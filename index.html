@@ -2078,7 +2078,10 @@ function updateWaves(dt) {
 // ============================================================ COMBAT CORE
 const HITFX = { hit: 0, kill: 0 };   // hitmarker flashes on the crosshair
 const FEED = [], DMGDIR = [];   // kill feed rows and the arcs that show where fire came from
-const buzz = ms => { if (meta && meta.opts.vibe && navigator.vibrate) navigator.vibrate(ms); };
+let gestured = false;   // vibrate() is refused (and logs an error) until the page itself has been touched
+addEventListener('pointerdown', () => { gestured = true; }, true);
+addEventListener('keydown', () => { gestured = true; }, true);
+const buzz = ms => { if (gestured && meta && meta.opts.vibe && navigator.vibrate) navigator.vibrate(ms); };
 function nearestEnemy(x, y, maxD) {
   let best = null, bd = maxD * maxD;
   for (const e of enemies) { const d = dist2(x, y, e.x, e.y); if (d < bd) { bd = d; best = e; } }
