@@ -49,6 +49,18 @@
   each level +6% damage, +3% fire rate. Sniper pierces up to 2 targets. Rockets explode (r70, no
   friendly fire from your own rockets). AI squadmates fire 2.6x slower than the controlled soldier.
 
+  HEADSHOTS — the fight is simulated top-down, so a target is a circle and its head is the narrow
+  column at the middle of it: a round whose line passes within ~0.1 m of the target's centre (0.15 m
+  on a breacher, 0.22 m on the Warlord) can take the head for CFG.headshotMul (2x) damage — one shot
+  for a rifleman. Measured perpendicular to the shot, so it tracks where you actually aimed rather
+  than where the round happened to be sampled. Being in that column is necessary but not sufficient:
+  nothing in the simulation tracks how high up the body a round struck, so that is rolled at
+  CFG.headshotChance (35%) — your aim decides whether a headshot is possible, the roll decides
+  whether it happened. Aiming down the sights halves your spread, so far more of your rounds are in
+  the column: roughly 35% of ADS rounds land a headshot up close against 18% from the hip. Squad fire only; explosions never headshot, and enemy rounds have no
+  headshot, so nothing can one-shot your soldiers out of nowhere. A headshot gives a sharper
+  hitmarker (gold), a harder buzz, a higher spray and an HS tag in the kill feed.
+
   AMMO — magazines are finite: SMG/AR 30, LMG 100, Sniper 5, Rocket 1, with 2-6 spare mags each.
   Reloads (1.7-4.2 s) play out in full — mag out, hand to the pouch, fresh mag in, charging handle —
   and start automatically when the mag runs dry, on R or a tap of the ammo counter, or in any lull once
@@ -255,6 +267,7 @@
   #minimap { top:52px; left:10px; width:150px; height:120px; border:2px solid var(--trim); border-radius:8px; box-shadow:0 4px 14px rgba(0,0,0,.5); }
   body.nomap #minimap { display:none; }
   #feed { top:214px; right:10px; width:200px; text-align:right; font-size:11px; letter-spacing:.05em; }
+  #feed .frow i { font-style:normal; font-weight:800; color:var(--gold); letter-spacing:.08em; }
   body.nofeed #feed { display:none; }
   .frow { margin:2px 0; color:var(--dim); text-shadow:0 1px 2px #000; }
   .frow b { color:var(--gold); } .frow.bad b { color:var(--red); }
@@ -326,6 +339,7 @@
   #reticle .rt-x { transform:rotate(45deg); } #reticle .rt-x2 { transform:rotate(-45deg); }
   #reticle.hit .rt-x, #reticle.hit .rt-x2 { opacity:1; }
   #reticle.kill .rt-x, #reticle.kill .rt-x2 { background:#ff5a3c; }
+  #reticle.head .rt-x, #reticle.head .rt-x2 { background:var(--gold); height:3px; }
   #banner { top:24%; left:50%; transform:translate(-50%,-50%); font-family:var(--display); font-size:clamp(20px, 3.4vw, 34px);
     letter-spacing:.16em; color:#fff; text-shadow:0 0 2px #000, 3px 3px 0 rgba(0,0,0,.55); opacity:0; white-space:nowrap; }
   #hint { bottom:150px; left:50%; transform:translateX(-50%); font-size:12px; color:var(--ink); letter-spacing:.06em;
@@ -613,6 +627,8 @@ const CFG = {
   reqStart: 150, aiCdMul: 2.6, trainingDmg: 0.08,
   mineCount: 8, mineDmg: 2, mineR: 55,
   mortarDmg: 2, mortarR: 55,
+  headshotMul: 2,         // damage multiplier for a round that goes through the head column
+  headshotChance: 0.35,   // ...and happened to be at head height (the sim has no elevation, so it is rolled)
 };
 const TAU = Math.PI * 2;
 
@@ -2078,7 +2094,18 @@ function updateWaves(dt) {
 }
 
 // ============================================================ COMBAT CORE
-const HITFX = { hit: 0, kill: 0 };   // hitmarker flashes on the crosshair
+const HITFX = { hit: 0, kill: 0, head: 0 };   // hitmarker flashes on the crosshair
+// Head half-widths in px (40 px = 1 m), so roughly a real head across for a person-sized target.
+const HEAD_W = { grunt: 4, runner: 4, gunner: 4, spotter: 4, rider: 4.5, brute: 6, boss: 9 };
+function headShot(e, b) {   // did this round's line pass through the centre column of the target?
+  const bl = Math.hypot(b.vx, b.vy);
+  if (!bl) return false;
+  const perp = Math.abs((e.x - b.x) * (b.vy / bl) - (e.y - b.y) * (b.vx / bl));
+  // Being in the column is necessary but not sufficient. There is no elevation in the simulation, so
+  // where the round struck up the body is rolled: aim decides whether you CAN take the head, the roll
+  // decides whether you did. Without this, a close-range burst down the sights is a headshot every time.
+  return perp <= (HEAD_W[e.type] || 4) && Math.random() < CFG.headshotChance;
+}
 const FEED = [], DMGDIR = [];   // kill feed rows and the arcs that show where fire came from
 let gestured = false;   // vibrate() is refused (and logs an error) until the page itself has been touched
 addEventListener('pointerdown', () => { gestured = true; }, true);
@@ -2144,10 +2171,10 @@ function killEnemy(idx, credit) {
   if (credit.wkey) weaponXp(credit.wkey, meta.unlocks.promotions ? 2 : 1);
   if (credit.slot != null && meta.squad[credit.slot]) {
     meta.squad[credit.slot].kills = (meta.squad[credit.slot].kills || 0) + 1;
-    feedPush(meta.squad[credit.slot].name.toUpperCase(), labelOf(e.type), false);
+    feedPush(meta.squad[credit.slot].name.toUpperCase(), labelOf(e.type), false, !!credit.head);
   }
   if (credit.player) {
-    floaters.push({ x: e.x, y: e.y, z: 34, txt: `+${pct}%`, life: 0.9 });
+    floaters.push({ x: e.x, y: e.y, z: 34, txt: credit.head ? `HEADSHOT +${pct}%` : `+${pct}%`, life: 0.9 });
     state.streakN = (state.streakT > 0 ? state.streakN : 0) + 1;   // kill streak chatter
     state.streakT = 3.5;
     if (state.streakN === 5) sayEvent('streak', 15, () => sayArch(state.controlled, 'streak', 2));
@@ -2176,12 +2203,16 @@ function hurtEnemy(idx, dmg, credit, dir) {
     particles.push({ x: e.x, y: e.y, z: 16, vx: rand(-50, 50), vy: rand(-50, 50), vz: rand(40, 90), life: 0.15, max: 0.15, col: '#fff4c0', r: 1.4 });
   }
   e.hp -= dmg; e.flash = 0.1; e.lastHit = dir;
-  for (let i = 0; i < 3; i++)                                     // blood spurt, biased along the hit direction
-    particles.push({ x: e.x, y: e.y, z: 12,
+  for (let i = 0; i < (credit.head ? 5 : 3); i++)                 // blood spurt, biased along the hit direction
+    particles.push({ x: e.x, y: e.y, z: credit.head ? 22 : 12,
       vx: (dir ? dir.x * rand(30, 130) : 0) + rand(-45, 45), vy: (dir ? dir.y * rand(30, 130) : 0) + rand(-45, 45),
       vz: rand(20, 85), life: rand(0.25, 0.4), max: 0.4,
       col: Math.random() < 0.5 ? '#7a1f16' : '#a03028', r: rand(1, 2.2) });
-  if (credit.player) { if (HITFX.hit <= 0) { beep(2600, 0.03, 'square', 0.03); buzz(8); } HITFX.hit = 0.14; }
+  if (credit.player) {
+    if (HITFX.hit <= 0) { beep(credit.head ? 3500 : 2600, credit.head ? 0.045 : 0.03, 'square', credit.head ? 0.042 : 0.03); buzz(credit.head ? 16 : 8); }
+    HITFX.hit = 0.14;
+    if (credit.head) HITFX.head = 0.2;
+  }
   if (e.hp <= 0) { if (credit.player) HITFX.kill = 0.32; killEnemy(idx, credit); return true; }
   return false;
 }
@@ -3100,9 +3131,10 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
           if (d2 >= (e.r + 5) * (e.r + 5)) continue;
           if (b.aoe) { explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }); dead = true; break; }
           const bl = Math.hypot(b.vx, b.vy) || 1;
-          const cdmg = inCover(e) ? b.dmg * 0.65 : b.dmg;
-          particles.push({ x: e.x, y: e.y, z: 14, vx: rand(-40, 40), vy: rand(-40, 40), vz: rand(30, 90), life: 0.08, max: 0.08, col: '#fff0b0', r: 1.4 });
-          const died = hurtEnemy(j, cdmg, { player: b.fromPlayer, wkey: b.wkey, slot: b.slot }, { x: b.vx / bl, y: b.vy / bl });
+          const head = headShot(e, b);
+          const cdmg = (inCover(e) ? b.dmg * 0.65 : b.dmg) * (head ? CFG.headshotMul : 1);
+          particles.push({ x: e.x, y: e.y, z: head ? 22 : 14, vx: rand(-40, 40), vy: rand(-40, 40), vz: rand(30, 90), life: 0.08, max: 0.08, col: '#fff0b0', r: 1.4 });
+          const died = hurtEnemy(j, cdmg, { player: b.fromPlayer, wkey: b.wkey, slot: b.slot, head }, { x: b.vx / bl, y: b.vy / bl });
           b.hits++;
           (b.hitList || (b.hitList = [])).push(e);
           if (died) j--;
@@ -5362,8 +5394,10 @@ function updateOverlays(dt) {
     OV.rtOn = shown;
     HITFX.hit = Math.max(0, HITFX.hit - dt);
     HITFX.kill = Math.max(0, HITFX.kill - dt);
+    HITFX.head = Math.max(0, HITFX.head - dt);
     rt.classList.toggle('hit', HITFX.hit > 0 || HITFX.kill > 0);
     rt.classList.toggle('kill', HITFX.kill > 0);
+    rt.classList.toggle('head', HITFX.head > 0);
   }
   const jb = document.getElementById('joy');
   if (joy.active) {
@@ -5669,8 +5703,8 @@ function updateBattleHud() {
 // ---------- minimap, kill feed, damage direction, settings ----------
 const ENEMY_LABEL = { grunt: 'RIFLEMAN', runner: 'RUNNER', brute: 'BREACHER', gunner: 'GUNNER', spotter: 'SPOTTER', rider: 'RAIDER', boss: 'WARLORD' };
 const labelOf = type => ENEMY_LABEL[type] || 'ENEMY';
-function feedPush(who, whom, bad) {
-  FEED.push({ who, whom, bad, t: performance.now() });
+function feedPush(who, whom, bad, head) {
+  FEED.push({ who, whom, bad, head, t: performance.now() });
   if (FEED.length > 6) FEED.shift();
   FEED.dirty = true;
 }
@@ -5712,7 +5746,7 @@ function updateFeed() {
   while (FEED.length && now - FEED[0].t > 4500) { FEED.shift(); FEED.dirty = true; }
   if (!FEED.dirty) return;
   FEED.dirty = false;
-  box.innerHTML = FEED.map(f => `<div class="frow${f.bad ? ' bad' : ''}"><b>${f.who}</b> ▸ ${f.whom}</div>`).join('');
+  box.innerHTML = FEED.map(f => `<div class="frow${f.bad ? ' bad' : ''}"><b>${f.who}</b> ▸${f.head ? ' <i>HS</i>' : ''} ${f.whom}</div>`).join('');
 }
 function applyOpts() {   // the options that change how the game looks and reads
   const o = meta.opts;
