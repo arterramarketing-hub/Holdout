@@ -12,7 +12,12 @@
   low orbit around the fallen body, then a sweep to the next soldier. Red arrows mark close enemies
   beside or behind you. The chase camera pulls in front of house walls rather than clipping through.
 
-  CONTROLS — two schemes, switchable any time in SETTINGS (map screen, the cog in battle, or O): AUTO-FIRE
+  ORIENTATION — on a phone or tablet the game plays in landscape only: held upright it shows a rotate
+  prompt and the simulation stops dead until you turn it, so nothing happens while you cannot see it.
+
+  CONTROLS — first person with manual fire is the DEFAULT (existing saves are migrated to it once).
+  Aim assist does not apply in first person and the setting is not offered there — the view is yours to
+  aim. Two schemes, switchable any time in SETTINGS (map screen, the cog in battle, or O): AUTO-FIRE
   keeps the soldier picking targets and shooting for you (Tab / right-click / tap to lock on), or MANUAL
   hands you the crosshair — the mouse aims (click to capture the pointer, Esc frees it), left mouse fires,
   right mouse aims down sights; on a phone the right side of the screen looks, a FIRE button shoots (drag
@@ -44,10 +49,11 @@
   (Body Armor +1 squad HP/lvl max 3, cost 150*2^lvl; Training +8% squad dmg/lvl max 5, cost 150*2^lvl;
   Strike ATVs 100 each max 8: +45% speed, +1 HP for the assigned soldier).
 
-  WEAPONS — SMG / AR / LMG / Sniper / Rocket, stats in WEAPONS table. Progression: each weapon type
-  gains 1 XP per kill made with it (by anyone in the squad), levels 1-10, need = round(15*lvl^1.5);
-  each level +6% damage, +3% fire rate. Sniper pierces up to 2 targets. Rockets explode (r70, no
-  friendly fire from your own rockets). AI squadmates fire 2.6x slower than the controlled soldier.
+  WEAPONS — SMG / AR / LMG / Sniper / Rocket, stats in the WEAPONS table and fixed: there are no weapon
+  levels and no weapon XP, so a rifle is the same rifle on the first front and the last. The only things
+  that move squad damage are LIVE-FIRE TRAINING (+8%/level) and the Korvan Ridge perk (+8%). Sniper
+  pierces up to 2 targets. Rockets explode (r70, no friendly fire from your own rockets). AI squadmates
+  fire 2.6x slower than the controlled soldier.
 
   HEADSHOTS — the fight is simulated top-down, so a target is a circle and its head is the narrow
   column at the middle of it: a round whose line passes within ~0.1 m of the target's centre (0.15 m
@@ -114,8 +120,7 @@
   recorded on the Memorial screen (name, rank, kills, front, theater; last 300 kept).
 
   COMMENDATIONS — +1 ★ per theater secured; spend in the Armory on permanent unlocks: COMBAT RATIONS
-  (+1 HP), FIELD PROMOTIONS (2x weapon XP), DEFENSE CONTRACTS (+50% all REQ), ARMORED COLUMN (+1 of every
-  support ammo per conquest).
+  (+1 HP), DEFENSE CONTRACTS (+50% all REQ), ARMORED COLUMN (+1 of every support ammo per conquest).
 
   STORY — "THE PASSENGER": you are the thing that moves between bodies on handoff. Campaign beats
   play as Star-Fox-style comm bubbles at the start of each territory (first theater only; the roll-call
@@ -410,8 +415,6 @@
   .wtop { display:flex; justify-content:space-between; font-size:13px; }
   .wtop b { color:var(--gold); }
   .wstats { font-size:11px; color:var(--dim); margin-top:2px; font-weight:600; font-variant-numeric:tabular-nums; }
-  .xpbar { height:7px; background:#0b1220; border-radius:4px; overflow:hidden; margin-top:5px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.6); }
-  .xpbar i { display:block; height:100%; background:linear-gradient(180deg, #fff08a, #e0a820); }
   .buyrow { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:7px 2px; border-bottom:1px solid var(--rule); font-size:13px; }
   .buyrow:last-child { border-bottom:none; }
   .buyrow .d { color:var(--dim); font-size:11px; font-weight:600; }
@@ -438,6 +441,14 @@
   #vig { position:fixed; inset:0; z-index:5; pointer-events:none; background:radial-gradient(ellipse at center, transparent 62%, rgba(0,0,12,.38) 100%); }
 
   /* title screen */
+  #rotate { position:fixed; inset:0; z-index:60; display:none; flex-direction:column; align-items:center; justify-content:center;
+    gap:6px; text-align:center; background:#0c1424; color:var(--ink); padding:24px; }
+  body.portrait #rotate { display:flex; }
+  #rotate .rot-icon { font-size:64px; color:var(--trim); transform:rotate(90deg); animation:rotHint 2.2s ease-in-out infinite; }
+  #rotate h2 { margin:10px 0 0; font-family:var(--display); font-size:20px; letter-spacing:.16em; color:var(--gold); }
+  #rotate p { margin:0; font-size:13px; color:var(--dim); }
+  @keyframes rotHint { 0%, 45% { transform:rotate(0deg); } 55%, 100% { transform:rotate(90deg); } }
+  @media (prefers-reduced-motion: reduce) { #rotate .rot-icon { animation:none; } }
   #boot { position:fixed; inset:0; z-index:39; display:flex; align-items:center; justify-content:center; cursor:pointer;
     transition:opacity .6s; background:radial-gradient(ellipse at 50% 38%, #2a4674, #0c1424 72%); color:var(--dim); }
   #boot.off { opacity:0; pointer-events:none; }
@@ -513,6 +524,28 @@
     #divebtn { bottom:180px; right:8px; }
     .mhead h1 { font-size:19px; letter-spacing:.12em; }
   }
+  /* Phones play in landscape, which is short rather than narrow: rebuild the HUD around the height. */
+  @media (max-height:520px) {
+    #topbar { top:6px; left:6px; }
+    #frontwrap { top:6px; left:196px; transform:none; width:calc(100vw - 330px); text-align:left; }
+    #wavetag { top:40px; left:196px; transform:none; }
+    #minimap { top:44px; left:6px; width:84px; height:64px; }
+    #feed { top:114px; left:6px; right:auto; width:140px; text-align:left; font-size:9px; }
+    #roster { top:6px; right:6px; width:104px; padding:3px; }
+    #roster .rname { font-size:8px; } #roster .rhp { width:20px; } #roster .pport { width:14px; height:14px; font-size:7px; }
+    #me { bottom:6px; left:6px; }
+    #supports { bottom:8px; left:158px; right:auto; transform:none; gap:6px; }
+    #ammo { bottom:84px; right:112px; }
+    #fallen { bottom:58px; right:112px; }
+    #firebtn { bottom:12px; right:10px; width:64px; height:64px; } #firebtn span { inset:19px; }
+    #adsbtn { bottom:84px; right:16px; width:46px; height:46px; font-size:9px; }
+    #lockbtn { bottom:84px; right:6px; }
+    #divebtn { bottom:150px; right:6px; }
+    body.touch.manual #divebtn { bottom:150px; right:6px; }
+    #hint { top:auto; bottom:46px; left:50%; transform:translateX(-50%); width:auto; max-width:min(40vw, 320px); font-size:10px; }
+    #comm { bottom:112px; left:158px; transform:none; width:min(260px, 40vw); }
+  }
+
 </style>
 </head>
 <body>
@@ -586,7 +619,7 @@
       <div class="panel"><h3>ROSTER — ASSIGN WEAPONS &amp; ATVS</h3><div id="squadlist"></div></div>
     </div>
     <div class="tcol">
-      <div class="panel"><h3>WEAPON PROGRESSION</h3><div id="weaponlist"></div></div>
+      <div class="panel"><h3>WEAPONS</h3><div id="weaponlist"></div></div>
     </div>
     <div class="tcol">
       <div class="panel"><h3>SUPPORT AMMUNITION</h3><div id="armorylist"></div></div>
@@ -605,6 +638,7 @@
   <div class="tgrid"><div class="panel" style="flex:1 1 100%"><div id="memlist"></div></div></div>
 </div>
 
+<div id="rotate"><div class="rot-icon">▭</div><h2>ROTATE YOUR DEVICE</h2><p>Holdout plays in landscape.</p></div>
 <div id="modal"><div id="modalbox"></div></div>
 <div id="boot"><div id="bootbox"><div class="boot-sub">The Ninth Company</div><h1>HOLDOUT</h1><div class="boot-press">Press any key</div><div id="bootlines"></div></div></div>
 
@@ -641,9 +675,6 @@ const WEAPONS = {
 };
 const WKEYS = Object.keys(WEAPONS);
 const SIDEARM = { name:'PISTOL', cd:0.3, dmg:0.7, range:280, spread:0.05, speed:2600, len:8 };   // bottomless, for when the rifle runs dry
-const wXpNeed = lvl => Math.round(15 * Math.pow(lvl, 1.5));   // xp to go from lvl -> lvl+1
-const wDmgMul = lvl => 1 + 0.06 * (lvl - 1);
-const wCdMul  = lvl => 1 / (1 + 0.03 * (lvl - 1));
 
 const SUPPORTS = {
   napalm:    { name:'INCENDIARY', cost:120, desc:'Strike jet lays white phosphorus across the enemy push. Burns both sides.', key:'1' },
@@ -700,7 +731,7 @@ const cv = document.getElementById('game');
 // ============================================================ PERSISTENT META
 let meta = null;
 // ---------- player options (saved with the campaign) ----------
-const OPT_DEFAULTS = { scheme: 'auto', fpv: false, aimAssist: true, sens: 1, fovAdd: 0, minimap: true, dmgDir: true, killfeed: true, vibe: true };
+const OPT_DEFAULTS = { v: 2, scheme: 'manual', fpv: true, aimAssist: true, sens: 1, fovAdd: 0, minimap: true, dmgDir: true, killfeed: true, vibe: true };
 const freshOpts = () => Object.assign({}, OPT_DEFAULTS);
 function freshMeta() {
   const taken = [];
@@ -710,13 +741,11 @@ function freshMeta() {
     squad.push({ name: n, weapon: 'ar', horse: false, alive: true, kills: 0,
       arch: ['vet','rook','joker','zealot','cynic','stoic','hen','wild'][i] });   // one of each to start
   }
-  const weapons = {};
-  for (const k of WKEYS) weapons[k] = { xp: 0, lvl: 1 };
   return {
     v: 2, req: CFG.reqStart, fallen: 0, theater: 0, muted: false,
-    weapons, inv: { napalm: 1, artillery: 1, supply: 1 },
+    inv: { napalm: 1, artillery: 1, supply: 1 },
     invest: { armor: 0, training: 0, horses: 0 },
-    commend: 0, unlocks: { rations: 0, promotions: 0, bonds: 0, resupply: 0 },
+    commend: 0, unlocks: { rations: 0, bonds: 0, resupply: 0 },
     opts: freshOpts(),
     memorial: [],
     story: { wren: 'none', wrenPending: false, seen: {}, seenTheater: -1 },
@@ -740,7 +769,6 @@ const hasPerk = id => meta && meta.terr[id] && meta.terr[id].owner === 'p';
 // Prestige unlocks bought with Commendations (1 per theater cleared)
 const UNLOCKS = {
   rations:    { name: 'COMBAT RATIONS',     desc: '+1 HP for every soldier, permanently.' },
-  promotions: { name: 'FIELD PROMOTIONS', desc: 'Weapons earn double XP.' },
   bonds:      { name: 'DEFENSE CONTRACTS',        desc: 'All REQ gains +50%.' },
   resupply:   { name: 'ARMORED COLUMN',   desc: '+1 of every support ammo after each conquest.' },
 };
@@ -751,15 +779,8 @@ const incomePerHour = () =>
   TERRITORIES.reduce((s, t) => s + (terrOwned(t) ? t.inc * incMul() : 0), 0) * (hasPerk(1) ? 1.15 : 1) * reqMul();
 const aliveCount = () => meta.squad.reduce((n, s) => n + (s.alive ? 1 : 0), 0);
 const horsesAssigned = () => meta.squad.reduce((n, s) => n + (s.horse && s.alive ? 1 : 0), 0);
-function weaponXp(key, n) {
-  const w = meta.weapons[key];
-  if (!w || w.lvl >= 10) return;
-  w.xp += n;
-  while (w.lvl < 10 && w.xp >= wXpNeed(w.lvl)) { w.xp -= wXpNeed(w.lvl); w.lvl++; showBanner(WEAPONS[key].name + ' → LVL ' + w.lvl); }
-}
-function squadDmg(key) {
-  return WEAPONS[key].dmg * wDmgMul(meta.weapons[key].lvl)
-    * (1 + CFG.trainingDmg * meta.invest.training) * (hasPerk(4) ? 1.08 : 1);
+function squadDmg(key) {   // a weapon is what it is: only Live-Fire Training and the damage perk move it
+  return WEAPONS[key].dmg * (1 + CFG.trainingDmg * meta.invest.training) * (hasPerk(4) ? 1.08 : 1);
 }
 const rankOf = k => k >= 500 ? 'MAJ' : k >= 300 ? 'CPT' : k >= 150 ? 'LT' : k >= 75 ? 'SGT' : k >= 25 ? 'CPL' : 'PVT';
 function addMemorial(name, kills, front) {
@@ -1866,6 +1887,13 @@ document.addEventListener('pointerdown', () => { audio(); startAmbience(); });
 
 const joy = { active: false, id: -1, bx: 0, by: 0, x: 0, y: 0, dx: 0, dy: 0 };
 const isTouch = 'ontouchstart' in window;
+let isPortrait = false;
+function checkOrient() {   // a phone held upright has no room for this fight; ask for landscape and wait
+  isPortrait = isTouch && innerHeight > innerWidth;
+  document.body.classList.toggle('portrait', isPortrait);
+}
+addEventListener('resize', checkOrient);
+addEventListener('orientationchange', checkOrient);
 const tap = { id: -1, x: 0, y: 0, t: 0 };   // right-side taps lock onto the enemy under the finger
 cv.addEventListener('touchstart', e => {
   e.preventDefault(); audio(); startAmbience();
@@ -1936,7 +1964,7 @@ function crosshairTarget(s, cone) {   // the enemy nearest the middle of the scr
   return best;
 }
 function aimAssist(s, dt) {   // a gentle pull toward a target already under the crosshair, plus stickier look
-  const t = meta.opts.aimAssist ? crosshairTarget(s, 0.2) : null;
+  const t = (meta.opts.aimAssist && !meta.opts.fpv) ? crosshairTarget(s, 0.2) : null;   // first person is yours to aim
   aim.sticky = !!t;
   if (!t) return;
   const want = Math.atan2(t.x - s.x, -(t.y - s.y));
@@ -2131,7 +2159,7 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   if (!s.pistol) s.mag--;
   bullets.push({ x: s.x + Math.cos(a) * 20, y: s.y + Math.sin(a) * 20,
     vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed,
-    life: w.range / w.speed, fromPlayer, wkey: key, slot: s.slot,
+    life: w.range / w.speed, age: 0, fromPlayer, wkey: key, slot: s.slot,
     dmg: s.pistol ? SIDEARM.dmg : squadDmg(s.weapon), hits: 0, maxHits: w.pierce || 1, aoe: w.aoe || 0, skip: coverNear(s, 34) });
   const mx = s.x + Math.cos(a) * 24, my = s.y + Math.sin(a) * 24;
   particles.push({ x: mx, y: my, z: 15, vx: 0, vy: 0, vz: 0, life: 0.04, max: 0.04, col: '#fff0b8', r: 3.4 });
@@ -2168,7 +2196,6 @@ function killEnemy(idx, credit) {
   const cap = (state.bossSpawned && state.bossRef && !e.boss) ? 99 : 100;  // boss gates the last 1%
   state.progress = Math.min(cap, state.progress + pct);
   reqGain((1 + 0.5 * state.tier) * (credit.player ? 1 : 0.6));
-  if (credit.wkey) weaponXp(credit.wkey, meta.unlocks.promotions ? 2 : 1);
   if (credit.slot != null && meta.squad[credit.slot]) {
     meta.squad[credit.slot].kills = (meta.squad[credit.slot].kills || 0) + 1;
     feedPush(meta.squad[credit.slot].name.toUpperCase(), labelOf(e.type), false, !!credit.head);
@@ -2556,6 +2583,7 @@ function loadMeta() {
     meta = Object.assign(freshMeta(), save);
     meta.story = Object.assign({ wren: 'none', wrenPending: false, seen: {}, seenTheater: -1 }, save.story || {});
     meta.opts = Object.assign(freshOpts(), save.opts || {});
+    if (!meta.opts.v) { meta.opts.v = 2; meta.opts.fpv = true; meta.opts.scheme = 'manual'; }   // first person is the default now
     for (const m of meta.squad) if (!m.arch) m.arch = pickL(ARCH_KEYS);   // migrate pre-story saves
     return simulateAfk(Math.max(0, (Date.now() - (save.lastSeen || Date.now())) / 1000));
   }
@@ -2897,7 +2925,7 @@ function updateSoldiers(dt) {
       s.quietT = aim.fire ? 0 : (s.quietT || 0) + dt;
       if (aim.fire && s.fireCd <= 0 && s.reloadT <= 0 && !s.dive) {
         if (s.pistol || s.mag > 0) {
-          s.fireCd = (s.pistol ? SIDEARM.cd : w.cd * wCdMul(meta.weapons[s.weapon].lvl)) * (hasPerk(10) ? 0.94 : 1);
+          s.fireCd = (s.pistol ? SIDEARM.cd : w.cd) * (hasPerk(10) ? 0.94 : 1);
           fire(s, null, true, s.aim);
           s.peekT = 0.5;
         }
@@ -2908,7 +2936,7 @@ function updateSoldiers(dt) {
       s.quietT = 0;
       if (s.fireCd <= 0 && s.reloadT <= 0) {
         if (s.pistol || s.mag > 0) {
-          s.fireCd = (s.pistol ? SIDEARM.cd : w.cd * wCdMul(meta.weapons[s.weapon].lvl)) * (isCtl ? 1 : CFG.aiCdMul) * (hasPerk(10) ? 0.94 : 1);
+          s.fireCd = (s.pistol ? SIDEARM.cd : w.cd) * (isCtl ? 1 : CFG.aiCdMul) * (hasPerk(10) ? 0.94 : 1);
           fire(s, t, isCtl);
           s.peekT = 0.5;   // pop up over cover to shoot
         }
@@ -3098,7 +3126,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
     const steps = Math.max(1, Math.ceil(Math.hypot(b.vx, b.vy) * dt / 10)), sdt = dt / steps;
     let dead = false;
     for (let k = 0; k < steps && !dead; k++) {
-      b.x += b.vx * sdt; b.y += b.vy * sdt; b.life -= sdt;
+      b.x += b.vx * sdt; b.y += b.vy * sdt; b.life -= sdt; b.age = (b.age || 0) + sdt;
       if (b.life <= 0) {
         if (b.aoe) explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey });
         dead = true; break;
@@ -4125,6 +4153,13 @@ function drawViewmodel(s, wdt, set) {
   emitParts(vmRig, gunParts(key), pal, set);
   emitParts(vmRig, vmHandParts(), pal, set);
   if (rl > 0.26 && rl < 0.64) emitParts(vmRig, vmMagParts(), pal, set);
+  {   // remember where the barrel ends in the world, so tracers can start there rather than at the body
+    const mlen = (s.pistol ? SIDEARM.len : WEAPONS[s.weapon].len) * 0.032;
+    TMP.m2.compose(TMP.v.set(ox, oy + 0.02, oz - mlen * 0.78), TMP.q, TMP.s.set(1, 1, 1));
+    TMP.m.multiplyMatrices(cam3.matrixWorld, TMP.m2);
+    FPV.muz = FPV.muz || TMP.v.clone();
+    FPV.muz.setFromMatrixPosition(TMP.m);
+  }
   if (FPV.flashT > 0) {   // muzzle flash, out at the end of the barrel
     const len = (s.pistol ? SIDEARM.len : WEAPONS[s.weapon].len) * 0.032;
     TMP.m2.compose(TMP.v.set(ox, oy + 0.02, oz - len * 0.78), TMP.q, TMP.s.set(0.22, 0.22, 0.22));
@@ -4383,12 +4418,15 @@ const FX_FRAME = ['shadow', 'crater', 'ring', 'fireGlow', 'tracer', 'tracerGlow'
 const hash2 = (x, y) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };
 function drawFx() {
   const F = VIEW.fx, now = performance.now();
+  const muz = fpvActive() && FPV.muz ? FPV.muz : null;   // in first person your own rounds leave the viewmodel's barrel
   for (const b of bullets) {   // thin tracer streaks trailing each round
     const sp = Math.hypot(b.vx, b.vy) || 1, rocket = b.wkey === 'rocket';
     const len = rocket ? 0.34 : clamp(sp * XS * 0.02, 0.6, 2.8);
     const w = rocket ? 0.08 : b.wkey === 'sniper' ? 0.028 : b.hostile ? 0.024 : 0.018;
     TMP.q.setFromAxisAngle(TMP.up, simYaw(Math.atan2(b.vy, b.vx)));
     TMP.v.set(b.x * XS - b.vx / sp * len / 2, b.hostile ? 1.0 : 1.08, b.y * XS - b.vy / sp * len / 2);
+    if (muz && !b.hostile && b.slot === state.controlled && b.age < 0.05)
+      TMP.v.lerp(muz, 1 - b.age / 0.05);   // the first moments of the streak are pinned to the barrel
     const col = colorOf(b.hostile ? '#ffb08a' : rocket ? '#ffc070' : '#fff2c0');
     TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w, w, len)); F.tracer.push(TMP.m, col);
     TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w * 2.4, w * 2.4, len)); F.tracerGlow.push(TMP.m, col);
@@ -5679,7 +5717,7 @@ function updateBattleHud() {
     const m = meta.squad[c.slot];
     el.meport.textContent = c.name[0]; el.meport.style.background = c.color;
     el.mename.textContent = rankOf(m.kills || 0) + ' ' + (c.alive ? c.name : c.name + ' †');
-    el.meweap.textContent = WEAPONS[c.weapon].name + ' LVL ' + meta.weapons[c.weapon].lvl
+    el.meweap.textContent = WEAPONS[c.weapon].name
       + (c.horse ? ' · ATV' : '') + (c.alive && inCover(c) ? ' · IN COVER' : '');
     el.mehpfill.style.width = clamp(c.hp / c.maxHp, 0, 1) * 100 + '%';
     const am = $('ammo');
@@ -5780,7 +5818,7 @@ function showSettings() {
     <div class="setrow"><span>View</span><span>
       <label><input type="radio" name="vw" value="tps"${on(!o.fpv)}> Third person</label>
       <label><input type="radio" name="vw" value="fps"${on(o.fpv)}> First person</label></span></div>
-    <div class="setrow"><span>Aim assist</span><input type="checkbox" id="o_aa"${on(o.aimAssist)}></div>
+    ${o.fpv ? '' : `<div class="setrow"><span>Aim assist</span><input type="checkbox" id="o_aa"${on(o.aimAssist)}></div>`}
     <div class="setrow"><span>Look sensitivity</span><input type="range" id="o_sens" min="0.4" max="2" step="0.05" value="${o.sens}"></div>
     <div class="setrow"><span>Field of view</span><input type="range" id="o_fov" min="-10" max="18" step="1" value="${o.fovAdd}"></div>
     <div class="setrow"><span>Minimap</span><input type="checkbox" id="o_map"${on(o.minimap)}></div>
@@ -5793,7 +5831,7 @@ function showSettings() {
     <button id="mbtn">DONE</button>`);
   const bind = (id, key, read) => { const e = $(id); if (e) e.oninput = () => { meta.opts[key] = read(e); applyOpts(); saveMeta(); }; };   // 'input' so the FOV and sensitivity sliders preview as you drag
   document.querySelectorAll('input[name=sch]').forEach(r => { r.onchange = () => { meta.opts.scheme = r.value; applyOpts(); saveMeta(); }; });
-  document.querySelectorAll('input[name=vw]').forEach(r => { r.onchange = () => { meta.opts.fpv = r.value === 'fps'; applyOpts(); saveMeta(); }; });
+  document.querySelectorAll('input[name=vw]').forEach(r => { r.onchange = () => { meta.opts.fpv = r.value === 'fps'; applyOpts(); saveMeta(); showSettings(); }; });   // redraw: first person drops the aim-assist row
   bind('o_aa', 'aimAssist', e => e.checked);
   bind('o_sens', 'sens', e => +e.value);
   bind('o_fov', 'fovAdd', e => +e.value);
@@ -5929,7 +5967,7 @@ function renderTeam() {
     const sel = document.createElement('select');
     for (const k of WKEYS) {
       const o = document.createElement('option');
-      o.value = k; o.textContent = `${WEAPONS[k].name} L${meta.weapons[k].lvl}`;
+      o.value = k; o.textContent = WEAPONS[k].name;
       if (m.weapon === k) o.selected = true;
       sel.appendChild(o);
     }
@@ -5949,15 +5987,12 @@ function renderTeam() {
   const wl = $('weaponlist');
   wl.innerHTML = '';
   for (const k of WKEYS) {
-    const w = WEAPONS[k], mw = meta.weapons[k];
-    const need = wXpNeed(mw.lvl);
+    const w = WEAPONS[k];
     const card = document.createElement('div');
     card.className = 'wcard';
     card.innerHTML = `
-      <div class="wtop"><span>${w.name}</span><b>LVL ${mw.lvl}${mw.lvl >= 10 ? ' MAX' : ''}</b></div>
-      <div class="wstats">DMG ${squadDmg(k).toFixed(2)} · ROF ${(1 / (w.cd * wCdMul(mw.lvl))).toFixed(1)}/s · RNG ${w.range} · MAG ${w.mag}${w.pierce ? ' · PIERCE ' + w.pierce : ''}${w.aoe ? ' · BLAST ' + w.aoe : ''}</div>
-      <div class="xpbar"><i style="width:${mw.lvl >= 10 ? 100 : mw.xp / need * 100}%"></i></div>
-      <div class="wstats">${mw.lvl >= 10 ? 'Mastered' : mw.xp + ' / ' + need + ' XP (kills with this weapon)'}</div>`;
+      <div class="wtop"><span>${w.name}</span><b>${squadDmg(k).toFixed(2)} DMG</b></div>
+      <div class="wstats">ROF ${(1 / w.cd).toFixed(1)}/s · RNG ${w.range} · MAG ${w.mag} · SPARE ${w.spare}${w.pierce ? ' · PIERCE ' + w.pierce : ''}${w.aoe ? ' · BLAST ' + w.aoe : ''}</div>`;
     wl.appendChild(card);
   }
   const ar = $('armorylist');
@@ -6032,6 +6067,7 @@ $('tomap').onclick = () => { if (state.mode === 'play' || state.mode === 'failed
 
 // ============================================================ MAIN LOOP
 function tick(dt) {
+  if (isPortrait) return;                    // held upright: everything waits for the rotate prompt
   meta.req += incomePerHour() / 3600 * dt;   // online trickle income
   updateAudio(dt);
   updateComms(dt);
@@ -6044,6 +6080,7 @@ let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
+  if (isTouch) checkOrient();   // resize/orientationchange can report stale metrics, so confirm every frame
   tick(dt);
   if (screen === 'battle') { renderView(dt); updateBattleHud(); }
   else {
@@ -6059,6 +6096,7 @@ el.hint.textContent = isTouch ? 'LEFT THUMB MOVE · A DIVES · TAP AMMO TO RELOA
 setTimeout(() => { el.hint.style.opacity = 0; }, 8000);
 showScreen('map');
 if (isTouch) document.body.classList.add('touch');
+checkOrient();
 applyOpts();
 const glStatus = () => VIEW.ready ? 'Waking the 3D engine (three.js r186) . . . ready'
   : VIEW.failed ? 'Waking the 3D engine . . . <span class="lost">offline — check your connection</span>'
