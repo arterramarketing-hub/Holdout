@@ -2409,6 +2409,8 @@ function enterBattle(tid) {
   state.controlled = first < 0 ? 0 : first;
   if (first >= 0) soldiers[state.controlled].invuln = CFG.spawnInvuln;
   lockRelease();
+  aim.yaw = 0; aim.pitch = 0; aim.fire = false; aim.ads = false; aim.lookDx = 0;   // every front opens facing the line, not wherever you last looked
+  applyOpts.wasManual = manualAim();
   viewEnterBattle();
   rosterDirty = true; supportsDirty = true;
   state.streakN = 0; state.streakT = 0;
@@ -5716,7 +5718,11 @@ function applyOpts() {   // the options that change how the game looks and reads
   document.body.classList.toggle('fpv', !!o.fpv);
   document.body.classList.toggle('nomap', !o.minimap);
   document.body.classList.toggle('nofeed', !o.killfeed);
-  if (manualAim()) lockRelease(); else { aim.fire = false; aim.ads = false; }
+  if (manualAim()) {
+    lockRelease();
+    if (!applyOpts.wasManual) { aim.yaw = cam.yaw; aim.pitch = 0; aim.lookDx = 0; }   // take the camera over where it stands, don't snap
+  } else { aim.fire = false; aim.ads = false; }
+  applyOpts.wasManual = manualAim();
   const ab = $('adsbtn');
   if (ab) ab.classList.toggle('on', aim.ads);
   el.hint.textContent = isTouch
