@@ -533,23 +533,36 @@
     #lockbtn { bottom:134px; right:8px; }
     .mhead h1 { font-size:19px; letter-spacing:.12em; }
   }
-  /* Phones play in landscape, which is short rather than narrow: rebuild the HUD around the height. */
+  /* Phones play in landscape: short, and every pixel of it is the fight. Keep the HUD small and at the
+     edges — touch targets stay big enough to hit, everything that is only information shrinks. */
   @media (max-height:520px) {
-    #topbar { top:6px; left:6px; }
-    #frontwrap { top:6px; left:196px; transform:none; width:calc(100vw - 330px); text-align:left; }
-    #minimap { top:44px; left:6px; width:84px; height:64px; }
-    #feed { top:114px; left:6px; right:auto; width:140px; text-align:left; font-size:9px; }
-    #tally { top:40px; left:196px; transform:none; font-size:10px; }
-    #roster .rname { font-size:8px; } #roster .rhp { width:20px; } #roster .pport { width:14px; height:14px; font-size:7px; }
-    #me { bottom:6px; left:6px; }
-    #supports { bottom:8px; left:158px; right:auto; transform:none; gap:6px; }
-    #ammo { bottom:84px; right:112px; }
-    #fallen { bottom:58px; right:112px; }
-    #firebtn { bottom:12px; right:10px; width:64px; height:64px; } #firebtn span { inset:19px; }
-    #adsbtn { bottom:84px; right:16px; width:46px; height:46px; font-size:9px; }
-    #lockbtn { bottom:84px; right:6px; }
-    #hint { top:auto; bottom:46px; left:50%; transform:translateX(-50%); width:auto; max-width:min(40vw, 320px); font-size:10px; }
-    #comm { bottom:112px; left:158px; transform:none; width:min(260px, 40vw); }
+    #topbar { top:5px; left:5px; gap:7px; }
+    #tomap { font-size:9px; padding:4px 10px; }
+    #tocfg { font-size:11px; padding:3px 7px; }
+    #frontwrap { top:6px; left:148px; transform:none; width:min(38vw, 280px); }
+    #frontbar { height:9px; padding:1px; border-width:1px; border-radius:6px; }
+    #tally { top:21px; left:148px; transform:none; font-size:9px; letter-spacing:.09em; }
+    #tally b { font-size:11px; } #tally i { margin:0 6px; height:9px; }
+    #minimap { top:40px; left:5px; width:70px; height:54px; border-width:1px; }
+    #feed { top:100px; left:5px; right:auto; width:118px; text-align:left; font-size:8px; }
+    #dmgdir i { width:210px; height:180px; margin:-180px 0 0 -105px; }
+    #supports { bottom:6px; left:130px; right:auto; transform:none; gap:5px; }
+    .supbtn { padding:2px 9px 2px 2px; font-size:8px; gap:4px; letter-spacing:.05em; border-width:1px; }
+    .supbtn .ckey { width:16px; height:16px; font-size:9px; }
+    .supbtn .cnt, .supbtn .need { min-width:14px; height:14px; font-size:8px; top:-6px; right:-5px; border-width:1px; padding:0 3px; }
+    #ammo { bottom:42px; right:76px; }
+    #ammag { font-size:15px; } #amres { font-size:9px; } #ambar { width:42px; height:3px; }
+    #firebtn { bottom:10px; right:8px; width:56px; height:56px; } #firebtn span { inset:17px; border-width:2px; }
+    #adsbtn { bottom:72px; right:13px; width:40px; height:40px; font-size:8px; }
+    #lockbtn { bottom:72px; right:5px; font-size:9px; padding:3px 10px 3px 3px; }
+    #lockbtn .zkey { width:19px; height:19px; font-size:10px; }
+    #hint { top:auto; bottom:32px; left:6px; right:auto; transform:none; text-align:left; width:auto;
+      max-width:33vw; font-size:8px; line-height:1.45; letter-spacing:.03em; }
+    #comm { bottom:116px; left:130px; transform:none; width:min(215px, 33vw); padding:5px 10px 6px 5px; gap:6px; border-radius:12px; }
+    #commport { width:22px; height:22px; font-size:10px; } #commtext { font-size:10px; } #commname { font-size:8px; }
+    #banner { font-size:clamp(13px, 2.3vw, 19px); letter-spacing:.1em; }
+    #bossbar { top:36px; left:50%; transform:translateX(-50%); width:min(210px, 30vw); }
+    #bossname { font-size:8px; margin-bottom:2px; } #bosshp { height:7px; padding:1px; border-width:1px; }
   }
 
 </style>
