@@ -51,8 +51,21 @@
 
   PROGRESS — controlled kill +0.7% front, AI squadmate kill +0.2%. Front cleared at 100%.
 
-  WEAPONS — SMG / AR / LMG / Sniper / Rocket, stats in the WEAPONS table and fixed: there are no weapon
-  levels and no weapon XP, so a rifle is the same rifle on the first front and the last. The only things
+  WEAPONS — UMP45 (SMG) / M4A1 (AR) / M249 SAW (LMG) / Intervention (sniper) / Rocket, stats in the
+  WEAPONS table and fixed: there are no weapon levels and no weapon XP, so a rifle is the same rifle on
+  the first front and the last.
+  ATTACHMENTS (BATTLE PREP; saved per weapon in meta.attach; your own rifle only, squadmates carry the
+  stock gun): a SIGHT — iron sights (1.45x), a 1.2x red dot, a 4x ACOG, and on the Intervention its own
+  6x scope in place of irons — and a MAGAZINE, standard or extended (UMP45 32/48, M4A1 30/45, SAW
+  100/200, Intervention 5/8; an extended mag adds 10% to the reload). Zoom is tan-based (the 4x shows a
+  quarter of the view), look sensitivity scales down with it, the ACOG and scope shoulder slower than a
+  dot, and a magnified optic tightens ADS spread a little more. Every sight is real geometry on the
+  model (GUN_BUILD): at full ADS the viewmodel is placed so the rear aperture and the front post — or
+  the optic's eyepiece — sit exactly on the camera axis at a short eye relief (adsInfo), and the
+  crosshair steps aside. Magnified optics add a DOM window (#sight) whose radius is computed from the
+  eyepiece ring's real size at that relief, with the chevron or crosshair drawn on top; the red dot is a
+  DOM dot glowing inside its 3D housing. The muzzle flash and tracers start at the model's own barrel
+  tip (GUN_MUZ). The only things
   that move squad damage are LIVE-FIRE TRAINING (+8%/level) and the Korvan Ridge perk (+8%). Sniper
   pierces up to 2 targets. Rockets explode (r70, no friendly fire from your own rockets). AI squadmates
   fire 2.6x slower than the controlled soldier.
@@ -75,7 +88,8 @@
   headshot, so nothing can one-shot your soldiers out of nowhere. A headshot gives a sharper
   hitmarker (gold), a harder buzz, a higher spray and an HS tag in the kill feed.
 
-  AMMO — magazines are finite: SMG/AR 30, LMG 100, Sniper 5, Rocket 1, with 2-6 spare mags each.
+  AMMO — magazines are finite: UMP45 32, M4A1 30, SAW 100, Intervention 5, Rocket 1 (extended mags
+  48 / 45 / 200 / 8), with 2-6 spare mags each.
   Reloads (1.7-4.2 s) play out in full — mag out, hand to the pouch, fresh mag in, charging handle —
   and start automatically when the mag runs dry, on R or a tap of the ammo counter, or in any lull once
   the mag is under half. Out of spares, everyone falls back to a bottomless pistol. Enemy dead drop a
@@ -343,6 +357,29 @@
   #reticle .rt-l { top:22px; left:2px; height:2px; width:9px; transform:translateX(calc(-1 * var(--g))); }
   #reticle .rt-r { top:22px; right:2px; height:2px; width:9px; transform:translateX(var(--g)); }
   #reticle .rt-dot { left:21px; top:21px; width:4px; height:4px; border-radius:50%; }
+  #reticle.ads .rt-t, #reticle.ads .rt-b, #reticle.ads .rt-l, #reticle.ads .rt-r, #reticle.ads .rt-dot { opacity:0; }   /* the real sights take over */
+  /* What you see through an optic once you are settled in behind it. The mask is a black field with a round
+     window whose radius the HUD sets from the eyepiece's real size; the reticle sits at the centre. */
+  #sight { position:fixed; inset:0; z-index:7; display:none; pointer-events:none; --cx:50vw; --cy:50vh; --r:200px; }
+  #sg-mask { position:absolute; inset:0;
+    background:radial-gradient(circle at var(--cx) var(--cy), transparent calc(var(--r) - 1px), rgba(0,0,0,.94) calc(var(--r) + 2px)); }
+  #sight.dot #sg-mask { display:none; }
+  #sg-ret { position:absolute; left:var(--cx); top:var(--cy); }
+  #sight.dot #sg-ret { width:7px; height:7px; margin:-3.5px 0 0 -3.5px; border-radius:50%; background:#ff3b2f;
+    box-shadow:0 0 3px 1px rgba(255,70,50,.85), 0 0 9px 3px rgba(255,60,40,.35); }
+  #sight.acog #sg-ret { width:2px; height:calc(var(--r) - 8px); margin:8px 0 0 -1px; background:rgba(255,59,47,.85); }
+  #sight.acog #sg-ret::before, #sight.acog #sg-ret::after { content:''; position:absolute; left:-1px; top:-9px; width:4px; height:17px;
+    background:#ff3b2f; transform-origin:50% 0; box-shadow:0 0 3px rgba(255,59,47,.6); }
+  #sight.acog #sg-ret::before { transform:rotate(-42deg); }
+  #sight.acog #sg-ret::after { transform:rotate(42deg); }
+  #sight.acog #sg-mask::after { content:''; position:absolute; left:var(--cx); top:var(--cy); width:calc(var(--r) * 2); height:calc(var(--r) * 2);
+    margin:calc(-1 * var(--r)) 0 0 calc(-1 * var(--r)); border-radius:50%; box-shadow:inset 0 0 22px 6px rgba(0,0,0,.55); }
+  #sight.scope #sg-ret { width:calc(var(--r) * 2); height:2px; margin:-1px 0 0 calc(-1 * var(--r)); background:#0a0a0a; }
+  #sight.scope #sg-ret::before { content:''; position:absolute; left:50%; top:calc(-1 * var(--r)); width:2px; height:calc(var(--r) * 2); margin-left:-1px; background:#0a0a0a; }
+  #sight.scope #sg-ret::after { content:''; position:absolute; left:50%; top:50%; width:5px; height:5px; margin:-2.5px 0 0 -2.5px; border-radius:50%;
+    border:1.5px solid #0a0a0a; }
+  #sight.scope #sg-mask::after { content:''; position:absolute; left:var(--cx); top:var(--cy); width:calc(var(--r) * 2); height:calc(var(--r) * 2);
+    margin:calc(-1 * var(--r)) 0 0 calc(-1 * var(--r)); border-radius:50%; box-shadow:inset 0 0 40px 14px rgba(0,0,0,.7); }
   #reticle.hot { color:#ff3b30; }   /* an enemy is lined up under it */
   /* Hit marker, the Call of Duty way: four short diagonal ticks that snap on at the instant of the hit
      and fade outward. White for a hit, red for a kill, longer for a headshot. Stays white over a red
@@ -379,6 +416,13 @@
   .wpick .wtop { display:flex; justify-content:space-between; gap:10px; font-family:var(--display); font-size:14px; letter-spacing:.08em; }
   .wpick .wtop b { color:var(--gold); }
   .wpick .wstats { font-size:11px; color:var(--dim); margin-top:5px; font-weight:600; }
+  .wpick .attrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:9px; }
+  .wpick .attrow > span { font-size:10px; letter-spacing:.14em; color:var(--dim); font-weight:800; min-width:40px; }
+  .att { font-size:10px; font-weight:800; letter-spacing:.06em; padding:5px 9px; border-radius:7px; border:1.5px solid var(--line);
+    background:rgba(0,0,0,.28); color:var(--dim); }
+  .att.on { border-color:var(--gold); color:var(--gold); background:rgba(255,216,74,.1); }
+  .att:hover { filter:brightness(1.2); }
+  .wpick .wnote { font-size:10.5px; color:var(--dim); margin-top:7px; line-height:1.45; }
   #banner { top:24%; left:50%; transform:translate(-50%,-50%); font-family:var(--display); font-size:clamp(20px, 3.4vw, 34px);
     letter-spacing:.16em; color:#fff; text-shadow:0 0 2px #000, 3px 3px 0 rgba(0,0,0,.55); opacity:0; white-space:nowrap; }
   #hint { bottom:150px; left:50%; transform:translateX(-50%); font-size:12px; color:var(--ink); letter-spacing:.06em;
@@ -574,6 +618,7 @@
 <div id="cine-top"></div><div id="cine-bot"></div>
 <div id="titlecard"><div class="tc-sub"></div><div class="tc-name"></div></div>
 <div id="floaters"></div>
+<div id="sight"><div id="sg-mask"></div><div id="sg-ret"></div></div>
 <div id="reticle"><i class="rt-t"></i><i class="rt-b"></i><i class="rt-l"></i><i class="rt-r"></i><i class="rt-dot"></i><i class="hm a"></i><i class="hm b"></i><i class="hm c"></i><i class="hm d"></i></div>
 <div id="threats"></div>
 <div id="joy"><div id="joyknob"></div></div>
@@ -655,13 +700,36 @@ const WEAPONS = {
   // `range` is how far the AI will engage from; `reach` is how far the round actually flies. They are
   // separate because you can see clear across an 80 m town in first person, and a round that quietly
   // expires at 10 m reads as the gun simply not registering.
-  smg:    { name:'SMG',      cd:0.09, dmg:1, range:300, reach:900,  spread:0.09,  speed:2800, len:13, mag:30,  reload:1.7, spare:5 },
-  ar:     { name:'AR',       cd:0.16, dmg:1, range:430, reach:1500, spread:0.04,  speed:3400, len:19, mag:30,  reload:2.1, spare:5 },
-  lmg:    { name:'LMG',      cd:0.11, dmg:1, range:400, reach:1400, spread:0.07,  speed:3200, len:23, mag:100, reload:4.2, spare:2, moveMul:0.85 },
-  sniper: { name:'SNIPER',   cd:1.05, dmg:4, range:720, reach:2600, spread:0.005, speed:5600, len:29, mag:5,   reload:2.9, spare:6, pierce:2 },
+  smg:    { name:'UMP45',        cd:0.09, dmg:1, range:300, reach:900,  spread:0.09,  speed:2800, len:13, mag:32,  ext:48,  reload:1.7, spare:5 },
+  ar:     { name:'M4A1',         cd:0.16, dmg:1, range:430, reach:1500, spread:0.04,  speed:3400, len:19, mag:30,  ext:45,  reload:2.1, spare:5 },
+  lmg:    { name:'M249 SAW',     cd:0.11, dmg:1, range:400, reach:1400, spread:0.07,  speed:3200, len:23, mag:100, ext:200, reload:4.2, spare:2, moveMul:0.85 },
+  sniper: { name:'INTERVENTION', cd:1.05, dmg:4, range:720, reach:2600, spread:0.005, speed:5600, len:29, mag:5,   ext:8,   reload:2.9, spare:6, pierce:2 },
   rocket: { name:'ROCKET',   cd:1.50, dmg:3, range:520, reach:1000, spread:0.02,  speed:900,  len:21, mag:1,   reload:2.6, spare:6, aoe:70 },
 };
 const WKEYS = Object.keys(WEAPONS);
+// ---------- attachments: what you look through, and how many rounds you carry in the gun ----------
+// zoom is tan-based (a 4x shows a quarter of the view); rate = how fast the sights come up; spread = ADS spread multiplier;
+// over = the DOM overlay drawn once you are settled behind the optic (null = the real iron sights, nothing drawn)
+const SIGHTS = {
+  iron:  { name:'IRON SIGHTS',  zoom:1.45, rate:12,  spread:0.5,  over:null,    note:'Iron sights: quick to the shoulder, a touch of zoom, nothing between you and the street.' },
+  rds:   { name:'RED DOT 1.2x', zoom:1.2,  rate:14,  spread:0.5,  over:'dot',   note:'Red dot: the fastest to the eye, 1.2x, a clean window with one dot in it.' },
+  acog:  { name:'ACOG 4x',      zoom:4,    rate:8.5, spread:0.4,  over:'acog',  note:'ACOG: 4x for the long streets, a red chevron, slower to shoulder and heavy on the look speed.' },
+  scope: { name:'SCOPE 6x',     zoom:6,    rate:7.5, spread:0.35, over:'scope', note:'6x scope: the far end of the street, fully blacked out around the glass; slow to shoulder.' },
+};
+const SIGHT_OPTS = { smg: ['iron', 'rds', 'acog'], ar: ['iron', 'rds', 'acog'], lmg: ['iron', 'rds', 'acog'], sniper: ['scope', 'acog'] };
+const NO_ATT = { sight: 'iron', ext: false };
+const EXT_RELOAD = 1.1;   // an extended magazine is heavier and slower to seat
+const freshAttach = () => ({ smg: { sight: 'iron', ext: false }, ar: { sight: 'iron', ext: false }, lmg: { sight: 'iron', ext: false }, sniper: { sight: 'scope', ext: false } });
+function normAtt(key, att) {   // an attachment record a gun can actually mount: an unknown sight falls back to the gun's first option
+  const opts = SIGHT_OPTS[key];
+  if (!opts) return NO_ATT;
+  return { sight: att && opts.includes(att.sight) ? att.sight : opts[0], ext: !!(att && att.ext && WEAPONS[key].ext) };
+}
+const attFor = key => normAtt(key, meta && meta.attach && meta.attach[key]);   // what BATTLE PREP has on this gun
+const magCap = s => { const w = WEAPONS[s.weapon]; return s.ext && w.ext ? w.ext : w.mag; };
+const heroSight = () => { const s = soldiers[state.controlled]; return s && !s.pistol && SIGHTS[s.sight] ? SIGHTS[s.sight] : SIGHTS.iron; };
+const heroZoom = () => fpvActive() ? heroSight().zoom : Math.min(heroSight().zoom, 1.45);   // over the shoulder a 4x would be absurd
+const adsSens = () => clamp(0.8 / heroZoom(), 0.13, 0.66);   // look speed comes down with the magnification (0.55 on irons)
 const SIDEARM = { name:'PISTOL', cd:0.3, dmg:0.7, range:280, reach:800, spread:0.05, speed:2600, len:8 };   // bottomless, for when the rifle runs dry
 
 const SUPPORTS = {
@@ -732,6 +800,7 @@ function freshMeta() {
   return {
     v: 2, theater: 0, muted: false,
     loadout: 'ar',
+    attach: freshAttach(),
     opts: freshOpts(),
     story: { wren: 'none', wrenPending: false, seen: {}, seenTheater: -1 },
     squad,
@@ -778,7 +847,7 @@ function awardStreak() {
 function respawnSoldier(s) {   // a fresh body off the reinforcement line: same name, same loadout
   const w = WEAPONS[s.weapon];
   s.alive = true; s.hp = s.maxHp; s.pistol = false;
-  s.mag = w.mag; s.reserve = w.mag * w.spare; s.reloadT = 0; s.fireCd = 0;
+  s.mag = magCap(s); s.reserve = magCap(s) * w.spare; s.reloadT = 0; s.fireCd = 0;
   s.x = CFG.arenaW / 2 + AI_SLOTS[s.slot] + rand(-24, 24); s.y = CFG.lineY + rand(-30, 50);
   s.aim = -Math.PI / 2; s.invuln = CFG.spawnInvuln; s.respawnT = 0;
   s.coverRef = null; s.dive = null; s.path = null; s.tgt = null; s.supp = 0; s.recoil = 0;
@@ -807,15 +876,17 @@ function buildSoldier(i) {
   const m = meta.squad[i];
   const maxHp = CFG.baseHp + (hasPerk(9) ? 1 : 0);
   const weapon = i === 0 ? (meta.loadout || 'ar') : m.weapon;
+  const att = i === 0 ? attFor(weapon) : normAtt(weapon, null);   // only your own rifle carries what you picked in BATTLE PREP
+  const cap = att.ext ? WEAPONS[weapon].ext : WEAPONS[weapon].mag;
   return {
     slot: i, name: m.name,
     color: m.wren ? '#d9dbe4' : slotColor(i), helm: m.wren ? '#7a7d8c' : slotDark(i),
-    weapon, horse: false,
+    weapon, horse: false, sight: att.sight, ext: att.ext,
     x: CFG.arenaW / 2 + AI_SLOTS[i] + rand(-20, 20), y: CFG.lineY + rand(-30, 50),
     hp: maxHp, maxHp, alive: true, respawnT: 0,
     fireCd: rand(0, 0.4), regenCd: 0, invuln: 0, aim: -Math.PI / 2, r: 13,
     walk: rand(0, TAU), moving: false, recoil: 0,
-    mag: WEAPONS[weapon].mag, reserve: WEAPONS[weapon].mag * WEAPONS[weapon].spare, reloadT: 0, reloadDur: 1, pistol: false,
+    mag: cap, reserve: cap * WEAPONS[weapon].spare, reloadT: 0, reloadDur: 1, pistol: false,
   };
 }
 function genTerrain() {   // the same town every front; its cover is rolled fresh each battle
@@ -1674,7 +1745,7 @@ const manualAim = () => !!meta && (meta.opts.scheme === 'manual' || meta.opts.fp
 const fpvActive = () => !!meta && meta.opts.fpv && state.mode === 'play'
   && !!soldiers[state.controlled] && soldiers[state.controlled].alive && !soldiers[state.controlled].horse;
 function addLook(dx, dy, scale) {
-  const k = meta.opts.sens * scale * (aim.ads ? 0.55 : 1) * (aim.sticky ? 0.65 : 1);
+  const k = meta.opts.sens * scale * (aim.ads ? adsSens() : 1) * (aim.sticky ? 0.65 : 1);
   aim.yaw = angWrap(aim.yaw + dx * k);
   aim.pitch = clamp(aim.pitch - dy * k * 0.8, -0.7, 0.7);
   aim.lookDx = aim.lookDx * 0.6 + dx * k * 0.4;
@@ -1895,7 +1966,7 @@ const GUN_KICK = { smg: 0.6, ar: 1.0, lmg: 1.4, sniper: 2.6, rocket: 3.2, pistol
 function fire(s, target, fromPlayer, angle) {   // angle set = fired where the player is aiming, not at a target
   const key = s.pistol ? 'pistol' : s.weapon, w = s.pistol ? SIDEARM : WEAPONS[s.weapon];
   const dx = target ? target.x - s.x : 0, dy = target ? target.y - s.y : 0;
-  const spread = w.spread * (fromPlayer && aim.ads ? 0.5 : 1) + (fromPlayer ? 0 : 0.03);
+  const spread = w.spread * (fromPlayer && aim.ads ? heroSight().spread : 1) + (fromPlayer ? 0 : 0.03);
   const a = (angle != null ? angle : Math.atan2(dy, dx)) + rand(-1, 1) * spread;
   s.aim = a; s.recoil = 0.09;
   if (fromPlayer && manualAim()) {   // the weapon climbs: your next round goes where the recoil left the muzzle
@@ -2019,7 +2090,7 @@ function killSoldier(s) {
   const hd = s.lastHit, front = hd ? Math.cos(s.aim) * hd.x + Math.sin(s.aim) * hd.y < 0 : Math.random() < 0.6;
   const ga = s.aim + rand(0.5, 1.4) * (Math.random() < 0.5 ? 1 : -1);
   bodies.push({ x: s.x, y: s.y, color: s.color, t: CFG.fallDur, face: Math.cos(s.aim) >= 0 ? 1 : -1, horse: s.horse,
-    aim: s.aim, slot: s.slot, weapon: s.pistol ? 'pistol' : s.weapon, style: front ? 0 : 1,
+    aim: s.aim, slot: s.slot, weapon: s.pistol ? 'pistol' : s.weapon, sight: s.sight, ext: s.ext, style: front ? 0 : 1,
     gunX: s.x + Math.cos(ga) * rand(16, 30), gunY: s.y + Math.sin(ga) * rand(16, 30), gunYaw: rand(0, TAU) });
   burst(s.x, s.y, s.color, 16, 12);
   feedPush(labelOf(s.lastSrc), s.name.toUpperCase(), true);
@@ -2107,7 +2178,7 @@ function updateShells(dt) {
     else if (sh.kind === 'fire') { fires.push({ x: sh.x, y: sh.y, r: 30, t: 8 * (hasPerk(8) ? 1.25 : 1) }); burst(sh.x, sh.y, '#e8843a', 8, 6); }
     else if (sh.kind === 'crate') {
       burst(sh.x, sh.y, '#b7d34a', 14, 10); sfxBuy();
-      for (const s of soldiers) if (s.alive) { const w = WEAPONS[s.weapon]; s.hp = s.maxHp; s.mag = w.mag; s.reserve = w.mag * w.spare; s.pistol = false; s.reloadT = 0; }
+      for (const s of soldiers) if (s.alive) { const w = WEAPONS[s.weapon]; s.hp = s.maxHp; s.mag = magCap(s); s.reserve = magCap(s) * w.spare; s.pistol = false; s.reloadT = 0; }
       floaters.push({ x: sh.x, y: sh.y, z: 34, txt: 'HEALED & RESUPPLIED', life: 1.4 });
     }
     shells.splice(i, 1);
@@ -2286,6 +2357,8 @@ function loadMeta() {
     const optsV = save.opts && save.opts.v;   // read the SAVED version: Object.assign fills v from the defaults
     meta.opts = Object.assign(freshOpts(), save.opts || {});
     if (!optsV) { meta.opts.v = 2; meta.opts.fpv = true; meta.opts.scheme = 'manual'; }   // first person is the default now
+    meta.attach = freshAttach();   // per-gun, so a save from before attachments (or with a gun missing) still gets every default
+    for (const k in meta.attach) Object.assign(meta.attach[k], (save.attach || {})[k] || {});
     return null;
   }
   meta = freshMeta();
@@ -2322,18 +2395,18 @@ function collideObstacles(o) {   // push out of buildings and cover
 // ---------- ammunition: magazines, reloads, the sidearm, pickups ----------
 function startReload(s) {
   const w = WEAPONS[s.weapon];
-  if (!s.alive || s.reloadT > 0 || s.dive || s.pistol || s.mag >= w.mag) return;
+  if (!s.alive || s.reloadT > 0 || s.dive || s.pistol || s.mag >= magCap(s)) return;
   if (s.reserve <= 0) {   // nothing left for the rifle: draw the pistol
     if (s.mag <= 0) { s.pistol = true; if (s.slot === state.controlled) showBanner('OUT OF AMMO — SIDEARM'); }
     return;
   }
-  s.reloadT = s.reloadDur = w.reload * (hasPerk(10) ? 0.9 : 1);
+  s.reloadT = s.reloadDur = w.reload * (hasPerk(10) ? 0.9 : 1) * (s.ext ? EXT_RELOAD : 1);
   particles.push({ x: s.x + Math.cos(s.aim + 0.6) * 8, y: s.y + Math.sin(s.aim + 0.6) * 8, z: 13, vx: rand(-15, 15), vy: rand(-15, 15),
     vz: rand(5, 30), life: 1.4, max: 1.4, col: '#2e3034', r: 2.4 });   // the empty magazine hits the dirt
   sfxReload(s);
 }
 function finishReload(s) {
-  const w = WEAPONS[s.weapon], take = Math.min(w.mag - s.mag, s.reserve);
+  const w = WEAPONS[s.weapon], take = Math.min(magCap(s) - s.mag, s.reserve);
   s.mag += take; s.reserve -= take; s.reloadT = 0;
 }
 function heroReload() {   // R / tap the ammo counter
@@ -2355,9 +2428,9 @@ function updatePickups(dt) {   // magazines dropped by the dead: walk over one t
     let taken = p.t <= 0;
     if (!taken) for (const s of soldiers) {
       if (!s.alive || dist2(s.x, s.y, p.x, p.y) > 36 * 36) continue;
-      const w = WEAPONS[s.weapon], cap = w.mag * (w.spare + 1);
+      const w = WEAPONS[s.weapon], cap = magCap(s) * (w.spare + 1);
       if (!s.pistol && s.reserve >= cap) continue;
-      s.reserve = Math.min(cap, s.reserve + w.mag);
+      s.reserve = Math.min(cap, s.reserve + magCap(s));
       if (s.pistol) { s.pistol = false; s.mag = 0; startReload(s); }
       if (s.slot === state.controlled) {
         floaters.push({ x: p.x, y: p.y, z: 30, txt: '+' + w.mag + ' ' + w.name, life: 1 });
@@ -2501,7 +2574,7 @@ function updateSoldiers(dt) {
           s.peekT = 0.5;
         }
         if (!s.pistol && s.mag <= 0) startReload(s);
-      } else if (!s.pistol && s.reloadT <= 0 && s.quietT > 1.5 && s.mag < w.mag * 0.5 && s.reserve > 0) startReload(s);
+      } else if (!s.pistol && s.reloadT <= 0 && s.quietT > 1.5 && s.mag < magCap(s) * 0.5 && s.reserve > 0) startReload(s);
     } else if (t) {
       s.aim = Math.atan2(t.y - s.y, t.x - s.x);
       s.quietT = 0;
@@ -2516,7 +2589,7 @@ function updateSoldiers(dt) {
     } else {
       if (s.moving && !s.dive) s.aim = Math.atan2(s.y - y0, s.x - x0);
       s.quietT = (s.quietT || 0) + dt;   // a lull in the shooting: top the magazine off
-      if (s.quietT > 1.5 && !s.pistol && s.reloadT <= 0 && s.mag < w.mag * 0.5 && s.reserve > 0) startReload(s);
+      if (s.quietT > 1.5 && !s.pistol && s.reloadT <= 0 && s.mag < magCap(s) * 0.5 && s.reserve > 0) startReload(s);
     }
   }
   for (let i = 0; i < soldiers.length; i++)
@@ -2767,7 +2840,7 @@ function updateFx(dt) {
     if (bodies[i].t <= 0) { // fall animation over -> permanent corpse on the field
       const b = bodies[i];
       addCorpse({ kind: 'soldier', x: b.x, y: b.y, col: b.color, face: b.face, sc: 1, horse: b.horse,
-        aim: b.aim, slot: b.slot, weapon: b.weapon, src: b,
+        aim: b.aim, slot: b.slot, weapon: b.weapon, sight: b.sight, ext: b.ext, src: b,
         style: b.style, gunX: b.gunX, gunY: b.gunY, gunYaw: b.gunYaw });
       bodies.splice(i, 1);
     }
@@ -3236,35 +3309,127 @@ const SOLDIER_ARMOR = [   // body armour upgrade: deltoid plates and a throat gu
   P(HJ.torso, 'band', 0.24, 0.07, 0.24, 0, 0.47, -0.02, 'carrier'),
 ];
 const WREN_SCARF = [P(HJ.torso, 'cloth', 0.09, 0.3, 0.05, 0.11, 0.34, -0.2, 'gaiter', 0.15)];
-const GUNS = {   // parts on the gun joint; the barrel runs along −Z
-  smg: [   // compact suppressed SMG, folding stock, red dot
-    P(HJ.gun, 'metal', 0.06, 0.1, 0.32, 0, 0.02, -0.08, 'gunm'), P(HJ.gun, 'metal', 0.035, 0.15, 0.05, 0, -0.1, -0.12, 'gunm', 0.15),
-    P(HJ.gun, 'cyl', 0.06, 0.24, 0.06, 0, 0.03, -0.36, 'gunm', Math.PI / 2), P(HJ.gun, 'metal', 0.02, 0.05, 0.2, 0, 0, 0.16, 'gunm'),
-    P(HJ.gun, 'metal', 0.04, 0.05, 0.06, 0, 0.1, -0.04, 'gunm'), P(HJ.gun, 'metal', 0.03, 0.09, 0.04, 0, -0.07, 0.03, 'tan')],
-  ar: [   // carbine: flat-top receiver, rail handguard, magnified optic, coyote furniture
-    P(HJ.gun, 'metal', 0.05, 0.09, 0.34, 0, 0.02, -0.04, 'gunm'), P(HJ.gun, 'metal', 0.055, 0.07, 0.28, 0, 0.03, -0.34, 'gunm'),
-    P(HJ.gun, 'cyl', 0.025, 0.16, 0.025, 0, 0.03, -0.56, 'gunm', Math.PI / 2), P(HJ.gun, 'metal', 0.035, 0.16, 0.07, 0, -0.1, -0.12, 'tan', 0.22),
-    P(HJ.gun, 'metal', 0.05, 0.1, 0.2, 0, -0.01, 0.22, 'tan'), P(HJ.gun, 'metal', 0.045, 0.055, 0.13, 0, 0.1, -0.06, 'gunm'),
-    P(HJ.gun, 'metal', 0.03, 0.09, 0.035, 0, -0.07, -0.32, 'gunm')],
-  lmg: [   // belt-fed LMG: bulky receiver, ammo box, heavy barrel, folded bipod, carry handle
-    P(HJ.gun, 'metal', 0.08, 0.12, 0.4, 0, 0.02, -0.06, 'gunm'), P(HJ.gun, 'metal', 0.11, 0.12, 0.13, -0.02, -0.11, -0.04, 'tan'),
-    P(HJ.gun, 'cyl', 0.04, 0.34, 0.04, 0, 0.03, -0.42, 'gunm', Math.PI / 2), P(HJ.gun, 'metal', 0.06, 0.1, 0.2, 0, 0, 0.24, 'gunm'),
-    P(HJ.gun, 'metal', 0.02, 0.02, 0.28, -0.03, -0.03, -0.42, 'gunm'), P(HJ.gun, 'metal', 0.02, 0.02, 0.28, 0.03, -0.03, -0.42, 'gunm'),
-    P(HJ.gun, 'metal', 0.02, 0.06, 0.14, 0, 0.12, -0.12, 'gunm')],
-  sniper: [   // bolt-action anti-materiel rifle: long barrel, muzzle brake, big scope, bipod
-    P(HJ.gun, 'metal', 0.055, 0.09, 0.46, 0, 0.02, -0.08, 'gunm'), P(HJ.gun, 'cyl', 0.035, 0.46, 0.035, 0, 0.03, -0.52, 'gunm', Math.PI / 2),
-    P(HJ.gun, 'metal', 0.06, 0.05, 0.09, 0, 0.03, -0.78, 'gunm'), P(HJ.gun, 'cyl', 0.07, 0.34, 0.07, 0, 0.13, -0.08, 'gunm', Math.PI / 2),
-    P(HJ.gun, 'metal', 0.06, 0.13, 0.22, 0, -0.01, 0.25, 'tan'), P(HJ.gun, 'metal', 0.035, 0.12, 0.06, 0, -0.1, -0.02, 'gunm'),
-    P(HJ.gun, 'metal', 0.02, 0.02, 0.26, -0.03, -0.04, -0.4, 'gunm'), P(HJ.gun, 'metal', 0.02, 0.02, 0.26, 0.03, -0.04, -0.4, 'gunm')],
-  pistol: [   // sidearm, drawn when the primary runs dry
-    P(HJ.gun, 'metal', 0.035, 0.08, 0.2, 0, 0.02, -0.06, 'gunm'), P(HJ.gun, 'metal', 0.03, 0.1, 0.05, 0, -0.06, 0.02, 'gunm', 0.3),
-    P(HJ.gun, 'metal', 0.02, 0.03, 0.05, 0, 0.06, -0.13, 'gunm')],
+// ---------- the guns: parts on the gun joint; the barrel runs along −Z, +Y is up, +X is the shooter's right ----------
+// B = a box, C = a cylinder lying along the barrel (r = radius), ring = n boxes around a circle in the XY plane —
+// a sight aperture, a hood, or a hollow scope tube you can actually look down.
+const B = (sx, sy, sz, x, y, z, col, rx = 0, ry = 0, rz = 0) => P(HJ.gun, 'metal', sx, sy, sz, x, y, z, col, rx, ry, rz);
+const C = (r, len, x, y, z, col) => P(HJ.gun, 'cyl', r * 2, len, r * 2, x, y, z, col, Math.PI / 2);
+function ring(r, t, d, x, y, z, col, n = 8) {
+  const rows = [], w = 2 * r * Math.tan(Math.PI / n) + t * 0.7;
+  for (let i = 0; i < n; i++) { const a = i * TAU / n; rows.push(B(w, t, d, x + Math.cos(a) * r, y + Math.sin(a) * r, z, col, 0, 0, a + Math.PI / 2)); }
+  return rows;
+}
+// Optics mount on a rail: railY = the rail's top face, z = where the optic sits along the gun. Each returns its rows.
+// The eyepiece / window ring is what the ADS camera looks through; its geometry is what adsInfo reports.
+const OPTIC = {
+  rds: { dy: 0.045, dz: 0, relief: 0.2, r: 0.0265 },     // window centre above the rail, eye relief, inner radius of the window
+  acog: { dy: 0.05, dz: 0.085, relief: 0.13, r: 0.0175 },  // eyepiece rear face sits dz ahead of the mount point
+};
+function opticRows(sight, railY, z) {
+  if (sight === 'rds') {   // a big-window reflex sight on a low mount: base, emitter, the housing ring, a top cap
+    const y = railY + OPTIC.rds.dy;
+    return [B(0.03, 0.018, 0.05, 0, railY + 0.009, z, 'gunm'), B(0.014, 0.012, 0.024, 0, railY + 0.024, z, 'poly'),
+      ...ring(0.03, 0.007, 0.03, 0, y, z, 'gunm', 10), B(0.022, 0.008, 0.03, 0, y + 0.034, z, 'gunm')];
+  }
+  if (sight === 'acog') {   // a 4x prism scope: mount with thumb screws, hollow body, objective bell, eyepiece, the fibre strip on top
+    const y = railY + OPTIC.acog.dy, ze = z + OPTIC.acog.dz;
+    return [B(0.034, 0.02, 0.07, 0, railY + 0.01, z, 'gunm'), B(0.046, 0.012, 0.012, 0, railY + 0.012, z - 0.022, 'rail'), B(0.046, 0.012, 0.012, 0, railY + 0.012, z + 0.022, 'rail'),
+      ...ring(0.018, 0.006, 0.1, 0, y, z, 'gunm', 10), ...ring(0.024, 0.006, 0.035, 0, y, z - 0.065, 'gunm', 10),
+      ...ring(0.02, 0.005, 0.04, 0, y, ze - 0.02, 'gunm', 10), B(0.006, 0.006, 0.07, 0, y + 0.021, z - 0.01, 'reddot')];
+  }
+  return [];
+}
+// Where the ADS camera sits for each gun and sight: y/z = the sight line in the gun's frame (rear aperture, window or eyepiece),
+// relief = eye distance to it in metres, r = the window's inner radius (only optics with a mask need it).
+const GUN_ADS = {
+  smg:    { rail: 0.079, iron: { y: 0.115, z: 0.06, relief: 0.18 } },
+  ar:     { rail: 0.085, iron: { y: 0.125, z: 0.08, relief: 0.18 } },
+  lmg:    { rail: 0.109, iron: { y: 0.14, z: 0.1, relief: 0.18 } },
+  sniper: { rail: 0.082, scope: { y: 0.135, z: 0.17, relief: 0.13, r: 0.021 } },
+  pistol: { iron: { y: 0.076, z: 0.03, relief: 0.42 } },
+  rocket: { iron: { y: 0.16, z: -0.2, relief: 0.3 } },
+};
+const OPTIC_Z = { smg: 0.0, ar: 0.0, lmg: -0.02, sniper: -0.02 };   // where an optic sits along each rail
+function adsInfo(key, s) {
+  const G = GUN_ADS[key] || GUN_ADS.ar, att = normAtt(key, s), o = OPTIC[att.sight];
+  if (o && G.rail != null) return { y: G.rail + o.dy, z: (OPTIC_Z[key] || 0) + o.dz, relief: o.relief, r: o.r };
+  return G[att.sight] || G.iron || G.scope;
+}
+const GUN_MUZ = {   // the barrel tip in the gun's frame: where the flash and the tracers start
+  smg: { y: 0.035, z: -0.46 }, ar: { y: 0.03, z: -0.7 }, lmg: { y: 0.035, z: -0.73 }, sniper: { y: 0.035, z: -0.96 },
+  pistol: { y: 0.02, z: -0.17 }, rocket: { y: 0.08, z: -1.0 },
+};
+const GUN_BUILD = {
+  smg: a => [   // UMP45: boxy polymer receiver, top rail, straight .45 mag ahead of the trigger, short barrel, hooded post, side-folding stock
+    B(0.056, 0.074, 0.3, 0, 0.03, -0.07, 'poly'), B(0.034, 0.012, 0.3, 0, 0.073, -0.07, 'rail'),
+    B(0.05, 0.05, 0.11, 0, -0.03, -0.1, 'poly'), B(0.034, a.ext ? 0.22 : 0.15, 0.06, 0, a.ext ? -0.165 : -0.13, -0.1, 'gunm'),
+    B(0.036, 0.095, 0.05, 0, -0.1, 0.05, 'poly', 0.3), B(0.012, 0.02, 0.07, 0, -0.065, 0.0, 'poly'), B(0.006, 0.02, 0.006, 0, -0.058, 0.0, 'rail'),
+    B(0.008, 0.026, 0.05, 0.03, 0.04, -0.09, 'gunm'), B(0.024, 0.016, 0.03, -0.035, 0.05, -0.22, 'poly'),
+    B(0.052, 0.06, 0.1, 0, 0.02, -0.27, 'poly'), B(0.012, 0.012, 0.09, 0, -0.012, -0.27, 'rail'),
+    C(0.011, 0.11, 0, 0.035, -0.375, 'gunm'), C(0.015, 0.03, 0, 0.035, -0.44, 'gunm'),
+    B(0.02, 0.02, 0.2, 0, 0.045, 0.21, 'poly'), B(0.016, 0.016, 0.18, 0, -0.03, 0.2, 'poly', -0.15), B(0.045, 0.09, 0.03, 0, 0.01, 0.32, 'poly'), B(0.04, 0.03, 0.04, 0, 0.03, 0.09, 'poly'),
+    ...(a.sight === 'iron' ? [   // hooded front post, flip-up rear aperture — the post tip and the aperture centre share the sight line (y 0.115)
+      B(0.02, 0.014, 0.02, 0, 0.083, -0.3, 'poly'), B(0.006, 0.03, 0.006, 0, 0.1, -0.3, 'gunm'), B(0.007, 0.01, 0.007, 0, 0.11, -0.3, 'sightw'),
+      ...ring(0.016, 0.005, 0.02, 0, 0.115, -0.3, 'poly', 8),
+      B(0.03, 0.012, 0.03, 0, 0.085, 0.06, 'poly'), ...ring(0.018, 0.005, 0.008, 0, 0.115, 0.06, 'poly', 8),
+    ] : opticRows(a.sight, 0.079, OPTIC_Z.smg))],
+  ar: a => [   // M4A1: flat-top upper, lower with magwell, quad-rail handguard, A2 front sight base, birdcage, collapsible stock
+    B(0.06, 0.07, 0.26, 0, 0.035, -0.02, 'gunm'), B(0.052, 0.055, 0.2, 0, -0.025, 0.0, 'gunm'), B(0.038, 0.014, 0.25, 0, 0.078, -0.02, 'rail'),
+    B(0.03, 0.014, 0.04, 0, 0.062, 0.115, 'gunm'), B(0.008, 0.028, 0.045, 0.03, 0.045, -0.02, 'rail'),
+    B(0.045, 0.07, 0.07, 0, -0.085, -0.055, 'gunm'), B(0.034, a.ext ? 0.25 : 0.165, 0.062, 0, a.ext ? -0.24 : -0.2, -0.065, 'poly', 0.16),
+    B(0.012, 0.02, 0.07, 0, -0.07, 0.03, 'gunm'), B(0.006, 0.02, 0.006, 0, -0.06, 0.02, 'rail'), B(0.036, 0.1, 0.048, 0, -0.1, 0.06, 'poly', 0.35),
+    C(0.016, 0.2, 0, 0.02, 0.2, 'gunm'), B(0.05, 0.09, 0.12, 0, -0.005, 0.29, 'poly'), B(0.05, 0.03, 0.05, 0, 0.04, 0.24, 'poly'),
+    B(0.056, 0.058, 0.2, 0, 0.03, -0.33, 'poly'),
+    B(0.014, 0.012, 0.18, 0, 0.064, -0.33, 'rail'), B(0.014, 0.012, 0.18, 0, -0.004, -0.33, 'rail'),
+    B(0.012, 0.014, 0.18, 0.033, 0.03, -0.33, 'rail'), B(0.012, 0.014, 0.18, -0.033, 0.03, -0.33, 'rail'),
+    C(0.02, 0.03, 0, 0.03, -0.215, 'gunm'), B(0.03, 0.045, 0.035, 0, 0.055, -0.46, 'gunm'),
+    C(0.011, 0.22, 0, 0.03, -0.55, 'gunm'), C(0.015, 0.05, 0, 0.03, -0.67, 'gunm'),
+    ...(a.sight === 'iron' ? [   // A2 post between its ears, flip-up rear aperture: sight line y 0.125
+      B(0.007, 0.05, 0.007, 0, 0.1, -0.46, 'gunm'), B(0.008, 0.012, 0.008, 0, 0.119, -0.46, 'sightw'),
+      B(0.008, 0.06, 0.012, 0.017, 0.098, -0.46, 'gunm', 0, 0, -0.18), B(0.008, 0.06, 0.012, -0.017, 0.098, -0.46, 'gunm', 0, 0, 0.18),
+      B(0.036, 0.012, 0.03, 0, 0.09, 0.08, 'gunm'), ...ring(0.018, 0.005, 0.008, 0, 0.125, 0.08, 'gunm', 8),
+    ] : opticRows(a.sight, 0.085, OPTIC_Z.ar))],
+  lmg: a => [   // M249 SAW: deep receiver, feed-tray cover with a rail, side-folded carry handle, soft ammo pouch, heat shield, gas tube, bipod, skeleton stock
+    B(0.07, 0.095, 0.34, 0, 0.02, -0.02, 'gunm'), B(0.074, 0.028, 0.22, 0, 0.083, -0.07, 'gunm'), B(0.038, 0.012, 0.2, 0, 0.103, -0.07, 'rail'),
+    B(0.02, 0.022, 0.12, -0.047, 0.085, -0.24, 'poly'), B(0.012, 0.03, 0.012, -0.047, 0.06, -0.19, 'poly'), B(0.012, 0.03, 0.012, -0.047, 0.06, -0.29, 'poly'),
+    B(a.ext ? 0.11 : 0.09, a.ext ? 0.14 : 0.11, a.ext ? 0.16 : 0.13, -0.015, a.ext ? -0.12 : -0.105, -0.06, 'tan'), B(0.03, 0.02, 0.06, -0.015, -0.045, -0.06, 'gunm'),
+    B(0.036, 0.1, 0.05, 0, -0.1, 0.09, 'poly', 0.35), B(0.012, 0.02, 0.07, 0, -0.07, 0.06, 'gunm'),
+    B(0.062, 0.07, 0.16, 0, 0.015, -0.3, 'poly'), C(0.012, 0.28, 0, -0.012, -0.44, 'gunm'),
+    C(0.014, 0.34, 0, 0.035, -0.52, 'gunm'), C(0.018, 0.05, 0, 0.035, -0.71, 'gunm'), B(0.03, 0.03, 0.03, 0, 0.04, -0.55, 'gunm'),
+    B(0.012, 0.012, 0.26, 0.032, -0.03, -0.5, 'gunm'), B(0.012, 0.012, 0.26, -0.032, -0.03, -0.5, 'gunm'),
+    B(0.048, 0.1, 0.18, 0, 0, 0.27, 'poly'), B(0.05, 0.12, 0.03, 0, -0.01, 0.37, 'poly'), B(0.03, 0.02, 0.1, 0, 0.06, 0.28, 'poly'),
+    ...(a.sight === 'iron' ? [   // hooded post on the gas block, peep on the cover: sight line y 0.14
+      B(0.007, 0.06, 0.007, 0, 0.085, -0.55, 'gunm'), B(0.008, 0.012, 0.008, 0, 0.134, -0.55, 'sightw'), ...ring(0.016, 0.005, 0.02, 0, 0.14, -0.55, 'gunm', 8),
+      B(0.03, 0.014, 0.03, 0, 0.116, 0.1, 'gunm'), ...ring(0.018, 0.005, 0.008, 0, 0.14, 0.1, 'gunm', 8),
+    ] : opticRows(a.sight, 0.109, OPTIC_Z.lmg))],
+  sniper: a => [   // Intervention: long chassis and rail, barrel shroud, box mag ahead of the grip, bolt, fluted barrel, big brake, folded bipod, skeleton stock
+    B(0.06, 0.085, 0.36, 0, 0.025, -0.04, 'gunm'), B(0.036, 0.014, 0.44, 0, 0.075, -0.06, 'rail'),
+    B(0.055, 0.06, 0.24, 0, 0.02, -0.34, 'poly'), B(0.012, 0.012, 0.22, 0, -0.016, -0.34, 'rail'),
+    B(0.04, a.ext ? 0.15 : 0.11, 0.07, 0, a.ext ? -0.135 : -0.115, -0.12, 'gunm'),
+    B(0.036, 0.1, 0.05, 0, -0.1, 0.07, 'poly', 0.3), B(0.012, 0.02, 0.07, 0, -0.07, 0.03, 'gunm'),
+    P(HJ.gun, 'cyl', 0.016, 0.06, 0.016, 0.05, 0.045, 0.1, 'rail', 0, 0, Math.PI / 2), P(HJ.gun, 'cyl', 0.024, 0.024, 0.024, 0.08, 0.045, 0.1, 'gunm', 0, 0, Math.PI / 2),
+    C(0.017, 0.5, 0, 0.035, -0.62, 'gunm'), B(0.046, 0.046, 0.1, 0, 0.035, -0.9, 'gunm'), B(0.06, 0.01, 0.06, 0, 0.035, -0.88, 'rail'), B(0.06, 0.01, 0.06, 0, 0.035, -0.92, 'rail'),
+    B(0.014, 0.014, 0.26, 0.036, -0.035, -0.42, 'gunm'), B(0.014, 0.014, 0.26, -0.036, -0.035, -0.42, 'gunm'), B(0.05, 0.03, 0.04, 0, -0.035, -0.3, 'gunm'),
+    B(0.03, 0.03, 0.24, 0, 0.055, 0.3, 'gunm'), B(0.024, 0.024, 0.22, 0, -0.03, 0.3, 'gunm', 0.12), B(0.04, 0.03, 0.12, 0, 0.085, 0.28, 'poly'),
+    B(0.045, 0.13, 0.03, 0, 0.01, 0.43, 'poly'), B(0.03, 0.06, 0.02, 0, -0.06, 0.4, 'gunm'),
+    ...(a.sight === 'scope' ? [   // its own 6x: mount, two rings, a hollow tube, objective bell, eyepiece, turrets — sight line y 0.135
+      B(0.03, 0.02, 0.22, 0, 0.092, -0.02, 'gunm'), ...ring(0.026, 0.008, 0.016, 0, 0.135, -0.1, 'rail', 10), ...ring(0.026, 0.008, 0.016, 0, 0.135, 0.06, 'rail', 10),
+      ...ring(0.02, 0.006, 0.3, 0, 0.135, -0.02, 'gunm', 10), ...ring(0.03, 0.006, 0.08, 0, 0.135, -0.2, 'gunm', 10), ...ring(0.024, 0.006, 0.06, 0, 0.135, 0.14, 'gunm', 10),
+      B(0.02, 0.03, 0.02, 0, 0.162, -0.02, 'gunm'), B(0.03, 0.02, 0.02, 0.035, 0.135, -0.02, 'gunm'),
+    ] : opticRows(a.sight, 0.082, OPTIC_Z.sniper))],
+};
+const GUN_STATIC = {
+  pistol: [   // sidearm, drawn when the primary runs dry: slide, frame, mag, a white post and a notch — sight line y 0.072
+    B(0.035, 0.08, 0.2, 0, 0.02, -0.06, 'gunm'), B(0.03, 0.1, 0.05, 0, -0.06, 0.02, 'gunm', 0.3), B(0.02, 0.03, 0.05, 0, 0.06, -0.13, 'gunm'),
+    B(0.007, 0.018, 0.007, 0, 0.067, -0.15, 'sightw'), B(0.007, 0.018, 0.01, 0.011, 0.067, 0.03, 'sightw'), B(0.007, 0.018, 0.01, -0.011, 0.067, 0.03, 'sightw')],
   rocket: [   // RPG on the shoulder: tube, warhead, grips, blast cone
     P(HJ.gun, 'cyl', 0.1, 0.9, 0.1, 0, 0.08, -0.12, 'tube', Math.PI / 2), P(HJ.gun, 'cyl', 0.17, 0.2, 0.17, 0, 0.08, -0.66, 'tube', Math.PI / 2),
     P(HJ.gun, 'cone', 0.17, 0.26, 0.17, 0, 0.08, -0.89, 'accent', -Math.PI / 2), P(HJ.gun, 'cone', 0.16, 0.18, 0.16, 0, 0.08, 0.38, 'gunm', -Math.PI / 2),
     P(HJ.gun, 'metal', 0.04, 0.12, 0.05, 0, -0.04, -0.05, 'gunm'), P(HJ.gun, 'metal', 0.04, 0.12, 0.05, 0, -0.04, -0.28, 'gunm'),
     P(HJ.gun, 'metal', 0.03, 0.06, 0.08, -0.07, 0.14, -0.2, 'gunm')],
 };
+const attSig = (key, att) => { const a = normAtt(key, att); return SIGHT_OPTS[key] ? ':' + a.sight + (a.ext ? 'X' : '') : ''; };
+const gunRows = (key, att) => GUN_BUILD[key] ? GUN_BUILD[key](normAtt(key, att)) : GUN_STATIC[key];
 const ENEMY_LEGS = [   // work trousers bloused into boots, gloves
   ...ARMS('coat', 'glove'),
   P(HJ.thighL, 'legp', 0.17, 0.4, 0.18, 0, -0.19, 0, 'pants'), P(HJ.thighR, 'legp', 0.17, 0.4, 0.18, 0, -0.19, 0, 'pants'),
@@ -3364,6 +3529,7 @@ function soldierPalette(slot, col, helm) {   // multicam uniform; carriers alter
     scarf: colorOf(wren ? '#b8322a' : col), skin: colorOf(SKIN_TONES[slot % 4]), glove: colorOf('#2c2a26'), lens: colorOf('#161a1e'),
     pad: colorOf('#34342e'), pack: colorOf(wren ? '#2a2c30' : '#6e6650'), webbing: colorOf('#6a6450'), leather: colorOf('#5c4430'),
     metal: colorOf('#8a8e92'), gunm: colorOf('#34363a'), tan: colorOf('#8c7a58'), wood: colorOf('#7c5432'), tube: colorOf('#58623c'),
+    poly: colorOf('#24262a'), rail: colorOf('#5c6066'), sightw: colorOf('#f6f3e4'), reddot: colorOf('#ff3a2e'), glass: colorOf('#1d2c3c'),
     accent: colorOf('#3e4630'), hide: colorOf('#5e6446'), blanket: colorOf('#2a2824'), mane: colorOf('#1c1c1a'), lamp: colorOf('#fff4c8'),
     hair: colorOf(['#3a2a1c', '#6a4a2a', '#2a2420', '#8a6a3a'][slot % 4]),
   };
@@ -3377,6 +3543,7 @@ function enemyPalette(col, boss) {   // mixed paramilitary kit, jackets tinted t
     armor: colorOf('#3c3e38'), shield: colorOf('#2a2c2e'), lens: colorOf('#121418'), pack: colorOf('#4a4a3c'),
     plume: colorOf('#c02e24'), blanket: colorOf('#2a2420'), hide: colorOf('#7a5e40'), mane: colorOf('#1a1816'), lamp: colorOf('#ffe0a0'),
     leather: colorOf('#3a2c22'), tube: colorOf('#4a5230'),
+    poly: colorOf('#222426'), rail: colorOf('#5a5c5e'), sightw: colorOf('#f6f3e4'), reddot: colorOf('#ff3a2e'), glass: colorOf('#1d2c3c'),
   };
 }
 let WHITE = null;   // THREE.Color, created once the engine loads
@@ -3658,8 +3825,8 @@ function emitGround(parts, pal, x, y, yaw, sc, set, cache) {   // a weapon lying
   emitParts(dropRig, parts, pal, set, false, cache);
   TMP.q.identity();
 }
-const soldierParts = (weapon, armor, wren) => partsFor(`S${weapon}${armor ? 'A' : ''}${wren ? 'W' : ''}`,
-  () => [...SOLDIER_BODY, ...(armor ? SOLDIER_ARMOR : []), ...(wren ? WREN_SCARF : []), ...GUNS[weapon]]);
+const soldierParts = (weapon, armor, wren, att) => partsFor(`S${weapon}${armor ? 'A' : ''}${wren ? 'W' : ''}${attSig(weapon, att)}`,
+  () => [...SOLDIER_BODY, ...(armor ? SOLDIER_ARMOR : []), ...(wren ? WREN_SCARF : []), ...gunRows(weapon, att)]);
 const enemyParts = type => partsFor('E' + type, ENEMY_ROWS[type] || ENEMY_ROWS.grunt);
 const horseParts = enemy => partsFor(enemy ? 'HE' : 'H', () => enemy ? [...HORSE_BODY, ...HORSE_BARDING] : HORSE_BODY);
 const isWrenCol = col => col === '#d9dbe4';
@@ -3683,6 +3850,7 @@ function mountRider(r, x, z, dt, amp, phase) {   // the horse faces where it run
 
 // ---------- first person: the weapon carried by the camera ----------
 const FPV = { bobP: 0, eyeY: null, kick: 0, kickV: 0, adsK: 0, lastRecoil: 0, flashT: 0, px: null, py: null, sway: 0 };
+const VM_S = 0.78;   // the viewmodel's scale in the camera's frame
 const VM_HANDS = [   // gloved hands and sleeves, in the weapon's own frame
   P(HJ.gun, 'hand', 0.115, 0.12, 0.115, 0.005, -0.075, 0.03, 'glove'),
   P(HJ.gun, 'limb', 0.1, 0.32, 0.1, 0.03, -0.22, 0.12, 'coat', 0.55),
@@ -3690,7 +3858,7 @@ const VM_HANDS = [   // gloved hands and sleeves, in the weapon's own frame
   P(HJ.gun, 'limb', 0.1, 0.34, 0.1, -0.09, -0.2, -0.34, 'coat', 0.6, 0, 0.3),
 ];
 const VM_MAG = [P(HJ.gun, 'metal', 0.05, 0.18, 0.1, -0.11, -0.26, 0.02, 'gunm')];   // the fresh magazine on its way in
-const gunParts = key => partsFor('G' + key, () => GUNS[key]);
+const gunParts = (key, att) => partsFor('G' + key + attSig(key, att), () => gunRows(key, att));
 const vmHandParts = () => partsFor('VMH', () => VM_HANDS);
 const vmMagParts = () => partsFor('VMM', () => VM_MAG);
 function drawViewmodel(s, wdt, set) {
@@ -3704,34 +3872,37 @@ function drawViewmodel(s, wdt, set) {
   const moveW = clamp(moved / Math.max(wdt, 1e-4) / 220, 0, 1);
   FPV.bobP += wdt * 9 * (0.2 + moveW);
   FPV.sway = approach(FPV.sway, clamp(-aim.lookDx * 2.2, -0.05, 0.05), 9, wdt);
-  const A = FPV.adsK, rel = 1 - A;
+  const A = FPV.adsK, rel = 1 - A, ads = adsInfo(key, s), muz = GUN_MUZ[key] || GUN_MUZ.ar;
   const wall = clearRun(s.x, s.y, s.x + Math.sin(aim.yaw) * 60, s.y - Math.cos(aim.yaw) * 60, 4) ? 0 : 1;   // muzzle against a wall: bring it in
   const rl = s.reloadT > 0 ? 1 - s.reloadT / s.reloadDur : -1, rdip = rl < 0 ? 0 : Math.sin(clamp(rl, 0, 1) * Math.PI);
   const ox = (0.13 + Math.sin(FPV.bobP) * 0.012 * moveW + FPV.sway) * rel;
-  const oy = lerp(-0.15, -0.072, A) + Math.abs(Math.cos(FPV.bobP)) * 0.01 * moveW * rel - FPV.kick * 0.028 - rdip * 0.09 - wall * 0.05;
-  const oz = lerp(-0.52, -0.42, A) + FPV.kick * 0.05 + wall * 0.16;
+  // at full ADS the gun sits so its sight line (rear aperture / eyepiece at ads.y, ads.z) is dead on the camera axis, ads.relief in front of the eye
+  const oy = lerp(-0.15, -ads.y * VM_S, A) + Math.abs(Math.cos(FPV.bobP)) * 0.01 * moveW * rel - FPV.kick * 0.028 - rdip * 0.09 - wall * 0.05 * rel;
+  const oz = lerp(-0.52, -(ads.relief + ads.z * VM_S), A) + FPV.kick * 0.05 * rel + wall * 0.16 * rel;
   TMP.e.set(FPV.kick * 0.14 + rdip * 0.5 + 0.05 * rel, (0.1 + FPV.sway * 2) * rel, (0.06 + rdip * 0.7) * rel, 'YXZ');
   TMP.q.setFromEuler(TMP.e);
-  TMP.m2.compose(TMP.v.set(ox, oy, oz), TMP.q, TMP.s.set(0.78, 0.78, 0.78));
+  TMP.m2.compose(TMP.v.set(ox, oy, oz), TMP.q, TMP.s.set(VM_S, VM_S, VM_S));
   TMP.m.multiplyMatrices(cam3.matrixWorld, TMP.m2);
   vmRig[HJ.gun].matrixWorld.copy(TMP.m);
   const rec = views.get(s);
   const pal = rec && rec.pal ? rec.pal : soldierPalette(s.slot, s.color, s.helm);
-  emitParts(vmRig, gunParts(key), pal, set);
-  emitParts(vmRig, vmHandParts(), pal, set);
-  if (rl > 0.26 && rl < 0.64) emitParts(vmRig, vmMagParts(), pal, set);
-  {   // remember where the barrel ends in the world, so tracers can start there rather than at the body
-    const mlen = (s.pistol ? SIDEARM.len : WEAPONS[s.weapon].len) * 0.032;
-    TMP.m2.compose(TMP.v.set(ox, oy + 0.02, oz - mlen * 0.78), TMP.q, TMP.s.set(1, 1, 1));
+  const glass = !s.pistol && SIGHTS[s.sight] && SIGHTS[s.sight].over && SIGHTS[s.sight].over !== 'dot';
+  if (!(glass && A > 0.85)) {   // settled behind a magnified optic, the picture is the optic's window (#sight), not the tube's insides
+    emitParts(vmRig, gunParts(key, s), pal, set);
+    emitParts(vmRig, vmHandParts(), pal, set);
+    if (rl > 0.26 && rl < 0.64) emitParts(vmRig, vmMagParts(), pal, set);
+  }
+  {   // the muzzle in the world: the model's own barrel tip, turned with the weapon — tracers and the flash start there, not at the body
+    TMP.v.set(0, muz.y * VM_S, muz.z * VM_S).applyQuaternion(TMP.q).add(TMP.v2.set(ox, oy, oz));
+    TMP.m2.compose(TMP.v, TMP.q, TMP.s.set(1, 1, 1));
     TMP.m.multiplyMatrices(cam3.matrixWorld, TMP.m2);
     FPV.muz = FPV.muz || TMP.v.clone();
     FPV.muz.setFromMatrixPosition(TMP.m);
-  }
-  if (FPV.flashT > 0) {   // muzzle flash, out at the end of the barrel
-    const len = (s.pistol ? SIDEARM.len : WEAPONS[s.weapon].len) * 0.032;
-    TMP.m2.compose(TMP.v.set(ox, oy + 0.02, oz - len * 0.78), TMP.q, TMP.s.set(0.22, 0.22, 0.22));
-    TMP.m.multiplyMatrices(cam3.matrixWorld, TMP.m2);
-    VIEW.fx.flash.push(TMP.m, colorOf('#ffe9a3'));
+    if (FPV.flashT > 0) {
+      TMP.m2.compose(TMP.v, TMP.q, TMP.s.set(0.22, 0.22, 0.22));
+      TMP.m.multiplyMatrices(cam3.matrixWorld, TMP.m2);
+      VIEW.fx.flash.push(TMP.m, colorOf('#ffe9a3'));
+    }
   }
   TMP.q.identity();
 }
@@ -3781,7 +3952,7 @@ function drawSoldier(s, wdt, set) {
   else placeRoot(J, X, Z, r.yaw, pitch, 1, 1, 1, lift);
   const blink = s.invuln > 0 && Math.floor(s.invuln * 12) % 2 === 0;
   if (!blink) {
-    emitParts(J, soldierParts(key, true, isWrenCol(s.color)), r.pal, set);
+    emitParts(J, soldierParts(key, true, isWrenCol(s.color), s), r.pal, set);
     if (s.reloadT > 0) {
       const rt = 1 - s.reloadT / s.reloadDur;
       if (rt > 0.26 && rt < 0.64) emitParts(J, magHandParts(), r.pal, set);
@@ -3873,7 +4044,7 @@ function drawBody(b, wdt, set) {   // a soldier's fall, continuing from the exac
   const pitch = poseDeath(J, t, b.style);
   smoothPose(r, J, wdt, 20);
   placeRoot(J, b.x * XS, b.y * XS, r.yaw, pitch, 1, 1, 1);
-  const parts = soldierParts(b.weapon || 'ar', true, isWrenCol(b.color)), dropped = t > 0.42;
+  const parts = soldierParts(b.weapon || 'ar', true, isWrenCol(b.color), b), dropped = t > 0.42;
   emitParts(J, dropped ? noGun(parts) : parts, r.pal, set);
   if (dropped) emitGround(gunOnly(parts), r.pal, b.gunX, b.gunY, b.gunYaw, 1, set);
 }
@@ -3883,7 +4054,7 @@ let corpseSig = '', staticDirty = true;
 function corpseLook(c) {
   if (c.kind === 'soldier') {
     const slot = c.slot || 0;
-    return { parts: soldierParts(c.weapon || 'ar', true, isWrenCol(c.col)),
+    return { parts: soldierParts(c.weapon || 'ar', true, isWrenCol(c.col), c),
       pal: soldierPalette(slot, c.col, helmFor(slot, c.col)), sc: [1, 1, 1] };
   }
   const look = ENEMY_LOOK[c.type] || ENEMY_LOOK.grunt;
@@ -4853,7 +5024,7 @@ function updateCamera3(dt) {
   cam.shake = Math.max(0, cam.shake - dt * 26);
   cam.punch = Math.max(0, cam.punch - dt * 0.35);
   cam.nudgeT = Math.max(0, cam.nudgeT - dt);
-  FPV.adsK = approach(FPV.adsK, aim.ads && manualAim() ? 1 : 0, 12, dt);   // sights zoom in both views
+  FPV.adsK = approach(FPV.adsK, aim.ads && manualAim() ? 1 : 0, heroSight().rate, dt);   // sights come up at the optic's own pace, in both views
   steerFromCursor(dt);
   {   // recoil recovery: the muzzle drifts back to where you were pointing once you stop firing
     const rate = dt * (aim.fire ? 0.35 : 1.8);
@@ -4953,13 +5124,33 @@ function updateCamera3(dt) {
   const heroFpv = fpvActive() ? soldiers[state.controlled] : null;
   if (heroFpv && heroFpv.dive) cam3.rotateZ(Math.sin(clamp(heroFpv.dive.t / heroFpv.dive.dur, 0, 1) * Math.PI) * 0.45);
   const base = (fpvActive() ? 68 : pr.fov) + (meta.opts.fovAdd || 0);
-  const fov = base * (1 - cam.punch * 1.5) * (state.mode === 'dying' ? 0.88 : 1) * lerp(1, 0.72, FPV.adsK);
+  const adsFov = 2 * Math.atan(Math.tan(base * Math.PI / 360) / heroZoom()) * 180 / Math.PI;   // a 4x shows a quarter of the view
+  const fov = lerp(base, adsFov, FPV.adsK) * (1 - cam.punch * 1.5) * (state.mode === 'dying' ? 0.88 : 1);
   if (Math.abs(cam3.fov - fov) > 0.01) { cam3.fov = fov; cam3.updateProjectionMatrix(); }
   document.body.classList.toggle('cine', state.mode === 'dying' || state.mode === 'handoff' || state.mode === 'spectate' || C.bossT > 0);
   document.body.classList.toggle('dying', state.mode === 'dying');
 }
 
 // ---------- screen overlays: floating text, joystick, threat arrows ----------
+function updateSightOverlay() {   // what you see through an optic once you are settled in behind it
+  const so = OV.sight || (OV.sight = $('sight'));
+  if (!so) return;
+  const hero = soldiers[state.controlled], sg = heroSight();
+  const on = fpvActive() && hero && hero.alive && !hero.pistol && sg.over && FPV.adsK > 0.7 && state.mode === 'play';
+  if (!on) { if (so.style.display !== 'none') so.style.display = 'none'; return; }
+  const ads = adsInfo(hero.weapon, hero);
+  let r = innerHeight * 0.46;
+  if (ads.r) {   // the window's radius on screen: the eyepiece ring's inner radius, seen from its eye relief through the current FOV
+    const px = (ads.r * VM_S / ads.relief) / Math.tan(VIEW.camera.fov * Math.PI / 360) * innerHeight / 2;
+    r = Math.min(px * 0.95, r);
+  }
+  so.style.display = 'block';
+  so.style.opacity = smooth(0.7, sg.over === 'dot' ? 0.97 : 0.85, FPV.adsK).toFixed(2);   // a scope's blackout is solid by the time the tube would show
+  if (so.className !== sg.over) so.className = sg.over;
+  so.style.setProperty('--cx', (innerWidth / 2).toFixed(0) + 'px');
+  so.style.setProperty('--cy', (innerHeight / 2).toFixed(0) + 'px');
+  so.style.setProperty('--r', r.toFixed(0) + 'px');
+}
 const OV = { floaters: [], threats: [], fpsOn: false, fpsT: 0, frames: 0, reticle: null, rtOn: false, rtX: 0, rtY: 0, gap: 0, dmg: [], mapT: 0, hurt: 0 };
 const SCR = { x: 0, y: 0 };
 function buildOverlays() {
@@ -5033,7 +5224,9 @@ function updateOverlays(dt) {
     rt.classList.toggle('hit', HITFX.hit > 0 || HITFX.kill > 0);
     rt.classList.toggle('kill', HITFX.kill > 0);
     rt.classList.toggle('head', HITFX.head > 0);
+    rt.classList.toggle('ads', fpvActive() && FPV.adsK > 0.6);   // down the sights the real sights do the aiming
   }
+  updateSightOverlay();
   const jb = document.getElementById('joy');
   if (joy.active) {
     jb.style.display = 'block';
@@ -5281,9 +5474,9 @@ function updateBattleHud() {
     $('ammag').textContent = c.pistol ? '∞' : c.mag;
     $('amres').textContent = c.pistol ? 'SIDEARM' : '/ ' + c.reserve;
     $('amname').textContent = c.reloadT > 0 ? 'RELOADING' : (c.pistol ? SIDEARM : WEAPONS[c.weapon]).name;
-    am.classList.toggle('low', !c.pistol && c.mag <= WEAPONS[c.weapon].mag * 0.25);
+    am.classList.toggle('low', !c.pistol && c.mag <= magCap(c) * 0.25);
     am.classList.toggle('reloading', c.reloadT > 0);
-    $('reloadbtn').classList.toggle('warn', !c.pistol && c.mag <= WEAPONS[c.weapon].mag * 0.25);
+    $('reloadbtn').classList.toggle('warn', !c.pistol && c.mag <= magCap(c) * 0.25);
     if (c.reloadT > 0) $('ambar').firstChild.style.width = (1 - c.reloadT / c.reloadDur) * 100 + '%';
     const f = c.alive ? clamp(1 - c.hp / c.maxHp, 0, 1) : 1;
     OV.hurt = Math.max(f, (OV.hurt || 0) - 0.05);          // a hit flashes harder, then falls back to how hurt you are
@@ -5490,17 +5683,33 @@ function renderMap() {
 function renderTeam() {
   const box = $('loadout');
   box.innerHTML = '';
+  if (!meta.attach) meta.attach = freshAttach();
   for (const k of WKEYS) {
-    const w = WEAPONS[k], on = (meta.loadout || 'ar') === k;
-    const card = document.createElement('button');
+    const w = WEAPONS[k], on = (meta.loadout || 'ar') === k, att = attFor(k), opts = SIGHT_OPTS[k] || [];
+    const card = document.createElement('div');   // a div, not a button: the attachment buttons live inside it
     card.className = 'wpick' + (on ? ' on' : '');
+    card.tabIndex = 0;
+    const sightBtns = opts.map(sk => `<button class="att${att.sight === sk ? ' on' : ''}" data-sight="${sk}">${SIGHTS[sk].name}</button>`).join('');
+    const magBtns = w.ext ? `<button class="att${att.ext ? '' : ' on'}" data-ext="0">STANDARD ${w.mag}</button>` +
+                            `<button class="att${att.ext ? ' on' : ''}" data-ext="1">EXTENDED ${w.ext}</button>` : '';
+    const note = opts.length ? SIGHTS[att.sight].note + (att.ext ? ` Extended magazine: ${w.ext} rounds, reload ${Math.round((EXT_RELOAD - 1) * 100)}% slower.` : '') : '';
     card.innerHTML = `
       <div class="wtop"><span>${w.name}</span><b>${squadDmg(k).toFixed(1)} DMG</b></div>
-      <div class="wstats">ROF ${(1 / w.cd).toFixed(1)}/s · MAG ${w.mag} · SPARE ${w.spare}${w.pierce ? ' · PIERCE ' + w.pierce : ''}${w.aoe ? ' · BLAST ' + w.aoe : ''}</div>
+      <div class="wstats">ROF ${(1 / w.cd).toFixed(1)}/s · MAG ${att.ext ? w.ext : w.mag} · SPARE ${w.spare}${w.pierce ? ' · PIERCE ' + w.pierce : ''}${w.aoe ? ' · BLAST ' + w.aoe : ''}</div>
       <div class="wstats">${(() => { const f = FALLOFF[k], reach = ((w.reach || w.range) / 40).toFixed(0);
         return f ? `REACH ${reach} m · full damage to ${(f.near / 40).toFixed(0)} m, ${Math.round(f.min * 100)}% at ${reach} m`
-                 : `REACH ${reach} m · no drop-off`; })()}</div>`;
+                 : `REACH ${reach} m · no drop-off`; })()}</div>
+      ${opts.length ? `<div class="attrow"><span>SIGHT</span>${sightBtns}</div>` : ''}
+      ${magBtns ? `<div class="attrow"><span>MAG</span>${magBtns}</div>` : ''}
+      ${note ? `<div class="wnote">${note}</div>` : ''}`;
     card.onclick = () => { meta.loadout = k; saveMeta(); renderTeam(); };
+    card.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.onclick(); } };
+    card.querySelectorAll('.att').forEach(b => b.onclick = e => {   // an attachment pick also picks the gun
+      e.stopPropagation();
+      const a = meta.attach[k] || (meta.attach[k] = { sight: opts[0], ext: false });
+      if (b.dataset.sight) a.sight = b.dataset.sight; else a.ext = b.dataset.ext === '1';
+      meta.loadout = k; saveMeta(); renderTeam();
+    });
     box.appendChild(card);
   }
 }
@@ -5605,7 +5814,7 @@ window.G = { state, meta, cam, CFG, WEAPONS, TERRITORIES,
   spawnMany(type, n) { for (let i = 0; i < n; i++) spawnEnemy(type); },
   lock, lockPress, lockRelease, spawnBoss, visMul, rollSky, SFX, playBuf, heroReload, startReload, destroyCover, navPath, TOWN,
   get pickups() { return pickups; },
-  aim, applyOpts, showSettings, fpvActive, crosshairTarget,
+  aim, applyOpts, showSettings, fpvActive, crosshairTarget, FPV, adsInfo, heroSight, attFor,
   get buildings() { return buildings; }, get rubble() { return rubble; },
   step(sec) { for (let t = 0; t < sec; t += 1 / 60) tick(1 / 60); } }; // debug fast-forward
 requestAnimationFrame(frame);
