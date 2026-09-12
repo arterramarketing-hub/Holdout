@@ -49,7 +49,20 @@
   there is no currency, no armory, no investments, no commendations, and nothing progresses while you are
   away — the map is a level select and the only thing it tracks is which territories you hold.
 
-  PROGRESS — controlled kill +0.7% front, AI squadmate kill +0.2%. Front cleared at 100%.
+  FOUR A SIDE — you and three squadmates against four enemies on the field at once. The enemy has its own
+  ticket pool (CFG.enemyTickets 22 + 4 per tier): every enemy death spends one, a new enemy walks on 2-4 s
+  after one falls while tickets remain, and the front is won when the pool is spent (the progress bar is
+  exactly that). The Warlord still arrives at 90%, and killing it breaks what is left of them.
+
+  SPAWN ZONES — no front line. Twelve dedicated zones sit in the open ground of the streets and alleys
+  (SPAWN_ZONES). An enemy walks on at the zone furthest from your squad and out of its sight, never within
+  ~16 m of it and never the zone used a moment ago; your reinforcements come back far from the enemy and
+  near a teammate, and the FOB is yours alone. Only the opening is a standoff: you start at the FOB.
+
+  SQUAD ROLES — your three do not trail you. Each fights its own nearest enemy in a fixed role: POINT closes
+  to 60% of its range, FLANK swings wide to one side, OVERWATCH holds at the edge of its range. Spots are
+  pushed apart so nobody stands within ~8 m of a teammate or of you. With nothing on the field they sweep
+  toward the last gunfire.
 
   WEAPONS — UMP45 (SMG) / M4A1 (AR) / M249 SAW (LMG) / Intervention (sniper) / Rocket, stats in the
   WEAPONS table and fixed: there are no weapon levels and no weapon XP, so a rifle is the same rifle on
@@ -684,11 +697,11 @@ const CFG = {
   deathCam: 1.9,          // seconds watching your soldier fall before control moves on
   fallDur: 1.6, enemyFallDur: 1.1,   // how long a body takes to hit the ground
   todSpeed: 1 / 150,      // time-of-day steps (dawn→day→dusk→night) per second of battle
-  playerKillPct: 0.7, aiKillPct: 0.2,
   tickets: 20, respawn: 3.0,          // reinforcements the squad shares, and how long you wait to come back
-  rosterSize: 8, baseHp: 4, regenDelay: 4.0, regenRate: 2.0,   // out of fire for 4s, then back to full in ~2s
+  rosterSize: 4, baseHp: 4, regenDelay: 4.0, regenRate: 2.0,   // out of fire for 4s, then back to full in ~2s
   playerSpeed: 225, aiSpeed: 195, horseSpeedMul: 1.45,
-  spawnInvuln: 1.0, waveInterval: 18,
+  spawnInvuln: 1.0,
+  enemyCap: 4, enemyTickets: 22, enemyTicketsPerTier: 4,   // four on the field at once; the enemy's reinforcement pool
   arenaW: 3200, arenaH: 2400, lineY: 2080,
   saveKey: 'holdout.v2', saveEvery: 5,
   aiCdMul: 2.6,
@@ -851,7 +864,7 @@ function respawnSoldier(s) {   // a fresh body off the reinforcement line: same 
   const w = WEAPONS[s.weapon];
   s.alive = true; s.hp = s.maxHp; s.pistol = false;
   s.mag = magCap(s); s.reserve = magCap(s) * w.spare; s.reloadT = 0; s.fireCd = 0;
-  s.x = CFG.arenaW / 2 + AI_SLOTS[s.slot] + rand(-24, 24); s.y = CFG.lineY + rand(-30, 50);
+  const p = pickSpawn('p'); s.x = p.x; s.y = p.y;
   s.aim = -Math.PI / 2; s.invuln = CFG.spawnInvuln; s.respawnT = 0;
   s.coverRef = null; s.dive = null; s.path = null; s.tgt = null; s.supp = 0; s.recoil = 0;
 }
@@ -860,6 +873,7 @@ function respawnSoldier(s) {   // a fresh body off the reinforcement line: same 
 const state = {   // per-battle / session
   mode: 'play', tid: 1, tier: 1,
   kills: 0, tickets: 0, ks: 0, earned: { napalm: 0, artillery: 0, supply: 0 },
+  enemyTotal: 26, enemyDown: 0, shots: 0, hits: 0, heads: 0, longest: 0, lastContact: null,
   progress: 0, controlled: 0, pending: -1, handoffT: 0, spectateT: 0, dyingT: 0,
   wave: 1, waveT: 0, spawnT: 0, mortarT: 8,
   frontTime: 0, frontDeaths: 0, saveT: 0,
@@ -873,7 +887,7 @@ let screen = 'map'; // map | team | battle
 let soldiers = [], enemies = [], bullets = [], particles = [], floaters = [], markers = [], bodies = [];
 let mines = [], shells = [], fires = [], craters = [], obstacles = [], corpses = [], pickups = [];
 const CORPSE_CAP = 120; // enemy corpses beyond this fade oldest-first; squad corpses never removed
-const AI_SLOTS = [-330, -235, -150, -75, 75, 150, 235, 330];
+const AI_SLOTS = [0, -170, 170, -330];   // where each of the four starts at the FOB
 
 function buildSoldier(i) {
   const m = meta.squad[i];
@@ -1863,10 +1877,44 @@ const ETYPES = {
   gunner:  { r: 13, hp: 2, sp: 60,  dmg: 1, col: '#c2a23a', ranged: 380 },   // stops and shoots back
   spotter: { r: 12, hp: 3, sp: 85,  dmg: 0, col: '#d8d2b8', spotter: true }, // calls mortars until killed
 };
-function spawnPoint() {   // most come in over the north edge; some down the cross streets from either flank
-  if (Math.random() < 0.7) return { x: rand(100, CFG.arenaW - 100), y: rand(-140, -40) };
-  return { x: Math.random() < 0.5 ? 30 : CFG.arenaW - 30, y: pickL(TOWN.entries) + rand(-30, 30) };
+// Dedicated spawn zones, in the open ground of the town's streets and alleys. There is no front: whenever
+// someone comes onto the field — an enemy walking on, or one of yours coming back as a reinforcement — the
+// zone is chosen for that moment. Enemies take one far from your squad and out of its sight; your own
+// come back somewhere far from the enemy, near a teammate if possible. The FOB is yours alone.
+const SPAWN_ZONES = [   // [name, x0, x1, y0, y1]
+  ['north gate', 1480, 1720, 20, 120],   ['nw alley', 500, 610, 120, 420],     ['ne alley', 2590, 2700, 120, 420],
+  ['west road', 40, 200, 530, 630],      ['east road', 3000, 3160, 530, 630],
+  ['west cross', 40, 200, 1180, 1320],   ['east cross', 3000, 3160, 1180, 1320],
+  ['sw lane', 40, 200, 1800, 1940],      ['se lane', 3000, 3160, 1800, 1940],
+  ['south-west', 460, 660, 2060, 2340],  ['south-east', 2540, 2740, 2060, 2340],
+  ['fob', 1300, 1900, 2080, 2330],
+].map(([name, x0, x1, y0, y1]) => ({ name, x0, x1, y0, y1, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, used: -99 }));
+function pickSpawn(side) {   // 'e' for the enemy, 'p' for your squad
+  const foes = side === 'e' ? soldiers.filter(s => s.alive) : enemies;
+  const mates = side === 'e' ? enemies : soldiers.filter(s => s.alive);
+  let best = null, bestScore = -1e9;
+  for (const z of SPAWN_ZONES) {
+    if (side === 'e' && z.name === 'fob') continue;
+    let near = 1e9, seen = false;
+    for (const f of foes) {
+      const d = Math.hypot(f.x - z.cx, f.y - z.cy);
+      if (d < near) near = d;
+      if (!seen && d < 1500 && losClear(f.x, f.y, z.cx, z.cy)) seen = true;
+    }
+    let score = Math.min(near, 1800) - (seen ? 900 : 0) + rand(0, 240);
+    if (near < 650) score -= 2000;                                        // never on top of the other side
+    if (state.frontTime - z.used < 6) score -= 700;                       // spread arrivals across zones
+    if (side === 'p') {
+      if (z.name === 'fob') score += 150;
+      if (mates.some(m => Math.hypot(m.x - z.cx, m.y - z.cy) < 900)) score += 300;
+    }
+    if (score > bestScore) { bestScore = score; best = z; }
+  }
+  best.used = state.frontTime;
+  const p = openSpot(best.x0, best.x1, best.y0, best.y1);
+  return { x: p.x, y: p.y };
 }
+function spawnPoint() { return pickSpawn('e'); }
 function spawnEnemy(type) {
   const t = ETYPES[type], mult = 1 + 0.2 * (state.tier - 1);
   enemies.push({ type, r: t.r, col: t.col, dmg: t.dmg, horse: !!t.horse,
@@ -1887,7 +1935,7 @@ function spawnBoss() {
   const e = { type: 'boss', boss: true, name, r: 34, col: '#6e2438', dmg: 3, horse: false,
     ranged: 0, spotter: false, spotCd: 0, fireT: 0, phase: 1, summonT: 5, radT: 4,
     hp: Math.round(60 * mult), maxHp: Math.round(60 * mult), sp: 40,
-    x: CFG.arenaW / 2 + rand(-200, 200), y: -60,
+    ...pickSpawn('e'),
     cd: 0, flash: 0, wob: 0, walk: 0, atk: 0, face: 1 };
   enemies.push(e);
   state.bossRef = e;
@@ -1898,26 +1946,21 @@ function spawnBoss() {
 function pickType() {
   const r = Math.random();
   if ((state.tier >= 2 || state.wave >= 4) && r < 0.07 &&
-      enemies.reduce((n, e) => n + (e.spotter ? 1 : 0), 0) < 2) return 'spotter';
+      enemies.reduce((n, e) => n + (e.spotter ? 1 : 0), 0) < 1) return 'spotter';   // one at a time in a four-man team
   if ((state.tier >= 2 || state.wave >= 2) && r < 0.22) return 'gunner';
   if ((state.tier >= 2 || state.wave >= 5) && r < 0.32) return 'rider';
   if (state.wave >= 3 && r > 0.90) return 'brute';
   if (state.wave >= 2 && r < 0.55) return 'runner';
   return 'grunt';
 }
-function updateWaves(dt) {
-  state.waveT += dt;
-  if (state.waveT >= CFG.waveInterval) {
-    state.waveT = 0; state.wave++;
-    const burst = Math.min(16, 3 + state.wave * 2 + state.tier);
-    for (let i = 0; i < burst; i++) spawnEnemy(pickType());
-  }
-  state.spawnT -= dt;
-  const target = Math.min(34, 5 + state.wave + state.tier * 2);
-  if (state.spawnT <= 0 && enemies.length < target) {
-    spawnEnemy(pickType());
-    state.spawnT = Math.max(0.35, 1.6 - state.wave * 0.1);
-  }
+function updateWaves(dt) {   // four a side: whenever the enemy is short-handed and has tickets left, someone walks on
+  state.wave = 1 + Math.floor(state.progress / 12);   // the enemy's mix toughens as its tickets run down
+  const onField = enemies.reduce((n, e) => n + (e.boss ? 0 : 1), 0);
+  const unspent = state.enemyTotal - state.enemyDown - onField;
+  if (enemies.length < CFG.enemyCap && unspent > 0) {
+    state.spawnT -= dt;
+    if (state.spawnT <= 0) { spawnEnemy(pickType()); state.spawnT = rand(2.2, 3.6); }
+  } else state.spawnT = Math.max(state.spawnT, 1.2);
 }
 
 // ============================================================ COMBAT CORE
@@ -1982,6 +2025,7 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   }
   if (!s.pistol) s.mag--;
   s.shotN = (s.shotN || 0) + 1;
+  if (fromPlayer) state.shots++;
   const mz = (s.pistol ? SIDEARM.len : w.len) + 6;   // the barrel tip: where the round actually leaves the weapon
   bullets.push({ x: s.x + Math.cos(a) * mz, y: s.y + Math.sin(a) * mz,
     vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed,
@@ -2019,9 +2063,12 @@ function killEnemy(idx, credit) {
     gunX: e.x + Math.cos(ga) * rand(14, 28), gunY: e.y + Math.sin(ga) * rand(14, 28), gunYaw: rand(0, TAU) });
   sfxKill(e.x, e.y);
   if (!e.boss && Math.random() < 0.35) pickups.push({ x: e.x + rand(-10, 10), y: e.y + rand(-10, 10), t: 30 });
-  const pct = credit.player ? CFG.playerKillPct : CFG.aiKillPct;
+  if (e.boss) state.enemyDown = state.enemyTotal;   // the Warlord falls and the rest of them break
+  else state.enemyDown = Math.min(state.enemyTotal, state.enemyDown + 1);
   const cap = (state.bossSpawned && state.bossRef && !e.boss) ? 99 : 100;  // boss gates the last 1%
-  state.progress = Math.min(cap, state.progress + pct);
+  state.progress = Math.min(cap, state.enemyDown / state.enemyTotal * 100);
+  const pct = +(100 / state.enemyTotal).toFixed(1);
+  if (credit.player) { const me = soldiers[state.controlled]; if (me) state.longest = Math.max(state.longest, Math.hypot(e.x - me.x, e.y - me.y)); }
   if (credit.slot != null && meta.squad[credit.slot]) {
     meta.squad[credit.slot].kills = (meta.squad[credit.slot].kills || 0) + 1;
     feedPush(meta.squad[credit.slot].name.toUpperCase(), labelOf(e.type), false, !!credit.head);
@@ -2264,7 +2311,10 @@ function enterBattle(tid) {
   state.tier = effTier(t);
   state.progress = meta.terr[tid].progress;
   state.mode = 'play'; state.pending = -1;
-  state.wave = 1; state.waveT = 0; state.spawnT = 0; state.mortarT = rand(6, 10);
+  state.wave = 1; state.waveT = 0; state.spawnT = 1.5; state.mortarT = rand(6, 10);
+  state.enemyTotal = CFG.enemyTickets + CFG.enemyTicketsPerTier * state.tier;
+  state.enemyDown = Math.min(state.enemyTotal - 1, Math.round(state.progress / 100 * state.enemyTotal));   // a front you left half-won resumes there
+  state.shots = 0; state.hits = 0; state.heads = 0; state.longest = 0; state.lastContact = null;
   state.frontTime = 0; state.frontDeaths = 0;
   state.bossSpawned = false; state.bossRef = null; state.spotterSeen = false;
   state.slow = 0; state.slowCd = 0;
@@ -2276,6 +2326,8 @@ function enterBattle(tid) {
   const first = soldiers.findIndex(s => s.alive);
   state.controlled = first < 0 ? 0 : first;
   if (first >= 0) soldiers[state.controlled].invuln = CFG.spawnInvuln;
+  const opening = Math.min(CFG.enemyCap, state.enemyTotal - state.enemyDown);   // their first four, somewhere far from the FOB
+  for (let i = 0; i < opening; i++) spawnEnemy(pickType());
   lockRelease();
   aim.yaw = 0; aim.pitch = 0; aim.fire = false; aim.ads = false; aim.lookDx = 0; aim.settle = 0; aim.settleY = 0;   // every front opens facing the line, not wherever you last looked
   applyOpts.wasManual = manualAim();
@@ -2300,7 +2352,8 @@ function frontCleared() {
   meta.terr[state.tid] = { owner: 'p', progress: 0 };
   let wrenJoins = false;
   if (state.tid === 7 && meta.theater === 0 && meta.story.wren === 'none') {
-    const slot = meta.squad.findIndex(s => !s.wren);
+    let slot = -1;
+    for (let i = meta.squad.length - 1; i > 0; i--) if (!meta.squad[i].wren) { slot = i; break; }   // never your own slot
     if (slot > 0) { makeWren(meta.squad[slot]); wrenJoins = true; }
   }
   const allOwned = TERRITORIES.every(tt => terrOwned(tt));
@@ -2355,10 +2408,15 @@ function loadMeta() {
   let save = null;
   try { save = JSON.parse(localStorage.getItem(CFG.saveKey)); } catch (e) {}
   if (location.search.includes('reset')) { try { localStorage.removeItem(CFG.saveKey); } catch (e) {} save = null; }
-  if (save && save.v === 2 && Array.isArray(save.squad) && save.squad.length === CFG.rosterSize) {
+  if (save && save.v === 2 && Array.isArray(save.squad) && save.squad.length >= CFG.rosterSize) {
     loadedFromSave = true;
     meta = Object.assign(freshMeta(), save);
     meta.story = Object.assign({ wren: 'none', wrenPending: false, seen: {}, seenTheater: -1 }, save.story || {});
+    if (meta.squad.length > CFG.rosterSize) {   // four to a side now: keep the first four, and Wren if she had joined
+      const wi = meta.squad.findIndex(m => m.wren), keep = meta.squad.slice(0, CFG.rosterSize);
+      if (wi >= CFG.rosterSize) keep[CFG.rosterSize - 1] = meta.squad[wi];
+      meta.squad = keep;
+    }
     const optsV = save.opts && save.opts.v;   // read the SAVED version: Object.assign fills v from the defaults
     meta.opts = Object.assign(freshOpts(), save.opts || {});
     if (!optsV) { meta.opts.v = 2; meta.opts.fpv = true; meta.opts.scheme = 'manual'; }   // first person is the default now
@@ -2498,28 +2556,63 @@ function heroControl(s, spd, dt) {   // you move yourself: nothing latches, noth
 }
 
 // ---------- the squad pushes into the fight, cover to cover ----------
-const SQUAD_SPREAD = [-300, -210, -130, -60, 60, 130, 210, 300];
+// Each of your three plays a role and fights its own nearest enemy. POINT closes to fighting range,
+// FLANK swings wide and comes in from the side, OVERWATCH hangs back at the edge of its range with a line
+// on the fight. Nobody positions off you, and nobody takes a spot within ~8 m of a teammate or of you.
+const SQUAD_ROLE = [null, 'point', 'flank', 'overwatch'];
 function squadAI(s, spd, dt, lead, front, wrange) {
   s.tacT = (s.tacT || 0) - dt; s.planT = (s.planT || 0) - dt;
   if ((s.pistol || s.reserve < WEAPONS[s.weapon].mag) && pickups.length && s.planT <= 0) {   // low on ammo: grab a dropped magazine nearby
     let best = null, bd = 340 * 340;
     for (const p of pickups) { const d = dist2(s.x, s.y, p.x, p.y); if (d < bd) { bd = d; best = p; } }
-    if (best) { s.planT = 2; s.tacT = 2; s.coverRef = null; goTo(s, best.x, best.y); }
+    if (best) { s.planT = 2; s.tacT = 2; s.coverRef = null; s.goalX = best.x; s.goalY = best.y; goTo(s, best.x, best.y); }
   }
-  const L = lead && lead.alive ? lead : s;
-  let fx = 0, fy = -1;
-  if (front) { const dx = front.x - L.x, dy = front.y - L.y, d = Math.hypot(dx, dy) || 1; fx = dx / d; fy = dy / d; }
-  const push = front ? clamp(Math.hypot(front.x - L.x, front.y - L.y) - wrange * 0.6, 80, 380) : 200;
-  const side = SQUAD_SPREAD[s.slot % 8];
-  const ax = clamp(L.x + fx * push - fy * side, 40, CFG.arenaW - 40), ay = clamp(L.y + fy * push + fx * side, 40, CFG.arenaH - 40);
   if (s.coverRef && !obstacles.includes(s.coverRef)) { s.coverRef = null; s.tacT = 0; }
-  const drift = s.gx == null || dist2(s.gx, s.gy, ax, ay) > 240 * 240;
-  if (s.planT <= 0 && (s.tacT <= 0 || drift)) {
-    s.tacT = rand(2.5, 4); s.planT = 0.8;
-    const threat = front || { x: ax + fx * 400, y: ay + fy * 400 };
-    const ob = pickCover(s, threat, ax, ay, 460, wrange * 0.7);
-    if (ob && dist2(SPOT.x, SPOT.y, ax, ay) < 280 * 280) { s.coverRef = ob; goTo(s, SPOT.x, SPOT.y); }
-    else { s.coverRef = null; goTo(s, ax, ay); }
+  const role = SQUAD_ROLE[s.slot] || 'point';
+  const foe = nearestEnemy(s.x, s.y, 1e6);
+  const moved = foe && s.foeX != null && dist2(foe.x, foe.y, s.foeX, s.foeY) > 320 * 320;
+  if (s.planT <= 0 && (s.tacT <= 0 || s.goalX == null || moved)) {
+    s.tacT = rand(2.6, 4.2); s.planT = 0.8;
+    let gx, gy, threat;
+    if (foe) {
+      const dx = foe.x - s.x, dy = foe.y - s.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+      // a triangle around the enemy: point straight in, flank out to the left, overwatch back and to the right
+      if (role === 'flank') {
+        const want = wrange * 0.72;
+        gx = foe.x - ux * want * 0.35 + uy * want; gy = foe.y - uy * want * 0.35 - ux * want;
+      } else if (role === 'overwatch') {
+        const want = wrange * 0.95;
+        gx = foe.x - ux * want * 0.85 - uy * want * 0.55; gy = foe.y - uy * want * 0.85 + ux * want * 0.55;
+      } else {
+        const want = wrange * 0.6;
+        gx = foe.x - ux * want; gy = foe.y - uy * want;
+      }
+      threat = foe; s.foeX = foe.x; s.foeY = foe.y;
+    } else {   // nobody on the field: sweep toward where they were last heard, or the middle of town
+      const at = state.lastContact || { x: CFG.arenaW / 2, y: 1250 };
+      const ang = s.slot * 2.1 + state.frontTime * 0.05, off = role === 'overwatch' ? 0 : role === 'flank' ? 520 : 260;
+      gx = at.x + Math.cos(ang) * off; gy = at.y + Math.sin(ang) * off;
+      threat = at; s.foeX = null;
+    }
+    for (let k = 0; k < 3; k++) {   // spread out: shove the spot away from teammates' spots, and from you
+      let bumped = false;
+      for (const o of soldiers) {
+        if (o === s || !o.alive) continue;
+        const useGoal = o.slot !== state.controlled && o.goalX != null;
+        const ox = useGoal ? o.goalX : o.x, oy = useGoal ? o.goalY : o.y;
+        const ddx = gx - ox, ddy = gy - oy, dd = Math.hypot(ddx, ddy);
+        if (dd < 320) {
+          const push = 360 - dd, nx = dd > 1 ? ddx / dd : Math.cos(s.slot * 2.4), ny = dd > 1 ? ddy / dd : Math.sin(s.slot * 2.4);
+          gx += nx * push; gy += ny * push; bumped = true;
+        }
+      }
+      if (!bumped) break;
+    }
+    gx = clamp(gx, 40, CFG.arenaW - 40); gy = clamp(gy, 40, CFG.arenaH - 40);
+    s.goalX = gx; s.goalY = gy;
+    const ob = pickCover(s, threat, gx, gy, 420, wrange * (role === 'overwatch' ? 0.9 : 0.62));
+    if (ob && dist2(SPOT.x, SPOT.y, gx, gy) < 260 * 260) { s.coverRef = ob; goTo(s, SPOT.x, SPOT.y); }
+    else { s.coverRef = null; goTo(s, gx, gy); }
   }
   const far = s.gx != null && dist2(s.x, s.y, s.gx, s.gy) > 300 * 300;
   followPath(s, spd * (far ? 1.15 : 1), dt);
@@ -2613,6 +2706,7 @@ function enemyFire(e, t, spread) {
   particles.push({ x: e.x + Math.cos(a) * 18, y: e.y + Math.sin(a) * 18, z: 14, vx: 0, vy: 0, vz: 0,
     life: 0.04, max: 0.04, col: '#ffb36b', r: 3 });
   sfxEnemyShot(e.x, e.y, e.type === 'gunner' ? 1.1 : 0.85);
+  state.lastContact = { x: e.x, y: e.y };   // gunfire gives a position away
 }
 function bossLogic(e, t, dt, d, dx, dy) {
   const frac = e.hp / e.maxHp;
@@ -2808,6 +2902,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
           if (b.aoe) { explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }); dead = true; break; }
           const bl = Math.hypot(b.vx, b.vy) || 1;
           const head = headShot(e, b);
+          if (b.fromPlayer) { state.hits++; if (head) state.heads++; }
           const cdmg = (inCover(e) ? b.dmg * 0.65 : b.dmg) * (head ? CFG.headshotMul : 1)
             * falloffMul(b.wkey, b.age * bl);   // how far this round had flown by the time it arrived
           particles.push({ x: e.x, y: e.y, z: head ? 22 : 14, vx: rand(-40, 40), vy: rand(-40, 40), vz: rand(30, 90), life: 0.08, max: 0.08, col: '#fff0b0', r: 1.4 });
