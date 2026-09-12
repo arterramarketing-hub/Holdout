@@ -224,10 +224,12 @@
   is thinned 45%. 'M' mutes everything via the master bus.
 
   BULLETS — squad rounds fly 4200–8400 px/s (105–210 m/s; rockets 900, enemy rifles 1500, Warlord burst
-  650) and move in ≤10 px sub-steps so they can't tunnel through bodies. A round is not a bar of light:
-  most are only a faint short whip of disturbed air; every third squad round, every other enemy round,
-  every .50 and every rocket is a TRACER — a hot head with a short tail (0.7–1.15 m) that thins and dims
-  behind it, amber for the squad, red for the enemy. Your own rounds start at the barrel you can see.
+  650) and move in ≤10 px sub-steps so they can't tunnel through bodies. Every round is visible: a short
+  streak (rifles 1.3–3 m, tied to how far it travels in about a frame and a half, so it reads as a bullet
+  moving rather than a laser) with a burning head, amber for the squad, red for the enemy. It is sized in
+  lines of the render (core 1.6, glow 5, head 3.4-5), not metres, so a round 40 m away still shows
+  instead of being dropped by the dither. Tracer-loaded rounds (every third squad round, every other enemy
+  round, every .50 and rocket) are brighter and a little longer. Your own rounds start at the barrel.
 
   ANIMATION — every joint eases toward its target pose (no popping between run, aim, kneel, swing and
   death); stride phase comes from real distance moved (no foot sliding); legs face the movement while
@@ -4241,7 +4243,7 @@ function buildFxBatches() {
     ring: new Batch(plane, decalMat(T.ring, { opacity: 0.75 }), 48, 3),
     fireGlow: new Batch(plane, decalMat(T.glow, add), 64, 3),
     tracer: new Batch(box, new THREE.MeshBasicMaterial(), 400),
-    tracerGlow: new Batch(box, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending }), 400, 4),
+    tracerGlow: new Batch(box, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.42, depthWrite: false, blending: THREE.AdditiveBlending }), 400, 4),
     spark: new Batch(new THREE.IcosahedronGeometry(0.5, 0), new THREE.MeshBasicMaterial(), 900),
     flash: new Batch(new THREE.IcosahedronGeometry(0.5, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending }), 220, 5),
     flame: new Batch(VIEW.kit.cone, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending }), 240, 5),
@@ -4267,20 +4269,27 @@ function drawFx() {
   const F = VIEW.fx, now = performance.now();
   if (!TMP.mz) { TMP.mz = TMP.v.clone(); TMP.bp = TMP.v.clone(); TMP.dir = TMP.v.clone(); TMP.zax = TMP.v.clone().set(0, 0, 1); }
   const ctl = soldiers[state.controlled];
-  // Rounds. A bullet is not a bar of light: most rounds are only a faint, short whip of disturbed air, and the
-  // ones loaded as tracers (every third squad round, every other enemy round, every .50) burn as a hot head
-  // with a short tail behind it that thins and dims — the burning compound is at the base of the bullet, so
-  // the light is brightest at the front and gone within a metre. Your own rounds start at the barrel you can
-  // see, and a tail never reaches back past the muzzle.
+  // Rounds. Every round is visible as a short streak with a burning head: long enough to read as a
+  // bullet in flight, short enough never to be a laser. Its thickness is measured in lines of the render
+  // target (core 1.6, glow 5, head 3.4-5), so it holds the same weight on screen at any distance —
+  // anything thinner than a line is simply dropped by the N64 dither. Tracer-loaded rounds (every third
+  // squad round, every other enemy round, every .50 and rocket) burn brighter and a little longer.
+  // Your own rounds start at the barrel you can see, and a streak never reaches back past the muzzle.
   const TR = TRACER_COLS || (TRACER_COLS = {
-    core: colorOf('#fff6dc'), hcore: colorOf('#ffe0c8'), rcore: colorOf('#fff0c0'),
-    glow: colorOf('#ffa63a'), hglow: colorOf('#ff5a36'), rglow: colorOf('#ffc070'),
-    dim: colorOf('#6a4416'), hdim: colorOf('#6e2416'), rdim: colorOf('#7a5a2a'),
-    air: colorOf('#9a9288'), hair: colorOf('#a08878') });
+    core: colorOf('#fff4d8'), hcore: colorOf('#ffd9c6'), rcore: colorOf('#fff0c0'),
+    soft: colorOf('#e6d2ac'), hsoft: colorOf('#e8b29a'),
+    glow: colorOf('#ffab40'), hglow: colorOf('#ff5a36'), rglow: colorOf('#ffc070'),
+    head: colorOf('#ffd48a'), hhead: colorOf('#ff8a60'), dimhead: colorOf('#b98a4a'), hdimhead: colorOf('#b0604a') });
+  const camPos = VIEW.camera.position;
+  const lines = (N64.target && N64.target.height) || N64.lines;
+  const PIX = 2 * Math.tan(VIEW.camera.fov * Math.PI / 360) / lines;   // metres per render line, per metre of distance
   for (const b of bullets) {
-    const sp = Math.hypot(b.vx, b.vy) || 1, rocket = b.wkey === 'rocket', y = b.hostile ? 1.0 : 1.08;
+    const sp = Math.hypot(b.vx, b.vy) || 1, rocket = b.wkey === 'rocket', sniper = b.wkey === 'sniper';
+    const hot = b.tracer || rocket, y = b.hostile ? 1.0 : 1.08;
     TMP.bp.set(b.x * XS, y, b.y * XS);   // the head of the round
-    let tail = rocket ? 0.42 : !b.tracer ? 0.32 : b.wkey === 'sniper' ? 1.15 : b.hostile ? 0.7 : 0.85;
+    const perFrame = sp * XS / 60;       // metres it covers in one frame
+    let tail = rocket ? 0.55 : sniper ? 3.0
+      : clamp(perFrame * 1.6, b.hostile ? 1.3 : 1.5, b.hostile ? 2.1 : 2.8) * (hot ? 1.1 : 0.9);
     if (!b.hostile && ctl && ctl.alive && b.slot === state.controlled && b.age < 0.11 && muzzleWorld(ctl, TMP.mz)) {
       TMP.dir.subVectors(TMP.bp, TMP.mz);
       const dl = TMP.dir.length();
@@ -4289,20 +4298,20 @@ function drawFx() {
       tail = Math.min(tail, dl);
     } else TMP.dir.set(b.vx / sp, 0, b.vy / sp);
     TMP.q.setFromUnitVectors(TMP.zax, TMP.dir);
-    if (!b.tracer) {   // no tracer: the air it tears through, barely there
-      TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail / 2);
-      TMP.m.compose(TMP.v, TMP.q, TMP.s.set(0.02, 0.02, tail)); F.tracerGlow.push(TMP.m, b.hostile ? TR.hair : TR.air);
-      continue;
-    }
-    const core = rocket ? TR.rcore : b.hostile ? TR.hcore : TR.core, glow = rocket ? TR.rglow : b.hostile ? TR.hglow : TR.glow, dim = rocket ? TR.rdim : b.hostile ? TR.hdim : TR.dim;
-    const w = rocket ? 0.07 : b.wkey === 'sniper' ? 0.03 : 0.022;
-    TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail * 0.2);   // the hot core: short, right behind the head
-    TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w, w, tail * 0.4)); F.tracer.push(TMP.m, core);
-    TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail * 0.25);   // the glow around it
-    TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w * 3.4, w * 3.4, tail * 0.5)); F.tracerGlow.push(TMP.m, glow);
-    TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail * 0.72);   // the tail: thinner and dimmer, then gone
-    TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w * 1.6, w * 1.6, tail * 0.56)); F.tracerGlow.push(TMP.m, dim);
-    TMP.m.compose(TMP.bp, TMP.q, TMP.s.set(w * 4.5, w * 4.5, w * 4.5)); F.flash.push(TMP.m, glow);   // the head itself burns
+    // Sized in render lines, not metres: the same on screen at 1 m or 40 m. A fixed size in metres is a thick
+    // bar right in front of your eye and nothing at all down the street.
+    const px = TMP.bp.distanceTo(camPos) * PIX;   // one render line, at this round's distance
+    const coreW = px * (rocket ? 3 : sniper ? 2 : 1.6);
+    const glowW = px * (rocket ? 7 : 5);
+    const core = rocket ? TR.rcore : b.hostile ? (hot ? TR.hcore : TR.hsoft) : (hot ? TR.core : TR.soft);
+    const glow = rocket ? TR.rglow : b.hostile ? TR.hglow : TR.glow;
+    TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail * 0.275);   // the bright core, right behind the head
+    TMP.m.compose(TMP.v, TMP.q, TMP.s.set(coreW, coreW, tail * 0.55)); F.tracer.push(TMP.m, core);
+    TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail * 0.5);     // the glow along the whole streak
+    TMP.m.compose(TMP.v, TMP.q, TMP.s.set(glowW, glowW, tail)); F.tracerGlow.push(TMP.m, glow);
+    const headW = px * (rocket ? 7 : hot ? 5 : 3.4);   // the head itself burns
+    TMP.m.compose(TMP.bp, TMP.q, TMP.s.set(headW, headW, headW));
+    F.flash.push(TMP.m, hot ? (b.hostile ? TR.hhead : TR.head) : (b.hostile ? TR.hdimhead : TR.dimhead));
   }
   TMP.q.identity();
   for (const p of particles) {
