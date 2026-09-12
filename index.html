@@ -1889,7 +1889,9 @@ const joy = { active: false, id: -1, bx: 0, by: 0, x: 0, y: 0, dx: 0, dy: 0 };
 const isTouch = 'ontouchstart' in window;
 let isPortrait = false;
 function checkOrient() {   // a phone held upright has no room for this fight; ask for landscape and wait
-  isPortrait = isTouch && innerHeight > innerWidth;
+  const p = isTouch && innerHeight > innerWidth;
+  if (p === isPortrait) return;                      // called every frame: only touch the DOM when it actually flips
+  isPortrait = p;
   document.body.classList.toggle('portrait', isPortrait);
 }
 addEventListener('resize', checkOrient);
@@ -2582,8 +2584,9 @@ function loadMeta() {
     loadedFromSave = true;
     meta = Object.assign(freshMeta(), save);
     meta.story = Object.assign({ wren: 'none', wrenPending: false, seen: {}, seenTheater: -1 }, save.story || {});
+    const optsV = save.opts && save.opts.v;   // read the SAVED version: Object.assign fills v from the defaults
     meta.opts = Object.assign(freshOpts(), save.opts || {});
-    if (!meta.opts.v) { meta.opts.v = 2; meta.opts.fpv = true; meta.opts.scheme = 'manual'; }   // first person is the default now
+    if (!optsV) { meta.opts.v = 2; meta.opts.fpv = true; meta.opts.scheme = 'manual'; }   // first person is the default now
     for (const m of meta.squad) if (!m.arch) m.arch = pickL(ARCH_KEYS);   // migrate pre-story saves
     return simulateAfk(Math.max(0, (Date.now() - (save.lastSeen || Date.now())) / 1000));
   }
@@ -6082,7 +6085,7 @@ function frame(now) {
   last = now;
   if (isTouch) checkOrient();   // resize/orientationchange can report stale metrics, so confirm every frame
   tick(dt);
-  if (screen === 'battle') { renderView(dt); updateBattleHud(); }
+  if (screen === 'battle' && !isPortrait) { renderView(dt); updateBattleHud(); }   // nothing to draw behind the rotate prompt
   else {
     el.mapreq.textContent = `${Math.floor(meta.req)} REQ`;
     el.teamreq.textContent = `${Math.floor(meta.req)} REQ`;
