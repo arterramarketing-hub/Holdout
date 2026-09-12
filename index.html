@@ -160,9 +160,9 @@
   to release), Esc to release. Pressing again cycles targets (ahead-of-camera and close first; the
   Warlord and spotters jump the queue). The camera swings to face the target and pulls back up to 1.5 m
   to frame both; auto-fire prefers the lock within 110% of weapon range. A locked target that dies
-  passes the lock to the next after 0.25 s. A crosshair sits on whatever you are shooting — white on the
-  auto-target, gold with a turning ring when locked — and blooms while you move, fire or reload; hits
-  flash a white X across it, kills a red one.
+  passes the lock to the next after 0.25 s. The crosshair is white, turns RED the moment an enemy is
+  lined up under it, and blooms while you move, fire or reload. Hits punch a four-tick marker across it:
+  white for a hit, red for a kill, longer for a headshot.
   Q/E nudge the camera ±25° for 2 s.
 
   PHASE 2 VIEW — every enemy type has its own model (knit-cap knife runner, breacher with riot shield
@@ -343,14 +343,23 @@
   #reticle .rt-l { top:22px; left:2px; height:2px; width:9px; transform:translateX(calc(-1 * var(--g))); }
   #reticle .rt-r { top:22px; right:2px; height:2px; width:9px; transform:translateX(var(--g)); }
   #reticle .rt-dot { left:21px; top:21px; width:4px; height:4px; border-radius:50%; }
-  #reticle.locked { color:var(--gold); }
-  #reticle.locked::after { content:''; position:absolute; inset:3px; border:2px dashed rgba(255,216,74,.85); border-radius:50%; animation:rtspin 4s linear infinite; }
-  @keyframes rtspin { to { transform:rotate(360deg); } }
-  #reticle .rt-x, #reticle .rt-x2 { left:8px; top:22px; width:30px; height:2px; opacity:0; background:#fff; }
-  #reticle .rt-x { transform:rotate(45deg); } #reticle .rt-x2 { transform:rotate(-45deg); }
-  #reticle.hit .rt-x, #reticle.hit .rt-x2 { opacity:1; }
-  #reticle.kill .rt-x, #reticle.kill .rt-x2 { background:#ff5a3c; }
-  #reticle.head .rt-x, #reticle.head .rt-x2 { background:var(--gold); height:3px; }
+  #reticle.hot { color:#ff3b30; }   /* an enemy is lined up under it */
+  /* Hit marker, the Call of Duty way: four short diagonal ticks that snap on at the instant of the hit
+     and fade outward. White for a hit, red for a kill, longer for a headshot. Stays white over a red
+     reticle, so the marker always reads. */
+  #reticle .hm { left:50%; top:50%; width:10px; height:2px; margin:-1px 0 0 -5px; background:#fff; opacity:0;
+    transition:opacity .2s ease-out, transform .2s ease-out; box-shadow:0 0 0 1px rgba(0,0,0,.75); }
+  #reticle .hm.a { transform:rotate(45deg)  translateX(14px); }
+  #reticle .hm.b { transform:rotate(135deg) translateX(14px); }
+  #reticle .hm.c { transform:rotate(225deg) translateX(14px); }
+  #reticle .hm.d { transform:rotate(315deg) translateX(14px); }
+  #reticle.hit .hm { opacity:1; transition:none; }
+  #reticle.hit .hm.a { transform:rotate(45deg)  translateX(10px); }
+  #reticle.hit .hm.b { transform:rotate(135deg) translateX(10px); }
+  #reticle.hit .hm.c { transform:rotate(225deg) translateX(10px); }
+  #reticle.hit .hm.d { transform:rotate(315deg) translateX(10px); }
+  #reticle.kill .hm { background:#ff4438; }
+  #reticle.head .hm { width:15px; margin-left:-7.5px; height:3px; }
   #tally { top:36px; left:50%; transform:translateX(-50%); font-family:var(--display); font-size:12px; letter-spacing:.14em;
     color:var(--dim); text-shadow:0 2px 0 #000, 0 0 8px rgba(0,0,0,.7); white-space:nowrap; }
   #tally b { color:var(--ink); font-size:15px; font-variant-numeric:tabular-nums; }
@@ -499,7 +508,8 @@
   #fpsbox { position:fixed; left:8px; top:96px; z-index:50; font:11px ui-monospace, Menlo, monospace; color:#fff; background:rgba(0,0,0,.55); padding:3px 6px; display:none; pointer-events:none; }
 
   @media (prefers-reduced-motion: reduce) {
-    #bootbox .boot-press, #titlecard.show .tc-name, #reticle.locked::after, #hurt.crit { animation:none; }
+    #bootbox .boot-press, #titlecard.show .tc-name, #hurt.crit { animation:none; }
+    #reticle .hm { transition:none; }
   }
   @media (max-width:899px) {   /* compact HUD: phones, and any window too narrow for the spread-out layout */
     #frontwrap { left:8px; transform:none; width:calc(100vw - 150px); text-align:left; }
@@ -564,7 +574,7 @@
 <div id="cine-top"></div><div id="cine-bot"></div>
 <div id="titlecard"><div class="tc-sub"></div><div class="tc-name"></div></div>
 <div id="floaters"></div>
-<div id="reticle"><i class="rt-t"></i><i class="rt-b"></i><i class="rt-l"></i><i class="rt-r"></i><i class="rt-dot"></i><i class="rt-x"></i><i class="rt-x2"></i></div>
+<div id="reticle"><i class="rt-t"></i><i class="rt-b"></i><i class="rt-l"></i><i class="rt-r"></i><i class="rt-dot"></i><i class="hm a"></i><i class="hm b"></i><i class="hm c"></i><i class="hm d"></i></div>
 <div id="threats"></div>
 <div id="joy"><div id="joyknob"></div></div>
 <div id="fpsbox"></div>
@@ -4998,7 +5008,7 @@ function updateOverlays(dt) {
       const bloom = Math.max(0, (hero.moving ? 4 : 0) + (hero.recoil > 0 ? 6 : 0) + (hero.reloadT > 0 ? 8 : 0) - (aim.ads ? 3 : 0));
       OV.gap += (bloom - OV.gap) * Math.min(1, dt * 12);
       rt.style.setProperty('--g', OV.gap.toFixed(1) + 'px');
-      rt.classList.toggle('locked', !!aimAt);
+      rt.classList.toggle('hot', !!aimAt);
       shown = true;
     } else if (aimAt && enemies.includes(aimAt)) {
       const lk = ENEMY_LOOK[aimAt.type] || ENEMY_LOOK.grunt;
@@ -5011,7 +5021,7 @@ function updateOverlays(dt) {
         const bloom = (hero.moving ? 4 : 0) + (hero.recoil > 0 ? 5 : 0) + (hero.reloadT > 0 ? 7 : 0);
         OV.gap += (bloom - OV.gap) * Math.min(1, dt * 12);
         rt.style.setProperty('--g', OV.gap.toFixed(1) + 'px');
-        rt.classList.toggle('locked', aimAt === lock.target);
+        rt.classList.toggle('hot', true);
         shown = true;
       }
     }
