@@ -39,15 +39,17 @@
   falling backward when shot from the front and forward when shot in the back, and the weapon lands on
   the ground beside them and stays there.
 
-  PROGRESS — controlled kill +0.7% front, AI squadmate kill +0.2%, AFK 0.07%/sec (active kill = 10 AFK-sec).
-  AFK capped at 8h, applies to the currently targeted territory; can conquer it offline (extra time beyond
-  100% is discarded). Offline soldier loss: min(35%, 6%/hr), max 1, never the last one alive.
+  REINFORCEMENTS — you are one soldier and you stay that soldier. Die and you watch it happen, then a
+  reinforcement puts you back on the line (CFG.respawn 3s); the squad shares one pool of CFG.tickets (20)
+  and every death on your side spends one, yours and theirs alike. AI squadmates walk back on by
+  themselves. When the pool is empty the next death is final and the front fails. No body-swapping.
 
-  ECONOMY — Requisition (REQ). Earned: kills (1 + 0.5*tier, AI kills 60% of that), front cleared
-  (100 + 50*tier), owned-territory income (req/hr, accrues online AND offline). Start with 150.
-  Spent in the Armory: support ammo (Incendiary 120, Artillery 90, Supply Drop 60), investments
-  (Body Armor +1 squad HP/lvl max 3, cost 150*2^lvl; Training +8% squad dmg/lvl max 5, cost 150*2^lvl;
-  Strike ATVs 100 each max 8: +45% speed, +1 HP for the assigned soldier).
+  KILLSTREAKS — supports are earned, not bought: 4 kills without dying gives INCENDIARY, 7 ARTILLERY,
+  10 SUPPLY DROP (KILLSTREAKS table). Dying resets the count. Nothing is purchased anywhere in the game:
+  there is no currency, no armory, no investments, no commendations, and nothing progresses while you are
+  away — the map is a level select and the only thing it tracks is which territories you hold.
+
+  PROGRESS — controlled kill +0.7% front, AI squadmate kill +0.2%. Front cleared at 100%.
 
   WEAPONS — SMG / AR / LMG / Sniper / Rocket, stats in the WEAPONS table and fixed: there are no weapon
   levels and no weapon XP, so a rifle is the same rifle on the first front and the last. The only things
@@ -252,18 +254,14 @@
   .pill, #tomap, .navbtn { font-family:var(--display); font-weight:800; letter-spacing:.1em; color:var(--ink); text-shadow:0 1px 0 #000;
     background:linear-gradient(180deg, #3a5a8a, #1f3456); border:2px solid var(--trim); border-radius:999px;
     box-shadow:0 3px 0 rgba(0,0,0,.45); }
-  #reqbattle::before, .mreq::before, .buybtn.cost::before { content:''; display:inline-block; width:.62em; height:.95em;
+  .mreq::before, .buybtn.cost::before { content:''; display:inline-block; width:.62em; height:.95em;
     margin-right:.35em; vertical-align:-.1em; background:linear-gradient(135deg, #c8ffb0, #3fc24a 50%, #12702a);
     clip-path:polygon(50% 0, 100% 26%, 100% 74%, 50% 100%, 0 74%, 0 26%); }
 
   /* ---------- battle HUD ---------- */
   #frontwrap { top:10px; left:50%; transform:translateX(-50%); width:min(460px, 56vw); text-align:center; }
-  #frontlabel { font-family:var(--display); font-size:13px; letter-spacing:.12em; margin-bottom:5px;
-    text-shadow:0 2px 0 #000, 0 0 8px rgba(0,0,0,.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   #frontbar { height:15px; padding:2px; background:#0b1220; border:2px solid var(--trim); border-radius:10px; box-shadow:0 3px 10px rgba(0,0,0,.5); }
   #frontfill { height:100%; width:0%; border-radius:6px; background:var(--magic); box-shadow:inset 0 1px 0 rgba(255,255,255,.5); transition:width .25s ease; }
-  #wavetag { top:50px; left:50%; transform:translateX(-50%); font-size:11px; letter-spacing:.12em; color:var(--dim);
-    text-shadow:0 1px 2px #000, 0 0 6px rgba(0,0,0,.8); white-space:nowrap; }
   #bossbar { top:70px; left:50%; transform:translateX(-50%); width:min(400px, 62vw); text-align:center; display:none; }
   #bossname { font-family:var(--display); font-size:12px; letter-spacing:.16em; color:#ffc0a8; margin-bottom:4px; text-shadow:0 2px 0 #3a0a0a; }
   #bosshp { height:13px; padding:2px; background:#1a0a0c; border:2px solid #b8882e; border-radius:8px; overflow:hidden; }
@@ -291,7 +289,6 @@
   body.touch.manual #firebtn, body.touch.manual #adsbtn { display:flex; }
   @media (min-width:900px) { body.touch #ammo { bottom:250px; } }   /* tablets: the ammo counter sits above the whole button stack */
   body.manual #lockbtn { display:none !important; }
-  body.touch.manual #divebtn { bottom:192px; right:20px; }
   #tocfg { font-size:12px; padding:6px 11px; }
   .setrow { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:7px 2px; border-bottom:1px solid var(--rule); font-size:13px; text-align:left; }
   .setrow:last-of-type { border-bottom:none; }
@@ -345,6 +342,29 @@
   #reticle.hit .rt-x, #reticle.hit .rt-x2 { opacity:1; }
   #reticle.kill .rt-x, #reticle.kill .rt-x2 { background:#ff5a3c; }
   #reticle.head .rt-x, #reticle.head .rt-x2 { background:var(--gold); height:3px; }
+  #tally { top:36px; left:50%; transform:translateX(-50%); font-family:var(--display); font-size:12px; letter-spacing:.14em;
+    color:var(--dim); text-shadow:0 2px 0 #000, 0 0 8px rgba(0,0,0,.7); white-space:nowrap; }
+  #tally b { color:var(--ink); font-size:15px; font-variant-numeric:tabular-nums; }
+  #tally i { display:inline-block; width:1px; height:11px; background:var(--line); margin:0 9px; vertical-align:-1px; }
+  #vitals { left:12px; bottom:12px; width:180px; }
+  #vitals #mehp { height:11px; padding:2px; background:#0b1220; border:1.5px solid var(--trim); border-radius:8px; }
+  #vitals #mehpfill { height:100%; width:100%; border-radius:5px; background:var(--magic); transition:width .12s; }
+  #vitals.hurt #mehpfill { background:linear-gradient(180deg, #ff9a7a, #d0342a); }
+  .supbtn.locked { opacity:.45; }
+  .supbtn .need { position:absolute; top:-9px; right:-7px; min-width:21px; height:21px; padding:0 5px; border-radius:11px;
+    display:flex; align-items:center; justify-content:center; background:var(--slate-solid); border:2px solid var(--line);
+    color:var(--dim); font-size:11px; font-weight:800; }
+  #deploybar { display:flex; align-items:center; gap:14px; padding:4px 20px 18px; }
+  #deploybar #terrname { font-family:var(--display); font-size:14px; letter-spacing:.12em; color:var(--ink); }
+  #deploybar .navbtn { margin-left:auto; font-size:13px; padding:10px 26px; }
+  #deploybar .navbtn:disabled { opacity:.35; cursor:default; }
+  #loadout { display:flex; flex-wrap:wrap; gap:10px; }
+  .wpick { flex:1 1 250px; text-align:left; padding:12px 14px; color:var(--ink); cursor:pointer;
+    background:linear-gradient(180deg, var(--slate-top), var(--slate)); border:2px solid var(--line); border-radius:12px; }
+  .wpick.on { border-color:var(--gold); box-shadow:0 0 0 2px rgba(255,216,74,.25); }
+  .wpick .wtop { display:flex; justify-content:space-between; gap:10px; font-family:var(--display); font-size:14px; letter-spacing:.08em; }
+  .wpick .wtop b { color:var(--gold); }
+  .wpick .wstats { font-size:11px; color:var(--dim); margin-top:5px; font-weight:600; }
   #banner { top:24%; left:50%; transform:translate(-50%,-50%); font-family:var(--display); font-size:clamp(20px, 3.4vw, 34px);
     letter-spacing:.16em; color:#fff; text-shadow:0 0 2px #000, 3px 3px 0 rgba(0,0,0,.55); opacity:0; white-space:nowrap; }
   #hint { bottom:150px; left:50%; transform:translateX(-50%); font-size:12px; color:var(--ink); letter-spacing:.06em;
@@ -354,7 +374,6 @@
   #tomap { font-size:12px; padding:6px 14px; }
   #tomap:hover, .navbtn:hover, .buybtn:not(:disabled):hover, .supbtn:not(:disabled):hover { filter:brightness(1.15); }
   #tomap:active, .navbtn:active, .supbtn:active, #modalbox button:active { transform:translateY(2px); box-shadow:none; }
-  #reqbattle { font-size:15px; font-weight:800; color:#dcffd2; text-shadow:0 2px 0 #000; }
   #supports { bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:12px; pointer-events:auto; }
   .supbtn { position:relative; display:flex; align-items:center; gap:8px; padding:5px 16px 5px 5px; color:var(--ink);
     font-size:11px; letter-spacing:.08em; background:linear-gradient(180deg, var(--slate-top), var(--slate));
@@ -485,12 +504,7 @@
     border:2px solid var(--gold); border-radius:999px; box-shadow:0 3px 0 rgba(0,0,0,.45); touch-action:manipulation; }
   #lockbtn .zkey { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
     background:radial-gradient(circle at 35% 30%, #e2ecf4, #8a9aaa 60%, #4a5a6a); color:#10161e; font-size:13px; }
-  #divebtn { position:fixed; right:12px; bottom:118px; z-index:11; display:none; align-items:center; gap:8px; padding:5px 15px 5px 5px;
-    color:var(--ink); font-size:12px; font-weight:800; letter-spacing:.1em; background:linear-gradient(180deg, var(--slate-top), var(--slate));
-    border:2px solid var(--gold); border-radius:999px; box-shadow:0 3px 0 rgba(0,0,0,.45); touch-action:manipulation; }
-  #divebtn .akey { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    background:radial-gradient(circle at 35% 30%, #a8d4ff, #3a7ae0 60%, #1a3a8a); color:#fff; font-size:13px; }
-  body.touch #lockbtn, body.touch #divebtn { display:flex; }
+  body.touch #lockbtn { display:flex; }
   #fpsbox { position:fixed; left:8px; top:96px; z-index:50; font:11px ui-monospace, Menlo, monospace; color:#fff; background:rgba(0,0,0,.55); padding:3px 6px; display:none; pointer-events:none; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -498,17 +512,16 @@
   }
   @media (max-width:899px) {   /* compact HUD: phones, and any window too narrow for the spread-out layout */
     #frontwrap { left:8px; transform:none; width:calc(100vw - 150px); text-align:left; }
-    #frontlabel { font-size:10px; letter-spacing:.05em; }
-    #wavetag { left:8px; transform:none; top:48px; font-size:9px; letter-spacing:.05em; }
     #bossbar { top:104px; left:8px; transform:none; width:calc(100vw - 150px); }
-    #roster { width:120px; padding:4px; } .rname { font-size:9px; } .rhp { width:24px; }
+    #tally { top:48px; left:8px; transform:none; font-size:10px; letter-spacing:.08em; }
+    #tally b { font-size:13px; }
+    #vitals { left:8px; bottom:8px; width:132px; }
     #minimap { top:104px; left:8px; width:96px; height:76px; }
     #feed { top:206px; right:8px; width:150px; font-size:9px; }   /* clears the roster panel */
     #firebtn { right:14px; bottom:150px; width:72px; height:72px; } #firebtn span { inset:22px; }
     #adsbtn { right:96px; bottom:176px; width:52px; height:52px; font-size:10px; }
-    body.touch.manual #divebtn { bottom:232px; right:14px; }
     #topbar { top:68px; left:8px; }
-    #tomap { font-size:10px; padding:5px 10px; } #reqbattle { font-size:13px; }
+    #tomap { font-size:10px; padding:5px 10px; }
     #me { padding:4px 9px 4px 5px; bottom:8px; left:8px; gap:7px; }
     #meport { width:26px; height:26px; font-size:12px; } #mehp { width:92px; } #mename { font-size:12px; }
     #supports { bottom:76px; right:8px; left:auto; transform:none; gap:7px; }
@@ -521,17 +534,16 @@
     #commport { width:30px; height:30px; font-size:13px; } #commtext { font-size:12px; } #commname { font-size:10px; }
     #hint { top:auto; bottom:290px; width:90vw; text-align:center; font-size:11px; }   /* above the fire / ADS / dive buttons */
     #lockbtn { bottom:134px; right:8px; }
-    #divebtn { bottom:180px; right:8px; }
     .mhead h1 { font-size:19px; letter-spacing:.12em; }
   }
   /* Phones play in landscape, which is short rather than narrow: rebuild the HUD around the height. */
   @media (max-height:520px) {
     #topbar { top:6px; left:6px; }
     #frontwrap { top:6px; left:196px; transform:none; width:calc(100vw - 330px); text-align:left; }
-    #wavetag { top:40px; left:196px; transform:none; }
     #minimap { top:44px; left:6px; width:84px; height:64px; }
     #feed { top:114px; left:6px; right:auto; width:140px; text-align:left; font-size:9px; }
-    #roster { top:6px; right:6px; width:104px; padding:3px; }
+    #tally { top:40px; left:196px; transform:none; font-size:10px; }
+    #vitals { left:6px; bottom:6px; width:150px; }
     #roster .rname { font-size:8px; } #roster .rhp { width:20px; } #roster .pport { width:14px; height:14px; font-size:7px; }
     #me { bottom:6px; left:6px; }
     #supports { bottom:8px; left:158px; right:auto; transform:none; gap:6px; }
@@ -540,8 +552,6 @@
     #firebtn { bottom:12px; right:10px; width:64px; height:64px; } #firebtn span { inset:19px; }
     #adsbtn { bottom:84px; right:16px; width:46px; height:46px; font-size:9px; }
     #lockbtn { bottom:84px; right:6px; }
-    #divebtn { bottom:150px; right:6px; }
-    body.touch.manual #divebtn { bottom:150px; right:6px; }
     #hint { top:auto; bottom:46px; left:50%; transform:translateX(-50%); width:auto; max-width:min(40vw, 320px); font-size:10px; }
     #comm { bottom:112px; left:158px; transform:none; width:min(260px, 40vw); }
   }
@@ -562,27 +572,21 @@
 
 <!-- ============ BATTLE HUD ============ -->
 <div id="bhud" style="display:none">
-  <div class="hud" id="frontwrap"><div id="frontlabel">FRONT — 0%</div><div id="frontbar"><div id="frontfill"></div></div></div>
-  <div class="hud" id="wavetag">WAVE 1</div>
+  <div class="hud" id="frontwrap"><div id="frontbar"><div id="frontfill"></div></div></div>
+  <div class="hud" id="tally"><b id="killn">0</b> KILLS<i></i><b id="ticketn">20</b> LEFT</div>
   <div class="hud" id="bossbar"><div id="bossname">WARLORD</div><div id="bosshp"><i id="bosshpfill"></i></div></div>
-  <div class="hud" id="roster"></div>
   <canvas class="hud" id="minimap" width="150" height="120"></canvas>
   <div class="hud" id="feed"></div>
   <div class="hud" id="dmgdir"><i></i><i></i><i></i></div>
-  <div class="hud" id="me">
-    <div id="meport">?</div>
-    <div><div id="mename">—</div><div id="meweap">—</div><div id="mehp"><div id="mehpfill"></div></div></div>
-  </div>
-  <div class="hud" id="fallen"><b>0</b> FALLEN</div>
+  <div class="hud" id="vitals"><div id="mehp"><div id="mehpfill"></div></div></div>
   <div class="hud" id="ammo"><div id="ammag">30</div><div id="amres">/ 150</div><div id="amname">AR</div><div id="ambar"><i></i></div></div>
   <div class="hud" id="banner"></div>
   <div class="hud" id="hint"></div>
-  <div class="hud" id="topbar"><button id="tomap">◂ MAP</button><button id="tocfg">⚙</button><span id="reqbattle"></span></div>
+  <div class="hud" id="topbar"><button id="tomap">◂ MAP</button><button id="tocfg" title="Settings">⚙</button></div>
   <div class="hud" id="supports"></div>
   <button id="lockbtn"><span class="zkey">Z</span>LOCK</button>
   <button id="firebtn"><span></span></button>
   <button id="adsbtn">ADS</button>
-  <button id="divebtn"><span class="akey">A</span>DIVE</button>
   <div class="hud" id="comm">
     <div id="commport">?</div>
     <div style="flex:1;min-width:0"><div id="commname">—</div><div id="commtext"></div></div>
@@ -593,52 +597,27 @@
 <div id="mapscr" class="scr">
   <div class="mhead">
     <div><h1>HOLDOUT</h1><div class="sub" id="theatertag">THEATER I — OPERATIONS MAP</div></div>
-    <div class="mreq" id="mapreq">0 REQ</div>
-    <button class="navbtn ghost" id="tosettings">SETTINGS</button>
-    <button class="navbtn ghost" id="tomem">MEMORIAL</button>
-    <button class="navbtn ghost" id="toteam">SQUAD &amp; ARMORY</button>
+    <button class="navbtn ghost" id="tosettings" style="margin-left:auto">SETTINGS</button>
+    <button class="navbtn ghost" id="toteam">LOADOUT</button>
   </div>
   <div class="mbody">
     <svg id="mapsvg" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet"></svg>
-    <div id="mapside">
-      <div class="panel" id="tpanel"><h3>TERRITORY</h3><p class="sub">Select a territory on the map.</p></div>
-      <div class="panel" id="afkbox"></div>
-    </div>
+  </div>
+  <div id="deploybar">
+    <span id="terrname">SELECT A TERRITORY</span>
+    <button class="navbtn" id="deploybtn" disabled>⚔ DEPLOY</button>
   </div>
 </div>
 
 <!-- ============ TEAM / ARMORY SCREEN ============ -->
 <div id="teamscr" class="scr">
   <div class="mhead">
-    <div><h1>SQUAD</h1><div class="sub">LOADOUT · INVESTMENTS · ARMORY</div></div>
-    <div class="mreq" id="teamreq">0 REQ</div>
-    <button class="navbtn" id="backmap">◂ MAP</button>
+    <div><h1>BATTLE PREP</h1><div class="sub">PICK WHAT YOU CARRY</div></div>
+    <button class="navbtn" id="backmap" style="margin-left:auto">◂ MAP</button>
   </div>
-  <div class="tgrid">
-    <div class="tcol">
-      <div class="panel"><h3>ROSTER — ASSIGN WEAPONS &amp; ATVS</h3><div id="squadlist"></div></div>
-    </div>
-    <div class="tcol">
-      <div class="panel"><h3>WEAPONS</h3><div id="weaponlist"></div></div>
-    </div>
-    <div class="tcol">
-      <div class="panel"><h3>SUPPORT AMMUNITION</h3><div id="armorylist"></div></div>
-      <div class="panel"><h3>ARMY INVESTMENTS</h3><div id="investlist"></div></div>
-      <div class="panel"><h3 id="comhead">COMMENDATIONS ★0</h3><div id="commendlist"></div></div>
-    </div>
-  </div>
+  <div class="tgrid"><div class="tcol" style="flex:1 1 100%"><div id="loadout"></div></div></div>
 </div>
 
-<!-- ============ MEMORIAL SCREEN ============ -->
-<div id="memscr" class="scr">
-  <div class="mhead">
-    <div><h1>MEMORIAL</h1><div class="sub" id="memcount">THEY HELD THE LINE</div></div>
-    <button class="navbtn" id="memback" style="margin-left:auto">◂ MAP</button>
-  </div>
-  <div class="tgrid"><div class="panel" style="flex:1 1 100%"><div id="memlist"></div></div></div>
-</div>
-
-<div id="rotate"><div class="rot-icon">▭</div><h2>ROTATE YOUR DEVICE</h2><p>Holdout plays in landscape.</p></div>
 <div id="modal"><div id="modalbox"></div></div>
 <div id="boot"><div id="bootbox"><div class="boot-sub">The Ninth Company</div><h1>HOLDOUT</h1><div class="boot-press">Press any key</div><div id="bootlines"></div></div></div>
 
@@ -651,14 +630,14 @@ const CFG = {
   deathCam: 1.9,          // seconds watching your soldier fall before control moves on
   fallDur: 1.6, enemyFallDur: 1.1,   // how long a body takes to hit the ground
   todSpeed: 1 / 150,      // time-of-day steps (dawn→day→dusk→night) per second of battle
-  playerKillPct: 0.7, aiKillPct: 0.2, afkPctPerSec: 0.07, afkCapHours: 8,
-  afkLossPerHour: 0.06, afkLossCap: 0.35,
+  playerKillPct: 0.7, aiKillPct: 0.2,
+  tickets: 20, respawn: 3.0,          // reinforcements the squad shares, and how long you wait to come back
   rosterSize: 8, baseHp: 4, regenDelay: 3.5, regenRate: 0.6,
   playerSpeed: 225, aiSpeed: 195, horseSpeedMul: 1.45,
   spawnInvuln: 1.0, waveInterval: 18,
   arenaW: 3200, arenaH: 2400, lineY: 2080,
   saveKey: 'holdout.v2', saveEvery: 5,
-  reqStart: 150, aiCdMul: 2.6, trainingDmg: 0.08,
+  aiCdMul: 2.6,
   mineCount: 8, mineDmg: 2, mineR: 55,
   mortarDmg: 2, mortarR: 55,
   headshotMul: 2,         // damage multiplier for a round that goes through the head column
@@ -742,16 +721,13 @@ function freshMeta() {
       arch: ['vet','rook','joker','zealot','cynic','stoic','hen','wild'][i] });   // one of each to start
   }
   return {
-    v: 2, req: CFG.reqStart, fallen: 0, theater: 0, muted: false,
-    inv: { napalm: 1, artillery: 1, supply: 1 },
-    invest: { armor: 0, training: 0, horses: 0 },
-    commend: 0, unlocks: { rations: 0, bonds: 0, resupply: 0 },
+    v: 2, theater: 0, muted: false,
+    loadout: 'ar',
     opts: freshOpts(),
-    memorial: [],
     story: { wren: 'none', wrenPending: false, seen: {}, seenTheater: -1 },
     squad,
     terr: TERRITORIES.map(t => ({ owner: t.tier === 0 ? 'p' : 'e', progress: 0 })),
-    activeTid: 1, lastAway: '', lastSeen: Date.now(),
+    activeTid: 1,
   };
 }
 const terrOwned = t => meta.terr[t.id].owner === 'p';
@@ -766,50 +742,43 @@ const PERKS = {
   10: 'Fire rate +6%',          11: 'AFK progress +25%',      12: 'All REQ gains +25%',
 };
 const hasPerk = id => meta && meta.terr[id] && meta.terr[id].owner === 'p';
-// Prestige unlocks bought with Commendations (1 per theater cleared)
-const UNLOCKS = {
-  rations:    { name: 'COMBAT RATIONS',     desc: '+1 HP for every soldier, permanently.' },
-  bonds:      { name: 'DEFENSE CONTRACTS',        desc: 'All REQ gains +50%.' },
-  resupply:   { name: 'ARMORED COLUMN',   desc: '+1 of every support ammo after each conquest.' },
-};
-const reqMul = () => (hasPerk(12) ? 1.25 : 1) * (meta.unlocks && meta.unlocks.bonds ? 1.5 : 1);
-const reqGain = x => { meta.req += x * reqMul(); };
-const priceMul = () => hasPerk(2) ? 0.9 : 1;
-const incomePerHour = () =>
-  TERRITORIES.reduce((s, t) => s + (terrOwned(t) ? t.inc * incMul() : 0), 0) * (hasPerk(1) ? 1.15 : 1) * reqMul();
-const aliveCount = () => meta.squad.reduce((n, s) => n + (s.alive ? 1 : 0), 0);
-const horsesAssigned = () => meta.squad.reduce((n, s) => n + (s.horse && s.alive ? 1 : 0), 0);
-function squadDmg(key) {   // a weapon is what it is: only Live-Fire Training and the damage perk move it
-  return WEAPONS[key].dmg * (1 + CFG.trainingDmg * meta.invest.training) * (hasPerk(4) ? 1.08 : 1);
+function squadDmg(key) {   // a weapon is what it is
+  return WEAPONS[key].dmg * (hasPerk(4) ? 1.08 : 1);
 }
 const rankOf = k => k >= 500 ? 'MAJ' : k >= 300 ? 'CPT' : k >= 150 ? 'LT' : k >= 75 ? 'SGT' : k >= 25 ? 'CPL' : 'PVT';
-function addMemorial(name, kills, front) {
-  meta.memorial.push({ n: name, k: kills || 0, f: front, th: meta.theater });
-  if (meta.memorial.length > 300) meta.memorial.shift();
-}
 function makeWren(s) {
   s.name = 'Wren'; s.arch = 'legacy'; s.wren = true;
   s.weapon = 'ar'; s.horse = false; s.alive = true; s.kills = 0;
   meta.story.wren = 'joined'; meta.story.wrenPending = false;
 }
-function recruit(maxN) { // fill up to maxN dead slots with fresh soldiers
-  const taken = meta.squad.map(s => s.name);
-  let n = 0;
-  for (const s of meta.squad) {
-    if (!s.alive && n < maxN) {
-      if (meta.story && meta.story.wrenPending) { makeWren(s); n++; continue; }
-      s.name = makeName(taken); taken.push(s.name);
-      s.weapon = 'ar'; s.horse = false; s.alive = true; s.kills = 0; s.wren = false;
-      s.arch = pickL(ARCH_KEYS);
-      n++;
-    }
+
+const KILLSTREAKS = [   // supports are earned on the field now, not bought
+  { at: 4,  key: 'napalm' },
+  { at: 7,  key: 'artillery' },
+  { at: 10, key: 'supply' },
+];
+function awardStreak() {
+  state.ks++;
+  for (const k of KILLSTREAKS) if (k.at === state.ks) {
+    state.earned[k.key]++;
+    supportsDirty = true;
+    showBanner(SUPPORTS[k.key].name + ' READY');
+    beep(1500, 0.09, 'square', 0.05);
   }
-  return n;
+}
+function respawnSoldier(s) {   // a fresh body off the reinforcement line: same name, same loadout
+  const w = WEAPONS[s.weapon];
+  s.alive = true; s.hp = s.maxHp; s.pistol = false;
+  s.mag = w.mag; s.reserve = w.mag * w.spare; s.reloadT = 0; s.fireCd = 0;
+  s.x = CFG.arenaW / 2 + AI_SLOTS[s.slot] + rand(-24, 24); s.y = CFG.lineY + rand(-30, 50);
+  s.aim = -Math.PI / 2; s.invuln = CFG.spawnInvuln; s.respawnT = 0;
+  s.coverRef = null; s.dive = null; s.path = null; s.tgt = null; s.supp = 0; s.recoil = 0;
 }
 
 // ============================================================ BATTLE STATE
 const state = {   // per-battle / session
   mode: 'play', tid: 1, tier: 1,
+  kills: 0, tickets: 0, ks: 0, earned: { napalm: 0, artillery: 0, supply: 0 },
   progress: 0, controlled: 0, pending: -1, handoffT: 0, spectateT: 0, dyingT: 0,
   wave: 1, waveT: 0, spawnT: 0, mortarT: 8,
   frontTime: 0, frontDeaths: 0, saveT: 0,
@@ -827,22 +796,18 @@ const AI_SLOTS = [-330, -235, -150, -75, 75, 150, 235, 330];
 
 function buildSoldier(i) {
   const m = meta.squad[i];
-  const maxHp = CFG.baseHp + meta.invest.armor + (m.horse ? 1 : 0)
-    + (hasPerk(9) ? 1 : 0) + (meta.unlocks.rations ? 1 : 0);
+  const maxHp = CFG.baseHp + (hasPerk(9) ? 1 : 0);
+  const weapon = i === 0 ? (meta.loadout || 'ar') : m.weapon;
   return {
     slot: i, name: m.name,
     color: m.wren ? '#d9dbe4' : slotColor(i), helm: m.wren ? '#7a7d8c' : slotDark(i),
-    weapon: m.weapon, horse: m.horse && m.alive,
+    weapon, horse: false,
     x: CFG.arenaW / 2 + AI_SLOTS[i] + rand(-20, 20), y: CFG.lineY + rand(-30, 50),
-    hp: m.alive ? maxHp : 0, maxHp, alive: m.alive,
+    hp: maxHp, maxHp, alive: true, respawnT: 0,
     fireCd: rand(0, 0.4), regenCd: 0, invuln: 0, aim: -Math.PI / 2, r: 13,
     walk: rand(0, TAU), moving: false, recoil: 0,
-    mag: WEAPONS[m.weapon].mag, reserve: WEAPONS[m.weapon].mag * WEAPONS[m.weapon].spare, reloadT: 0, reloadDur: 1, pistol: false,
+    mag: WEAPONS[weapon].mag, reserve: WEAPONS[weapon].mag * WEAPONS[weapon].spare, reloadT: 0, reloadDur: 1, pistol: false,
   };
-}
-function nextLiving(from) {
-  for (let k = 1; k <= soldiers.length; k++) { const i = (from + k) % soldiers.length; if (soldiers[i].alive) return i; }
-  return -1;
 }
 function genTerrain() {   // the same town every front; its cover is rolled fresh each battle
   obstacles = []; craters = []; mines = []; fires = []; shells = []; corpses = []; rubble = [];
@@ -1810,7 +1775,7 @@ function briefingFor(tid) {
       W('...it walks in ours as well... when the line thins... keep firing... keep firi—'),
       A('So. They have one too. Take the marsh.')];
     case 6: {
-      const roll = meta.memorial.slice(-3).map(m => rankOf(m.k) + ' ' + m.n).join('. ');
+      const roll = meta.squad.slice(0, 3).map(m => rankOf(m.kills || 0) + ' ' + m.name).join('. ');
       return [
         A('Command wants the roll of the fallen read on open channel. For morale.'),
         A(roll ? roll + '.' : 'No names on the roll yet. That won\'t last.'),
@@ -1868,7 +1833,6 @@ window.addEventListener('keydown', e => {
   keys[e.code] = true;
   if (e.code === 'KeyM' && meta) meta.muted = !meta.muted;
   if (screen === 'battle') {
-    if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) heroDive(); }
     if (e.code === 'KeyR') heroReload();
     if (e.code === 'KeyO') showSettings();
     if (e.code === 'KeyV') { meta.opts.fpv = !meta.opts.fpv; applyOpts(); saveMeta(); }
@@ -1944,7 +1908,7 @@ function moveVector() {
 // ---------- free aim: the manual scheme and first person ----------
 // Auto-fire keeps the old behaviour (the soldier picks targets). Manual hands you the crosshair: the
 // camera looks where you look, the trigger is yours, and aim assist only nudges — it never fires.
-const aim = { yaw: 0, pitch: 0, fire: false, ads: false, sticky: false, lookDx: 0 };
+const aim = { yaw: 0, pitch: 0, fire: false, ads: false, sticky: false, lookDx: 0, settle: 0 };
 const manualAim = () => !!meta && (meta.opts.scheme === 'manual' || meta.opts.fpv);
 const fpvActive = () => !!meta && meta.opts.fpv && state.mode === 'play'
   && !!soldiers[state.controlled] && soldiers[state.controlled].alive && !soldiers[state.controlled].horse;
@@ -2158,12 +2122,19 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   const spread = w.spread * (fromPlayer && aim.ads ? 0.5 : 1) + (fromPlayer ? 0 : 0.03);
   const a = (angle != null ? angle : Math.atan2(dy, dx)) + rand(-1, 1) * spread;
   s.aim = a; s.recoil = 0.09;
+  if (fromPlayer && manualAim()) {   // the weapon climbs: your next round goes where the recoil left the muzzle
+    const rk = RECOIL_KICK[key] || 0.2, steady = aim.ads ? 0.6 : 1;
+    aim.pitch = clamp(aim.pitch + rk * 0.055 * steady, -0.7, 0.7);
+    aim.yaw = angWrap(aim.yaw + rand(-1, 1) * rk * 0.022 * steady);
+    aim.settle = (aim.settle || 0) + rk * 0.055 * steady;   // the whole climb comes back down between bursts
+  }
   if (!s.pistol) s.mag--;
-  bullets.push({ x: s.x + Math.cos(a) * 20, y: s.y + Math.sin(a) * 20,
+  const mz = (s.pistol ? SIDEARM.len : w.len) + 6;   // the barrel tip: where the round actually leaves the weapon
+  bullets.push({ x: s.x + Math.cos(a) * mz, y: s.y + Math.sin(a) * mz,
     vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed,
     life: w.range / w.speed, age: 0, fromPlayer, wkey: key, slot: s.slot,
     dmg: s.pistol ? SIDEARM.dmg : squadDmg(s.weapon), hits: 0, maxHits: w.pierce || 1, aoe: w.aoe || 0, skip: coverNear(s, 34) });
-  const mx = s.x + Math.cos(a) * 24, my = s.y + Math.sin(a) * 24;
+  const mx = s.x + Math.cos(a) * mz, my = s.y + Math.sin(a) * mz;
   particles.push({ x: mx, y: my, z: 15, vx: 0, vy: 0, vz: 0, life: 0.04, max: 0.04, col: '#fff0b8', r: 3.4 });
   particles.push({ x: mx, y: my, z: 16, vx: Math.cos(a) * 20 + rand(-8, 8), vy: Math.sin(a) * 20 + rand(-8, 8),
     vz: rand(14, 32), life: rand(0.3, 0.55), max: 0.55, col: '#8a8a80', r: rand(1.5, 2.8) });   // muzzle smoke
@@ -2197,13 +2168,14 @@ function killEnemy(idx, credit) {
   const pct = credit.player ? CFG.playerKillPct : CFG.aiKillPct;
   const cap = (state.bossSpawned && state.bossRef && !e.boss) ? 99 : 100;  // boss gates the last 1%
   state.progress = Math.min(cap, state.progress + pct);
-  reqGain((1 + 0.5 * state.tier) * (credit.player ? 1 : 0.6));
   if (credit.slot != null && meta.squad[credit.slot]) {
     meta.squad[credit.slot].kills = (meta.squad[credit.slot].kills || 0) + 1;
     feedPush(meta.squad[credit.slot].name.toUpperCase(), labelOf(e.type), false, !!credit.head);
   }
   if (credit.player) {
     floaters.push({ x: e.x, y: e.y, z: 34, txt: credit.head ? `HEADSHOT +${pct}%` : `+${pct}%`, life: 0.9 });
+    state.kills++;
+    awardStreak();
     state.streakN = (state.streakT > 0 ? state.streakN : 0) + 1;   // kill streak chatter
     state.streakT = 3.5;
     if (state.streakN === 5) sayEvent('streak', 15, () => sayArch(state.controlled, 'streak', 2));
@@ -2211,7 +2183,6 @@ function killEnemy(idx, credit) {
   if (e.boss) {
     state.bossRef = null;
     showBanner(e.name + ' DOWN');
-    reqGain(50 * state.tier);
     explode(e.x, e.y, 90, 0, 0, credit);
     say(VOICE_ANCHOR, 'Warlord down. ...It\'s quiet. Move while it\'s quiet.', 3);
     state.progress = 100;
@@ -2271,9 +2242,7 @@ function damageSoldier(s, dmg, quiet) {
 }
 function killSoldier(s) {
   s.alive = false; s.hp = 0;
-  meta.squad[s.slot].alive = false;
-  meta.fallen++; state.frontDeaths++;
-  addMemorial(s.name, meta.squad[s.slot].kills, TERRITORIES[state.tid].name);
+  state.frontDeaths++;
   markers.push({ x: s.x, y: s.y });
   const hd = s.lastHit, front = hd ? Math.cos(s.aim) * hd.x + Math.sin(s.aim) * hd.y < 0 : Math.random() < 0.6;
   const ga = s.aim + rand(0.5, 1.4) * (Math.random() < 0.5 ? 1 : -1);
@@ -2281,28 +2250,27 @@ function killSoldier(s) {
     aim: s.aim, slot: s.slot, weapon: s.pistol ? 'pistol' : s.weapon, style: front ? 0 : 1,
     gunX: s.x + Math.cos(ga) * rand(16, 30), gunY: s.y + Math.sin(ga) * rand(16, 30), gunYaw: rand(0, TAU) });
   burst(s.x, s.y, s.color, 16, 12);
-  showBanner('KIA: ' + rankOf(meta.squad[s.slot].kills || 0) + ' ' + s.name.toUpperCase());
   feedPush(labelOf(s.lastSrc), s.name.toUpperCase(), true);
-  if (s.slot === state.controlled) buzz(60);
   sfxKia();
-  rosterDirty = true;
+  s.coverRef = null; s.dive = null; s.path = null; s.tgt = null;
+  if (state.tickets > 0) { state.tickets--; s.respawnT = CFG.respawn; }   // a reinforcement takes their place
   sayArch(s.slot, 'death', 3);                                   // dying words
   const grievers = aliveSlots(s.slot);
   if (grievers.length) sayArch(pickL(grievers), 'grief', 3, { name: s.name });
-  if (meta.squad[s.slot].wren) { meta.story.wren = 'dead'; say(VOICE_ANCHOR, '...Wren\'s down. I\'ll write the Colonel myself.', 3); }
-  if (!soldiers.some(a => a.alive)) { beginFail(); return; }
-  if (s.slot === state.controlled && state.mode === 'play') beginDeathCam();
+  if (meta.squad[s.slot].wren) say(VOICE_ANCHOR, '...Wren\'s down. Get her back on her feet.', 3);
+  if (s.slot === state.controlled) {
+    state.ks = 0;                                                // your streak dies with you
+    buzz(60);
+    if (state.mode === 'play') beginDeathCam();
+    return;
+  }
+  if (!soldiers.some(a => a.alive || a.respawnT > 0)) beginFail();
 }
 function beginDeathCam() {   // hold on your soldier as they go down, before the Passenger moves on
   state.mode = 'dying'; state.dyingT = 0;
   state.slow = Math.max(state.slow, CFG.deathCam * 0.75);
   lockRelease();
   sfxHeartbeat();
-}
-function beginHandoff() {
-  state.pending = nextLiving(state.controlled);
-  state.mode = 'handoff'; state.handoffT = 0;
-  lockRelease();
 }
 function beginFail() {
   state.mode = 'spectate'; state.spectateT = 0;
@@ -2342,8 +2310,8 @@ function enemyCluster() {
   return { x: best.x, y: best.y };
 }
 function useSupport(k) {
-  if (screen !== 'battle' || state.mode !== 'play' || !meta.inv[k]) return;
-  meta.inv[k]--;
+  if (screen !== 'battle' || state.mode !== 'play' || !state.earned[k]) return;
+  state.earned[k]--;
   const c = enemyCluster();
   const SUPPORT_LINES = {
     napalm: 'Willy Pete inbound! The jet\'s lighting up their line — HEADS DOWN.',
@@ -2365,7 +2333,7 @@ function useSupport(k) {
     const p = camTarget();
     shells.push({ kind: 'crate', x: p ? p.x : CFG.arenaW / 2, y: p ? p.y : CFG.lineY, t: 1.0 });
   }
-  supportsDirty = true; saveMeta();
+  supportsDirty = true;
 }
 function updateShells(dt) {
   for (let i = shells.length - 1; i >= 0; i--) {
@@ -2471,13 +2439,14 @@ function enterBattle(tid) {
   state.controlled = first < 0 ? 0 : first;
   if (first >= 0) soldiers[state.controlled].invuln = CFG.spawnInvuln;
   lockRelease();
-  aim.yaw = 0; aim.pitch = 0; aim.fire = false; aim.ads = false; aim.lookDx = 0;   // every front opens facing the line, not wherever you last looked
+  aim.yaw = 0; aim.pitch = 0; aim.fire = false; aim.ads = false; aim.lookDx = 0; aim.settle = 0;   // every front opens facing the line, not wherever you last looked
   applyOpts.wasManual = manualAim();
   viewEnterBattle();
-  rosterDirty = true; supportsDirty = true;
+  supportsDirty = true;
   state.streakN = 0; state.streakT = 0;
+  state.kills = 0; state.ks = 0; state.tickets = CFG.tickets;
+  state.earned = { napalm: 0, artillery: 0, supply: 0 };
   showScreen('battle');
-  el.frontname.textContent = t.name.toUpperCase();
   queueStory();
   if (first < 0) showFailModal();
 }
@@ -2491,28 +2460,19 @@ function frontCleared() {
   state.mode = 'cleared';
   sfxClear();
   const t = TERRITORIES[state.tid];
-  const bonus = Math.round((100 + 50 * state.tier) * reqMul());
-  meta.req += bonus;
   meta.terr[state.tid] = { owner: 'p', progress: 0 };
-  for (const s of soldiers) if (s.alive) { meta.squad[s.slot].alive = true; }
-  // story beat: clearing Highwater Pass finds Cpl. Dana Wren of the dead Third
   let wrenJoins = false;
   if (state.tid === 7 && meta.theater === 0 && meta.story.wren === 'none') {
-    const slot = meta.squad.findIndex(s => !s.alive);
-    if (slot >= 0) { makeWren(meta.squad[slot]); wrenJoins = true; }
-    else { meta.story.wrenPending = true; wrenJoins = true; }   // takes the next open slot
+    const slot = meta.squad.findIndex(s => !s.wren);
+    if (slot > 0) { makeWren(meta.squad[slot]); wrenJoins = true; }
   }
-  const recruits = recruit(8);
-  if (meta.unlocks.resupply) { for (const k of Object.keys(meta.inv)) meta.inv[k]++; supportsDirty = true; }
   const allOwned = TERRITORIES.every(tt => terrOwned(tt));
   showModal(`
     <h2>${t.name.toUpperCase()} TAKEN</h2>
     <p class="gain">The line held. Territory secured.</p>
-    <p>Soldiers lost: <b class="lost">${state.frontDeaths}</b> · Time: <b>${fmtTime(state.frontTime)}</b></p>
-    <p class="amber">+${bonus} REQ · +${Math.round(t.inc * incMul())} REQ/hr income</p>
+    <p>Kills: <b>${state.kills}</b> · Reinforcements spent: <b class="lost">${state.frontDeaths}</b> · Time: <b>${fmtTime(state.frontTime)}</b></p>
     ${wrenJoins ? `<p class="gain">You found her. CPL DANA WREN, Third Company — sole survivor.</p>
-      <p class="sub">"The Third held this pass so I'd live. I'm not spending that anywhere else.<br>I'm coming with you."</p>` : ''}
-    ${recruits ? `<p class="sub">${recruits} fresh recruit${recruits > 1 ? 's' : ''} joined the squad.</p>` : ''}
+      <p class="sub">"The Third held this pass so I'd live. I'm coming with you."</p>` : ''}
     <button id="mbtn">RETURN TO MAP</button>`);
   document.getElementById('mbtn').onclick = () => {
     hideModal();
@@ -2523,7 +2483,6 @@ function frontCleared() {
 }
 function advanceTheater() {
   meta.theater++;
-  meta.commend = (meta.commend || 0) + 1;
   for (const t of TERRITORIES) meta.terr[t.id] = { owner: t.tier === 0 ? 'p' : 'e', progress: 0 };
   meta.activeTid = 1;
   showModal(`
@@ -2531,7 +2490,7 @@ function advanceTheater() {
     <p>Every territory is ours. Command reassigns the squad to a harder theater.</p>
     <p class="sub">"The war does not end. It changes uniforms.<br>Somewhere another Ninth is waking up — and it has you." — Anchor</p>
     <p class="amber">★ +1 COMMENDATION — spend it in the Armory on permanent unlocks</p>
-    <p class="amber">Theater ${ROMAN[meta.theater] || meta.theater + 1}: enemy tiers +2, territory income ×${incMul().toFixed(1)}</p>
+    <p class="amber">Theater ${ROMAN[meta.theater] || meta.theater + 1}: enemy tiers +2</p>
     <button id="mbtn">DEPLOY</button>`);
   document.getElementById('mbtn').onclick = () => { hideModal(); exitBattle(); };
   saveMeta();
@@ -2540,39 +2499,18 @@ function showFailModal() {
   state.mode = 'failed';
   showModal(`
     <h2 class="lost">FRONT FAILED</h2>
-    <p>The whole squad is gone.<br><b class="lost">${meta.fallen}</b> fallen in total.</p>
-    <p class="sub">Command can send 3 reinforcements —<br>this front restarts from 0%.</p>
-    <button id="mbtn">▶ CALL REINFORCEMENTS<br><span class="sub">(watch ad)</span></button>
+    <p>Reinforcements exhausted.</p>
+    <p class="sub">Kills: <b>${state.kills}</b> · Time: <b>${fmtTime(state.frontTime)}</b></p>
+    <button id="mbtn">▶ TRY AGAIN</button>
     <button id="mretreat" class="ghost">RETREAT TO MAP</button>`);
-  document.getElementById('mbtn').onclick = () => playAd(() => {
-    recruit(3);
-    meta.terr[state.tid].progress = 0;
-    hideModal();
-    enterBattle(state.tid);
-    showBanner('REINFORCEMENTS ARRIVED');
-    saveMeta();
-  });
-  document.getElementById('mretreat').onclick = () => {
-    meta.terr[state.tid].progress = 0;
-    hideModal(); exitBattle();
-  };
-}
-function playAd(after) {
-  let n = 3;
-  showModal(`<h2>AD PLAYING…</h2><p style="font-size:34px" id="adcount">3</p><p class="sub">Your sponsor thanks you for your service.</p>`);
-  const iv = setInterval(() => {
-    n--;
-    const el2 = document.getElementById('adcount');
-    if (el2) el2.textContent = n;
-    if (n <= 0) { clearInterval(iv); after(); }
-  }, 1000);
+  $('mbtn').onclick = () => { meta.terr[state.tid].progress = 0; hideModal(); enterBattle(state.tid); };
+  $('mretreat').onclick = () => { meta.terr[state.tid].progress = 0; hideModal(); exitBattle(); };
 }
 
 // ============================================================ SAVE / LOAD / AFK
 function saveMeta() {
   try {
     if (screen === 'battle') meta.terr[state.tid].progress = state.mode === 'cleared' ? meta.terr[state.tid].progress : state.progress;
-    meta.lastSeen = Date.now();
     localStorage.setItem(CFG.saveKey, JSON.stringify(meta));
   } catch (e) {}
 }
@@ -2588,51 +2526,12 @@ function loadMeta() {
     meta.opts = Object.assign(freshOpts(), save.opts || {});
     if (!optsV) { meta.opts.v = 2; meta.opts.fpv = true; meta.opts.scheme = 'manual'; }   // first person is the default now
     for (const m of meta.squad) if (!m.arch) m.arch = pickL(ARCH_KEYS);   // migrate pre-story saves
-    return simulateAfk(Math.max(0, (Date.now() - (save.lastSeen || Date.now())) / 1000));
+    return null;
   }
   meta = freshMeta();
   return null;
 }
 let loadedFromSave = false;
-function simulateAfk(elapsed) {
-  if (elapsed < 30) return null;
-  const capped = Math.min(elapsed, CFG.afkCapHours * 3600);
-  const hours = capped / 3600;
-  const income = incomePerHour() * hours;
-  meta.req += income;
-  let gain = 0, conquered = null;
-  const tid = meta.activeTid, t = TERRITORIES[tid];
-  if (aliveCount() > 0 && t && !terrOwned(t) && terrAttackable(t)) {
-    gain = capped * CFG.afkPctPerSec * (hasPerk(11) ? 1.25 : 1);
-    let p = meta.terr[tid].progress + gain;
-    if (p >= 100) { // conquer once; overflow time is discarded
-      meta.terr[tid] = { owner: 'p', progress: 0 };
-      reqGain(100 + 50 * effTier(t));
-      conquered = t.name;
-    } else meta.terr[tid].progress = p;
-  }
-  // enemy counterattack: a frontier territory can fall while you're away
-  let lostTerr = null, repelled = null;
-  const frontier = TERRITORIES.filter(x => x.tier > 0 && terrOwned(x) && x.adj.some(a => meta.terr[a].owner === 'e'));
-  if (frontier.length && TERRITORIES.filter(terrOwned).length >= 3) {
-    if (Math.random() < Math.min(0.30, hours * 0.05)) {
-      const v = frontier[randi(0, frontier.length - 1)];
-      meta.terr[v.id] = { owner: 'e', progress: 60 };   // partially defended — cheaper to retake
-      lostTerr = v.name;
-    } else if (hours >= 1 && Math.random() < 0.5) {
-      repelled = frontier[randi(0, frontier.length - 1)].name;
-    }
-  }
-  let lostName = null;
-  const chance = Math.min(CFG.afkLossCap, hours * CFG.afkLossPerHour);
-  const alive = meta.squad.filter(s => s.alive);
-  if (alive.length > 1 && Math.random() < chance) {
-    const v = alive[randi(0, alive.length - 1)];
-    v.alive = false; lostName = v.name; meta.fallen++;
-    addMemorial(v.name, v.kills, (t ? t.name : 'the line') + ' — while you were away');
-  }
-  return { hours, income, gain, conquered, lostName, lostTerr, repelled, front: t ? t.name : '' };
-}
 function showAwayModal(afk) {
   let lines = `<p class="amber">+${Math.round(afk.income)} REQ territory income</p>`;
   if (afk.conquered) lines += `<p class="gain">${afk.conquered} CONQUERED while you were away</p>`;
@@ -2753,102 +2652,11 @@ function nearestVisibleEnemy(x, y, maxD) {
 }
 
 // ---------- the hero: cover latch and the dive ----------
-function latch(s, ob) { s.coverRef = ob; s.autoCover = null; }
-function heroControl(s, spd, dt) {
-  if (s.dive) { updateDive(s, dt); return; }
-  const mv = moveVector(), moving = mv.x || mv.y;
-  if (s.horse) { s.coverRef = null; s.x += mv.x * spd * dt; s.y += mv.y * spd * dt; return; }
-  s.coverCd = Math.max(0, (s.coverCd || 0) - dt);
-  if (s.coverRef && !s.coverRef.building && !obstacles.includes(s.coverRef)) s.coverRef = null;
-  if (s.coverRef) {
-    coverPoint(s.coverRef, s.x, s.y, CP);
-    if (moving && mv.x * CP.nx + mv.y * CP.ny > 0.55) { s.coverRef = null; s.coverCd = 0.4; }   // step out
-    else {
-      if (moving) {   // shuffle along it
-        const tx = -CP.ny, ty = CP.nx, along = mv.x * tx + mv.y * ty;
-        s.x += tx * along * spd * 0.55 * dt; s.y += ty * along * spd * 0.55 * dt;
-        if (coverPoint(s.coverRef, s.x, s.y, CP).d > s.r + 26) { s.coverRef = null; s.coverCd = 0.3; }
-      }
-      if (s.coverRef) {   // stay pressed against it
-        coverPoint(s.coverRef, s.x, s.y, CP);
-        const k = Math.min(1, dt * 14), gap = s.r * 0.8 + 3 - CP.d;
-        s.x += CP.nx * gap * k; s.y += CP.ny * gap * k;
-      }
-      s.idleT = 0;
-      return;
-    }
-  }
-  if (moving) {
-    s.x += mv.x * spd * dt; s.y += mv.y * spd * dt;
-    s.idleT = 0; s.autoCover = null;
-    if (s.coverCd <= 0) {   // walking into cover (or a wall) latches onto it
-      const ob = coverNear(s, 5);
-      if (ob && mv.x * coverPoint(ob, s.x, s.y, CP).nx + mv.y * CP.ny < -0.35) latch(s, ob);
-    }
-    return;
-  }
-  s.idleT = (s.idleT || 0) + dt;
-  if (s.coverCd > 0 || !enemies.length) return;
-  if (!s.autoCover && s.idleT > 0.2) {   // standing still in a fight: slide to the nearest cover that faces the threat
-    const threat = nearestEnemy(s.x, s.y, 1200);
-    if (threat) {
-      let best = null, bd = 140;
-      const ur = s.r * 0.8 + 3;
-      for (const ob of obstacles) {
-        coverSpot(ob, threat.x, threat.y, ur, SPOT);
-        const d = Math.hypot(SPOT.x - s.x, SPOT.y - s.y);
-        if (d < bd && !spotBlocked(SPOT.x, SPOT.y, ur)) { bd = d; best = ob; }
-      }
-      if (best) { coverSpot(best, threat.x, threat.y, ur, SPOT); s.autoCover = { ob: best, x: SPOT.x, y: SPOT.y }; }
-      else s.idleT = -1.5;   // nothing close: look again shortly
-    }
-  }
-  const a = s.autoCover;
-  if (a) {
-    if (!obstacles.includes(a.ob)) { s.autoCover = null; return; }
-    const dx = a.x - s.x, dy = a.y - s.y, d = Math.hypot(dx, dy);
-    if (d < 8) latch(s, a.ob);
-    else { const st = Math.min(d, spd * 1.2 * dt); s.x += dx / d * st; s.y += dy / d * st; }
-  }
-}
-function heroDive() {   // Space / A: throw yourself behind the best cover in the direction you're moving
-  const s = soldiers[state.controlled];
-  if (screen !== 'battle' || state.mode !== 'play' || !s || !s.alive || s.dive || (s.diveCd || 0) > 0 || s.horse) return;
+function heroControl(s, spd, dt) {   // you move yourself: nothing latches, nothing crouches for you
   const mv = moveVector();
-  let dx = mv.x, dy = mv.y;
-  if (!dx && !dy) { dx = Math.sin(cam.yaw); dy = -Math.cos(cam.yaw); }
-  const threat = nearestEnemy(s.x, s.y, 1400) || { x: s.x + dx * 600, y: s.y + dy * 600 };
-  const ur = s.r * 0.8 + 3;
-  let best = null, bs = Infinity, tx = 0, ty = 0;
-  for (const ob of obstacles) {
-    if (ob === s.coverRef) continue;
-    coverSpot(ob, threat.x, threat.y, ur, SPOT);
-    const ox = SPOT.x - s.x, oy = SPOT.y - s.y, d = Math.hypot(ox, oy);
-    if (d < 50 || d > 380) continue;
-    const align = (ox * dx + oy * dy) / d;
-    if (align < 0.45 || spotBlocked(SPOT.x, SPOT.y, ur) || !clearRun(s.x, s.y, SPOT.x, SPOT.y, 6)) continue;
-    const score = d * (1.6 - align);
-    if (score < bs) { bs = score; best = ob; tx = SPOT.x; ty = SPOT.y; }
-  }
-  if (!best) { tx = clamp(s.x + dx * 170, 30, CFG.arenaW - 30); ty = clamp(s.y + dy * 170, 30, CFG.arenaH - 30); }   // a combat roll
-  const d = Math.hypot(tx - s.x, ty - s.y);
-  s.dive = { t: 0, dur: clamp(d / 620, 0.38, 0.62), x0: s.x, y0: s.y, x1: tx, y1: ty, ob: best };
-  s.coverRef = null; s.autoCover = null;
-  s.aim = Math.atan2(ty - s.y, tx - s.x);
-  cam.punch = Math.max(cam.punch, 0.05);
-  sfxDive();
-}
-function updateDive(s, dt) {
-  const D = s.dive;
-  D.t += dt;
-  const p = Math.min(1, D.t / D.dur), k = 1 - (1 - p) * (1 - p);
-  s.x = lerp(D.x0, D.x1, k); s.y = lerp(D.y0, D.y1, k);
-  s.aim = Math.atan2(D.y1 - D.y0, D.x1 - D.x0);
-  if (p < 1) return;
-  s.dive = null; s.diveCd = 0.8; s.idleT = 0;
-  cam.shake = Math.max(cam.shake, 4);
-  playBuf('fall:0', { gain: 0.35, rate: 1.2, force: true });
-  if (D.ob && obstacles.includes(D.ob)) latch(s, D.ob); else s.coverCd = 0.25;
+  s.coverRef = null;
+  if (mv.x || mv.y) { s.x += mv.x * spd * dt; s.y += mv.y * spd * dt; s.idleT = 0; }
+  else s.idleT = (s.idleT || 0) + dt;
 }
 
 // ---------- the squad pushes into the fight, cover to cover ----------
@@ -3217,6 +3025,11 @@ function battleUpdate(dt) {
     updateWaves(wdt);
     updateLock(dt);
     updateSoldiers(wdt);
+    for (const s of soldiers)   // squadmates walk back on once their reinforcement clock runs out
+      if (!s.alive && s.respawnT > 0 && s.slot !== state.controlled) {
+        s.respawnT -= wdt;
+        if (s.respawnT <= 0) respawnSoldier(s);
+      }
     updateEnemies(wdt);
     updateBullets(wdt);
     updateShells(wdt);
@@ -3226,29 +3039,16 @@ function battleUpdate(dt) {
     updatePickups(wdt);
   }
   updateFx(wdt);
-  if (state.mode === 'dying') {   // the death camera runs, then control moves on
+  if (state.mode === 'dying') {   // watch yourself go down, then a reinforcement puts you back on the line
     state.dyingT += dt;
-    if (state.dyingT >= CFG.deathCam) beginHandoff();
-  }
-  if (state.mode === 'handoff') {
-    const p = soldiers[state.pending];
-    if (!p || !p.alive) {   // the soldier we were cutting to died mid-cut: retarget the next one
-      state.pending = nextLiving(state.pending < 0 ? state.controlled : state.pending);
-      state.handoffT = Math.min(state.handoffT, CFG.handoffDur * 0.3);
-      if (state.pending < 0) beginFail();
-    }
-  }
-  if (state.mode === 'handoff') {
-    state.handoffT += dt;
-    if (state.handoffT >= CFG.handoffDur) {
-      state.controlled = state.pending; state.pending = -1;
-      const s = soldiers[state.controlled];
-      if (s && s.alive) s.invuln = CFG.spawnInvuln;
-      state.mode = 'play';
-      rosterDirty = true;
-      if (aliveSlots(-1).length === 1)                            // last one standing
-        say(voiceOfSlot(state.controlled), 'Just me. Just us, I mean. ...Come on, then.', 3);
-      else sayArch(state.controlled, 'possessed', 2);             // the Passenger settles in
+    if (state.dyingT >= CFG.deathCam) {
+      const me = soldiers[state.controlled];
+      if (me && me.respawnT > 0) {
+        respawnSoldier(me);
+        state.mode = 'play';
+        cam.snap = true;
+        sayArch(state.controlled, 'possessed', 2);
+      } else beginFail();
     }
   }
   if (state.mode === 'spectate') {
@@ -4217,7 +4017,7 @@ function drawSoldier(s, wdt, set) {
   else placeRoot(J, X, Z, r.yaw, pitch, 1, 1, 1, lift);
   const blink = s.invuln > 0 && Math.floor(s.invuln * 12) % 2 === 0;
   if (!blink) {
-    emitParts(J, soldierParts(key, meta.invest.armor > 0, isWrenCol(s.color)), r.pal, set);
+    emitParts(J, soldierParts(key, true, isWrenCol(s.color)), r.pal, set);
     if (s.reloadT > 0) {
       const rt = 1 - s.reloadT / s.reloadDur;
       if (rt > 0.26 && rt < 0.64) emitParts(J, magHandParts(), r.pal, set);
@@ -4309,7 +4109,7 @@ function drawBody(b, wdt, set) {   // a soldier's fall, continuing from the exac
   const pitch = poseDeath(J, t, b.style);
   smoothPose(r, J, wdt, 20);
   placeRoot(J, b.x * XS, b.y * XS, r.yaw, pitch, 1, 1, 1);
-  const parts = soldierParts(b.weapon || 'ar', meta.invest.armor > 0, isWrenCol(b.color)), dropped = t > 0.42;
+  const parts = soldierParts(b.weapon || 'ar', true, isWrenCol(b.color)), dropped = t > 0.42;
   emitParts(J, dropped ? noGun(parts) : parts, r.pal, set);
   if (dropped) emitGround(gunOnly(parts), r.pal, b.gunX, b.gunY, b.gunYaw, 1, set);
 }
@@ -4319,7 +4119,7 @@ let corpseSig = '', staticDirty = true;
 function corpseLook(c) {
   if (c.kind === 'soldier') {
     const slot = c.slot || 0;
-    return { parts: soldierParts(c.weapon || 'ar', meta.invest.armor > 0, isWrenCol(c.col)),
+    return { parts: soldierParts(c.weapon || 'ar', true, isWrenCol(c.col)),
       pal: soldierPalette(slot, c.col, helmFor(slot, c.col)), sc: [1, 1, 1] };
   }
   const look = ENEMY_LOOK[c.type] || ENEMY_LOOK.grunt;
@@ -5269,6 +5069,10 @@ function updateCamera3(dt) {
   cam.nudgeT = Math.max(0, cam.nudgeT - dt);
   FPV.adsK = approach(FPV.adsK, aim.ads && manualAim() ? 1 : 0, 12, dt);   // sights zoom in both views
   steerFromCursor(dt);
+  if (aim.settle > 0) {   // recoil recovery: the muzzle drifts back down once you stop firing
+    const d = Math.min(aim.settle, dt * (aim.fire ? 0.35 : 1.8));
+    aim.pitch -= d; aim.settle -= d;
+  }
   if (cam.nudgeT <= 0) cam.nudge = approach(cam.nudge, 0, 3, dt);
   const boss = state.bossRef;
   if (boss && boss !== C.bossSeen && state.mode === 'play') { C.bossSeen = boss; C.bossT = CFG.bossIntro; showTitleCard(boss); }   // waits out a handoff
@@ -5645,83 +5449,44 @@ function viewStats() {
 }
 
 // ============================================================ HUD / SCREENS (DOM)
-let rosterDirty = true, supportsDirty = true;
+let supportsDirty = true;
 const $ = id => document.getElementById(id);
 const el = {
-  frontlabel: $('frontlabel'), frontfill: $('frontfill'), roster: $('roster'),
-  meport: $('meport'), mename: $('mename'), meweap: $('meweap'), mehpfill: $('mehpfill'),
-  fallen: $('fallen'), banner: $('banner'), wavetag: $('wavetag'),
+  frontfill: $('frontfill'), mehpfill: $('mehpfill'), banner: $('banner'),
   modal: $('modal'), modalbox: $('modalbox'), hint: $('hint'),
   bhud: $('bhud'), mapscr: $('mapscr'), teamscr: $('teamscr'),
-  mapreq: $('mapreq'), teamreq: $('teamreq'), reqbattle: $('reqbattle'),
-  supports: $('supports'), mapsvg: $('mapsvg'), tpanel: $('tpanel'), afkbox: $('afkbox'),
-  theatertag: $('theatertag'),
-  frontname: $('frontlabel'), // battle title uses front label line
+  supports: $('supports'), mapsvg: $('mapsvg'), theatertag: $('theatertag'),
 };
 function showScreen(s) {
   screen = s;
   el.mapscr.classList.toggle('on', s === 'map');
   el.teamscr.classList.toggle('on', s === 'team');
-  $('memscr').classList.toggle('on', s === 'memorial');
   el.bhud.style.display = s === 'battle' ? 'block' : 'none';
   if (s === 'map') renderMap();
   if (s === 'team') renderTeam();
-  if (s === 'memorial') renderMemorial();
-}
-function renderMemorial() {
-  $('memcount').textContent = meta.fallen === 0 ? 'THEY HELD THE LINE' : `${meta.fallen} FALLEN — THEY HELD THE LINE`;
-  const list = $('memlist');
-  if (!meta.memorial.length) {
-    list.innerHTML = '<p class="sub">No one has fallen. Yet.</p>';
-    return;
-  }
-  list.innerHTML = meta.memorial.slice().reverse().map(m =>
-    `<div class="memrow"><b>${rankOf(m.k)} ${m.n}</b><span class="mk">${m.k} kills</span>` +
-    `<span class="mf">fell at ${m.f} · Theater ${ROMAN[m.th] || m.th + 1}</span></div>`).join('');
 }
 let hpRefs = [];
-function rebuildRoster() {
-  el.roster.innerHTML = '';
-  hpRefs = [];
-  soldiers.forEach((s, i) => {
-    const row = document.createElement('div');
-    row.className = 'rrow' + (s.alive ? '' : ' dead') + (i === state.controlled && s.alive ? ' ctl' : '');
-    const hpHtml = s.alive ? `<div class="rhp"><i style="width:${(s.hp / s.maxHp) * 100}%"></i></div>` : `<span class="kiatag">KIA</span>`;
-    row.innerHTML = `<div class="pport" style="background:${s.color}">${s.name[0]}</div><div class="rname">${s.name}${s.horse ? ' · ATV' : ''}${meta.squad[i].wren ? ' ✦' : ''}</div>${hpHtml}`;
-    el.roster.appendChild(row);
-    hpRefs.push(s.alive ? row.querySelector('.rhp i') : null);
+function rebuildSupports() {
+  const box = el.supports;
+  box.innerHTML = '';
+  KILLSTREAKS.forEach((ks, i) => {
+    const s = SUPPORTS[ks.key], have = state.earned[ks.key] || 0;
+    const b = document.createElement('button');
+    b.className = 'supbtn' + (have ? '' : ' locked');
+    b.disabled = !have;
+    b.innerHTML = `<span class="ckey">${i + 1}</span>${s.name}`
+      + (have ? `<span class="cnt">${have}</span>` : `<span class="need">${Math.max(0, ks.at - state.ks)}</span>`);
+    b.onclick = () => useSupport(ks.key);
+    box.appendChild(b);
   });
 }
-function rebuildSupports() {
-  el.supports.innerHTML = '';
-  for (const k of Object.keys(SUPPORTS)) {
-    const b = document.createElement('button');
-    b.className = 'supbtn';
-    b.disabled = !meta.inv[k];
-    b.innerHTML = `<span class="ckey">${SUPPORTS[k].key}</span>${SUPPORTS[k].name}<span class="cnt">${meta.inv[k]}</span>`;
-    b.onclick = () => useSupport(k);
-    el.supports.appendChild(b);
-  }
-}
 function updateBattleHud() {
-  const t = TERRITORIES[state.tid];
-  el.frontlabel.textContent = `${t.name.toUpperCase()} · TIER ${state.tier} — ${Math.floor(state.progress)}%`;
   el.frontfill.style.width = state.progress + '%';
-  const vis = visMul(), wx = WEATHER[state.weather] || WEATHER.clear;
-  el.wavetag.textContent = `WAVE ${state.wave} · ${todName()}` + (state.weather !== 'clear' ? ` · ${wx.label}` : '')
-    + (vis < 0.99 ? ` · SIGHT ${Math.round(vis * 100)}%` : '');
-  el.fallen.innerHTML = `<b>${meta.fallen}</b> FALLEN`;
-  el.reqbattle.textContent = `${Math.floor(meta.req)} REQ`;
-  if (rosterDirty) { rebuildRoster(); rosterDirty = false; }
+  $('killn').textContent = state.kills;
+  $('ticketn').textContent = state.tickets;
   if (supportsDirty) { rebuildSupports(); supportsDirty = false; }
-  soldiers.forEach((s, i) => { if (hpRefs[i] && s.alive) hpRefs[i].style.width = (s.hp / s.maxHp) * 100 + '%'; });
   const c = soldiers[state.controlled];
   if (c) {
-    const m = meta.squad[c.slot];
-    el.meport.textContent = c.name[0]; el.meport.style.background = c.color;
-    el.mename.textContent = rankOf(m.kills || 0) + ' ' + (c.alive ? c.name : c.name + ' †');
-    el.meweap.textContent = WEAPONS[c.weapon].name
-      + (c.horse ? ' · ATV' : '') + (c.alive && inCover(c) ? ' · IN COVER' : '');
     el.mehpfill.style.width = clamp(c.hp / c.maxHp, 0, 1) * 100 + '%';
     const am = $('ammo');
     $('ammag').textContent = c.pistol ? '∞' : c.mag;
@@ -5730,6 +5495,7 @@ function updateBattleHud() {
     am.classList.toggle('low', !c.pistol && c.mag <= WEAPONS[c.weapon].mag * 0.25);
     am.classList.toggle('reloading', c.reloadT > 0);
     if (c.reloadT > 0) $('ambar').firstChild.style.width = (1 - c.reloadT / c.reloadDur) * 100 + '%';
+    $('vitals').classList.toggle('hurt', c.alive && c.hp / c.maxHp < 0.4);
   }
   if (meta.opts.minimap && performance.now() - (OV.mapT || 0) > 100) { OV.mapT = performance.now(); drawMinimap(); }
   if (meta.opts.killfeed) updateFeed();
@@ -5803,10 +5569,10 @@ function applyOpts() {   // the options that change how the game looks and reads
   const ab = $('adsbtn');
   if (ab) ab.classList.toggle('on', aim.ads);
   el.hint.textContent = isTouch
-    ? (manualAim() ? 'LEFT THUMB MOVES · DRAG RIGHT TO LOOK · FIRE · ADS · A DIVES · TAP AMMO TO RELOAD'
-                   : 'LEFT THUMB MOVES · A DIVES · TAP AMMO TO RELOAD · TAP AN ENEMY TO LOCK ON')
-    : (manualAim() ? 'WASD MOVE · MOUSE AIMS (CLICK TO CAPTURE IT, ESC FREES; OTHERWISE STEER FROM THE EDGES) · CLICK FIRE · RIGHT-CLICK ADS · SPACE DIVE · R RELOAD · V VIEW'
-                   : 'WASD MOVE · SPACE DIVE · R RELOAD · TAB LOCK-ON · Q/E CAMERA · 1/2/3 SUPPORTS · V VIEW');
+    ? (manualAim() ? 'LEFT THUMB MOVES · DRAG RIGHT TO LOOK · FIRE · ADS · TAP AMMO TO RELOAD'
+                   : 'LEFT THUMB MOVES · TAP AMMO TO RELOAD · TAP AN ENEMY TO LOCK ON')
+    : (manualAim() ? 'WASD MOVE · MOUSE AIMS (CLICK TO CAPTURE IT, ESC FREES) · CLICK FIRE · RIGHT-CLICK ADS · R RELOAD · V VIEW'
+                   : 'WASD MOVE · R RELOAD · TAB LOCK-ON · Q/E CAMERA · 1/2/3 KILLSTREAKS · V VIEW');
   el.hint.style.opacity = 1;
   clearTimeout(applyOpts.t);
   applyOpts.t = setTimeout(() => { el.hint.style.opacity = 0; }, 6000);
@@ -5911,148 +5677,41 @@ function renderMap() {
     g.addEventListener('click', () => { selectedTid = t.id; renderMap(); });
     svg.appendChild(g);
   }
-  // territory panel
+  // deploy bar
   const t = TERRITORIES[selectedTid] || null;
+  const db = $('deploybtn');
   if (!t) {
-    el.tpanel.innerHTML = `<h3>TERRITORY</h3><p class="sub">Select a territory on the map. Green = held, red = attackable, gray = out of reach (take an adjacent territory first).</p>`;
+    $('terrname').textContent = 'SELECT A TERRITORY';
+    db.disabled = true; db.onclick = null;
   } else {
     const owned = terrOwned(t), atk = terrAttackable(t);
     const prog = meta.terr[t.id].progress;
-    el.tpanel.innerHTML = `
-      <h3>TERRITORY</h3>
-      <p style="font-size:15px;letter-spacing:2px">${t.name.toUpperCase()}</p>
-      <div class="statline"><span>Status</span><b>${owned ? 'HELD' : atk ? 'ATTACKABLE' : 'OUT OF REACH'}</b></div>
-      <div class="statline"><span>Difficulty</span><b>TIER ${effTier(t)}</b></div>
-      <div class="statline"><span>Income when held</span><span class="r">${Math.round(t.inc * incMul())} REQ/hr</span></div>
-      ${PERKS[t.id] ? `<div class="statline"><span>Perk${owned ? '' : ' (when held)'}</span><b${owned ? '' : ' style="color:#8b9179"'}>${PERKS[t.id]}</b></div>` : ''}
-      ${!owned ? `<div class="tprog"><i style="width:${prog}%"></i></div><div class="statline"><span>Front progress</span><b>${Math.floor(prog)}%</b></div>` : ''}
-      ${atk ? `<button class="navbtn" id="deploybtn" style="width:100%;margin-top:8px">⚔ DEPLOY — DIVE INTO BATTLE</button>` : ''}
-      ${owned && t.tier === 0 ? '<p class="sub">Home base. Never falls.</p>' : ''}`;
-    const db = $('deploybtn');
-    if (db) db.onclick = () => {
-      if (aliveCount() === 0) {
-        showModal(`<h2 class="lost">NO SQUAD LEFT</h2><p class="sub">Everyone is KIA. Call reinforcements to keep fighting.</p>
-          <button id="mbtn">▶ CALL REINFORCEMENTS<br><span class="sub">(watch ad)</span></button>`);
-        $('mbtn').onclick = () => playAd(() => { recruit(3); hideModal(); renderMap(); saveMeta(); });
-        return;
-      }
-      meta.activeTid = t.id;
-      saveMeta();
-      enterBattle(t.id);
-    };
+    $('terrname').textContent = `${t.name.toUpperCase()} · TIER ${effTier(t)}`
+      + (owned ? ' · HELD' : prog > 0 ? ` · ${Math.floor(prog)}%` : '') + (atk || owned ? '' : ' · OUT OF REACH');
+    db.disabled = !atk;
+    db.onclick = atk ? () => { meta.activeTid = t.id; saveMeta(); enterBattle(t.id); } : null;
   }
-  // afk box
-  const at = TERRITORIES[meta.activeTid];
-  const held = TERRITORIES.filter(tt => terrOwned(tt)).length;
-  el.afkbox.innerHTML = `
-    <h3>WAR EFFORT (RUNS WHILE YOU'RE AWAY)</h3>
-    <div class="statline"><span>Territories held</span><b>${held} / ${TERRITORIES.length}</b></div>
-    <div class="statline"><span>Territory income</span><span class="r">${Math.round(incomePerHour())} REQ/hr</span></div>
-    <div class="statline"><span>AFK front</span><b>${at && !terrOwned(at) ? at.name : '—'}</b></div>
-    <div class="statline"><span>AFK advance rate</span><b>${(CFG.afkPctPerSec * 3600).toFixed(0)}%/hr</b></div>
-    <div class="statline"><span>Offline cap</span><b>${CFG.afkCapHours}h</b></div>
-    <p class="sub" style="margin-top:8px">⚠ Frontier territories can fall to counterattack while you're away.</p>
-    ${meta.lastAway ? `<p class="sub" style="margin-top:8px">${meta.lastAway}</p>` : ''}
-    <p class="sub" style="margin-top:8px">Squad: ${aliveCount()}/8 · Fallen: ${meta.fallen} · ★${meta.commend || 0}</p>`;
 }
 
 // ---------- TEAM / ARMORY SCREEN ----------
 function renderTeam() {
-  const sq = $('squadlist');
-  sq.innerHTML = '';
-  meta.squad.forEach((m, i) => {
-    const row = document.createElement('div');
-    row.className = 'srow' + (m.alive ? '' : ' dead2');
-    const hp = CFG.baseHp + meta.invest.armor + (m.horse ? 1 : 0) + (hasPerk(9) ? 1 : 0) + (meta.unlocks.rations ? 1 : 0);
-    row.innerHTML = `
-      <div class="pport" style="background:${m.wren ? '#d9dbe4' : slotColor(i)}">${m.name[0]}</div>
-      <div class="nm">${rankOf(m.kills || 0)} ${m.name}${m.alive ? '' : ' <span class="kiatag">KIA</span>'}<small>${archOf(m).label} · ${hp} HP · ${m.kills || 0} kills</small></div>`;
-    const sel = document.createElement('select');
-    for (const k of WKEYS) {
-      const o = document.createElement('option');
-      o.value = k; o.textContent = WEAPONS[k].name;
-      if (m.weapon === k) o.selected = true;
-      sel.appendChild(o);
-    }
-    sel.disabled = !m.alive;
-    sel.onchange = () => { m.weapon = sel.value; saveMeta(); };
-    row.appendChild(sel);
-    const lab = document.createElement('label');
-    lab.className = 'hrs';
-    const cb = document.createElement('input');
-    cb.type = 'checkbox'; cb.checked = m.horse;
-    cb.disabled = !m.alive || (!m.horse && horsesAssigned() >= meta.invest.horses);
-    cb.onchange = () => { m.horse = cb.checked; saveMeta(); renderTeam(); };
-    lab.appendChild(cb); lab.appendChild(document.createTextNode('ATV'));
-    row.appendChild(lab);
-    sq.appendChild(row);
-  });
-  const wl = $('weaponlist');
-  wl.innerHTML = '';
+  const box = $('loadout');
+  box.innerHTML = '';
   for (const k of WKEYS) {
-    const w = WEAPONS[k];
-    const card = document.createElement('div');
-    card.className = 'wcard';
+    const w = WEAPONS[k], on = (meta.loadout || 'ar') === k;
+    const card = document.createElement('button');
+    card.className = 'wpick' + (on ? ' on' : '');
     card.innerHTML = `
-      <div class="wtop"><span>${w.name}</span><b>${squadDmg(k).toFixed(2)} DMG</b></div>
+      <div class="wtop"><span>${w.name}</span><b>${squadDmg(k).toFixed(1)} DMG</b></div>
       <div class="wstats">ROF ${(1 / w.cd).toFixed(1)}/s · RNG ${w.range} · MAG ${w.mag} · SPARE ${w.spare}${w.pierce ? ' · PIERCE ' + w.pierce : ''}${w.aoe ? ' · BLAST ' + w.aoe : ''}</div>`;
-    wl.appendChild(card);
-  }
-  const ar = $('armorylist');
-  ar.innerHTML = '';
-  for (const k of Object.keys(SUPPORTS)) {
-    const s = SUPPORTS[k];
-    const cost = Math.round(s.cost * priceMul());
-    const row = document.createElement('div');
-    row.className = 'buyrow';
-    row.innerHTML = `<div><b>${s.name}</b> × ${meta.inv[k]}<div class="d">${s.desc}</div></div>`;
-    const b = document.createElement('button');
-    b.className = 'buybtn cost'; b.textContent = `${cost}`;
-    b.disabled = meta.req < cost;
-    b.onclick = () => { if (meta.req >= cost) { meta.req -= cost; meta.inv[k]++; sfxBuy(); supportsDirty = true; saveMeta(); renderTeam(); } };
-    row.appendChild(b);
-    ar.appendChild(row);
-  }
-  const inv = $('investlist');
-  inv.innerHTML = '';
-  for (const k of Object.keys(INVESTMENTS)) {
-    const d = INVESTMENTS[k], lvl = meta.invest[k];
-    const maxed = lvl >= d.max;
-    const cost = maxed ? 0 : Math.round(d.cost(lvl) * priceMul());
-    const row = document.createElement('div');
-    row.className = 'buyrow';
-    row.innerHTML = `<div><b>${d.name}</b> ${k === 'horses' ? `× ${lvl}` : `LVL ${lvl}/${d.max}`}<div class="d">${d.desc}</div></div>`;
-    const b = document.createElement('button');
-    b.className = maxed ? 'buybtn' : 'buybtn cost';
-    b.textContent = maxed ? 'MAX' : `${cost}`;
-    b.disabled = maxed || meta.req < cost;
-    b.onclick = () => { if (!maxed && meta.req >= cost) { meta.req -= cost; meta.invest[k]++; sfxBuy(); saveMeta(); renderTeam(); } };
-    row.appendChild(b);
-    inv.appendChild(row);
-  }
-  const cm = $('commendlist');
-  $('comhead').textContent = `COMMENDATIONS ★${meta.commend || 0}`;
-  cm.innerHTML = '';
-  for (const k of Object.keys(UNLOCKS)) {
-    const u = UNLOCKS[k], owned = !!meta.unlocks[k];
-    const row = document.createElement('div');
-    row.className = 'buyrow';
-    row.innerHTML = `<div><b>${u.name}</b>${owned ? ' <span class="gain">ACTIVE</span>' : ''}<div class="d">${u.desc}</div></div>`;
-    const b = document.createElement('button');
-    b.className = 'buybtn';
-    b.textContent = owned ? 'OWNED' : 'UNLOCK ★1';
-    b.disabled = owned || (meta.commend || 0) < 1;
-    b.onclick = () => { if (!owned && meta.commend >= 1) { meta.commend--; meta.unlocks[k] = 1; sfxBuy(); saveMeta(); renderTeam(); } };
-    row.appendChild(b);
-    cm.appendChild(row);
+    card.onclick = () => { meta.loadout = k; saveMeta(); renderTeam(); };
+    box.appendChild(card);
   }
 }
 
 // nav buttons
 $('toteam').onclick = () => showScreen('team');
 $('backmap').onclick = () => showScreen('map');
-$('tomem').onclick = () => showScreen('memorial');
-$('memback').onclick = () => showScreen('map');
 {   // mobile lock button: tap to lock or cycle, hold to release
   const lb = $('lockbtn');
   let holdT = null, held = false;
@@ -6060,7 +5719,6 @@ $('memback').onclick = () => showScreen('map');
   lb.addEventListener('pointerup', () => { clearTimeout(holdT); if (!held) lockPress(); });
   lb.addEventListener('pointerleave', () => clearTimeout(holdT));
 }
-$('divebtn').addEventListener('pointerdown', e => { e.preventDefault(); heroDive(); });
 $('ammo').addEventListener('pointerdown', e => { e.preventDefault(); heroReload(); });
 bindHoldButton('firebtn', () => { aim.fire = true; }, () => { aim.fire = false; });
 $('adsbtn').addEventListener('pointerdown', e => { e.preventDefault(); aim.ads = !aim.ads; $('adsbtn').classList.toggle('on', aim.ads); });
@@ -6071,7 +5729,6 @@ $('tomap').onclick = () => { if (state.mode === 'play' || state.mode === 'failed
 // ============================================================ MAIN LOOP
 function tick(dt) {
   if (isPortrait) return;                    // held upright: everything waits for the rotate prompt
-  meta.req += incomePerHour() / 3600 * dt;   // online trickle income
   updateAudio(dt);
   updateComms(dt);
   if (state.streakT > 0) { state.streakT -= dt; if (state.streakT <= 0) state.streakN = 0; }
@@ -6087,15 +5744,13 @@ function frame(now) {
   tick(dt);
   if (screen === 'battle' && !isPortrait) { renderView(dt); updateBattleHud(); }   // nothing to draw behind the rotate prompt
   else {
-    el.mapreq.textContent = `${Math.floor(meta.req)} REQ`;
-    el.teamreq.textContent = `${Math.floor(meta.req)} REQ`;
   }
   requestAnimationFrame(frame);
 }
 
 // ============================================================ BOOT
 const afkResult = loadMeta();
-el.hint.textContent = isTouch ? 'LEFT THUMB MOVE · A DIVES · TAP AMMO TO RELOAD · TAP AN ENEMY TO LOCK ON' : 'WASD MOVE · SPACE DIVE · R RELOAD · TAB LOCK-ON · Q/E CAMERA · 1/2/3 SUPPORTS';
+el.hint.textContent = isTouch ? 'LEFT THUMB MOVE · TAP AMMO TO RELOAD' : 'WASD MOVE · R RELOAD · V VIEW';
 setTimeout(() => { el.hint.style.opacity = 0; }, 8000);
 showScreen('map');
 if (isTouch) document.body.classList.add('touch');
@@ -6111,7 +5766,7 @@ loadThree().then(() => { const g = document.getElementById('bootgl'); if (g) g.i
   const lines = [
     'Reading the war journal . . .',
     loadedFromSave
-      ? `Save found — Theater ${ROMAN[meta.theater] || meta.theater + 1} · ${meta.fallen} fallen`
+      ? `Save found — Theater ${ROMAN[meta.theater] || meta.theater + 1}`
       : 'No save found — a new campaign begins',
     () => '<span id="bootgl">' + glStatus() + '</span>',
     'Unfolding the operations map',
@@ -6143,7 +5798,7 @@ window.G = { state, meta, cam, CFG, WEAPONS, TERRITORIES,
   VIEW, stats: viewStats, frame(dt = 1 / 60) { renderView(dt); updateBattleHud(); },
   spawn(type, x, y) { spawnEnemy(type); const e = enemies[enemies.length - 1]; if (x != null) { e.x = x; e.y = y; } return e; },
   spawnMany(type, n) { for (let i = 0; i < n; i++) spawnEnemy(type); },
-  lock, lockPress, lockRelease, spawnBoss, visMul, rollSky, SFX, playBuf, heroDive, heroReload, startReload, destroyCover, navPath, TOWN,
+  lock, lockPress, lockRelease, spawnBoss, visMul, rollSky, SFX, playBuf, heroReload, startReload, destroyCover, navPath, TOWN,
   get pickups() { return pickups; },
   aim, applyOpts, showSettings, fpvActive, crosshairTarget,
   get buildings() { return buildings; }, get rubble() { return rubble; },
