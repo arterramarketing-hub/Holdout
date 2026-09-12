@@ -121,23 +121,13 @@
   RANKS & MEMORIAL — soldiers track kills (PVT/CPL 25/SGT 75/LT 150/CPT 300/MAJ 500); every death is
   recorded on the Memorial screen (name, rank, kills, front, theater; last 300 kept).
 
-  COMMENDATIONS — +1 ★ per theater secured; spend in the Armory on permanent unlocks: COMBAT RATIONS
-  (+1 HP), DEFENSE CONTRACTS (+50% all REQ), ARMORED COLUMN (+1 of every support ammo per conquest).
+  NO DIALOGUE — there is no radio chatter, no comm box, no personalities and no campaign story text.
+  Soldiers keep names (the kill feed uses them on desktop) and nothing else talks.
 
-  STORY — "THE PASSENGER": you are the thing that moves between bodies on handoff. Campaign beats
-  play as Star-Fox-style comm bubbles at the start of each territory (first theater only; the roll-call
-  beat at Velen Crossing reads real memorial names, the fireside beat at Kessel Heights uses the live
-  roster). Clearing Highwater Pass recruits CPL DANA WREN (silver, ✦, unique 'THE THIRD' voice); if she
-  dies, Anchor mourns her and she stays dead. The Warlord taunts at boss spawns; the finale at Enemy
-  Capital and the theater epilogue close the arc. Later theaters get one repeat-tour line, then pure
-  gameplay.
-
-  PERSONALITIES — every soldier has an archetype (VETERAN/ROOKIE/JOKER/BELIEVER/CYNIC/QUIET ONE/
-  PROTECTOR/BERSERKER; starting squad has one of each, recruits roll random). Lines are event-driven:
-  battle start, idle chatter (~every 25s), dying words, grief by name ("{name}?! NO—"), the Passenger
-  arriving on handoff, last-man-standing, low HP, 5-kill streaks, wave wipes, boss sightings, spotter/
-  mortar warnings, and support calls. Comm box: typewriter reveal, radio blip, priority queue (drama
-  flushes chatter), cooldowns per event type so it never spams.
+  TOUCH CONTROLS — Call of Duty Mobile layout: left thumb moves, right thumb looks, and the trigger is
+  duplicated on both sides so you can fire with whichever thumb is free — the left one matters when the
+  right is busy holding an aim. Flat translucent circles with glyphs: reticle to fire, scope for sights,
+  a reload that outlines red under a quarter magazine, and the lock-on ring in the auto scheme.
 
   MAP — 13 hand-authored territories in a Risk-style adjacency graph; attack any enemy territory adjacent
   to an owned one. Conquering flips it and adds its income. Conquering everything starts a new "theater":
@@ -284,16 +274,19 @@
     color:rgba(255,255,255,.94); background:rgba(16,20,28,.28); border:2px solid rgba(255,255,255,.5);
     box-shadow:0 0 0 1px rgba(0,0,0,.3); text-shadow:0 1px 2px rgba(0,0,0,.6); }
   .tbtn:active { background:rgba(255,255,255,.32); border-color:#fff; }
-  #firebtn { right:18px; bottom:92px; width:78px; height:78px; }
-  #firebtn span { position:absolute; inset:22px; border:2px solid rgba(255,255,255,.92); border-radius:50%; }
-  #firebtn::before, #firebtn::after { content:''; position:absolute; left:50%; width:2px; margin-left:-1px;
-    height:13px; background:rgba(255,255,255,.92); }
+  #firebtn { right:20px; bottom:26px; width:78px; height:78px; }
+  #firebtn2 { left:20px; bottom:150px; width:62px; height:62px; }   /* second trigger for the left thumb */
+  #firebtn span, #firebtn2 span { position:absolute; inset:22px; border:2px solid rgba(255,255,255,.92); border-radius:50%; }
+  #firebtn2 span { inset:17px; }
+  #firebtn::before, #firebtn::after, #firebtn2::before, #firebtn2::after { content:''; position:absolute; left:50%;
+    width:2px; margin-left:-1px; height:13px; background:rgba(255,255,255,.92); }
   #firebtn::before { top:11px; } #firebtn::after { bottom:11px; }
-  #adsbtn { right:112px; bottom:128px; width:54px; height:54px; font-size:19px; }
+  #firebtn2::before { top:8px; } #firebtn2::after { bottom:8px; height:10px; }
+  #adsbtn { right:112px; bottom:36px; width:54px; height:54px; font-size:19px; }
   #adsbtn.on { background:rgba(255,255,255,.5); border-color:#fff; color:#10151d; }
-  #reloadbtn { right:112px; bottom:58px; width:48px; height:48px; font-size:21px; }
+  #reloadbtn { right:30px; bottom:120px; width:48px; height:48px; font-size:21px; }
   #reloadbtn.warn { border-color:rgba(255,120,90,.9); color:#ff9a7a; }
-  body.touch.manual #firebtn, body.touch.manual #adsbtn { display:flex; }
+  body.touch.manual #firebtn, body.touch.manual #firebtn2, body.touch.manual #adsbtn { display:flex; }
   @media (min-width:900px) { body.touch #ammo { bottom:250px; } }   /* tablets: the ammo counter sits above the whole button stack */
   body.manual #lockbtn { display:none !important; }
   #tocfg { font-size:12px; padding:6px 11px; }
@@ -390,16 +383,6 @@
   .supbtn .cnt { position:absolute; top:-9px; right:-7px; min-width:21px; height:21px; padding:0 5px; border-radius:11px;
     display:flex; align-items:center; justify-content:center; background:var(--slate-solid); border:2px solid var(--gold);
     color:var(--gold); font-size:11px; font-weight:800; }
-
-  /* OoT-style dialogue box for radio comms */
-  #comm { left:50%; transform:translateX(-50%); bottom:70px; width:min(580px, 84vw); display:none; align-items:flex-start; gap:12px;
-    background:rgba(0,0,0,.74); border:2px solid rgba(255,255,255,.14); border-radius:18px; padding:10px 20px 12px 10px; }
-  #commport { width:42px; height:42px; flex:none; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    font-weight:800; font-size:17px; color:#1a1408; border:2px solid var(--gold); }
-  #commname { font-size:12px; letter-spacing:.06em; color:var(--gold); margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  #commtext { font-size:16px; line-height:1.4; color:#fff; min-height:22px; word-wrap:break-word; }
-  #comm.done #commtext::after { content:'▼'; display:inline-block; margin-left:8px; font-size:11px; color:var(--gold); animation:bob .6s ease-in-out infinite alternate; }
-  @keyframes bob { from { transform:translateY(-2px); } to { transform:translateY(2px); } }
 
   /* ---------- menu screens ---------- */
   .scr { position:fixed; inset:0; z-index:15; display:none; flex-direction:column; overflow:auto; touch-action:pan-y;
@@ -510,7 +493,7 @@
   #fpsbox { position:fixed; left:8px; top:96px; z-index:50; font:11px ui-monospace, Menlo, monospace; color:#fff; background:rgba(0,0,0,.55); padding:3px 6px; display:none; pointer-events:none; }
 
   @media (prefers-reduced-motion: reduce) {
-    #comm.done #commtext::after, #bootbox .boot-press, #titlecard.show .tc-name, #reticle.locked::after, #hurt.crit { animation:none; }
+    #bootbox .boot-press, #titlecard.show .tc-name, #reticle.locked::after, #hurt.crit { animation:none; }
   }
   @media (max-width:899px) {   /* compact HUD: phones, and any window too narrow for the spread-out layout */
     #frontwrap { left:8px; transform:none; width:calc(100vw - 150px); text-align:left; }
@@ -530,8 +513,6 @@
     #ammo { bottom:44px; right:8px; }
     #ammag, #amres { display:inline; vertical-align:baseline; } #ammag { font-size:20px; } #amres { font-size:11px; margin-left:4px; }
     #amname { display:none; } #ambar { width:56px; margin-top:2px; }
-    #comm { left:8px; transform:none; bottom:126px; width:min(250px, 64vw); padding:8px 12px 10px 8px; gap:8px; border-radius:14px; }
-    #commport { width:30px; height:30px; font-size:13px; } #commtext { font-size:12px; } #commname { font-size:10px; }
     #hint { top:auto; bottom:290px; width:90vw; text-align:center; font-size:11px; }   /* above the fire / ADS / dive buttons */
     #lockbtn { bottom:134px; right:8px; }
     .mhead h1 { font-size:19px; letter-spacing:.12em; }
@@ -554,15 +535,15 @@
     .supbtn { padding:2px 9px 2px 2px; font-size:8px; gap:4px; letter-spacing:.05em; border-width:1px; }
     .supbtn .ckey { width:16px; height:16px; font-size:9px; }
     .supbtn .cnt, .supbtn .need { min-width:14px; height:14px; font-size:8px; top:-6px; right:-5px; border-width:1px; padding:0 3px; }
-    #ammo { bottom:42px; right:76px; }
+    #ammo { bottom:64px; right:70px; }
     #ammag { font-size:15px; } #amres { font-size:9px; } #ambar { width:42px; height:3px; }
-    #firebtn { bottom:10px; right:8px; width:60px; height:60px; } #firebtn span { inset:17px; }
+    #firebtn { bottom:8px; right:8px; width:62px; height:62px; } #firebtn span { inset:18px; }
+    #firebtn2 { bottom:104px; left:8px; width:48px; height:48px; } #firebtn2 span { inset:13px; }
     #firebtn::before, #firebtn::after { height:10px; } #firebtn::before { top:8px; } #firebtn::after { bottom:8px; }
-    #adsbtn { bottom:78px; right:12px; width:42px; height:42px; font-size:15px; }
-    #reloadbtn { bottom:78px; right:62px; width:38px; height:38px; font-size:16px; }
-    #lockbtn { bottom:10px; right:8px; width:54px; height:54px; font-size:21px; }
-    #comm { bottom:116px; left:130px; transform:none; width:min(215px, 33vw); padding:5px 10px 6px 5px; gap:6px; border-radius:12px; }
-    #commport { width:22px; height:22px; font-size:10px; } #commtext { font-size:10px; } #commname { font-size:8px; }
+    #firebtn2::before, #firebtn2::after { height:8px; } #firebtn2::before { top:6px; } #firebtn2::after { bottom:6px; }
+    #adsbtn { bottom:12px; right:78px; width:44px; height:44px; font-size:15px; }
+    #reloadbtn { bottom:78px; right:14px; width:40px; height:40px; font-size:17px; }
+    #lockbtn { bottom:8px; right:8px; width:56px; height:56px; font-size:22px; }
     #bossbar { top:36px; left:50%; transform:translateX(-50%); width:min(210px, 30vw); }
     #bossname { font-size:8px; margin-bottom:2px; } #bosshp { height:7px; padding:1px; border-width:1px; }
   }
@@ -596,13 +577,10 @@
   <div class="hud" id="topbar"><button id="tomap">◂ MAP</button><button id="tocfg" title="Settings">⚙</button></div>
   <div class="hud" id="supports"></div>
   <button class="tbtn" id="lockbtn">◉</button>
+  <button class="tbtn" id="firebtn2"><span></span></button>
   <button class="tbtn" id="firebtn"><span></span></button>
   <button class="tbtn" id="adsbtn">◎</button>
   <button class="tbtn" id="reloadbtn">⟳</button>
-  <div class="hud" id="comm">
-    <div id="commport">?</div>
-    <div style="flex:1;min-width:0"><div id="commname">—</div><div id="commtext"></div></div>
-  </div>
 </div>
 
 <!-- ============ MAP SCREEN ============ -->
@@ -658,14 +636,17 @@ const CFG = {
 const TAU = Math.PI * 2;
 
 const WEAPONS = {
-  smg:    { name:'SMG',      cd:0.09, dmg:1, range:300, spread:0.09,  speed:2800,  len:13, mag:30,  reload:1.7, spare:5 },
-  ar:     { name:'AR',       cd:0.16, dmg:1, range:430, spread:0.04,  speed:3400,  len:19, mag:30,  reload:2.1, spare:5 },
-  lmg:    { name:'LMG',      cd:0.11, dmg:1, range:400, spread:0.07,  speed:3200,  len:23, mag:100, reload:4.2, spare:2, moveMul:0.85 },
-  sniper: { name:'SNIPER',   cd:1.05, dmg:4, range:720, spread:0.005, speed:5600, len:29, mag:5,   reload:2.9, spare:6, pierce:2 },
-  rocket: { name:'ROCKET',   cd:1.50, dmg:3, range:520, spread:0.02,  speed:900,  len:21, mag:1,   reload:2.6, spare:6, aoe:70 },
+  // `range` is how far the AI will engage from; `reach` is how far the round actually flies. They are
+  // separate because you can see clear across an 80 m town in first person, and a round that quietly
+  // expires at 10 m reads as the gun simply not registering.
+  smg:    { name:'SMG',      cd:0.09, dmg:1, range:300, reach:900,  spread:0.09,  speed:2800, len:13, mag:30,  reload:1.7, spare:5 },
+  ar:     { name:'AR',       cd:0.16, dmg:1, range:430, reach:1500, spread:0.04,  speed:3400, len:19, mag:30,  reload:2.1, spare:5 },
+  lmg:    { name:'LMG',      cd:0.11, dmg:1, range:400, reach:1400, spread:0.07,  speed:3200, len:23, mag:100, reload:4.2, spare:2, moveMul:0.85 },
+  sniper: { name:'SNIPER',   cd:1.05, dmg:4, range:720, reach:2600, spread:0.005, speed:5600, len:29, mag:5,   reload:2.9, spare:6, pierce:2 },
+  rocket: { name:'ROCKET',   cd:1.50, dmg:3, range:520, reach:1000, spread:0.02,  speed:900,  len:21, mag:1,   reload:2.6, spare:6, aoe:70 },
 };
 const WKEYS = Object.keys(WEAPONS);
-const SIDEARM = { name:'PISTOL', cd:0.3, dmg:0.7, range:280, spread:0.05, speed:2600, len:8 };   // bottomless, for when the rifle runs dry
+const SIDEARM = { name:'PISTOL', cd:0.3, dmg:0.7, range:280, reach:800, spread:0.05, speed:2600, len:8 };   // bottomless, for when the rifle runs dry
 
 const SUPPORTS = {
   napalm:    { name:'INCENDIARY', cost:120, desc:'Strike jet lays white phosphorus across the enemy push. Burns both sides.', key:'1' },
@@ -1587,255 +1568,7 @@ function sfxBreak(x, y, mat) {   // cover giving way: splintering wood, slumping
 }
 function sfxDive() { noise({ freq: 700, type: 'bandpass', q: 0.8, dur: 0.3, gain: 0.12, slide: -400, attack: 0.02 }); }
 
-// ============================================================ STORY — "THE PASSENGER"
-// You are the thing that moves between bodies when a soldier falls. Command's
-// radio (ANCHOR) narrates the campaign; the squad has personalities that react
-// to everything; at Highwater Pass you find Cpl. Dana Wren of the dead Third.
 const pickL = a => a[randi(0, a.length - 1)];
-const ARCH = {
-  vet: { label: 'VETERAN', lines: {
-    start: ['Same mud, different name on the map.', 'Check your feet, check your friends, in that order.'],
-    chatter: ['My third war. The rifles improve. Nothing else does.', 'Save your ammo for the ones that scream.', 'I knew this field when it grew wheat.'],
-    death: ['Huh. Thought it\'d... hurt more—', 'Finally. A lie-down.'],
-    grief: ['{name}\'s gone. Close the gap. Grieve at 100%.', 'Steady. {name} would want the line straight.'],
-    possessed: ['You again. Fine. My hands were shaking anyway.', 'Come in quiet, Passenger. I\'m working.'],
-    lowhp: ['I\'m leaking. Not stopping.'],
-    streak: ['Still got it.'],
-    wave: ['Quiet. Count your friends.'],
-    boss: ['Big lad. Aim for the pride.'],
-  } },
-  rook: { label: 'ROOKIE', lines: {
-    start: ['First to a hundred buys the rations, right? ...right?'],
-    chatter: ['My mum thinks I\'m a cook.', 'Is it always this loud?', 'I named my rifle. Is that stupid? Don\'t answer.'],
-    death: ['Oh no. Oh no no no—', 'Mum— I\'m sorry—'],
-    grief: ['{name}?! NO— no no NO—', 'They were JUST HERE—'],
-    possessed: ['Something\'s— okay. Okay okay okay. We\'re okay.', 'Cold hands. COLD HANDS. Moving now.'],
-    lowhp: ['I don\'t wanna find out what\'s next!'],
-    streak: ['Did you SEE that?! I did that! WE did that!'],
-    wave: ['We\'re alive! Everyone check — we\'re alive!'],
-    boss: ['That one\'s built like a barn. A MEAN barn.'],
-  } },
-  joker: { label: 'JOKER', lines: {
-    start: ['Lovely weather for a massacre.'],
-    chatter: ['After the war I\'m opening a bakery. Thermite croissants.', 'Enemy\'s punctual today. Respect.', 'Anyone else\'s horoscope say "avoid mortars"?'],
-    death: ['Rude... I had... material—', 'Tell the bakery... I tried—'],
-    grief: ['{name}—! That joke wasn\'t finished, come BACK—', 'Not funny. NOT FUNNY, {name}.'],
-    possessed: ['Ooh, tingly. Hello, ghost. Two drink minimum.', 'Great, I\'m haunted. Best day.'],
-    lowhp: ['I\'m at "funny limp" health.'],
-    streak: ['I\'d like to thank the academy—'],
-    wave: ['Aaand scene. Everyone bow.'],
-    boss: ['I\'m not fighting that. ...Fine. ONE punchline.'],
-  } },
-  zealot: { label: 'BELIEVER', lines: {
-    start: ['The Passenger walks with us. Stand tall.'],
-    chatter: ['It chooses the worthy. I keep my rifle clean for it.', 'The line is a prayer. Say it with your feet.', 'Fear is just faith pointed backward.'],
-    death: ['Take... someone better...', 'I was worthy... wasn\'t I—'],
-    grief: ['{name} is carried now. FORWARD.', 'Light keep you, {name}. We hold.'],
-    possessed: ['IT CHOSE ME. Watch— WATCH what we do.', 'I am the rifle now. Speak through me.'],
-    lowhp: ['Not yet. I\'m not FINISHED yet.'],
-    streak: ['THE PASSENGER SEES YOU.'],
-    wave: ['As promised. As PROMISED.'],
-    boss: ['A false god. Ours is angrier.'],
-  } },
-  cynic: { label: 'CYNIC', lines: {
-    start: ['Command says hold. Command\'s very brave from forty miles back.'],
-    chatter: ['They print medals faster than boots.', 'We\'re cheap. That crate isn\'t. Guess which we protect.', '"Progress: 40%." Forty percent of WHAT.'],
-    death: ['Figures... right on... schedule—', 'Put it... in a report—'],
-    grief: ['{name}\'s dead and some clerk is stamping a form. DAMN them.', 'It wasn\'t worth it. {name}, it wasn\'t—'],
-    possessed: ['Oh good, the thing. At least YOU show up.', 'Use me right, Passenger. Someone should.'],
-    lowhp: ['Medical\'s forty miles back too!'],
-    streak: ['Put THAT in the report.'],
-    wave: ['Hooray. Here comes the next form.'],
-    boss: ['Of course there\'s a bigger one. There ALWAYS is.'],
-  } },
-  stoic: { label: 'QUIET ONE', lines: {
-    start: ['Ready.'],
-    chatter: ['...', 'Wind\'s changed.', 'Later.'],
-    death: ['...oh.', 'Done.'],
-    grief: ['{name}.', '...no.'],
-    possessed: ['I know. Come in.', 'Mm.'],
-    lowhp: ['Hit.'],
-    streak: ['Good.'],
-    wave: ['Clear.'],
-    boss: ['Big. Focus.'],
-  } },
-  hen: { label: 'PROTECTOR', lines: {
-    start: ['Eyes up. Nobody wanders, nobody dies. That\'s the deal.'],
-    chatter: ['Rook, tighten that strap. Don\'t argue.', 'Everyone drink water. Yes, NOW.', 'I count eight. I like counting eight.'],
-    death: ['Watch each other... promise me—', 'Who\'s got... the rookie—'],
-    grief: ['{name}!! I COUNT US— that\'s MY job—', 'NO. Not {name}. Not on my watch—'],
-    possessed: ['If you\'re driving, keep them safe. Both hands.', 'Fine. But we protect them. Say it.'],
-    lowhp: ['I\'m fine. WORRY ABOUT THE LINE.'],
-    streak: ['That\'s how we keep eight!'],
-    wave: ['Count off! Everyone count!'],
-    boss: ['Nobody duels it alone. NOBODY.'],
-  } },
-  wild: { label: 'BERSERKER', lines: {
-    start: ['Wake the guns. WAKE THE GUNS.'],
-    chatter: ['I can hear my heartbeat. It\'s LAUGHING.', 'Everything\'s fun if you\'re loud enough.', 'They should fear this field. This field is ME.'],
-    death: ['WHAT A WAY— TO—', 'More... I wanted... MORE—'],
-    grief: ['{name}!!! I\'LL EAT THEIR WHOLE ARMY—', '{name}, this one\'s yours! ALL of them are yours!'],
-    possessed: ['YES. YES. Drive FAST.', 'You picked the right body. GO.'],
-    lowhp: ['BLOOD\'S JUST APPLAUSE.'],
-    streak: ['MORE. FEED ME MORE.'],
-    wave: ['WHO\'S NEXT?! ...aw.'],
-    boss: ['FINALLY. A MAIN COURSE.'],
-  } },
-  legacy: { label: 'THE THIRD', lines: {   // Cpl. Dana Wren only
-    start: ['Third Company died so I\'d stand here. Watch what they bought.'],
-    chatter: ['The Colonel writes weekly. I answer in kills.', 'The 3rd held two days with no shells. I held their hands after.', 'Don\'t call me "the Colonel\'s kid." The 3rd called me Dana.'],
-    death: ['Tell my father... the 3rd kept me... after all—'],
-    grief: ['{name}— I know how this grief goes. I\'ll carry it. FIGHT.'],
-    possessed: ['So you\'re what held the Pass. ...Thank you. Now work.'],
-    lowhp: ['I\'ve bled worse for less.'],
-    streak: ['For the Third.'],
-    wave: ['Still standing. That\'s for you, Third.'],
-    boss: ['You\'re not the biggest thing I\'ve survived.'],
-  } },
-};
-const ARCH_KEYS = ['vet', 'rook', 'joker', 'zealot', 'cynic', 'stoic', 'hen', 'wild'];
-const archOf = m => ARCH[m.arch] || ARCH.vet;
-const VOICE_ANCHOR  = { name: 'ANCHOR', tag: 'COMMAND RADIO', color: '#5c7233', init: 'A', tcol: '#cfd6c3' };
-const VOICE_WARLORD = { name: 'UNKNOWN', tag: 'INTERCEPTED SIGNAL', color: '#6e2438', init: 'W', tcol: '#e08a8a' };
-function voiceOfSlot(i) {
-  const m = meta.squad[i];
-  return { name: rankOf(m.kills || 0) + ' ' + m.name, tag: archOf(m).label,
-    color: m.wren ? '#d9dbe4' : slotColor(i), init: m.name[0], tcol: '#e4e8d8' };
-}
-function aliveSlots(excl) {
-  const r = [];
-  meta.squad.forEach((m, i) => { if (m.alive && i !== excl) r.push(i); });
-  return r;
-}
-const fmtL = (s, ctx) => s.replace(/\{name\}/g, ctx && ctx.name || '');
-// --- comm queue (Star-Fox-style talking heads) ---
-const comms = { queue: [], active: null, shown: 0, hold: 0, cds: {}, idle: 14 };
-function say(voice, text, pri = 1) {
-  if (!voice || !text) return;
-  if (pri >= 3) comms.queue = comms.queue.filter(m => m.pri >= 2);   // drama flushes chatter
-  else if (comms.queue.length >= 4) return;
-  comms.queue.push({ voice, text: String(text), pri });
-  if (comms.queue.length > 6) {
-    const i = comms.queue.findIndex(m => m.pri <= 1);
-    comms.queue.splice(i >= 0 ? i : 0, 1);   // drop chatter first, else the oldest — never the newest
-  }
-}
-function sayArch(slot, ev, pri, ctx) {
-  const m = meta.squad[slot]; if (!m || !m.alive && ev !== 'death') return;
-  const pool = archOf(m).lines[ev];
-  if (pool) say(voiceOfSlot(slot), fmtL(pickL(pool), ctx), pri);
-}
-function sayEvent(cat, cd, fn) {   // cooldown-gated
-  if (comms.cds[cat] > 0) return;
-  comms.cds[cat] = cd;
-  fn();
-}
-function updateComms(dt) {
-  for (const k in comms.cds) comms.cds[k] = Math.max(0, comms.cds[k] - dt);
-  const box = $('comm');
-  if (screen !== 'battle') { box.style.display = 'none'; return; }
-  if (comms.active) {
-    comms.shown += dt * 52;
-    const full = comms.shown >= comms.active.text.length;
-    if (full) comms.hold -= dt;
-    $('commtext').textContent = comms.active.text.slice(0, Math.ceil(comms.shown));
-    box.classList.toggle('done', full);
-    if (full && comms.hold <= 0) { comms.active = null; box.style.display = 'none'; }
-  } else if (comms.queue.length) {
-    comms.active = comms.queue.shift();
-    comms.shown = 0;
-    comms.hold = 1.3 + comms.active.text.length * 0.028;
-    const v = comms.active.voice;
-    $('commport').textContent = v.init; $('commport').style.background = v.color;
-    $('commname').textContent = v.name + ' · ' + v.tag;
-    $('commtext').style.color = v.tcol;
-    $('commtext').textContent = '';
-    box.style.display = 'flex';
-    box.classList.remove('done');
-    beep(1180, 0.04, 'square', 0.02, 200);   // radio blip
-  } else if (state.mode === 'play') {
-    comms.idle -= dt;
-    if (comms.idle <= 0) {
-      comms.idle = rand(20, 34);
-      const a = aliveSlots(-1);
-      if (a.length) sayArch(pickL(a), 'chatter', 1);
-    }
-  }
-}
-// --- campaign briefings, one per territory (first theater tells the arc) ---
-function briefingFor(tid) {
-  const A = t => ({ v: VOICE_ANCHOR, t }), W = t => ({ v: VOICE_WARLORD, t });
-  const S = t => { const a = aliveSlots(-1); return { v: a.length ? voiceOfSlot(pickL(a)) : VOICE_ANCHOR, t }; };
-  switch (tid) {
-    case 1: return [
-      A('Ninth Company, this is Anchor. The line broke at dawn. Everyone who could run, ran.'),
-      A('Forward post reports one rifle in Miller Fields still firing. That would be you.'),
-      A('I don\'t know which of you I\'m talking to anymore. Hold anyway.')];
-    case 2: return [
-      A('Yesterday our best shot was one soldier. Today it\'s whoever stood up where they fell.'),
-      A('Command has questions about you, Ninth. I\'ve stopped writing my answers down.')];
-    case 3: return [
-      S('You\'ve felt it too. When one of us drops, something... steps across.'),
-      S('The old hands call it the Passenger. Don\'t name it while it\'s IN somebody.'),
-      A('The men have a word for whatever you are. It stays off the reports. Take Saint Rennes.')];
-    case 4: return [
-      A('New orders in the packet. Colonel Wren\'s child — Corporal Dana Wren, Third Company.'),
-      A('The Third stopped answering at Highwater Pass ten days ago. If anyone crawled out, they\'re ahead of you.'),
-      A('Ridge first. Eyes open after.')];
-    case 5: return [
-      A('We caught enemy radio in the clear. Translating what didn\'t scream:'),
-      W('...it walks in ours as well... when the line thins... keep firing... keep firi—'),
-      A('So. They have one too. Take the marsh.')];
-    case 6: {
-      const roll = meta.squad.slice(0, 3).map(m => rankOf(m.kills || 0) + ' ' + m.name).join('. ');
-      return [
-        A('Command wants the roll of the fallen read on open channel. For morale.'),
-        A(roll ? roll + '.' : 'No names on the roll yet. That won\'t last.'),
-        A('I\'ve run out of ways to say sorry. Cross the river.')];
-    }
-    case 7: return [
-      A('This is where the Third went quiet.'),
-      A('If Wren\'s alive, they\'ve held a dead position for two weeks. Bring the Pass home either way.')];
-    case 8: return [
-      A('The recruits sleep fine now. They say "the Passenger keeps the watch."'),
-      A('They stopped being afraid of you, Ninth. That\'s the part that scares me.')];
-    case 9: return [
-      W('PASSENGER. YES. WE NAME YOU TOO.'),
-      W('OURS IS OLDER. OURS IS HUNGRIER. REDMARSH WILL INTRODUCE YOU.'),
-      A('...You heard it. First time it\'s spoken TO us. Redmarsh, carefully.')];
-    case 10: return [
-      A('Two territories left. I keep drafting the victory announcement and deleting your names.'),
-      A('Whoever you\'re wearing when this ends — try to make it someone kind.')];
-    case 11: {
-      const msgs = [A('Last camp before the Capital. I\'ll keep the channel open tonight.')];
-      aliveSlots(-1).slice(0, 3).forEach(i => msgs.push({ v: voiceOfSlot(i), t: pickL(archOf(meta.squad[i]).lines.chatter) }));
-      return msgs;
-    }
-    case 12: return [
-      W('COME, RIDER OF THE NINTH. LET THE TWO OF US FINISH WHAT THE BODIES STARTED.'),
-      A('All stations, this is Anchor. No reinforcements are coming — you never needed them.'),
-      A('It was always just you. Bring my company home.')];
-  }
-  return null;
-}
-function queueStory() {   // called on battle entry
-  comms.queue = []; comms.active = null; comms.idle = 12;
-  if (meta.theater === 0 && !meta.story.seen[state.tid]) {
-    const b = briefingFor(state.tid);
-    if (b) { b.forEach(m => say(m.v, m.t, 3)); meta.story.seen[state.tid] = true; saveMeta(); return; }
-  }
-  if (meta.theater > 0 && meta.story.seenTheater !== meta.theater) {
-    meta.story.seenTheater = meta.theater;
-    say(VOICE_ANCHOR, 'Different mud. Same names on new maps. You\'re still here. So am I. Hold.', 3);
-    saveMeta(); return;
-  }
-  const a = aliveSlots(-1);
-  if (a.length && Math.random() < 0.7) sayArch(pickL(a), 'start', 2);
-}
-const WARLORD_TAUNTS = [
-  'YOUR CARRIER IS BORROWED, PASSENGER. MINE WAS BUILT.',
-  'I CAN SMELL THE SEAMS ON YOUR SOLDIER.',
-  'EIGHT LITTLE DOORS. I WILL CLOSE THEM ALL.'];
 const WARLORD_EPITHETS = ['Carrier of the Other', 'Eater of Lines', 'The Borrowed Crown', 'Breaker of the Ninth', 'Mouth of the Hungry Passenger'];
 
 // ============================================================ INPUT
@@ -1978,13 +1711,16 @@ const look = { id: -1, x: 0, y: 0 };   // the thumb that aims
 function bindHoldButton(id, down, up) {
   const b = $(id);
   if (!b) return;
-  b.addEventListener('pointerdown', e => { e.preventDefault(); b.setPointerCapture(e.pointerId); look.x = e.clientX; look.y = e.clientY; down(); });
+  b.addEventListener('pointerdown', e => {
+    e.preventDefault(); look.x = e.clientX; look.y = e.clientY; down();   // act first: capture is a nicety
+    try { b.setPointerCapture(e.pointerId); } catch (err) {}
+  });
   b.addEventListener('pointermove', e => {   // dragging off the button still steers the camera
     if (!b.hasPointerCapture(e.pointerId)) return;
     addLook(e.clientX - look.x, e.clientY - look.y, 0.006);
     look.x = e.clientX; look.y = e.clientY;
   });
-  const end = e => { if (b.hasPointerCapture(e.pointerId)) b.releasePointerCapture(e.pointerId); up(); };
+  const end = e => { try { if (b.hasPointerCapture(e.pointerId)) b.releasePointerCapture(e.pointerId); } catch (err) {} up(); };
   b.addEventListener('pointerup', end);
   b.addEventListener('pointercancel', end);
 }
@@ -2053,8 +1789,6 @@ function spawnEnemy(type) {
   if (t.spotter && !state.spotterSeen) {
     state.spotterSeen = true;
     showBanner('ENEMY SPOTTER — PRIORITY TARGET');
-    const a = aliveSlots(-1);
-    if (a.length) say(voiceOfSlot(pickL(a)), 'Spotter in the back field! Kill it or keep dancing!', 2);
   }
 }
 function spawnBoss() {
@@ -2070,9 +1804,6 @@ function spawnBoss() {
   e.epithet = pickL(WARLORD_EPITHETS);
   state.slow = CFG.bossIntro;   // the world crawls while the title card plays
   noise({ freq: 70, dur: 1.4, gain: 0.2, type: 'lowpass', q: 0.5, attack: 0.1 });
-  say(VOICE_WARLORD, pickL(WARLORD_TAUNTS), 3);
-  const wit = aliveSlots(-1);
-  if (wit.length) sayArch(pickL(wit), 'boss', 2);
 }
 function pickType() {
   const r = Math.random();
@@ -2144,7 +1875,7 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   const mz = (s.pistol ? SIDEARM.len : w.len) + 6;   // the barrel tip: where the round actually leaves the weapon
   bullets.push({ x: s.x + Math.cos(a) * mz, y: s.y + Math.sin(a) * mz,
     vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed,
-    life: w.range / w.speed, age: 0, fromPlayer, wkey: key, slot: s.slot,
+    life: (w.reach || w.range) / w.speed, age: 0, fromPlayer, wkey: key, slot: s.slot,
     dmg: s.pistol ? SIDEARM.dmg : squadDmg(s.weapon), hits: 0, maxHits: w.pierce || 1, aoe: w.aoe || 0, skip: coverNear(s, 34) });
   const mx = s.x + Math.cos(a) * mz, my = s.y + Math.sin(a) * mz;
   particles.push({ x: mx, y: my, z: 15, vx: 0, vy: 0, vz: 0, life: 0.04, max: 0.04, col: '#fff0b8', r: 3.4 });
@@ -2190,20 +1921,16 @@ function killEnemy(idx, credit) {
     awardStreak();
     state.streakN = (state.streakT > 0 ? state.streakN : 0) + 1;   // kill streak chatter
     state.streakT = 3.5;
-    if (state.streakN === 5) sayEvent('streak', 15, () => sayArch(state.controlled, 'streak', 2));
   }
   if (e.boss) {
     state.bossRef = null;
     showBanner(e.name + ' DOWN');
     explode(e.x, e.y, 90, 0, 0, credit);
-    say(VOICE_ANCHOR, 'Warlord down. ...It\'s quiet. Move while it\'s quiet.', 3);
     state.progress = 100;
   }
   // wave wiped out — a short slow-motion beat to savor it
   if (!enemies.length && state.slowCd <= 0 && state.wave >= 2 && (state.mode === 'play' || state.mode === 'handoff')) {
     state.slow = 0.5; state.slowCd = 10; cam.punch = 0.12;
-    const a = aliveSlots(-1);
-    if (a.length) sayEvent('wave', 12, () => sayArch(pickL(a), 'wave', 1));
   }
   if (state.progress >= 100) frontCleared();
 }
@@ -2238,7 +1965,6 @@ function addCorpse(c) {
 }
 function damageSoldier(s, dmg, quiet) {
   if (!s.alive || s.invuln > 0) return;
-  if (s.dive) dmg *= 0.3;   // mid-dive is hard to hit
   s.hp -= dmg; s.regenCd = CFG.regenDelay;
   if (!quiet) {
     burst(s.x, s.y, '#a03028', 5, 14);
@@ -2249,8 +1975,6 @@ function damageSoldier(s, dmg, quiet) {
       if (DMGDIR.length > 3) DMGDIR.shift();
     }
   }
-  if (s.hp > 0 && s.slot === state.controlled && s.hp / s.maxHp < 0.35)
-    sayEvent('lowhp', 18, () => sayArch(s.slot, 'lowhp', 2));
   if (s.hp <= 0) killSoldier(s);
 }
 function killSoldier(s) {
@@ -2267,10 +1991,6 @@ function killSoldier(s) {
   sfxKia();
   s.coverRef = null; s.dive = null; s.path = null; s.tgt = null;
   if (state.tickets > 0) { state.tickets--; s.respawnT = CFG.respawn; }   // a reinforcement takes their place
-  sayArch(s.slot, 'death', 3);                                   // dying words
-  const grievers = aliveSlots(s.slot);
-  if (grievers.length) sayArch(pickL(grievers), 'grief', 3, { name: s.name });
-  if (meta.squad[s.slot].wren) say(VOICE_ANCHOR, '...Wren\'s down. Get her back on her feet.', 3);
   if (s.slot === state.controlled) {
     state.ks = 0;                                                // your streak dies with you
     buzz(60);
@@ -2326,12 +2046,6 @@ function useSupport(k) {
   if (screen !== 'battle' || state.mode !== 'play' || !state.earned[k]) return;
   state.earned[k]--;
   const c = enemyCluster();
-  const SUPPORT_LINES = {
-    napalm: 'Willy Pete inbound! The jet\'s lighting up their line — HEADS DOWN.',
-    artillery: 'Fire mission, danger close! If it whistles, it\'s ours!',
-    supply: 'Crate inbound. Patch up and get back on the line.',
-  };
-  say(voiceOfSlot(state.controlled), SUPPORT_LINES[k], 2);
   if (k === 'napalm') {
     showBanner('INCENDIARY STRIKE INBOUND'); sfxJet();
     state.flyby = { x: c.x, y: c.y, t0: state.frontTime };
@@ -2460,7 +2174,6 @@ function enterBattle(tid) {
   state.kills = 0; state.ks = 0; state.tickets = CFG.tickets;
   state.earned = { napalm: 0, artillery: 0, supply: 0 };
   showScreen('battle');
-  queueStory();
   if (first < 0) showFailModal();
 }
 function exitBattle() {
@@ -2538,7 +2251,6 @@ function loadMeta() {
     const optsV = save.opts && save.opts.v;   // read the SAVED version: Object.assign fills v from the defaults
     meta.opts = Object.assign(freshOpts(), save.opts || {});
     if (!optsV) { meta.opts.v = 2; meta.opts.fpv = true; meta.opts.scheme = 'manual'; }   // first person is the default now
-    for (const m of meta.squad) if (!m.arch) m.arch = pickL(ARCH_KEYS);   // migrate pre-story saves
     return null;
   }
   meta = freshMeta();
@@ -2937,7 +2649,6 @@ function spotterAI(e, t, dt, d) {   // hides well back behind cover and walks mo
     e.spotCd = rand(5.5, 7) * (hasPerk(5) ? 1.25 : 1);
     shells.push({ kind: 'mortar', x: t.x + rand(-70, 70), y: t.y + rand(-55, 55), t: 1.5 });
     sfxIncoming();
-    sayEvent('mortar', 16, () => { if (t.slot != null) say(voiceOfSlot(t.slot), 'INCOMING—! Ears down!', 2); });
   }
 }
 function inCover(o) { return !!coverNear(o, 18); }   // hugging cover or a wall: ranged damage reduction
@@ -3065,7 +2776,6 @@ function battleUpdate(dt) {
         respawnSoldier(me);
         state.mode = 'play';
         cam.snap = true;
-        sayArch(state.controlled, 'possessed', 2);
       } else beginFail();
     }
   }
@@ -5764,6 +5474,15 @@ $('backmap').onclick = () => showScreen('map');
 }
 $('ammo').addEventListener('pointerdown', e => { e.preventDefault(); heroReload(); });
 bindHoldButton('firebtn', () => { aim.fire = true; }, () => { aim.fire = false; });
+(function leftTrigger(id) {   // the left-thumb trigger only fires; looking stays with the right thumb
+  const b = $(id); if (!b) return;
+  b.addEventListener('pointerdown', e => {
+    e.preventDefault(); aim.fire = true;
+    try { b.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  const end = e => { try { if (b.hasPointerCapture(e.pointerId)) b.releasePointerCapture(e.pointerId); } catch (err) {} aim.fire = false; };
+  b.addEventListener('pointerup', end); b.addEventListener('pointercancel', end);
+})('firebtn2');
 $('adsbtn').addEventListener('pointerdown', e => { e.preventDefault(); aim.ads = !aim.ads; $('adsbtn').classList.toggle('on', aim.ads); });
 $('reloadbtn').addEventListener('pointerdown', e => { e.preventDefault(); heroReload(); });
 $('tosettings').onclick = showSettings;
@@ -5774,7 +5493,6 @@ $('tomap').onclick = () => { if (state.mode === 'play' || state.mode === 'failed
 function tick(dt) {
   if (isPortrait) return;                    // held upright: everything waits for the rotate prompt
   updateAudio(dt);
-  updateComms(dt);
   if (state.streakT > 0) { state.streakT -= dt; if (state.streakT <= 0) state.streakN = 0; }
   if (screen === 'battle') battleUpdate(dt);
   state.saveT += dt;
