@@ -210,8 +210,11 @@
   that swells with enemy count, far artillery, distant firefights, radio squelch, rain. AI squad fire
   is thinned 45%. 'M' mutes everything via the master bus.
 
-  BULLETS — rounds fly 2800–5600 px/s (rockets 900, enemy rifles 1500, Warlord burst 650) and move in
-  ≤10 px sub-steps so they can't tunnel through bodies; tracers are thin streaks trailing each round.
+  BULLETS — squad rounds fly 4200–8400 px/s (105–210 m/s; rockets 900, enemy rifles 1500, Warlord burst
+  650) and move in ≤10 px sub-steps so they can't tunnel through bodies. A round is not a bar of light:
+  most are only a faint short whip of disturbed air; every third squad round, every other enemy round,
+  every .50 and every rocket is a TRACER — a hot head with a short tail (0.7–1.15 m) that thins and dims
+  behind it, amber for the squad, red for the enemy. Your own rounds start at the barrel you can see.
 
   ANIMATION — every joint eases toward its target pose (no popping between run, aim, kneel, swing and
   death); stride phase comes from real distance moved (no foot sliding); legs face the movement while
@@ -700,10 +703,10 @@ const WEAPONS = {
   // `range` is how far the AI will engage from; `reach` is how far the round actually flies. They are
   // separate because you can see clear across an 80 m town in first person, and a round that quietly
   // expires at 10 m reads as the gun simply not registering.
-  smg:    { name:'UMP45',        cd:0.09, dmg:1, range:300, reach:900,  spread:0.09,  speed:2800, len:13, mag:32,  ext:48,  reload:1.7, spare:5 },
-  ar:     { name:'M4A1',         cd:0.16, dmg:1, range:430, reach:1500, spread:0.04,  speed:3400, len:19, mag:30,  ext:45,  reload:2.1, spare:5 },
-  lmg:    { name:'M249 SAW',     cd:0.11, dmg:1, range:400, reach:1400, spread:0.07,  speed:3200, len:23, mag:100, ext:200, reload:4.2, spare:2, moveMul:0.85 },
-  sniper: { name:'INTERVENTION', cd:1.05, dmg:4, range:720, reach:2600, spread:0.005, speed:5600, len:29, mag:5,   ext:8,   reload:2.9, spare:6, pierce:2 },
+  smg:    { name:'UMP45',        cd:0.09, dmg:1, range:300, reach:900,  spread:0.09,  speed:4200, len:13, mag:32,  ext:48,  reload:1.7, spare:5 },
+  ar:     { name:'M4A1',         cd:0.16, dmg:1, range:430, reach:1500, spread:0.04,  speed:5100, len:19, mag:30,  ext:45,  reload:2.1, spare:5 },
+  lmg:    { name:'M249 SAW',     cd:0.11, dmg:1, range:400, reach:1400, spread:0.07,  speed:4800, len:23, mag:100, ext:200, reload:4.2, spare:2, moveMul:0.85 },
+  sniper: { name:'INTERVENTION', cd:1.05, dmg:4, range:720, reach:2600, spread:0.005, speed:8400, len:29, mag:5,   ext:8,   reload:2.9, spare:6, pierce:2 },
   rocket: { name:'ROCKET',   cd:1.50, dmg:3, range:520, reach:1000, spread:0.02,  speed:900,  len:21, mag:1,   reload:2.6, spare:6, aoe:70 },
 };
 const WKEYS = Object.keys(WEAPONS);
@@ -730,7 +733,7 @@ const magCap = s => { const w = WEAPONS[s.weapon]; return s.ext && w.ext ? w.ext
 const heroSight = () => { const s = soldiers[state.controlled]; return s && !s.pistol && SIGHTS[s.sight] ? SIGHTS[s.sight] : SIGHTS.iron; };
 const heroZoom = () => fpvActive() ? heroSight().zoom : Math.min(heroSight().zoom, 1.45);   // over the shoulder a 4x would be absurd
 const adsSens = () => clamp(0.8 / heroZoom(), 0.13, 0.66);   // look speed comes down with the magnification (0.55 on irons)
-const SIDEARM = { name:'PISTOL', cd:0.3, dmg:0.7, range:280, reach:800, spread:0.05, speed:2600, len:8 };   // bottomless, for when the rifle runs dry
+const SIDEARM = { name:'PISTOL', cd:0.3, dmg:0.7, range:280, reach:800, spread:0.05, speed:3900, len:8 };   // bottomless, for when the rifle runs dry
 
 const SUPPORTS = {
   napalm:    { name:'INCENDIARY', cost:120, desc:'Strike jet lays white phosphorus across the enemy push. Burns both sides.', key:'1' },
@@ -1978,9 +1981,11 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
     aim.settleY = (aim.settleY || 0) + kx;                   // and the sideways walk comes back too between bursts
   }
   if (!s.pistol) s.mag--;
+  s.shotN = (s.shotN || 0) + 1;
   const mz = (s.pistol ? SIDEARM.len : w.len) + 6;   // the barrel tip: where the round actually leaves the weapon
   bullets.push({ x: s.x + Math.cos(a) * mz, y: s.y + Math.sin(a) * mz,
     vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed,
+    tracer: key === 'rocket' || key === 'sniper' || s.shotN % 3 === 0,   // every third round is loaded as a tracer; the .50 and the rocket always burn
     life: (w.reach || w.range) / w.speed, age: 0, fromPlayer, wkey: key, slot: s.slot,
     dmg: s.pistol ? SIDEARM.dmg : squadDmg(s.weapon), hits: 0, maxHits: w.pierce || 1, aoe: w.aoe || 0, skip: coverNear(s, 34) });
   const mx = s.x + Math.cos(a) * mz, my = s.y + Math.sin(a) * mz;
@@ -2603,7 +2608,7 @@ function updateSoldiers(dt) {
 function enemyFire(e, t, spread) {
   const a = Math.atan2(t.y - e.y, t.x - e.x) + rand(-1, 1) * spread;
   bullets.push({ x: e.x + Math.cos(a) * 16, y: e.y + Math.sin(a) * 16,
-    vx: Math.cos(a) * 1500, vy: Math.sin(a) * 1500, life: (e.ranged || 400) * 1.5 / 1500,
+    vx: Math.cos(a) * 1500, vy: Math.sin(a) * 1500, life: (e.ranged || 400) * 1.5 / 1500, tracer: Math.random() < 0.5,
     hostile: true, dmg: e.dmg, wkey: null, slot: null, hits: 0, maxHits: 1, aoe: 0, skip: coverNear(e, 34), srcType: e.type });
   particles.push({ x: e.x + Math.cos(a) * 18, y: e.y + Math.sin(a) * 18, z: 14, vx: 0, vy: 0, vz: 0,
     life: 0.04, max: 0.04, col: '#ffb36b', r: 3 });
@@ -2641,7 +2646,7 @@ function bossLogic(e, t, dt, d, dx, dy) {
       e.radT = 5;
       for (let k = 0; k < 10; k++) {
         const a = k / 10 * TAU;
-        bullets.push({ x: e.x, y: e.y, vx: Math.cos(a) * 650, vy: Math.sin(a) * 650, life: 0.65,
+        bullets.push({ x: e.x, y: e.y, vx: Math.cos(a) * 650, vy: Math.sin(a) * 650, life: 0.65, tracer: true,
           hostile: true, dmg: 1, wkey: null, slot: null, hits: 0, maxHits: 1, aoe: 0 });
       }
       sfxBossBurst(e.x, e.y);
@@ -4143,7 +4148,7 @@ function buildFxBatches() {
     tracer: new Batch(box, new THREE.MeshBasicMaterial(), 400),
     tracerGlow: new Batch(box, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending }), 400, 4),
     spark: new Batch(new THREE.IcosahedronGeometry(0.5, 0), new THREE.MeshBasicMaterial(), 900),
-    flash: new Batch(new THREE.IcosahedronGeometry(0.5, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending }), 64, 5),
+    flash: new Batch(new THREE.IcosahedronGeometry(0.5, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending }), 220, 5),
     flame: new Batch(VIEW.kit.cone, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending }), 240, 5),
     mine: new Batch(VIEW.kit.cyl, VIEW.mats.lit, 32),
     wood: new Batch(VIEW.kit.wood, VIEW.mats.lit, 64),
@@ -4153,6 +4158,7 @@ function buildFxBatches() {
   };
 }
 const FX_FRAME = ['shadow', 'crater', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow'];
+let TRACER_COLS = null;   // tracer palette, built once the engine is up
 const hash2 = (x, y) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };
 function muzzleWorld(s, out) {   // where the drawn weapon's barrel actually ends, this frame
   if (fpvActive() && s.slot === state.controlled && FPV.muz) { out.copy(FPV.muz); return true; }
@@ -4166,30 +4172,42 @@ function drawFx() {
   const F = VIEW.fx, now = performance.now();
   if (!TMP.mz) { TMP.mz = TMP.v.clone(); TMP.bp = TMP.v.clone(); TMP.dir = TMP.v.clone(); TMP.zax = TMP.v.clone().set(0, 0, 1); }
   const ctl = soldiers[state.controlled];
-  for (const b of bullets) {   // thin tracer streaks trailing each round
-    const sp = Math.hypot(b.vx, b.vy) || 1, rocket = b.wkey === 'rocket';
-    const len = rocket ? 0.34 : clamp(sp * XS * 0.02, 0.6, 2.8);
-    const w = rocket ? 0.08 : b.wkey === 'sniper' ? 0.028 : b.hostile ? 0.024 : 0.018;
-    const col = colorOf(b.hostile ? '#ffb08a' : rocket ? '#ffc070' : '#fff2c0');
-    // Your own rounds, for their first moments, are a streak spanning barrel -> round, so they leave the
-    // muzzle you can actually see — hip-fire included, where the weapon sits low and off to one side.
+  // Rounds. A bullet is not a bar of light: most rounds are only a faint, short whip of disturbed air, and the
+  // ones loaded as tracers (every third squad round, every other enemy round, every .50) burn as a hot head
+  // with a short tail behind it that thins and dims — the burning compound is at the base of the bullet, so
+  // the light is brightest at the front and gone within a metre. Your own rounds start at the barrel you can
+  // see, and a tail never reaches back past the muzzle.
+  const TR = TRACER_COLS || (TRACER_COLS = {
+    core: colorOf('#fff6dc'), hcore: colorOf('#ffe0c8'), rcore: colorOf('#fff0c0'),
+    glow: colorOf('#ffa63a'), hglow: colorOf('#ff5a36'), rglow: colorOf('#ffc070'),
+    dim: colorOf('#6a4416'), hdim: colorOf('#6e2416'), rdim: colorOf('#7a5a2a'),
+    air: colorOf('#9a9288'), hair: colorOf('#a08878') });
+  for (const b of bullets) {
+    const sp = Math.hypot(b.vx, b.vy) || 1, rocket = b.wkey === 'rocket', y = b.hostile ? 1.0 : 1.08;
+    TMP.bp.set(b.x * XS, y, b.y * XS);   // the head of the round
+    let tail = rocket ? 0.42 : !b.tracer ? 0.32 : b.wkey === 'sniper' ? 1.15 : b.hostile ? 0.7 : 0.85;
     if (!b.hostile && ctl && ctl.alive && b.slot === state.controlled && b.age < 0.11 && muzzleWorld(ctl, TMP.mz)) {
-      TMP.bp.set(b.x * XS, 1.08, b.y * XS);
       TMP.dir.subVectors(TMP.bp, TMP.mz);
       const dl = TMP.dir.length();
-      if (dl > 0.03) {
-        TMP.dir.divideScalar(dl);
-        TMP.q.setFromUnitVectors(TMP.zax, TMP.dir);
-        TMP.v.addVectors(TMP.mz, TMP.bp).multiplyScalar(0.5);
-        TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w, w, dl)); F.tracer.push(TMP.m, col);
-        TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w * 2.4, w * 2.4, dl)); F.tracerGlow.push(TMP.m, col);
-        continue;
-      }
+      if (dl < 0.03) continue;
+      TMP.dir.divideScalar(dl);
+      tail = Math.min(tail, dl);
+    } else TMP.dir.set(b.vx / sp, 0, b.vy / sp);
+    TMP.q.setFromUnitVectors(TMP.zax, TMP.dir);
+    if (!b.tracer) {   // no tracer: the air it tears through, barely there
+      TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail / 2);
+      TMP.m.compose(TMP.v, TMP.q, TMP.s.set(0.02, 0.02, tail)); F.tracerGlow.push(TMP.m, b.hostile ? TR.hair : TR.air);
+      continue;
     }
-    TMP.q.setFromAxisAngle(TMP.up, simYaw(Math.atan2(b.vy, b.vx)));
-    TMP.v.set(b.x * XS - b.vx / sp * len / 2, b.hostile ? 1.0 : 1.08, b.y * XS - b.vy / sp * len / 2);
-    TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w, w, len)); F.tracer.push(TMP.m, col);
-    TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w * 2.4, w * 2.4, len)); F.tracerGlow.push(TMP.m, col);
+    const core = rocket ? TR.rcore : b.hostile ? TR.hcore : TR.core, glow = rocket ? TR.rglow : b.hostile ? TR.hglow : TR.glow, dim = rocket ? TR.rdim : b.hostile ? TR.hdim : TR.dim;
+    const w = rocket ? 0.07 : b.wkey === 'sniper' ? 0.03 : 0.022;
+    TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail * 0.2);   // the hot core: short, right behind the head
+    TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w, w, tail * 0.4)); F.tracer.push(TMP.m, core);
+    TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail * 0.25);   // the glow around it
+    TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w * 3.4, w * 3.4, tail * 0.5)); F.tracerGlow.push(TMP.m, glow);
+    TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail * 0.72);   // the tail: thinner and dimmer, then gone
+    TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w * 1.6, w * 1.6, tail * 0.56)); F.tracerGlow.push(TMP.m, dim);
+    TMP.m.compose(TMP.bp, TMP.q, TMP.s.set(w * 4.5, w * 4.5, w * 4.5)); F.flash.push(TMP.m, glow);   // the head itself burns
   }
   TMP.q.identity();
   for (const p of particles) {
