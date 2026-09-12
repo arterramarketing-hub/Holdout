@@ -310,8 +310,6 @@
     color:#1a1408; font-size:15px; border:2px solid var(--gold); box-shadow:0 0 0 2px rgba(0,0,0,.5); }
   #mename { font-family:var(--display); font-size:14px; letter-spacing:.06em; }
   #meweap { font-size:10px; color:var(--dim); letter-spacing:.08em; margin:1px 0 5px; }
-  #mehp { width:142px; height:11px; padding:2px; background:#0b1220; border:1.5px solid var(--trim); border-radius:8px; }
-  #mehpfill { height:100%; width:100%; border-radius:5px; background:var(--magic); transition:width .12s; }
   #fallen { right:14px; bottom:14px; font-family:var(--display); font-size:12px; color:var(--dim); letter-spacing:.12em; text-shadow:0 1px 2px #000; }
   #fallen b { color:var(--red); font-size:16px; }
   #ammo { right:14px; bottom:40px; text-align:right; pointer-events:auto; cursor:pointer; user-select:none; -webkit-user-select:none; }
@@ -323,6 +321,11 @@
   #ambar { height:4px; width:78px; margin:4px 0 0 auto; background:rgba(0,0,0,.55); border-radius:3px; overflow:hidden; display:none; }
   #ammo.reloading #ambar { display:block; }
   #ambar i { display:block; height:100%; width:0%; background:var(--amber); }
+  /* No health bar: how hurt you are is the blood on the glass, and it clears itself if you break contact. */
+  #hurt { position:fixed; inset:0; z-index:6; pointer-events:none; opacity:0; transition:opacity .18s linear;
+    background:radial-gradient(ellipse at center, rgba(120,0,0,0) 26%, rgba(140,8,8,.5) 64%, rgba(86,0,0,.94) 100%); }
+  #hurt.crit { animation:hurtBeat .95s ease-in-out infinite; }
+  @keyframes hurtBeat { 0%, 100% { filter:brightness(1); } 50% { filter:brightness(1.5) saturate(1.3); } }
   #deathfx { position:fixed; inset:0; z-index:7; pointer-events:none; opacity:0; transition:opacity .45s;
     background:radial-gradient(ellipse at center, rgba(120,0,0,0) 32%, rgba(80,0,0,.6) 100%); }
   body.dying #deathfx { opacity:1; }
@@ -346,10 +349,6 @@
     color:var(--dim); text-shadow:0 2px 0 #000, 0 0 8px rgba(0,0,0,.7); white-space:nowrap; }
   #tally b { color:var(--ink); font-size:15px; font-variant-numeric:tabular-nums; }
   #tally i { display:inline-block; width:1px; height:11px; background:var(--line); margin:0 9px; vertical-align:-1px; }
-  #vitals { left:12px; bottom:12px; width:180px; }
-  #vitals #mehp { height:11px; padding:2px; background:#0b1220; border:1.5px solid var(--trim); border-radius:8px; }
-  #vitals #mehpfill { height:100%; width:100%; border-radius:5px; background:var(--magic); transition:width .12s; }
-  #vitals.hurt #mehpfill { background:linear-gradient(180deg, #ff9a7a, #d0342a); }
   .supbtn.locked { opacity:.45; }
   .supbtn .need { position:absolute; top:-9px; right:-7px; min-width:21px; height:21px; padding:0 5px; border-radius:11px;
     display:flex; align-items:center; justify-content:center; background:var(--slate-solid); border:2px solid var(--line);
@@ -508,14 +507,13 @@
   #fpsbox { position:fixed; left:8px; top:96px; z-index:50; font:11px ui-monospace, Menlo, monospace; color:#fff; background:rgba(0,0,0,.55); padding:3px 6px; display:none; pointer-events:none; }
 
   @media (prefers-reduced-motion: reduce) {
-    #comm.done #commtext::after, #bootbox .boot-press, #titlecard.show .tc-name, #reticle.locked::after { animation:none; }
+    #comm.done #commtext::after, #bootbox .boot-press, #titlecard.show .tc-name, #reticle.locked::after, #hurt.crit { animation:none; }
   }
   @media (max-width:899px) {   /* compact HUD: phones, and any window too narrow for the spread-out layout */
     #frontwrap { left:8px; transform:none; width:calc(100vw - 150px); text-align:left; }
     #bossbar { top:104px; left:8px; transform:none; width:calc(100vw - 150px); }
     #tally { top:48px; left:8px; transform:none; font-size:10px; letter-spacing:.08em; }
     #tally b { font-size:13px; }
-    #vitals { left:8px; bottom:8px; width:132px; }
     #minimap { top:104px; left:8px; width:96px; height:76px; }
     #feed { top:206px; right:8px; width:150px; font-size:9px; }   /* clears the roster panel */
     #firebtn { right:14px; bottom:150px; width:72px; height:72px; } #firebtn span { inset:22px; }
@@ -523,7 +521,6 @@
     #topbar { top:68px; left:8px; }
     #tomap { font-size:10px; padding:5px 10px; }
     #me { padding:4px 9px 4px 5px; bottom:8px; left:8px; gap:7px; }
-    #meport { width:26px; height:26px; font-size:12px; } #mehp { width:92px; } #mename { font-size:12px; }
     #supports { bottom:76px; right:8px; left:auto; transform:none; gap:7px; }
     .supbtn { padding:3px 9px 3px 3px; font-size:9px; gap:5px; } .supbtn .ckey { width:20px; height:20px; font-size:10px; }
     #fallen { bottom:10px; right:8px; font-size:10px; }
@@ -543,7 +540,6 @@
     #minimap { top:44px; left:6px; width:84px; height:64px; }
     #feed { top:114px; left:6px; right:auto; width:140px; text-align:left; font-size:9px; }
     #tally { top:40px; left:196px; transform:none; font-size:10px; }
-    #vitals { left:6px; bottom:6px; width:150px; }
     #roster .rname { font-size:8px; } #roster .rhp { width:20px; } #roster .pport { width:14px; height:14px; font-size:7px; }
     #me { bottom:6px; left:6px; }
     #supports { bottom:8px; left:158px; right:auto; transform:none; gap:6px; }
@@ -561,6 +557,7 @@
 <body>
 <canvas id="game"></canvas>
 <div id="vig"></div>
+<div id="hurt"></div>
 <div id="deathfx"></div>
 <div id="cine-top"></div><div id="cine-bot"></div>
 <div id="titlecard"><div class="tc-sub"></div><div class="tc-name"></div></div>
@@ -578,7 +575,6 @@
   <canvas class="hud" id="minimap" width="150" height="120"></canvas>
   <div class="hud" id="feed"></div>
   <div class="hud" id="dmgdir"><i></i><i></i><i></i></div>
-  <div class="hud" id="vitals"><div id="mehp"><div id="mehpfill"></div></div></div>
   <div class="hud" id="ammo"><div id="ammag">30</div><div id="amres">/ 150</div><div id="amname">AR</div><div id="ambar"><i></i></div></div>
   <div class="hud" id="banner"></div>
   <div class="hud" id="hint"></div>
@@ -632,7 +628,7 @@ const CFG = {
   todSpeed: 1 / 150,      // time-of-day steps (dawn→day→dusk→night) per second of battle
   playerKillPct: 0.7, aiKillPct: 0.2,
   tickets: 20, respawn: 3.0,          // reinforcements the squad shares, and how long you wait to come back
-  rosterSize: 8, baseHp: 4, regenDelay: 3.5, regenRate: 0.6,
+  rosterSize: 8, baseHp: 4, regenDelay: 4.0, regenRate: 2.0,   // out of fire for 4s, then back to full in ~2s
   playerSpeed: 225, aiSpeed: 195, horseSpeedMul: 1.45,
   spawnInvuln: 1.0, waveInterval: 18,
   arenaW: 3200, arenaH: 2400, lineY: 2080,
@@ -2232,6 +2228,7 @@ function damageSoldier(s, dmg, quiet) {
     burst(s.x, s.y, '#a03028', 5, 14);
     if (s.slot === state.controlled) {
       cam.shake = 9; sfxHurt(); buzz(26);
+      OV.hurt = Math.min(1, (OV.hurt || 0) + 0.42);   // the glass takes a hit
       if (meta.opts.dmgDir && s.lastHit) DMGDIR.push({ x: -s.lastHit.x, y: -s.lastHit.y, t: 1.3 });
       if (DMGDIR.length > 3) DMGDIR.shift();
     }
@@ -3039,6 +3036,11 @@ function battleUpdate(dt) {
     updatePickups(wdt);
   }
   updateFx(wdt);
+  const me = soldiers[state.controlled];   // your own pulse, once you are nearly out of it
+  if (state.mode === 'play' && me && me.alive && me.hp / me.maxHp <= 0.35) {
+    state.beatT = (state.beatT || 0) - dt;
+    if (state.beatT <= 0) { state.beatT = 0.95; beep(58, 0.15, 'sine', 0.32, -18); beep(52, 0.19, 'sine', 0.24, -14, 0.19); }
+  } else state.beatT = 0;
   if (state.mode === 'dying') {   // watch yourself go down, then a reinforcement puts you back on the line
     state.dyingT += dt;
     if (state.dyingT >= CFG.deathCam) {
@@ -4219,18 +4221,40 @@ function buildFxBatches() {
 }
 const FX_FRAME = ['shadow', 'crater', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow'];
 const hash2 = (x, y) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };
+function muzzleWorld(s, out) {   // where the drawn weapon's barrel actually ends, this frame
+  if (fpvActive() && s.slot === state.controlled && FPV.muz) { out.copy(FPV.muz); return true; }
+  const r = views.get(s);
+  if (!r || !r.J || !r.J[HJ.gun]) return false;
+  const mlen = (s.pistol ? SIDEARM.len : WEAPONS[s.weapon].len) * 0.032;
+  out.set(0, 0.02, -mlen * 0.78).applyMatrix4(r.J[HJ.gun].matrixWorld);
+  return true;
+}
 function drawFx() {
   const F = VIEW.fx, now = performance.now();
-  const muz = fpvActive() && FPV.muz ? FPV.muz : null;   // in first person your own rounds leave the viewmodel's barrel
+  if (!TMP.mz) { TMP.mz = TMP.v.clone(); TMP.bp = TMP.v.clone(); TMP.dir = TMP.v.clone(); TMP.zax = TMP.v.clone().set(0, 0, 1); }
+  const ctl = soldiers[state.controlled];
   for (const b of bullets) {   // thin tracer streaks trailing each round
     const sp = Math.hypot(b.vx, b.vy) || 1, rocket = b.wkey === 'rocket';
     const len = rocket ? 0.34 : clamp(sp * XS * 0.02, 0.6, 2.8);
     const w = rocket ? 0.08 : b.wkey === 'sniper' ? 0.028 : b.hostile ? 0.024 : 0.018;
+    const col = colorOf(b.hostile ? '#ffb08a' : rocket ? '#ffc070' : '#fff2c0');
+    // Your own rounds, for their first moments, are a streak spanning barrel -> round, so they leave the
+    // muzzle you can actually see — hip-fire included, where the weapon sits low and off to one side.
+    if (!b.hostile && ctl && ctl.alive && b.slot === state.controlled && b.age < 0.11 && muzzleWorld(ctl, TMP.mz)) {
+      TMP.bp.set(b.x * XS, 1.08, b.y * XS);
+      TMP.dir.subVectors(TMP.bp, TMP.mz);
+      const dl = TMP.dir.length();
+      if (dl > 0.03) {
+        TMP.dir.divideScalar(dl);
+        TMP.q.setFromUnitVectors(TMP.zax, TMP.dir);
+        TMP.v.addVectors(TMP.mz, TMP.bp).multiplyScalar(0.5);
+        TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w, w, dl)); F.tracer.push(TMP.m, col);
+        TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w * 2.4, w * 2.4, dl)); F.tracerGlow.push(TMP.m, col);
+        continue;
+      }
+    }
     TMP.q.setFromAxisAngle(TMP.up, simYaw(Math.atan2(b.vy, b.vx)));
     TMP.v.set(b.x * XS - b.vx / sp * len / 2, b.hostile ? 1.0 : 1.08, b.y * XS - b.vy / sp * len / 2);
-    if (muz && !b.hostile && b.slot === state.controlled && b.age < 0.05)
-      TMP.v.lerp(muz, 1 - b.age / 0.05);   // the first moments of the streak are pinned to the barrel
-    const col = colorOf(b.hostile ? '#ffb08a' : rocket ? '#ffc070' : '#fff2c0');
     TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w, w, len)); F.tracer.push(TMP.m, col);
     TMP.m.compose(TMP.v, TMP.q, TMP.s.set(w * 2.4, w * 2.4, len)); F.tracerGlow.push(TMP.m, col);
   }
@@ -5170,7 +5194,7 @@ function updateCamera3(dt) {
 }
 
 // ---------- screen overlays: floating text, joystick, threat arrows ----------
-const OV = { floaters: [], threats: [], fpsOn: false, fpsT: 0, frames: 0, reticle: null, rtOn: false, rtX: 0, rtY: 0, gap: 0, dmg: [], mapT: 0 };
+const OV = { floaters: [], threats: [], fpsOn: false, fpsT: 0, frames: 0, reticle: null, rtOn: false, rtX: 0, rtY: 0, gap: 0, dmg: [], mapT: 0, hurt: 0 };
 const SCR = { x: 0, y: 0 };
 function buildOverlays() {
   const fl = document.getElementById('floaters'), th = document.getElementById('threats');
@@ -5452,7 +5476,7 @@ function viewStats() {
 let supportsDirty = true;
 const $ = id => document.getElementById(id);
 const el = {
-  frontfill: $('frontfill'), mehpfill: $('mehpfill'), banner: $('banner'),
+  frontfill: $('frontfill'), hurt: $('hurt'), banner: $('banner'),
   modal: $('modal'), modalbox: $('modalbox'), hint: $('hint'),
   bhud: $('bhud'), mapscr: $('mapscr'), teamscr: $('teamscr'),
   supports: $('supports'), mapsvg: $('mapsvg'), theatertag: $('theatertag'),
@@ -5487,7 +5511,6 @@ function updateBattleHud() {
   if (supportsDirty) { rebuildSupports(); supportsDirty = false; }
   const c = soldiers[state.controlled];
   if (c) {
-    el.mehpfill.style.width = clamp(c.hp / c.maxHp, 0, 1) * 100 + '%';
     const am = $('ammo');
     $('ammag').textContent = c.pistol ? '∞' : c.mag;
     $('amres').textContent = c.pistol ? 'SIDEARM' : '/ ' + c.reserve;
@@ -5495,7 +5518,10 @@ function updateBattleHud() {
     am.classList.toggle('low', !c.pistol && c.mag <= WEAPONS[c.weapon].mag * 0.25);
     am.classList.toggle('reloading', c.reloadT > 0);
     if (c.reloadT > 0) $('ambar').firstChild.style.width = (1 - c.reloadT / c.reloadDur) * 100 + '%';
-    $('vitals').classList.toggle('hurt', c.alive && c.hp / c.maxHp < 0.4);
+    const f = c.alive ? clamp(1 - c.hp / c.maxHp, 0, 1) : 1;
+    OV.hurt = Math.max(f, (OV.hurt || 0) - 0.05);          // a hit flashes harder, then falls back to how hurt you are
+    el.hurt.style.opacity = Math.pow(OV.hurt, 0.8).toFixed(3);
+    el.hurt.classList.toggle('crit', c.alive && c.hp / c.maxHp <= 0.35);
   }
   if (meta.opts.minimap && performance.now() - (OV.mapT || 0) > 100) { OV.mapT = performance.now(); drawMinimap(); }
   if (meta.opts.killfeed) updateFeed();
