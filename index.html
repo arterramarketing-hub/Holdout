@@ -157,10 +157,12 @@
   NO DIALOGUE — there is no radio chatter, no comm box, no personalities and no campaign story text.
   Soldiers keep names (the kill feed uses them on desktop) and nothing else talks.
 
-  TOUCH CONTROLS — Call of Duty Mobile layout: left thumb moves, right thumb looks, and the trigger is
-  duplicated on both sides so you can fire with whichever thumb is free — the left one matters when the
-  right is busy holding an aim. Flat translucent circles with glyphs: reticle to fire, scope for sights,
-  a reload that outlines red under a quarter magazine, and the lock-on ring in the auto scheme.
+  TOUCH CONTROLS — Call of Duty Mobile's layout and proportions: left thumb moves, right thumb looks, and
+  the trigger is duplicated on both sides so you can fire with whichever thumb is free. Flat translucent
+  circles sized off the screen height (--fb = 22vh, clamped 66-108 px) so they keep CoD Mobile's ratios on
+  every phone: fire 1, lock-on .82, left trigger .8, ADS .68, reload .6. The fire button sits up off the
+  corner under the right thumb, ADS above-right of it, reload to its left, the left trigger above the
+  left thumb, and the corner is left clear for the ammo count. Reload outlines red under a quarter mag.
 
   MAP — 13 hand-authored territories in a Risk-style adjacency graph; attack any enemy territory adjacent
   to an owned one. Conquering flips it and adds its income. Conquering everything starts a new "theater":
@@ -209,9 +211,16 @@
   gunner range equally; the HUD shows it under the wave counter. Rain adds streaks, a hiss layer, and
   lightning with thunder.
 
-  OCARINA UI — slate pause-menu panels with gold trim, black rounded dialogue box with a ▼ when a line
-  finishes, gem-style REQ, yellow C-button supports, parchment operations map, Cinzel titles over Nunito
-  text (Google Fonts; falls back to Georgia / system sans offline), title-card boot screen.
+  UI — flat and modern, in the Battlefield manner, built on the brand sheet: near-black navy (#05080f),
+  hairline slate rules, one orange accent (#ff6b2c), square corners, and only the call to action glows.
+  Archivo Expanded for headlines and buttons, Archivo for reading, JetBrains Mono for labels and numbers
+  (Google Fonts; system fallbacks offline). The HUD is a two-sided TICKET BAR top-centre (your
+  reinforcements in blue, the enemy's in red, your kills between), the minimap top-left, the menu
+  buttons top-right, and the weapon block and killstreak slots bottom-right. Menus are an eyebrow with a
+  rule, an expanded headline, and hairline panels; the operations map is a dark tactical grid (blue =
+  held, orange ring = attackable). Every end-of-front screen is the after-action layout: eyebrow,
+  headline, one line, a hairline stat grid (kills, accuracy, headshots, longest kill, reinforcements,
+  time), a solid orange button and a mono note. The rotate prompt uses the same system.
 
   SOUND — no sample files: at the first tap every weapon sound is synthesised offline into 32 kHz
   stereo buffers (sub-millisecond attack, saturated muzzle blast, a falling pressure thump, early
@@ -256,109 +265,118 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Holdout</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Nunito:wght@600;700;800&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;500;700;800&display=swap">
 <style>
-  /* Slate pause-menu panels with gold trim, black rounded dialogue boxes, gem currency,
-     yellow C-buttons, parchment campaign map. Cinzel for titles, Nunito for everything read. */
+  /* HOLDOUT — flat and modern, the Battlefield way: near-black navy, hairline slate rules, one orange accent.
+     Archivo Expanded for the loud words, Archivo for reading, JetBrains Mono for labels and every number.
+     Square corners throughout; nothing is bevelled, and only the call to action glows. */
   :root { color-scheme: dark;
-    --slate: rgba(16, 26, 42, .86); --slate-top: rgba(40, 60, 92, .9); --slate-solid: #142238;
-    --trim: #c9a24a; --ink: #f6f0dc; --dim: #b9b29c;
-    --gold: #ffd84a; --green: #6ad84e; --red: #ee5c42; --amber: #ffb83e;
-    --line: rgba(201, 162, 74, .5); --rule: rgba(201, 162, 74, .22);
-    --display: 'Cinzel', Georgia, 'Times New Roman', serif;
-    --ui: 'Nunito', 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
-    --magic: linear-gradient(180deg, #b6ff8a, #4cc23a 55%, #2a8a24); }
+    --bg: #05080f; --panel: rgba(6, 10, 17, .82); --panel-solid: #070b14;
+    --line: #262f3d; --line-hi: #3a4454;
+    --ink: #f1f3f6; --text: #c9d1dc; --label: #a6b0bf; --muted: #7b879a;
+    --accent: #ff6b2c; --accent-hi: #ff8551; --accent-ink: #140903; --accent-glow: rgba(255, 107, 44, .36);
+    --friend: #5cb6ff; --foe: #ff4d3d; --ok: #86dd90;
+    --display: 'Archivo', 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+    --body: 'Archivo', 'Helvetica Neue', Arial, system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --fb: clamp(66px, 22vh, 108px); }
   * { box-sizing:border-box; }
-  html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#0c1424;
-    font-family:var(--ui); font-weight:700; color:var(--ink); }
-  button { font:inherit; cursor:pointer; }
-  button:focus-visible, select:focus-visible, input:focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
+  html, body { margin:0; padding:0; height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--body); }
+  button { font:inherit; color:inherit; cursor:pointer; }
+  button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
   #game { display:block; width:100vw; height:100vh; touch-action:none; image-rendering:pixelated; }
-  .hud { position:fixed; z-index:10; color:var(--ink); pointer-events:none; user-select:none; -webkit-user-select:none; }
-  #roster, #me, .panel {
-    background:linear-gradient(180deg, var(--slate-top), var(--slate));
-    border:2px solid var(--trim); border-radius:12px;
-    box-shadow:inset 0 0 0 1px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,240,200,.18), 0 6px 18px rgba(0,0,0,.45); }
-  .pill, #tomap, .navbtn { font-family:var(--display); font-weight:800; letter-spacing:.1em; color:var(--ink); text-shadow:0 1px 0 #000;
-    background:linear-gradient(180deg, #3a5a8a, #1f3456); border:2px solid var(--trim); border-radius:999px;
-    box-shadow:0 3px 0 rgba(0,0,0,.45); }
-  .mreq::before, .buybtn.cost::before { content:''; display:inline-block; width:.62em; height:.95em;
-    margin-right:.35em; vertical-align:-.1em; background:linear-gradient(135deg, #c8ffb0, #3fc24a 50%, #12702a);
-    clip-path:polygon(50% 0, 100% 26%, 100% 74%, 50% 100%, 0 74%, 0 26%); }
+
+  /* ---------- shared pieces, straight from the brand sheet ---------- */
+  .eyebrow { display:flex; align-items:center; gap:16px; font-family:var(--mono); font-weight:700; font-size:12px;
+    letter-spacing:.34em; text-transform:uppercase; color:var(--accent); }
+  .eyebrow::after { content:''; flex:1; height:1px; background:var(--line-hi); }
+  .xl { margin:0; font-family:var(--display); font-stretch:125%; font-weight:800; line-height:.92;
+    text-transform:uppercase; color:var(--accent); text-wrap:balance; }
+  .lede { font-family:var(--body); font-size:17px; line-height:1.55; color:var(--text); max-width:62ch; }
+  .note { font-family:var(--mono); font-size:12px; line-height:1.7; color:var(--muted); }
+  .stats { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line-hi); border:1px solid var(--line-hi); }
+  .stat { background:var(--panel-solid); padding:14px 18px 16px; min-width:0; }
+  .stat.wide { grid-column:1 / -1; }
+  .stat .k { font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--label); }
+  .stat .v { margin-top:7px; font-family:var(--mono); font-weight:800; font-size:28px; line-height:1; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .stat .v small { margin-left:5px; font-size:12px; font-weight:700; letter-spacing:.1em; color:var(--label); }
+  .stat .v.hot { font-size:46px; color:var(--accent); }
+  .cta { display:block; width:100%; padding:20px 24px; border:0; border-radius:0; background:var(--accent); color:var(--accent-ink);
+    font-family:var(--display); font-stretch:125%; font-weight:800; font-size:17px; letter-spacing:.2em; text-transform:uppercase;
+    box-shadow:0 14px 38px -10px var(--accent-glow); transition:background .15s; }
+  .cta:hover { background:var(--accent-hi); }
+  .cta:active { transform:translateY(1px); }
+  .cta:disabled { background:#1b2230; color:#5f6b7d; box-shadow:none; cursor:default; transform:none; }
+  .btn { font-family:var(--mono); font-weight:700; font-size:12px; letter-spacing:.2em; text-transform:uppercase; color:var(--ink);
+    background:var(--panel); border:1px solid var(--line-hi); border-radius:0; padding:12px 18px; }
+  .btn:hover { border-color:var(--accent); color:var(--accent); }
+  .lost { color:var(--foe); } .gain { color:var(--ok); } .amber { color:var(--accent); }
 
   /* ---------- battle HUD ---------- */
-  #frontwrap { top:10px; left:50%; transform:translateX(-50%); width:min(460px, 56vw); text-align:center; }
-  #frontbar { height:15px; padding:2px; background:#0b1220; border:2px solid var(--trim); border-radius:10px; box-shadow:0 3px 10px rgba(0,0,0,.5); }
-  #frontfill { height:100%; width:0%; border-radius:6px; background:var(--magic); box-shadow:inset 0 1px 0 rgba(255,255,255,.5); transition:width .25s ease; }
-  #bossbar { top:70px; left:50%; transform:translateX(-50%); width:min(400px, 62vw); text-align:center; display:none; }
-  #bossname { font-family:var(--display); font-size:12px; letter-spacing:.16em; color:#ffc0a8; margin-bottom:4px; text-shadow:0 2px 0 #3a0a0a; }
-  #bosshp { height:13px; padding:2px; background:#1a0a0c; border:2px solid #b8882e; border-radius:8px; overflow:hidden; }
-  #bosshp i { display:block; height:100%; width:100%; border-radius:5px; background:linear-gradient(180deg, #ff9a7a, #d0342a 55%, #8a1a1a); }
-  #roster { top:10px; right:10px; width:162px; padding:6px; }
-  #minimap { top:52px; left:10px; width:150px; height:120px; border:2px solid var(--trim); border-radius:8px; box-shadow:0 4px 14px rgba(0,0,0,.5); }
+  .hud { position:fixed; z-index:10; color:var(--ink); pointer-events:none; user-select:none; -webkit-user-select:none; }
+  /* tickets: your reinforcements in blue on the left, theirs in red on the right, your kills between */
+  #tickets { top:10px; left:50%; transform:translateX(-50%); display:flex; align-items:stretch; height:36px;
+    background:var(--panel); border:1px solid var(--line); font-family:var(--mono); font-weight:800; }
+  #tickets > b { display:flex; align-items:center; justify-content:center; min-width:54px; font-size:18px; font-variant-numeric:tabular-nums; }
+  #tickets > b.us { color:var(--friend); } #tickets > b.them { color:var(--foe); }
+  .tkbar { display:flex; align-items:center; width:min(190px, 15vw); padding:0 10px; }
+  .tkbar.us { color:var(--friend); } .tkbar.them { color:var(--foe); }
+  .tk-track { position:relative; flex:1; height:6px; background:rgba(255,255,255,.07); }
+  .tk-track i { position:absolute; top:0; bottom:0; width:100%; background:currentColor; transition:width .35s ease; }
+  .tkbar.us .tk-track i { right:0; } .tkbar.them .tk-track i { left:0; }
+  .tkmid { display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:66px; padding:0 12px;
+    border-left:1px solid var(--line); border-right:1px solid var(--line); }
+  .tkmid b { font-size:16px; line-height:1; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .tkmid em { margin-top:3px; font-style:normal; font-size:8px; font-weight:700; letter-spacing:.26em; color:var(--label); }
+  #bossbar { top:56px; left:50%; transform:translateX(-50%); width:min(420px, 58vw); display:none; text-align:center; }
+  #bossname { margin-bottom:5px; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--foe); }
+  #bosshp { height:5px; background:rgba(255,255,255,.08); border:1px solid var(--line); }
+  #bosshp i { display:block; height:100%; width:100%; background:var(--foe); }
+  #minimap { top:10px; left:10px; width:160px; height:128px; background:var(--panel); border:1px solid var(--line); }
   body.nomap #minimap { display:none; }
-  #feed { top:214px; right:10px; width:200px; text-align:right; font-size:11px; letter-spacing:.05em; }
-  #feed .frow i { font-style:normal; font-weight:800; color:var(--gold); letter-spacing:.08em; }
+  #topbar { top:10px; right:10px; display:flex; gap:6px; pointer-events:auto; }
+  #tomap, #tocfg { height:36px; padding:0 14px; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.2em;
+    text-transform:uppercase; color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:0; }
+  #tocfg { width:36px; padding:0; font-size:15px; letter-spacing:0; }
+  #tomap:hover, #tocfg:hover { border-color:var(--accent); color:var(--accent); }
+  #feed { top:56px; right:10px; width:260px; display:flex; flex-direction:column; align-items:flex-end; gap:3px; font-family:var(--mono); font-size:11px; }
   body.nofeed #feed { display:none; }
-  .frow { margin:2px 0; color:var(--dim); text-shadow:0 1px 2px #000; }
-  .frow b { color:var(--gold); } .frow.bad b { color:var(--red); }
+  .frow { padding:4px 9px; background:var(--panel); color:var(--text); box-shadow:inset -2px 0 0 var(--friend); white-space:nowrap; }
+  .frow b { color:var(--ink); font-weight:800; } .frow i { font-style:normal; font-weight:800; color:var(--accent); }
+  .frow.bad { box-shadow:inset -2px 0 0 var(--foe); } .frow.bad b { color:var(--foe); }
   #dmgdir i { position:fixed; left:50%; top:50%; width:280px; height:240px; margin:-240px 0 0 -140px; transform-origin:50% 100%;
     background:radial-gradient(ellipse at 50% 0%, rgba(255,70,45,.6), rgba(255,70,45,0) 62%);
     clip-path:polygon(18% 0, 82% 0, 63% 44%, 37% 44%); display:none; }
-  /* Touch controls in the Call of Duty Mobile idiom: flat translucent circles with a glyph, so the
-     fight shows through them. No gold, no bevel, no drop shadow. */
-  .tbtn { position:fixed; z-index:11; display:none; align-items:center; justify-content:center; border-radius:50%;
-    touch-action:none; padding:0; font-family:var(--ui); font-weight:700; line-height:1;
-    color:rgba(255,255,255,.94); background:rgba(16,20,28,.28); border:2px solid rgba(255,255,255,.5);
-    box-shadow:0 0 0 1px rgba(0,0,0,.3); text-shadow:0 1px 2px rgba(0,0,0,.6); }
-  .tbtn:active { background:rgba(255,255,255,.32); border-color:#fff; }
-  #firebtn { right:20px; bottom:26px; width:78px; height:78px; }
-  #firebtn2 { left:20px; bottom:150px; width:62px; height:62px; }   /* second trigger for the left thumb */
-  #firebtn span, #firebtn2 span { position:absolute; inset:22px; border:2px solid rgba(255,255,255,.92); border-radius:50%; }
-  #firebtn2 span { inset:17px; }
-  #firebtn::before, #firebtn::after, #firebtn2::before, #firebtn2::after { content:''; position:absolute; left:50%;
-    width:2px; margin-left:-1px; height:13px; background:rgba(255,255,255,.92); }
-  #firebtn::before { top:11px; } #firebtn::after { bottom:11px; }
-  #firebtn2::before { top:8px; } #firebtn2::after { bottom:8px; height:10px; }
-  #adsbtn { right:112px; bottom:36px; width:54px; height:54px; font-size:19px; }
-  #adsbtn.on { background:rgba(255,255,255,.5); border-color:#fff; color:#10151d; }
-  #reloadbtn { right:30px; bottom:120px; width:48px; height:48px; font-size:21px; }
-  #reloadbtn.warn { border-color:rgba(255,120,90,.9); color:#ff9a7a; }
-  body.touch.manual #firebtn, body.touch.manual #firebtn2, body.touch.manual #adsbtn { display:flex; }
-  @media (min-width:900px) { body.touch #ammo { bottom:250px; } }   /* tablets: the ammo counter sits above the whole button stack */
-  body.manual #lockbtn { display:none !important; }
-  #tocfg { font-size:12px; padding:6px 11px; }
-  .setrow { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:7px 2px; border-bottom:1px solid var(--rule); font-size:13px; text-align:left; }
-  .setrow:last-of-type { border-bottom:none; }
-  .setrow label { font-size:12px; margin-left:10px; white-space:nowrap; }
-  .setrow input[type=range] { width:132px; accent-color:var(--trim); }
-  .setrow input[type=checkbox], .setrow input[type=radio] { accent-color:var(--trim); }
-  .rrow { display:flex; align-items:center; gap:6px; padding:2px 4px; border-radius:6px; }
-  .rrow.ctl { background:rgba(255,216,74,.16); box-shadow:inset 0 0 0 1px rgba(255,216,74,.5); }
-  .pport { width:18px; height:18px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center;
-    font-size:9px; font-weight:800; color:#1a1408; border:1.5px solid var(--trim); }
-  .rname { font-size:11px; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .rhp { width:34px; height:6px; background:#0b1220; border-radius:4px; overflow:hidden; flex:none; box-shadow:inset 0 0 0 1px rgba(0,0,0,.6); }
-  .rhp i { display:block; height:100%; background:linear-gradient(180deg, #9dff7a, #3fae34); }
-  .rrow.dead { opacity:.45; filter:grayscale(1); }
-  .rrow.dead .rname { text-decoration:line-through; }
-  .kiatag { font-size:9px; color:var(--red); letter-spacing:.1em; flex:none; }
-  #me { left:12px; bottom:12px; display:flex; align-items:center; gap:10px; padding:7px 14px 7px 8px; }
-  #meport { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800;
-    color:#1a1408; font-size:15px; border:2px solid var(--gold); box-shadow:0 0 0 2px rgba(0,0,0,.5); }
-  #mename { font-family:var(--display); font-size:14px; letter-spacing:.06em; }
-  #meweap { font-size:10px; color:var(--dim); letter-spacing:.08em; margin:1px 0 5px; }
-  #fallen { right:14px; bottom:14px; font-family:var(--display); font-size:12px; color:var(--dim); letter-spacing:.12em; text-shadow:0 1px 2px #000; }
-  #fallen b { color:var(--red); font-size:16px; }
-  #ammo { right:14px; bottom:40px; text-align:right; pointer-events:auto; cursor:pointer; user-select:none; -webkit-user-select:none; }
-  #ammag { font-family:var(--display); font-size:30px; font-weight:800; line-height:1; text-shadow:0 2px 0 #000, 0 0 10px rgba(0,0,0,.7); }
-  #amres { font-size:12px; color:var(--dim); letter-spacing:.08em; margin-top:2px; }
-  #amname { font-size:10px; letter-spacing:.14em; color:var(--gold); margin-top:2px; }
-  #ammo.low #ammag { color:var(--red); }
-  #ammo.reloading #amname { color:var(--amber); }
-  #ambar { height:4px; width:78px; margin:4px 0 0 auto; background:rgba(0,0,0,.55); border-radius:3px; overflow:hidden; display:none; }
+  /* weapon: name above, magazine large, reserve beside it, the reload filling underneath */
+  #ammo { right:14px; bottom:14px; display:grid; grid-template-columns:auto auto; justify-content:end; align-items:baseline; column-gap:7px;
+    min-width:156px; padding:10px 14px 12px; text-align:right; background:var(--panel); border:1px solid var(--line);
+    box-shadow:inset -2px 0 0 var(--accent); pointer-events:auto; cursor:pointer; }
+  #amname { grid-column:1 / -1; grid-row:1; justify-self:end; margin-bottom:5px; font-family:var(--mono); font-weight:700; font-size:10px;
+    letter-spacing:.26em; text-transform:uppercase; color:var(--label); }
+  #ammag { grid-row:2; grid-column:1; font-family:var(--mono); font-weight:800; font-size:34px; line-height:1; color:var(--ink); font-variant-numeric:tabular-nums; }
+  #amres { grid-row:2; grid-column:2; font-family:var(--mono); font-weight:700; font-size:13px; color:var(--label); font-variant-numeric:tabular-nums; }
+  #ammo.low #ammag { color:var(--foe); }
+  #ammo.reloading #amname { color:var(--accent); }
+  #ambar { grid-column:1 / -1; grid-row:3; height:3px; margin-top:7px; background:rgba(255,255,255,.08); display:none; }
   #ammo.reloading #ambar { display:block; }
-  #ambar i { display:block; height:100%; width:0%; background:var(--amber); }
+  #ambar i { display:block; height:100%; width:0%; background:var(--accent); }
+  /* killstreaks: three slots, orange when earned */
+  #supports { right:182px; bottom:14px; display:flex; gap:6px; pointer-events:auto; }
+  .supbtn { display:flex; flex-direction:column; justify-content:space-between; gap:9px; width:120px; padding:8px 10px 9px; text-align:left;
+    background:var(--panel); border:1px solid var(--line); border-radius:0; color:var(--ink); }
+  .ks-top { display:flex; justify-content:space-between; align-items:center; gap:6px; font-family:var(--mono); font-weight:800; font-size:10px; letter-spacing:.1em; }
+  .supbtn .ckey { color:var(--muted); }
+  .supbtn .cnt { color:var(--accent); } .supbtn .need { color:var(--muted); }
+  .ks-name { font-family:var(--display); font-stretch:112%; font-weight:800; font-size:10px; letter-spacing:.03em; text-transform:uppercase; white-space:nowrap; }
+  .supbtn.locked { opacity:.62; cursor:default; }
+  .supbtn:not(.locked) { border-color:var(--accent); box-shadow:inset 0 -2px 0 var(--accent); }
+  .supbtn:not(.locked):hover { background:rgba(255,107,44,.12); }
+  #banner { top:22%; left:50%; transform:translate(-50%,-50%); padding:9px 20px 10px 16px; white-space:nowrap; opacity:0;
+    font-family:var(--display); font-stretch:125%; font-weight:800; font-size:clamp(16px, 2.2vw, 26px); letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ink); background:linear-gradient(90deg, rgba(6,10,17,.88), rgba(6,10,17,.3)); box-shadow:inset 3px 0 0 var(--accent); }
+  #hint { bottom:96px; left:50%; transform:translateX(-50%); max-width:min(92vw, 760px); text-align:center; line-height:1.7;
+    font-family:var(--mono); font-size:11px; letter-spacing:.08em; color:var(--text); text-shadow:0 1px 3px rgba(0,0,0,.9); transition:opacity 1s; }
   /* No health bar: how hurt you are is the blood on the glass, and it clears itself if you break contact. */
   #hurt { position:fixed; inset:0; z-index:6; pointer-events:none; opacity:0; transition:opacity .18s linear;
     background:radial-gradient(ellipse at center, rgba(120,0,0,0) 26%, rgba(140,8,8,.5) 64%, rgba(86,0,0,.94) 100%); }
@@ -415,217 +433,182 @@
   #reticle.hit .hm.d { transform:rotate(315deg) translateX(10px); }
   #reticle.kill .hm { background:#ff4438; }
   #reticle.head .hm { width:15px; margin-left:-7.5px; height:3px; }
-  #tally { top:36px; left:50%; transform:translateX(-50%); font-family:var(--display); font-size:12px; letter-spacing:.14em;
-    color:var(--dim); text-shadow:0 2px 0 #000, 0 0 8px rgba(0,0,0,.7); white-space:nowrap; }
-  #tally b { color:var(--ink); font-size:15px; font-variant-numeric:tabular-nums; }
-  #tally i { display:inline-block; width:1px; height:11px; background:var(--line); margin:0 9px; vertical-align:-1px; }
-  .supbtn.locked { opacity:.45; }
-  .supbtn .need { position:absolute; top:-9px; right:-7px; min-width:21px; height:21px; padding:0 5px; border-radius:11px;
-    display:flex; align-items:center; justify-content:center; background:var(--slate-solid); border:2px solid var(--line);
-    color:var(--dim); font-size:11px; font-weight:800; }
-  #deploybar { display:flex; align-items:center; gap:14px; padding:4px 20px 18px; }
-  #deploybar #terrname { font-family:var(--display); font-size:14px; letter-spacing:.12em; color:var(--ink); }
-  #deploybar .navbtn { margin-left:auto; font-size:13px; padding:10px 26px; }
-  #deploybar .navbtn:disabled { opacity:.35; cursor:default; }
-  #loadout { display:flex; flex-wrap:wrap; gap:10px; }
-  .wpick { flex:1 1 250px; text-align:left; padding:12px 14px; color:var(--ink); cursor:pointer;
-    background:linear-gradient(180deg, var(--slate-top), var(--slate)); border:2px solid var(--line); border-radius:12px; }
-  .wpick.on { border-color:var(--gold); box-shadow:0 0 0 2px rgba(255,216,74,.25); }
-  .wpick .wtop { display:flex; justify-content:space-between; gap:10px; font-family:var(--display); font-size:14px; letter-spacing:.08em; }
-  .wpick .wtop b { color:var(--gold); }
-  .wpick .wstats { font-size:11px; color:var(--dim); margin-top:5px; font-weight:600; }
-  .wpick .attrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:9px; }
-  .wpick .attrow > span { font-size:10px; letter-spacing:.14em; color:var(--dim); font-weight:800; min-width:40px; }
-  .att { font-size:10px; font-weight:800; letter-spacing:.06em; padding:5px 9px; border-radius:7px; border:1.5px solid var(--line);
-    background:rgba(0,0,0,.28); color:var(--dim); }
-  .att.on { border-color:var(--gold); color:var(--gold); background:rgba(255,216,74,.1); }
-  .att:hover { filter:brightness(1.2); }
-  .wpick .wnote { font-size:10.5px; color:var(--dim); margin-top:7px; line-height:1.45; }
-  #banner { top:24%; left:50%; transform:translate(-50%,-50%); font-family:var(--display); font-size:clamp(20px, 3.4vw, 34px);
-    letter-spacing:.16em; color:#fff; text-shadow:0 0 2px #000, 3px 3px 0 rgba(0,0,0,.55); opacity:0; white-space:nowrap; }
-  #hint { bottom:150px; left:50%; transform:translateX(-50%); font-size:12px; color:var(--ink); letter-spacing:.06em;
-    text-shadow:0 1px 2px #000, 0 0 6px #000; transition:opacity 1s; text-align:center; line-height:1.5;
-    max-width:min(92vw, 720px); }
-  #topbar { top:10px; left:10px; display:flex; gap:12px; align-items:center; pointer-events:auto; }
-  #tomap { font-size:12px; padding:6px 14px; }
-  #tomap:hover, .navbtn:hover, .buybtn:not(:disabled):hover, .supbtn:not(:disabled):hover { filter:brightness(1.15); }
-  #tomap:active, .navbtn:active, .supbtn:active, #modalbox button:active { transform:translateY(2px); box-shadow:none; }
-  #supports { bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:12px; pointer-events:auto; }
-  .supbtn { position:relative; display:flex; align-items:center; gap:8px; padding:5px 16px 5px 5px; color:var(--ink);
-    font-size:11px; letter-spacing:.08em; background:linear-gradient(180deg, var(--slate-top), var(--slate));
-    border:2px solid var(--gold); border-radius:999px; box-shadow:0 3px 0 rgba(0,0,0,.45); text-shadow:0 1px 0 #000; }
-  .supbtn .ckey { width:26px; height:26px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center;
-    background:radial-gradient(circle at 35% 30%, #fff39a, #ffd23a 55%, #c89a12); color:#3a2a00; font-size:12px; font-weight:800; text-shadow:none; }
-  .supbtn:disabled { opacity:.4; cursor:default; }
-  .supbtn .cnt { position:absolute; top:-9px; right:-7px; min-width:21px; height:21px; padding:0 5px; border-radius:11px;
-    display:flex; align-items:center; justify-content:center; background:var(--slate-solid); border:2px solid var(--gold);
-    color:var(--gold); font-size:11px; font-weight:800; }
-
-  /* ---------- menu screens ---------- */
-  .scr { position:fixed; inset:0; z-index:15; display:none; flex-direction:column; overflow:auto; touch-action:pan-y;
-    background:radial-gradient(ellipse at 50% -10%, rgba(96,140,200,.38), transparent 60%), linear-gradient(180deg, #1b2c48, #0c1424); }
-  .scr.on { display:flex; }
-  .mhead { display:flex; align-items:center; gap:14px; padding:16px 20px 12px; flex-wrap:wrap; }
-  .mhead h1 { margin:0; font-family:var(--display); font-weight:800; font-size:26px; letter-spacing:.18em; color:var(--gold);
-    text-shadow:0 2px 0 #3a2a08, 0 0 18px rgba(255,200,80,.25); text-wrap:balance; }
-  .mhead .sub { font-size:11px; letter-spacing:.14em; color:var(--dim); text-transform:uppercase; }
-  .mreq { margin-left:auto; color:#dcffd2; font-size:17px; font-weight:800; text-shadow:0 2px 0 #000; font-variant-numeric:tabular-nums; }
-  .navbtn { font-size:12px; padding:8px 18px; }
-  .navbtn.ghost { background:linear-gradient(180deg, #2a3a52, #18243a); }
-  .mbody { display:flex; flex:1; gap:14px; padding:0 20px 16px; min-height:0; flex-wrap:wrap; align-content:flex-start; }
-  #mapsvg { flex:2 1 480px; min-width:300px; max-height:70vh; border-radius:10px; border:3px solid var(--trim);
-    background:radial-gradient(ellipse at 50% 45%, #f4e6bd, #e2cc94 68%, #c3a462);
-    box-shadow:inset 0 0 44px rgba(90,60,20,.5), 0 8px 24px rgba(0,0,0,.5); }
-  #mapside { flex:1 1 250px; min-width:250px; display:flex; flex-direction:column; gap:12px; }
-  .panel { padding:12px 16px; }
-  .panel h3 { margin:0 0 8px; font-family:var(--display); font-size:13px; letter-spacing:.14em; color:var(--gold); font-weight:800; }
-  .panel p { margin:5px 0; font-size:13px; line-height:1.45; }
-  .tprog { height:11px; padding:2px; background:#0b1220; border:1.5px solid var(--trim); border-radius:8px; margin:7px 0; }
-  .tprog i { display:block; height:100%; border-radius:5px; background:var(--magic); }
-  .statline { display:flex; justify-content:space-between; gap:10px; font-size:12px; margin:4px 0; font-variant-numeric:tabular-nums; }
-  .statline b { color:var(--green); font-weight:800; }
-  .statline .r { color:#dcffd2; }
-  .tgrid { display:flex; gap:14px; padding:0 20px 20px; flex-wrap:wrap; align-items:flex-start; }
-  .tcol { flex:1 1 300px; min-width:280px; display:flex; flex-direction:column; gap:14px; }
-  .srow { display:flex; align-items:center; gap:8px; padding:6px 4px; border-bottom:1px solid var(--rule); }
-  .srow:last-child { border-bottom:none; }
-  .srow .pport { width:26px; height:26px; font-size:12px; }
-  .srow .nm { flex:1; font-size:13px; min-width:70px; }
-  .srow .nm small { display:block; color:var(--dim); font-size:10px; font-weight:600; }
-  .srow select { background:#0e1a2c; color:var(--ink); border:1.5px solid var(--trim); border-radius:8px; padding:4px 6px; font:inherit; font-size:12px; }
-  .srow label.hrs { font-size:12px; color:var(--dim); display:flex; align-items:center; gap:3px; cursor:pointer; }
-  .srow.dead2 { opacity:.45; filter:grayscale(1); }
-  .wcard { border-bottom:1px solid var(--rule); padding:7px 2px; }
-  .wcard:last-child { border-bottom:none; }
-  .wtop { display:flex; justify-content:space-between; font-size:13px; }
-  .wtop b { color:var(--gold); }
-  .wstats { font-size:11px; color:var(--dim); margin-top:2px; font-weight:600; font-variant-numeric:tabular-nums; }
-  .buyrow { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:7px 2px; border-bottom:1px solid var(--rule); font-size:13px; }
-  .buyrow:last-child { border-bottom:none; }
-  .buyrow .d { color:var(--dim); font-size:11px; font-weight:600; }
-  .buybtn { color:#dcffd2; font-size:12px; font-weight:800; white-space:nowrap; padding:5px 13px; border-radius:999px;
-    background:linear-gradient(180deg, #3a5a8a, #1f3456); border:2px solid var(--trim); box-shadow:0 2px 0 rgba(0,0,0,.45); font-variant-numeric:tabular-nums; }
-  .buybtn:disabled { opacity:.4; cursor:default; }
-  .memrow { display:flex; gap:14px; align-items:baseline; padding:8px 4px; border-bottom:1px solid var(--rule); font-size:13px; flex-wrap:wrap; }
-  .memrow:last-child { border-bottom:none; }
-  .memrow b { font-family:var(--display); color:var(--ink); letter-spacing:.06em; font-weight:800; min-width:140px; }
-  .memrow .mk { color:var(--gold); min-width:70px; font-variant-numeric:tabular-nums; }
-  .memrow .mf { color:var(--dim); font-size:12px; font-weight:600; }
-
-  /* modal: the same black dialogue box */
-  #modal { position:fixed; inset:0; z-index:30; display:none; align-items:center; justify-content:center; background:rgba(4,8,16,.55); }
-  #modalbox { width:min(440px, 90vw); padding:24px 30px; text-align:center; background:rgba(0,0,0,.82);
-    border:2px solid rgba(255,255,255,.16); border-radius:20px; box-shadow:0 12px 40px rgba(0,0,0,.6); }
-  #modalbox h2 { margin:0 0 12px; font-family:var(--display); font-size:21px; letter-spacing:.12em; color:var(--gold); text-wrap:balance; }
-  #modalbox p { margin:7px 0; font-size:14px; line-height:1.5; }
-  #modalbox .sub { color:var(--dim); font-size:12px; font-weight:600; }
-  #modalbox button { margin:14px 4px 0; font-family:var(--display); font-weight:800; letter-spacing:.1em; font-size:13px; color:var(--ink);
-    background:linear-gradient(180deg, #3a5a8a, #1f3456); border:2px solid var(--trim); border-radius:999px; padding:10px 22px; box-shadow:0 3px 0 rgba(0,0,0,.45); }
-  #modalbox button.ghost { background:linear-gradient(180deg, #2a3a52, #18243a); }
-  .lost { color:var(--red); } .gain { color:var(--green); } .amber { color:var(--amber); }
-  #vig { position:fixed; inset:0; z-index:5; pointer-events:none; background:radial-gradient(ellipse at center, transparent 62%, rgba(0,0,12,.38) 100%); }
-
-  /* title screen */
-  #rotate { position:fixed; inset:0; z-index:60; display:none; flex-direction:column; align-items:center; justify-content:center;
-    gap:6px; text-align:center; background:#0c1424; color:var(--ink); padding:24px; }
-  body.portrait #rotate { display:flex; }
-  #rotate .rot-icon { font-size:64px; color:var(--trim); transform:rotate(90deg); animation:rotHint 2.2s ease-in-out infinite; }
-  #rotate h2 { margin:10px 0 0; font-family:var(--display); font-size:20px; letter-spacing:.16em; color:var(--gold); }
-  #rotate p { margin:0; font-size:13px; color:var(--dim); }
-  @keyframes rotHint { 0%, 45% { transform:rotate(0deg); } 55%, 100% { transform:rotate(90deg); } }
-  @media (prefers-reduced-motion: reduce) { #rotate .rot-icon { animation:none; } }
-  #boot { position:fixed; inset:0; z-index:39; display:flex; align-items:center; justify-content:center; cursor:pointer;
-    transition:opacity .6s; background:radial-gradient(ellipse at 50% 38%, #2a4674, #0c1424 72%); color:var(--dim); }
-  #boot.off { opacity:0; pointer-events:none; }
-  #bootbox { text-align:center; width:min(540px, 88vw); }
-  #bootbox .boot-sub { font-family:var(--display); font-size:14px; letter-spacing:.32em; color:var(--dim); text-transform:uppercase; }
-  #bootbox h1 { margin:6px 0 8px; font-family:var(--display); font-weight:800; font-size:clamp(46px, 9vw, 86px); letter-spacing:.14em;
-    color:var(--gold); text-shadow:0 3px 0 #5a3a08, 0 7px 0 rgba(0,0,0,.35), 0 0 34px rgba(255,200,80,.35); }
-  #bootbox .boot-press { font-size:13px; letter-spacing:.26em; color:var(--ink); text-transform:uppercase; margin-bottom:26px;
-    animation:blink 1.1s steps(2, jump-none) infinite; }
-  @keyframes blink { 50% { opacity:.25; } }
-  #bootlines { font-size:12px; line-height:1.9; letter-spacing:.04em; min-height:110px; white-space:pre-wrap; color:var(--dim); font-weight:600; }
-  #bootlines .ok { color:var(--green); }
-
-  /* 3D view overlays */
+  #vig { position:fixed; inset:0; z-index:5; pointer-events:none; background:radial-gradient(ellipse at center, transparent 62%, rgba(0,2,8,.42) 100%); }
   #cine-top, #cine-bot { position:fixed; left:0; right:0; height:11vh; background:#000; z-index:9; pointer-events:none; transition:transform .25s ease; }
-  #cine-top { top:0; transform:translateY(-100%); }
-  #cine-bot { bottom:0; transform:translateY(100%); }
+  #cine-top { top:0; transform:translateY(-100%); } #cine-bot { bottom:0; transform:translateY(100%); }
   body.cine #cine-top, body.cine #cine-bot { transform:none; }
   #floaters, #threats { position:fixed; inset:0; z-index:8; pointer-events:none; overflow:hidden; }
-  .floater { position:absolute; left:0; top:0; font:800 16px var(--ui); color:#fff38a; text-shadow:0 2px 0 #000, 0 0 6px rgba(0,0,0,.7);
-    white-space:nowrap; will-change:transform; display:none; }
-  .threat { position:absolute; left:0; top:0; width:0; height:0; display:none; border-left:11px solid transparent;
-    border-right:11px solid transparent; border-bottom:22px solid #ff5a3c; filter:drop-shadow(0 0 3px rgba(0,0,0,.8)); }
-  #joy { position:fixed; width:104px; height:104px; margin:-52px 0 0 -52px; border:3px solid rgba(255,216,74,.55); border-radius:50%; z-index:9; pointer-events:none; display:none; }
-  #joyknob { position:absolute; left:29px; top:29px; width:40px; height:40px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #fff39a, #ffd23a 60%, #c89a12); }
-  #titlecard { position:fixed; left:0; right:0; bottom:14vh; z-index:12; text-align:center; pointer-events:none; opacity:0; transition:opacity .35s ease; color:#fff; font-family:var(--display); }
+  .floater { position:absolute; left:0; top:0; display:none; white-space:nowrap; will-change:transform;
+    font:800 13px var(--mono); letter-spacing:.06em; color:var(--accent); text-shadow:0 1px 3px rgba(0,0,0,.95); }
+  .threat { position:absolute; left:0; top:0; width:0; height:0; display:none; border-left:10px solid transparent; border-right:10px solid transparent;
+    border-bottom:20px solid var(--foe); filter:drop-shadow(0 0 3px rgba(0,0,0,.8)); }
+  #joy { position:fixed; width:124px; height:124px; margin:-62px 0 0 -62px; z-index:9; display:none; pointer-events:none; border-radius:50%;
+    border:1.5px solid rgba(255,255,255,.38); background:rgba(8,12,20,.18); }
+  #joyknob { position:absolute; left:41px; top:41px; width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,.6); }
+  #titlecard { position:fixed; left:0; right:0; bottom:15vh; z-index:12; text-align:center; pointer-events:none; opacity:0; transition:opacity .35s ease; }
   #titlecard.show { opacity:1; }
-  #titlecard .tc-sub { font-size:clamp(13px, 2vw, 19px); letter-spacing:.1em; color:#f0d9a8; text-shadow:2px 2px 0 #2a0808; margin-bottom:4px; }
-  #titlecard .tc-name { font-size:clamp(30px, 6vw, 62px); font-weight:800; letter-spacing:.14em; text-shadow:0 0 2px #000, 4px 4px 0 #4a0d10; }
+  #titlecard .tc-sub { margin-bottom:10px; font-family:var(--mono); font-weight:700; font-size:clamp(11px, 1.4vw, 14px); letter-spacing:.34em; text-transform:uppercase; color:var(--accent); }
+  #titlecard .tc-name { font-family:var(--display); font-stretch:125%; font-weight:800; font-size:clamp(30px, 6.4vw, 74px); line-height:.95;
+    text-transform:uppercase; color:var(--ink); text-shadow:0 4px 30px rgba(0,0,0,.65); }
   #titlecard.show .tc-name { animation:tcIn 1.9s ease-out both; }
-  @keyframes tcIn { from { letter-spacing:.5em; opacity:0; } 25% { opacity:1; } to { letter-spacing:.14em; } }
-  #lockbtn { right:18px; bottom:92px; width:66px; height:66px; font-size:26px; }
+  @keyframes tcIn { from { letter-spacing:.24em; opacity:0; } 25% { opacity:1; } to { letter-spacing:0; } }
+  #fpsbox { position:fixed; left:10px; top:148px; z-index:50; display:none; pointer-events:none; padding:3px 6px; font:11px var(--mono); color:#fff; background:rgba(0,0,0,.6); }
+
+  /* ---------- touch controls: Call of Duty Mobile's look and proportions ----------
+     Flat translucent circles sized off the screen height (--fb, the fire button), so the set keeps the same
+     proportions on every phone: fire 1, lock .82, left trigger .8, ADS .68, reload .6. Placed the way CoD
+     Mobile places them: the trigger up off the corner under the right thumb, sights above-right of it, reload
+     to its left, a second trigger above the left thumb, and the corner itself left clear for the ammo. */
+  .tbtn { position:fixed; z-index:11; display:none; align-items:center; justify-content:center; padding:0; border-radius:50%;
+    touch-action:none; line-height:1; font-family:var(--body); font-weight:600; color:rgba(255,255,255,.95);
+    background:rgba(9,13,21,.34); border:2px solid rgba(255,255,255,.55); box-shadow:0 0 0 1px rgba(0,0,0,.28); }
+  .tbtn:active { background:rgba(255,255,255,.3); border-color:#fff; }
+  #firebtn { width:var(--fb); height:var(--fb); right:calc(var(--fb) * .9); bottom:calc(var(--fb) * .95); }
+  #lockbtn { width:calc(var(--fb) * .82); height:calc(var(--fb) * .82); right:calc(var(--fb) * .99); bottom:calc(var(--fb) * 1.04); font-size:calc(var(--fb) * .32); }
+  #adsbtn { width:calc(var(--fb) * .68); height:calc(var(--fb) * .68); right:calc(var(--fb) * .12); bottom:calc(var(--fb) * 1.88); font-size:calc(var(--fb) * .28); }
+  #adsbtn.on { background:rgba(255,255,255,.55); border-color:#fff; color:#0a0e16; }
+  #reloadbtn { width:calc(var(--fb) * .6); height:calc(var(--fb) * .6); right:calc(var(--fb) * 2.02); bottom:calc(var(--fb) * 1.5); font-size:calc(var(--fb) * .28); }
+  #reloadbtn.warn { border-color:var(--foe); color:#ffa596; }
+  #firebtn2 { width:calc(var(--fb) * .8); height:calc(var(--fb) * .8); left:calc(var(--fb) * 1.3); bottom:calc(var(--fb) * 1.9); }
+  #firebtn span, #firebtn2 span { position:absolute; inset:30%; border:2px solid rgba(255,255,255,.92); border-radius:50%; }
+  #firebtn::before, #firebtn::after, #firebtn2::before, #firebtn2::after { content:''; position:absolute; left:50%; width:2px; height:14%;
+    margin-left:-1px; background:rgba(255,255,255,.92); }
+  #firebtn::before, #firebtn2::before { top:11%; } #firebtn::after, #firebtn2::after { bottom:11%; }
+  body.touch.manual #firebtn, body.touch.manual #firebtn2, body.touch.manual #adsbtn { display:flex; }
   body.touch #lockbtn, body.touch #reloadbtn { display:flex; }
-  #fpsbox { position:fixed; left:8px; top:96px; z-index:50; font:11px ui-monospace, Menlo, monospace; color:#fff; background:rgba(0,0,0,.55); padding:3px 6px; display:none; pointer-events:none; }
+  body.manual #lockbtn { display:none !important; }
+  /* with touch buttons on screen the ammo takes the corner, the killstreaks stack under the menu buttons */
+  body.touch #ammo { right:8px; bottom:8px; }
+  body.touch #supports { top:54px; right:10px; bottom:auto; flex-direction:column; }
+  body.touch #feed { top:148px; bottom:auto; left:10px; right:auto; align-items:flex-start; }
+  body.touch .frow { box-shadow:inset 2px 0 0 var(--friend); } body.touch .frow.bad { box-shadow:inset 2px 0 0 var(--foe); }
+
+  /* ---------- menu screens ---------- */
+  .scr { position:fixed; inset:0; z-index:15; display:none; flex-direction:column; overflow:auto; touch-action:pan-y; background:var(--bg);
+    background-image:linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+    background-size:56px 56px; }
+  .scr.on { display:flex; }
+  .mhead { display:flex; align-items:flex-end; gap:10px; padding:26px 32px 18px; flex-wrap:wrap; }
+  .mhead .ttl { flex:1 1 320px; min-width:0; margin-right:12px; }
+  .mhead .eyebrow { margin-bottom:12px; }
+  .mhead .xl { font-size:clamp(34px, 5.4vw, 64px); }
+  .mbody { display:flex; flex:1; min-height:0; padding:0 32px; }
+  #mapsvg { flex:1; width:100%; min-height:240px; max-height:calc(100vh - 250px); background:var(--panel-solid); border:1px solid var(--line); }
+  #deploybar { display:flex; align-items:center; gap:24px; margin-top:18px; padding:16px 32px 24px; border-top:1px solid var(--line); }
+  #deploybar .dz { flex:1; min-width:0; }
+  #terrmeta { font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--label); }
+  #terrname { margin-top:7px; font-size:clamp(20px, 3vw, 36px); color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #deploybtn { width:auto; min-width:230px; }
+  .tgrid { padding:0 32px 32px; }
+  #loadout { display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:12px; }
+  .wpick { text-align:left; padding:16px 18px; color:var(--ink); cursor:pointer; background:var(--panel-solid); border:1px solid var(--line); }
+  .wpick:hover { border-color:var(--line-hi); }
+  .wpick.on { border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }
+  .wpick .wtop { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+  .wpick .wtop span { font-family:var(--display); font-stretch:125%; font-weight:800; font-size:20px; text-transform:uppercase; }
+  .wpick.on .wtop span { color:var(--accent); }
+  .wpick .wtop b { font-family:var(--mono); font-weight:800; font-size:13px; color:var(--ink); white-space:nowrap; }
+  .wpick .wstats { margin-top:8px; font-family:var(--mono); font-size:11px; letter-spacing:.03em; color:var(--label); font-variant-numeric:tabular-nums; }
+  .wpick .attrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:12px; }
+  .wpick .attrow > span { min-width:44px; font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.22em; color:var(--muted); }
+  .att { padding:6px 9px; font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.08em; color:var(--label);
+    background:transparent; border:1px solid var(--line-hi); border-radius:0; }
+  .att:hover { color:var(--ink); }
+  .att.on { border-color:var(--accent); color:var(--accent); background:rgba(255,107,44,.08); }
+  .wpick .wnote { margin-top:10px; font-family:var(--mono); font-size:10.5px; line-height:1.55; color:var(--muted); }
+
+  /* ---------- modal: the after-action layout from the brand sheet, over the blurred fight ---------- */
+  #modal { position:fixed; inset:0; z-index:30; display:none; align-items:center; justify-content:center; overflow:auto; padding:32px;
+    background:rgba(3,5,10,.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+  #modalbox { width:min(760px, 100%); margin:auto; text-align:left; color:var(--text); }
+  #modalbox .eyebrow { margin-bottom:14px; }
+  #modalbox h2 { margin:0 0 18px; font-family:var(--display); font-stretch:125%; font-weight:800; font-size:clamp(40px, 8vw, 96px); line-height:.92;
+    text-transform:uppercase; color:var(--accent); text-wrap:balance; }
+  #modalbox .lede { margin:0 0 24px; }
+  #modalbox .stats, #modalbox .setlist { margin:0 0 26px; }
+  #modalbox .btn { display:block; width:100%; margin-top:10px; }
+  #modalbox .note { margin:18px 0 0; }
+  .setlist { border:1px solid var(--line-hi); background:var(--panel-solid); }
+  .setrow { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:12px 16px; border-top:1px solid var(--line);
+    font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--label); }
+  .setrow:first-child { border-top:0; }
+  .setrow label { margin-left:14px; white-space:nowrap; font-weight:500; letter-spacing:.04em; text-transform:none; color:var(--text); }
+  .setrow input[type=range] { width:150px; accent-color:var(--accent); }
+  .setrow input[type=checkbox], .setrow input[type=radio] { accent-color:var(--accent); }
+
+  /* ---------- rotate prompt and title screen ---------- */
+  #rotate { position:fixed; inset:0; z-index:60; display:none; flex-direction:column; justify-content:center; gap:14px; padding:34px; background:var(--bg); }
+  body.portrait #rotate { display:flex; }
+  #rotate .rot-icon { width:fit-content; font-size:52px; line-height:1; color:var(--accent); transform:rotate(90deg); animation:rotHint 2.2s ease-in-out infinite; }
+  #rotate .xl { font-size:clamp(30px, 10vw, 56px); }
+  @keyframes rotHint { 0%, 45% { transform:rotate(0deg); } 55%, 100% { transform:rotate(90deg); } }
+  #boot { position:fixed; inset:0; z-index:39; display:flex; align-items:center; justify-content:center; padding:32px; cursor:pointer; transition:opacity .6s; background:var(--bg); }
+  #boot.off { opacity:0; pointer-events:none; }
+  #bootbox { width:min(760px, 100%); }
+  #bootbox .eyebrow { margin-bottom:14px; }
+  #bootbox h1 { font-size:clamp(56px, 12vw, 136px); }
+  #bootbox .boot-press { margin:24px 0 26px; font-family:var(--mono); font-weight:700; font-size:12px; letter-spacing:.32em; text-transform:uppercase; color:var(--ink);
+    animation:blink 1.1s steps(2, jump-none) infinite; }
+  @keyframes blink { 50% { opacity:.25; } }
+  #bootlines { min-height:110px; white-space:pre-wrap; font-family:var(--mono); font-size:12px; line-height:1.9; color:var(--muted); }
+  #bootlines .ok { color:var(--accent); }
 
   @media (prefers-reduced-motion: reduce) {
-    #bootbox .boot-press, #titlecard.show .tc-name, #hurt.crit { animation:none; }
+    #bootbox .boot-press, #titlecard.show .tc-name, #hurt.crit, #rotate .rot-icon { animation:none; }
     #reticle .hm { transition:none; }
   }
-  @media (max-width:899px) {   /* compact HUD: phones, and any window too narrow for the spread-out layout */
-    #frontwrap { left:8px; transform:none; width:calc(100vw - 150px); text-align:left; }
-    #bossbar { top:104px; left:8px; transform:none; width:calc(100vw - 150px); }
-    #tally { top:48px; left:8px; transform:none; font-size:10px; letter-spacing:.08em; }
-    #tally b { font-size:13px; }
-    #minimap { top:104px; left:8px; width:96px; height:76px; }
-    #feed { top:206px; right:8px; width:150px; font-size:9px; }   /* clears the roster panel */
-    #firebtn { right:14px; bottom:150px; width:72px; height:72px; } #firebtn span { inset:22px; }
-    #adsbtn { right:96px; bottom:176px; width:52px; height:52px; font-size:10px; }
-    #topbar { top:68px; left:8px; }
-    #tomap { font-size:10px; padding:5px 10px; }
-    #me { padding:4px 9px 4px 5px; bottom:8px; left:8px; gap:7px; }
-    #supports { bottom:76px; right:8px; left:auto; transform:none; gap:7px; }
-    .supbtn { padding:3px 9px 3px 3px; font-size:9px; gap:5px; } .supbtn .ckey { width:20px; height:20px; font-size:10px; }
-    #fallen { bottom:10px; right:8px; font-size:10px; }
-    #ammo { bottom:44px; right:8px; }
-    #ammag, #amres { display:inline; vertical-align:baseline; } #ammag { font-size:20px; } #amres { font-size:11px; margin-left:4px; }
-    #amname { display:none; } #ambar { width:56px; margin-top:2px; }
-    #hint { top:auto; bottom:290px; width:90vw; text-align:center; font-size:11px; }   /* above the fire / ADS / dive buttons */
-    #lockbtn { bottom:134px; right:8px; }
-    .mhead h1 { font-size:19px; letter-spacing:.12em; }
-  }
-  /* Phones play in landscape: short, and every pixel of it is the fight. Keep the HUD small and at the
-     edges — touch targets stay big enough to hit, everything that is only information shrinks. */
-  @media (max-height:520px) {
-    /* No text toasts on a phone: no banners, no floating numbers, no kill feed, no control reminder. */
-    #banner, #hint, #floaters, #feed { display:none !important; }
-    #topbar { top:5px; left:5px; gap:7px; }
-    #tomap { font-size:9px; padding:4px 10px; }
-    #tocfg { font-size:11px; padding:3px 7px; }
-    #frontwrap { top:6px; left:148px; transform:none; width:min(38vw, 280px); }
-    #frontbar { height:9px; padding:1px; border-width:1px; border-radius:6px; }
-    #tally { top:21px; left:148px; transform:none; font-size:9px; letter-spacing:.09em; }
-    #tally b { font-size:11px; } #tally i { margin:0 6px; height:9px; }
-    #minimap { top:40px; left:5px; width:70px; height:54px; border-width:1px; }
+  /* compact: phones, and any window too narrow for the spread-out layout */
+  @media (max-width:899px), (max-height:520px) {
+    #tickets { top:6px; height:30px; }
+    #tickets > b { min-width:40px; font-size:14px; }
+    .tkbar { width:min(110px, 13vw); padding:0 7px; }
+    .tkmid { min-width:50px; padding:0 8px; } .tkmid b { font-size:13px; } .tkmid em { font-size:7px; letter-spacing:.2em; }
+    #minimap { top:6px; left:6px; width:96px; height:76px; }
+    #topbar { top:6px; right:6px; gap:4px; }
+    #tomap, #tocfg { height:30px; padding:0 10px; font-size:10px; } #tocfg { width:30px; padding:0; font-size:13px; }
+    #bossbar { top:44px; width:min(280px, 46vw); } #bossname { margin-bottom:3px; font-size:9px; }
+    #feed { top:auto; bottom:64px; right:6px; width:220px; font-size:10px; }
+    #ammo { right:6px; bottom:6px; min-width:0; padding:6px 10px 8px; }
+    #amname { margin-bottom:3px; font-size:8px; letter-spacing:.2em; } #ammag { font-size:22px; } #amres { font-size:11px; }
+    #supports { right:auto; left:6px; bottom:6px; gap:4px; }
+    .supbtn { width:98px; gap:4px; padding:5px 8px 6px; }
+    .ks-top { font-size:8.5px; } .ks-name { font-size:8.5px; }
+    body.touch #ammo { right:6px; bottom:6px; }
+    body.touch #supports { top:42px; right:6px; left:auto; bottom:auto; }
+    body.touch #feed { top:88px; bottom:auto; left:6px; }
+    #hint { bottom:70px; font-size:10px; }
     #dmgdir i { width:210px; height:180px; margin:-180px 0 0 -105px; }
-    #supports { bottom:6px; left:130px; right:auto; transform:none; gap:5px; }
-    .supbtn { padding:2px 9px 2px 2px; font-size:8px; gap:4px; letter-spacing:.05em; border-width:1px; }
-    .supbtn .ckey { width:16px; height:16px; font-size:9px; }
-    .supbtn .cnt, .supbtn .need { min-width:14px; height:14px; font-size:8px; top:-6px; right:-5px; border-width:1px; padding:0 3px; }
-    #ammo { bottom:64px; right:70px; }
-    #ammag { font-size:15px; } #amres { font-size:9px; } #ambar { width:42px; height:3px; }
-    #firebtn { bottom:8px; right:8px; width:62px; height:62px; } #firebtn span { inset:18px; }
-    #firebtn2 { bottom:104px; left:8px; width:48px; height:48px; } #firebtn2 span { inset:13px; }
-    #firebtn::before, #firebtn::after { height:10px; } #firebtn::before { top:8px; } #firebtn::after { bottom:8px; }
-    #firebtn2::before, #firebtn2::after { height:8px; } #firebtn2::before { top:6px; } #firebtn2::after { bottom:6px; }
-    #adsbtn { bottom:12px; right:78px; width:44px; height:44px; font-size:15px; }
-    #reloadbtn { bottom:78px; right:14px; width:40px; height:40px; font-size:17px; }
-    #lockbtn { bottom:8px; right:8px; width:56px; height:56px; font-size:22px; }
-    #bossbar { top:36px; left:50%; transform:translateX(-50%); width:min(210px, 30vw); }
-    #bossname { font-size:8px; margin-bottom:2px; } #bosshp { height:7px; padding:1px; border-width:1px; }
+    .mhead { padding:14px 16px 10px; }
+    .mbody { padding:0 16px; }
+    #deploybar { gap:14px; margin-top:10px; padding:10px 16px 12px; }
+    #deploybtn { min-width:150px; }
+    .tgrid { padding:0 16px 16px; }
+    #loadout { grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:8px; }
+    .wpick { padding:12px 14px; } .wpick .wtop span { font-size:16px; }
   }
-
+  /* phones in landscape: every pixel is the fight */
+  @media (max-height:520px) {
+    #banner, #hint, #floaters, #feed { display:none !important; }   /* no text toasts on a phone */
+    .mhead .eyebrow { margin-bottom:6px; font-size:10px; } .mhead .xl { font-size:30px; }
+    #mapsvg { min-height:0; max-height:calc(100vh - 142px); }
+    #terrmeta { font-size:9px; } #terrname { margin-top:3px; font-size:18px; }
+    .cta { padding:12px 18px; font-size:13px; }
+    #modal { padding:14px 26px; }
+    #modalbox .eyebrow { margin-bottom:8px; font-size:10px; }
+    #modalbox h2 { margin-bottom:10px; font-size:40px; }
+    #modalbox .lede { margin-bottom:12px; font-size:13px; }
+    #modalbox .stats, #modalbox .setlist { margin-bottom:12px; }
+    .stats { grid-template-columns:repeat(3, 1fr); } .stat.wide { grid-column:auto; }
+    .stat { padding:8px 12px 9px; } .stat .k { font-size:8.5px; letter-spacing:.16em; }
+    .stat .v { margin-top:4px; font-size:18px; } .stat .v.hot { font-size:22px; } .stat .v small { font-size:9px; }
+    .setlist { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); }   /* two columns so DONE stays on screen */
+    .setrow { padding:6px 12px; font-size:9.5px; border-top:0; background:var(--panel-solid); }
+    .setrow label { margin-left:8px; }
+    .setrow:last-child:nth-child(odd) { grid-column:1 / -1; }   /* an odd row out spans the width instead of leaving a hole */
+    #modalbox .note { margin-top:10px; font-size:10px; }
+    #bootbox h1 { font-size:64px; } #bootbox .boot-press { margin:12px 0 14px; } #bootlines { min-height:0; font-size:10px; }
+    body.touch #supports { gap:3px; } body.touch .supbtn { gap:2px; padding:4px 8px 5px; }   /* clear of the ADS button below */
+  }
 </style>
 </head>
 <body>
@@ -644,8 +627,13 @@
 
 <!-- ============ BATTLE HUD ============ -->
 <div id="bhud" style="display:none">
-  <div class="hud" id="frontwrap"><div id="frontbar"><div id="frontfill"></div></div></div>
-  <div class="hud" id="tally"><b id="killn">0</b> KILLS<i></i><b id="ticketn">20</b> LEFT</div>
+  <div class="hud" id="tickets">
+    <b class="us" id="ticketn">20</b>
+    <span class="tkbar us"><span class="tk-track"><i id="tkus"></i></span></span>
+    <span class="tkmid"><b id="killn">0</b><em>KILLS</em></span>
+    <span class="tkbar them"><span class="tk-track"><i id="tkthem"></i></span></span>
+    <b class="them" id="enemyn">26</b>
+  </div>
   <div class="hud" id="bossbar"><div id="bossname">WARLORD</div><div id="bosshp"><i id="bosshpfill"></i></div></div>
   <canvas class="hud" id="minimap" width="150" height="120"></canvas>
   <div class="hud" id="feed"></div>
@@ -665,30 +653,31 @@
 <!-- ============ MAP SCREEN ============ -->
 <div id="mapscr" class="scr">
   <div class="mhead">
-    <div><h1>HOLDOUT</h1><div class="sub" id="theatertag">THEATER I — OPERATIONS MAP</div></div>
-    <button class="navbtn ghost" id="tosettings" style="margin-left:auto">SETTINGS</button>
-    <button class="navbtn ghost" id="toteam">LOADOUT</button>
+    <div class="ttl"><div class="eyebrow" id="theatertag">Theater I · Operations</div><h1 class="xl">Holdout</h1></div>
+    <button class="btn" id="tosettings">Settings</button>
+    <button class="btn" id="toteam">Loadout</button>
   </div>
   <div class="mbody">
     <svg id="mapsvg" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet"></svg>
   </div>
   <div id="deploybar">
-    <span id="terrname">SELECT A TERRITORY</span>
-    <button class="navbtn" id="deploybtn" disabled>⚔ DEPLOY</button>
+    <div class="dz"><div id="terrmeta">Select a territory</div><div class="xl" id="terrname">Operations</div></div>
+    <button class="cta" id="deploybtn" disabled>Deploy</button>
   </div>
 </div>
 
 <!-- ============ TEAM / ARMORY SCREEN ============ -->
 <div id="teamscr" class="scr">
   <div class="mhead">
-    <div><h1>BATTLE PREP</h1><div class="sub">PICK WHAT YOU CARRY</div></div>
-    <button class="navbtn" id="backmap" style="margin-left:auto">◂ MAP</button>
+    <div class="ttl"><div class="eyebrow">Battle prep</div><h1 class="xl">Loadout</h1></div>
+    <button class="btn" id="backmap">◂ Map</button>
   </div>
-  <div class="tgrid"><div class="tcol" style="flex:1 1 100%"><div id="loadout"></div></div></div>
+  <div class="tgrid"><div id="loadout"></div></div>
 </div>
 
 <div id="modal"><div id="modalbox"></div></div>
-<div id="boot"><div id="bootbox"><div class="boot-sub">The Ninth Company</div><h1>HOLDOUT</h1><div class="boot-press">Press any key</div><div id="bootlines"></div></div></div>
+<div id="rotate"><div class="rot-icon">▭</div><div class="eyebrow">Landscape only</div><h2 class="xl">Rotate your device</h2><p class="note">Holdout plays sideways. The fight is paused until you turn it.</p></div>
+<div id="boot"><div id="bootbox"><div class="eyebrow">The Ninth Company</div><h1 class="xl">Holdout</h1><div class="boot-press">Press any key</div><div id="bootlines"></div></div></div>
 
 <script>
 'use strict';
@@ -1958,7 +1947,7 @@ function pickType() {
 function updateWaves(dt) {   // four a side: whenever the enemy is short-handed and has tickets left, someone walks on
   state.wave = 1 + Math.floor(state.progress / 12);   // the enemy's mix toughens as its tickets run down
   const onField = enemies.reduce((n, e) => n + (e.boss ? 0 : 1), 0);
-  const unspent = state.enemyTotal - state.enemyDown - onField;
+  const unspent = state.enemyTotal - state.enemyDown - onField - (state.bossRef ? 1 : 0);   // the Warlord's ticket is its own, not a spare
   if (enemies.length < CFG.enemyCap && unspent > 0) {
     state.spawnT -= dt;
     if (state.spawnT <= 0) { spawnEnemy(pickType()); state.spawnT = rand(2.2, 3.6); }
@@ -2066,7 +2055,7 @@ function killEnemy(idx, credit) {
   sfxKill(e.x, e.y);
   if (!e.boss && Math.random() < 0.35) pickups.push({ x: e.x + rand(-10, 10), y: e.y + rand(-10, 10), t: 30 });
   if (e.boss) state.enemyDown = state.enemyTotal;   // the Warlord falls and the rest of them break
-  else state.enemyDown = Math.min(state.enemyTotal, state.enemyDown + 1);
+  else state.enemyDown = Math.min(state.enemyTotal - (state.bossRef ? 1 : 0), state.enemyDown + 1);   // while the Warlord stands, its ticket stays on the board
   const cap = (state.bossSpawned && state.bossRef && !e.boss) ? 99 : 100;  // boss gates the last 1%
   state.progress = Math.min(cap, state.enemyDown / state.enemyTotal * 100);
   const pct = +(100 / state.enemyTotal).toFixed(1);
@@ -2300,10 +2289,10 @@ function rollSky(tid) {
 function enterBattle(tid) {
   if (!VIEW.ready) {   // three.js is still arriving (or failed): hold the deploy
     if (VIEW.failed) {
-      showModal(`<h2 class="lost">3D ENGINE OFFLINE</h2><p class="sub">The battlefield renderer couldn't load.<br>Check your connection, then reload.</p><button id="mbtn">RELOAD</button>`);
+      showModal(`<div class="eyebrow">Engine offline</div><h2>No signal</h2><p class="lede">The 3D renderer couldn't load. Check your connection, then reload.</p><button class="cta" id="mbtn">Reload</button>`);
       $('mbtn').onclick = () => location.reload();
     } else {
-      showModal(`<h2>LOADING 3D ENGINE…</h2><p class="sub">Deploying as soon as the battlefield is ready.</p>`);
+      showModal(`<div class="eyebrow">Stand by</div><h2>Loading</h2><p class="note">Deploying as soon as the battlefield is ready.</p>`);
       threeReady.then(() => { hideModal(); enterBattle(tid); });
     }
     return;
@@ -2359,13 +2348,21 @@ function frontCleared() {
     if (slot > 0) { makeWren(meta.squad[slot]); wrenJoins = true; }
   }
   const allOwned = TERRITORIES.every(tt => terrOwned(tt));
+  const acc = state.shots ? Math.round(state.hits / state.shots * 100) : 0;
   showModal(`
-    <h2>${t.name.toUpperCase()} TAKEN</h2>
-    <p class="gain">The line held. Territory secured.</p>
-    <p>Kills: <b>${state.kills}</b> · Reinforcements spent: <b class="lost">${state.frontDeaths}</b> · Time: <b>${fmtTime(state.frontTime)}</b></p>
-    ${wrenJoins ? `<p class="gain">You found her. CPL DANA WREN, Third Company — sole survivor.</p>
-      <p class="sub">"The Third held this pass so I'd live. I'm coming with you."</p>` : ''}
-    <button id="mbtn">RETURN TO MAP</button>`);
+    <div class="eyebrow">Front secured</div>
+    <h2>${t.name}</h2>
+    <p class="lede">The line held. ${t.name} is yours${allOwned ? ', and with it the whole theater' : ''}.${wrenJoins ? ' And at the pass you found CPL Dana Wren, sole survivor of the Third. She joins the squad.' : ''}</p>
+    <div class="stats">
+      <div class="stat wide"><div class="k">Kills</div><div class="v hot">${state.kills}</div></div>
+      <div class="stat"><div class="k">Accuracy</div><div class="v">${acc}<small>%</small></div></div>
+      <div class="stat"><div class="k">Headshots</div><div class="v">${state.heads}</div></div>
+      <div class="stat"><div class="k">Longest kill</div><div class="v">${Math.round(state.longest / 40)}<small>M</small></div></div>
+      <div class="stat"><div class="k">Reinforcements spent</div><div class="v">${state.frontDeaths}</div></div>
+      <div class="stat wide"><div class="k">Time on the front</div><div class="v">${fmtTime(state.frontTime)}</div></div>
+    </div>
+    <button class="cta" id="mbtn">${allOwned ? 'Next theater' : 'Return to map'}</button>
+    <p class="note">${TERRITORIES.filter(terrOwned).length} of ${TERRITORIES.length} territories held.</p>`);
   document.getElementById('mbtn').onclick = () => {
     hideModal();
     if (allOwned) advanceTheater();
@@ -2378,23 +2375,35 @@ function advanceTheater() {
   for (const t of TERRITORIES) meta.terr[t.id] = { owner: t.tier === 0 ? 'p' : 'e', progress: 0 };
   meta.activeTid = 1;
   showModal(`
-    <h2 class="gain">THEATER SECURED</h2>
-    <p>Every territory is ours. Command reassigns the squad to a harder theater.</p>
-    <p class="sub">"The war does not end. It changes uniforms.<br>Somewhere another Ninth is waking up — and it has you." — Anchor</p>
-    <p class="amber">★ +1 COMMENDATION — spend it in the Armory on permanent unlocks</p>
-    <p class="amber">Theater ${ROMAN[meta.theater] || meta.theater + 1}: enemy tiers +2</p>
-    <button id="mbtn">DEPLOY</button>`);
+    <div class="eyebrow">Theater secured</div>
+    <h2>Redeploy</h2>
+    <p class="lede">Every territory is ours. The squad moves on to a harder theater, and the map starts over with only HQ held.</p>
+    <div class="stats">
+      <div class="stat wide"><div class="k">Theater</div><div class="v hot">${ROMAN[meta.theater] || meta.theater + 1}</div></div>
+      <div class="stat wide"><div class="k">Enemy strength</div><div class="v">+2<small>TIERS</small></div></div>
+    </div>
+    <button class="cta" id="mbtn">To the map</button>`);
   document.getElementById('mbtn').onclick = () => { hideModal(); exitBattle(); };
   saveMeta();
 }
 function showFailModal() {
   state.mode = 'failed';
+  const t = TERRITORIES[state.tid], acc = state.shots ? Math.round(state.hits / state.shots * 100) : 0;
   showModal(`
-    <h2 class="lost">FRONT FAILED</h2>
-    <p>Reinforcements exhausted.</p>
-    <p class="sub">Kills: <b>${state.kills}</b> · Time: <b>${fmtTime(state.frontTime)}</b></p>
-    <button id="mbtn">▶ TRY AGAIN</button>
-    <button id="mretreat" class="ghost">RETREAT TO MAP</button>`);
+    <div class="eyebrow">Front lost</div>
+    <h2>Overrun</h2>
+    <p class="lede">Your reinforcements ran out before theirs did. ${t.name} stays in enemy hands.</p>
+    <div class="stats">
+      <div class="stat wide"><div class="k">Kills</div><div class="v hot">${state.kills}</div></div>
+      <div class="stat"><div class="k">Enemy left</div><div class="v">${Math.max(0, state.enemyTotal - state.enemyDown)}</div></div>
+      <div class="stat"><div class="k">Accuracy</div><div class="v">${acc}<small>%</small></div></div>
+      <div class="stat"><div class="k">Headshots</div><div class="v">${state.heads}</div></div>
+      <div class="stat"><div class="k">Longest kill</div><div class="v">${Math.round(state.longest / 40)}<small>M</small></div></div>
+      <div class="stat wide"><div class="k">Time on the front</div><div class="v">${fmtTime(state.frontTime)}</div></div>
+    </div>
+    <button class="cta" id="mbtn">Deploy again</button>
+    <button class="btn" id="mretreat">Retreat to map</button>
+    <p class="note">Either way the front starts again from nothing.</p>`);
   $('mbtn').onclick = () => { meta.terr[state.tid].progress = 0; hideModal(); enterBattle(state.tid); };
   $('mretreat').onclick = () => { meta.terr[state.tid].progress = 0; hideModal(); exitBattle(); };
 }
@@ -2430,24 +2439,6 @@ function loadMeta() {
   return null;
 }
 let loadedFromSave = false;
-function showAwayModal(afk) {
-  let lines = `<p class="amber">+${Math.round(afk.income)} REQ territory income</p>`;
-  if (afk.conquered) lines += `<p class="gain">${afk.conquered} CONQUERED while you were away</p>`;
-  else if (afk.gain > 0) lines += `<p class="gain">+${afk.gain.toFixed(1)}% progress on ${afk.front}</p>`;
-  if (afk.lostTerr) lines += `<p class="lost">COUNTERATTACK — ${afk.lostTerr} has fallen (retake at 60%)</p>`;
-  else if (afk.repelled) lines += `<p class="sub">Counterattack on ${afk.repelled} repelled.</p>`;
-  if (afk.lostName) lines += `<p class="lost">Lost 1 soldier: ${afk.lostName}</p>`;
-  meta.lastAway = `Last away (${afk.hours < 1 ? Math.round(afk.hours * 60) + 'm' : afk.hours.toFixed(1) + 'h'}): +${Math.round(afk.income)} REQ` +
-    (afk.conquered ? `, took ${afk.conquered}` : afk.gain > 0 ? `, +${afk.gain.toFixed(0)}% on ${afk.front}` : '') +
-    (afk.lostTerr ? `, LOST ${afk.lostTerr}` : '') +
-    (afk.lostName ? `, lost ${afk.lostName}` : '');
-  showModal(`
-    <h2>WHILE YOU WERE AWAY</h2>
-    <p class="sub">${afk.hours < 1 ? Math.round(afk.hours * 60) + ' minutes' : afk.hours.toFixed(1) + ' hours'} on the line</p>
-    ${lines}
-    <button id="mbtn">BACK TO THE WAR</button>`);
-  document.getElementById('mbtn').onclick = () => { hideModal(); saveMeta(); renderMap(); };
-}
 window.addEventListener('beforeunload', saveMeta);
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveMeta(); });
 
@@ -5557,7 +5548,7 @@ function viewStats() {
 let supportsDirty = true;
 const $ = id => document.getElementById(id);
 const el = {
-  frontfill: $('frontfill'), hurt: $('hurt'), banner: $('banner'),
+  hurt: $('hurt'), banner: $('banner'),
   modal: $('modal'), modalbox: $('modalbox'), hint: $('hint'),
   bhud: $('bhud'), mapscr: $('mapscr'), teamscr: $('teamscr'),
   supports: $('supports'), mapsvg: $('mapsvg'), theatertag: $('theatertag'),
@@ -5575,20 +5566,24 @@ function rebuildSupports() {
   const box = el.supports;
   box.innerHTML = '';
   KILLSTREAKS.forEach((ks, i) => {
-    const s = SUPPORTS[ks.key], have = state.earned[ks.key] || 0;
+    const s = SUPPORTS[ks.key], have = state.earned[ks.key] || 0, need = Math.max(0, ks.at - state.ks);
+    const status = have ? `<span class="cnt">READY${have > 1 ? ' ×' + have : ''}</span>`
+      : `<span class="need">${need > 0 ? need + (need === 1 ? ' KILL' : ' KILLS') : 'USED'}</span>`;   // used: earned once already this life
     const b = document.createElement('button');
     b.className = 'supbtn' + (have ? '' : ' locked');
     b.disabled = !have;
-    b.innerHTML = `<span class="ckey">${i + 1}</span>${s.name}`
-      + (have ? `<span class="cnt">${have}</span>` : `<span class="need">${Math.max(0, ks.at - state.ks)}</span>`);
+    b.innerHTML = `<span class="ks-top"><span class="ckey">${i + 1}</span>${status}</span><span class="ks-name">${s.name}</span>`;
     b.onclick = () => useSupport(ks.key);
     box.appendChild(b);
   });
 }
 function updateBattleHud() {
-  el.frontfill.style.width = state.progress + '%';
+  const theirs = Math.max(0, state.enemyTotal - state.enemyDown);
   $('killn').textContent = state.kills;
   $('ticketn').textContent = state.tickets;
+  $('enemyn').textContent = theirs;
+  $('tkus').style.width = clamp(state.tickets / CFG.tickets, 0, 1) * 100 + '%';
+  $('tkthem').style.width = clamp(theirs / Math.max(1, state.enemyTotal), 0, 1) * 100 + '%';
   if (supportsDirty) { rebuildSupports(); supportsDirty = false; }
   const c = soldiers[state.controlled];
   if (c) {
@@ -5630,30 +5625,29 @@ function drawMinimap() {
   const ox = s.x - span / 2, oy = s.y - H / sc / 2;
   const X = x => (x - ox) * sc, Y = y => (y - oy) * sc;
   g.clearRect(0, 0, W, H);
-  g.fillStyle = 'rgba(10,16,26,0.66)'; g.fillRect(0, 0, W, H);
-  g.fillStyle = '#2b3648';
+  g.fillStyle = 'rgba(5,8,15,0.5)'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#1d2634';
   for (const b of buildings) g.fillRect(X(b.x - b.hw), Y(b.y - b.hd), b.hw * 2 * sc, b.hd * 2 * sc);
-  g.fillStyle = '#4e4738';
+  g.fillStyle = '#3a4454';
   for (const o of obstacles) g.fillRect(X(o.x) - 1.5, Y(o.y) - 1.5, 3, 3);
-  g.fillStyle = '#e8d24a';
+  g.fillStyle = '#ff6b2c';
   for (const p of pickups) g.fillRect(X(p.x) - 2, Y(p.y) - 2, 4, 4);
   for (const e of enemies) {   // only what you could plausibly know about: close, or shooting
     const d = Math.hypot(e.x - s.x, e.y - s.y);
     if (d > 950 && !(e.fireT < 0.5 && d < 1600)) continue;
-    g.fillStyle = e.boss ? '#ff9a4a' : '#e0503c';
+    g.fillStyle = e.boss ? '#ff8a3d' : '#ff4d3d';
     g.beginPath(); g.arc(X(e.x), Y(e.y), e.boss ? 4 : 2.6, 0, TAU); g.fill();
   }
-  g.fillStyle = '#7ad24a';
+  g.fillStyle = '#5cb6ff';
   for (const m of soldiers) {
     if (!m.alive || m.slot === state.controlled) continue;
     g.beginPath(); g.arc(X(m.x), Y(m.y), 2.6, 0, TAU); g.fill();
   }
   g.save();
   g.translate(X(s.x), Y(s.y)); g.rotate(cam.yaw);
-  g.fillStyle = '#ffd84a';
+  g.fillStyle = '#ffffff';
   g.beginPath(); g.moveTo(0, -7); g.lineTo(4.5, 4.5); g.lineTo(-4.5, 4.5); g.closePath(); g.fill();
   g.restore();
-  g.strokeStyle = 'rgba(201,162,74,0.55)'; g.lineWidth = 2; g.strokeRect(1, 1, W - 2, H - 2);
 }
 function updateFeed() {
   const box = $('feed'), now = performance.now();
@@ -5688,7 +5682,9 @@ function applyOpts() {   // the options that change how the game looks and reads
 function showSettings() {
   const o = meta.opts, on = v => v ? ' checked' : '';
   showModal(`
-    <h2>SETTINGS</h2>
+    <div class="eyebrow">Settings</div>
+    <h2>Controls</h2>
+    <div class="setlist">
     <div class="setrow"><span>Controls</span><span>
       <label><input type="radio" name="sch" value="auto"${on(o.scheme === 'auto')}> Auto-fire</label>
       <label><input type="radio" name="sch" value="manual"${on(o.scheme === 'manual')}> Manual</label></span></div>
@@ -5703,9 +5699,10 @@ function showSettings() {
     <div class="setrow"><span>Kill feed</span><input type="checkbox" id="o_kf"${on(o.killfeed)}></div>
     <div class="setrow"><span>Vibration</span><input type="checkbox" id="o_vb"${on(o.vibe)}${navigator.vibrate ? '' : ' disabled'}></div>
     <div class="setrow"><span>Sound</span><input type="checkbox" id="o_snd"${on(!meta.muted)}></div>
-    <p class="sub">Manual: hold left mouse to fire, right mouse for sights; click once to capture the mouse, Esc frees it.
-      On a phone: drag the right side to look, FIRE to shoot, ADS to steady. First person always aims manually.</p>
-    <button id="mbtn">DONE</button>`);
+    </div>
+    <button class="cta" id="mbtn">Done</button>
+    <p class="note">Manual: hold left mouse to fire, right mouse for sights; click once to capture the mouse, Esc frees it.
+      On a phone: drag the right side to look, fire with either trigger, ADS to steady. First person always aims manually.</p>`);
   const bind = (id, key, read) => { const e = $(id); if (e) e.oninput = () => { meta.opts[key] = read(e); applyOpts(); saveMeta(); }; };   // 'input' so the FOV and sensitivity sliders preview as you drag
   document.querySelectorAll('input[name=sch]').forEach(r => { r.onchange = () => { meta.opts.scheme = r.value; applyOpts(); saveMeta(); }; });
   document.querySelectorAll('input[name=vw]').forEach(r => { r.onchange = () => { meta.opts.fpv = r.value === 'fps'; applyOpts(); saveMeta(); showSettings(); }; });   // redraw: first person drops the aim-assist row
@@ -5737,7 +5734,7 @@ function hideModal() { el.modal.style.display = 'none'; }
 // ---------- MAP SCREEN ----------
 let selectedTid = -1;
 function renderMap() {
-  el.theatertag.textContent = `THEATER ${ROMAN[meta.theater] || meta.theater + 1} — OPERATIONS MAP`;
+  el.theatertag.textContent = `Theater ${ROMAN[meta.theater] || meta.theater + 1} · Operations`;
   const NS = 'http://www.w3.org/2000/svg';
   const svg = el.mapsvg;
   svg.innerHTML = '';
@@ -5749,9 +5746,9 @@ function renderMap() {
     ln.setAttribute('x1', t.x); ln.setAttribute('y1', t.y);
     ln.setAttribute('x2', o.x); ln.setAttribute('y2', o.y);
     const both = terrOwned(t) && terrOwned(o);
-    ln.setAttribute('stroke', both ? '#3f7a3a' : '#8a5a34');
-    ln.setAttribute('stroke-width', '0.45');
-    if (!both) ln.setAttribute('stroke-dasharray', '1 1');
+    ln.setAttribute('stroke', both ? '#3b76a6' : '#3a4454');
+    ln.setAttribute('stroke-width', both ? '0.4' : '0.3');
+    if (!both) ln.setAttribute('stroke-dasharray', '0.9 0.9');
     svg.appendChild(ln);
   }
   for (const t of TERRITORIES) {
@@ -5760,26 +5757,32 @@ function renderMap() {
     const owned = terrOwned(t), atk = terrAttackable(t);
     const c = document.createElementNS(NS, 'circle');
     c.setAttribute('cx', t.x); c.setAttribute('cy', t.y);
-    c.setAttribute('r', t.tier === 6 ? 3.4 : 2.6);
-    c.setAttribute('fill', owned ? '#3f8a3a' : atk ? '#b8402c' : '#8a7a62');
-    c.setAttribute('stroke', t.id === selectedTid ? '#ffd84a' : t.id === meta.activeTid && !owned ? '#c9a24a' : '#3b2a16');
-    c.setAttribute('stroke-width', t.id === selectedTid ? 0.6 : 0.35);
+    c.setAttribute('r', t.tier === 6 ? 2.6 : 2);
+    c.setAttribute('fill', owned ? '#5cb6ff' : atk ? '#070b14' : '#1b2230');   // yours, attackable, out of reach
+    c.setAttribute('stroke', owned ? '#05080f' : atk ? '#ff6b2c' : '#3a4454');
+    c.setAttribute('stroke-width', atk ? 0.5 : 0.3);
+    if (t.id === selectedTid) {   // the selection: a hairline ring outside the node
+      const ring = document.createElementNS(NS, 'circle');
+      ring.setAttribute('cx', t.x); ring.setAttribute('cy', t.y); ring.setAttribute('r', (t.tier === 6 ? 2.6 : 2) + 1.5);
+      ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', '#ff6b2c'); ring.setAttribute('stroke-width', '0.28');
+      g.appendChild(ring);
+    }
     g.appendChild(c);
     const prog = meta.terr[t.id].progress;
     if (!owned && prog > 0) {
       const arc = document.createElementNS(NS, 'circle');
-      arc.setAttribute('cx', t.x); arc.setAttribute('cy', t.y); arc.setAttribute('r', 3.6);
-      arc.setAttribute('fill', 'none'); arc.setAttribute('stroke', '#2f6a2a'); arc.setAttribute('stroke-width', '0.5');
-      const circ = 2 * Math.PI * 3.6;
+      arc.setAttribute('cx', t.x); arc.setAttribute('cy', t.y); arc.setAttribute('r', 2.9);
+      arc.setAttribute('fill', 'none'); arc.setAttribute('stroke', '#ff6b2c'); arc.setAttribute('stroke-width', '0.45');
+      const circ = 2 * Math.PI * 2.9;
       arc.setAttribute('stroke-dasharray', `${circ * prog / 100} ${circ}`);
       arc.setAttribute('transform', `rotate(-90 ${t.x} ${t.y})`);
       g.appendChild(arc);
     }
     const tx = document.createElementNS(NS, 'text');
-    tx.setAttribute('x', t.x); tx.setAttribute('y', t.y + 5.6);
+    tx.setAttribute('x', t.x); tx.setAttribute('y', t.y + 4.9);
     tx.setAttribute('text-anchor', 'middle');
-    tx.setAttribute('font-size', '2.2'); tx.setAttribute('fill', owned ? '#1f4a1c' : '#3b2a16');
-    tx.setAttribute('font-family', 'Cinzel, Georgia, serif'); tx.setAttribute('font-weight', '800'); tx.setAttribute('letter-spacing', '0.2');
+    tx.setAttribute('font-size', '1.75'); tx.setAttribute('fill', owned ? '#9fd2ff' : atk ? '#f1f3f6' : '#7b879a');
+    tx.setAttribute('font-family', "'JetBrains Mono', ui-monospace, monospace"); tx.setAttribute('font-weight', '700'); tx.setAttribute('letter-spacing', '0.18');
     tx.textContent = t.name.toUpperCase();
     g.appendChild(tx);
     g.addEventListener('click', () => { selectedTid = t.id; renderMap(); });
@@ -5789,13 +5792,14 @@ function renderMap() {
   const t = TERRITORIES[selectedTid] || null;
   const db = $('deploybtn');
   if (!t) {
-    $('terrname').textContent = 'SELECT A TERRITORY';
+    $('terrmeta').textContent = 'Select a territory';
+    $('terrname').textContent = 'Operations';
     db.disabled = true; db.onclick = null;
   } else {
     const owned = terrOwned(t), atk = terrAttackable(t);
     const prog = meta.terr[t.id].progress;
-    $('terrname').textContent = `${t.name.toUpperCase()} · TIER ${effTier(t)}`
-      + (owned ? ' · HELD' : prog > 0 ? ` · ${Math.floor(prog)}%` : '') + (atk || owned ? '' : ' · OUT OF REACH');
+    $('terrmeta').textContent = `Tier ${effTier(t)} · ` + (owned ? 'Held' : atk ? (prog > 0 ? `${Math.floor(prog)}% taken` : 'Attackable') : 'Out of reach');
+    $('terrname').textContent = t.name;
     db.disabled = !atk;
     db.onclick = atk ? () => { meta.activeTid = t.id; saveMeta(); enterBattle(t.id); } : null;
   }
@@ -5919,7 +5923,6 @@ loadThree().then(() => { const g = document.getElementById('bootgl'); if (g) g.i
     clearInterval(iv);
     bootEl.classList.add('off');
     setTimeout(() => bootEl.remove(), 600);
-    if (afkResult) showAwayModal(afkResult);
   }
   bootEl.addEventListener('click', finish);
   window.addEventListener('keydown', finish, { once: true });
