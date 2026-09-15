@@ -20,7 +20,8 @@
   cog in battle, or O. Aim assist (on by default, third person only — first person is yours to aim) pulls the
   crosshair toward a target already under it and slows the look 35% while it is there; it never fires for you.
   The crosshair is white, turns RED the moment an enemy is lined up under it, and blooms while you move, fire or
-  reload; hits punch a four-tick marker across it (white for a hit, red for a kill, longer for a headshot). Down the sights your cone shrinks to a quarter of the hip cone (a fifth or
+  reload; hits punch a four-tick marker across it (white for a hit, red for a kill, longer for a headshot).
+  G throws a grenade and Shift sprints (see GRENADES and SPRINT). Down the sights your cone shrinks to a quarter of the hip cone (a fifth or
   less through the ACOG or scope), the view zooms by the sight's magnification, and you move at 70% speed.
   V switches between third and first person: first person puts the camera at the soldier's eyes with a weapon
   viewmodel (bob, sway, recoil kick, the full reload, muzzle bloom, the weapon pulled in against walls); the
@@ -98,8 +99,8 @@
   YOUR ROUNDS GO TO THE CROSSHAIR — in either view, a shot is a ray through the town: it flies in 3D to the first thing under the crosshair (an enemy, a wall, cover, the ground) with the
   weapon's spread around that line, so aiming up and down matters. Buildings and cover have real heights
   (COVER_TOP), riflemen are shorter while they kneel (bodyTop), and your headshots are decided by where the
-  round strikes (the top fifth of the body, near its middle). Squadmates and enemies keep level fire and the
-  probabilistic cover rule below.
+  round strikes (the top fifth of the body, near its middle). Enemy rounds are 3D too (ENEMY FIRE); squadmates keep
+  level fire and the probabilistic cover rule below.
 
   HEADSHOTS (squadmates) — their rounds fly level, so a target is a circle and its
   head is the narrow column at the middle of it: a round whose line passes within ~0.1 m of the target's centre
@@ -141,10 +142,34 @@
   cross street and a south road. Buildings, wagons and containers are solid with real heights; fixed cover is
   always there, and 55 slots roll fresh cover each battle. A wall down each side, a fence and closed gate across the
   pass road, and HESCO to the south stand exactly on the edge of play, so you can walk up to them.
-  Cover stops 35-95% of level rounds (per kind) and takes their damage; blasts damage all cover in range. A unit
-  hugging cover or a wall (within 18 px of its edge) takes 50% (soldiers) / 35% (enemies) less damage from level
-  rounds and fires over its own cover; your manually aimed rounds meet cover as geometry instead of a discount.
-  Melee ignores cover.
+  Every 3D round — yours and the enemy's — meets cover as geometry: it stops on anything taller than its line at
+  that point (COVER_TOP), passes over anything lower, and low-block cover (fences, hedges, tents) still rolls its
+  stop chance. Your squadmates' level rounds keep the old rule: cover stops 35-95% of them (per kind), and an enemy
+  hugging cover or a wall (within 18 px of its edge) takes 35% less. Cover takes the damage of what it stops;
+  blasts damage all cover in range. Melee ignores cover.
+
+  ENEMY FIRE — enemy rounds fly in 3D: from the shooter's shoulder (80% of its height, so a kneeling rifleman fires
+  low) at the target's chest (62% of its height), with the old side-to-side spread and half as much up and down.
+  A standing soldier is 1.8 m tall; an AI squadmate settled behind cover crouches to 1.1 m, so low cover protects
+  them, while you (who never crouch) are only covered by what is taller than the line to your chest: a car or a
+  van stops nearly everything (a round over the roof can still find your head), sandbags stop what comes in low.
+  In the open, damage per minute stays within 15% of the level-round game (tests/baseline.json). A sprinting
+  soldier draws 40% wider fire. The Warlord's radial burst flies level at 1.2 m. No enemy round is a headshot.
+
+  GRENADES — two frags each life, refilled by a care package. G (desktop) or the grenade button (touch) throws one
+  from the eyes along the crosshair, 12° above it, at 15 m/s; it falls under gravity, skips off the ground, walls and
+  the tops of cover, and bursts 2.2 s after it leaves the hand (CFG.frag*). The blast reaches 5 m, from 6 damage at
+  the centre to nothing at the edge: a rifleman dies within ~2.5 m. Walls of buildings shield it, a breacher's shield
+  does not, it chews cover, it never hurts your squad, and it hurts you at half strength — never enough to kill you
+  from full health. Throwing drops a sprint; the gun dips out of the way for the throw. A red grenade on a ring
+  around the crosshair points at any live frag within 6 m. The ammo block shows how many you carry; on a phone the
+  grenade button's badge does.
+
+  SPRINT — hold Shift, or on a phone push the move stick out to its rim and forward (within ±35°) for a beat; an
+  orange chevron over the stick shows it. 1.45x speed, forward only (within ±50° of where you look; it keeps going
+  down to 80% of the stick and ±50°), no stamina limit. No firing and no sights while sprinting: the trigger or ADS
+  drops the sprint, and the gun takes 0.18 s to come up before the first round. Reloads carry on. The view widens
+  by 8° and the gun swings low across your chest.
 
   TACTICS — everyone paths around buildings and cover on a 1 m A* grid. Riflemen and PKM gunners bound to the free
   cover nearest a point at 70% / 85% of their range (offset toward a flank), hold 2.6–5 s firing bursts, get
@@ -160,9 +185,10 @@
   marked ADS): left thumb moves, right thumb looks, and
   the trigger is duplicated on both sides so you can fire with whichever thumb is free. Flat translucent
   circles sized off the screen height (--fb = 22vh, clamped 66-108 px) so they keep CoD Mobile's ratios on
-  every phone: fire 1, left trigger .8, ADS .68, reload .6. The fire button sits up off the
-  corner under the right thumb, ADS above-right of it, reload to its left, the left trigger above the
-  left thumb, and the corner is left clear for the ammo count. Reload outlines red under a quarter mag.
+  every phone: fire 1, left trigger .8, ADS .68, grenade .62, reload .6. The fire button sits up off the
+  corner under the right thumb, ADS above-right of it, reload up and to its left, the grenade low beside it
+  (with a count badge), the left trigger above the left thumb, and the corner is left clear for the ammo count.
+  Reload outlines red under a quarter mag. Pushing the move stick out to its rim sprints.
 
   MAP — 13 hand-authored territories in a Risk-style adjacency graph; attack any enemy territory next to one you
   hold. Taking one flips it to you, and that is all it does. Taking them all starts a new theater: the map resets
