@@ -7,6 +7,8 @@ const FALLOFF = {
   smg:    { near: 400, min: 0.60 },   // full to 10 m, 60% by 22 m: 4 rounds on a rifleman up close, 5 at 15 m
   ar:     { near: 800, min: 0.60 },   // full to 20 m, 60% by 37 m: 3 rounds on a rifleman anywhere in the square
   lmg:    { near: 640, min: 0.55 },   // full to 16 m, 55% by 35 m
+  ak:     { near: 720, min: 0.60 },   // full to 18 m: three rounds on a rifleman out to about 21 m
+  pkm:    { near: 640, min: 0.55 },
   pistol: { near: 320, min: 0.50 },
 };
 function falloffMul(key, travelled) {
@@ -118,7 +120,7 @@ function nearestSoldier(x, y) {
   return best;
 }
 const hitsToDrop = k => Math.ceil(ETYPES.grunt.hp / squadDmg(k) - 1e-9);   // body hits on a rifleman at full damage
-const GUN_KICK = { smg: 0.6, ar: 1.0, lmg: 1.4, sniper: 2.6, rocket: 3.2, pistol: 0.4 };
+const GUN_KICK = { smg: 0.6, ar: 1.0, lmg: 1.4, sniper: 2.6, rocket: 3.2, pistol: 0.4, ak: 1.25, pkm: 1.5 };
 function fire(s, target, fromPlayer, angle) {   // angle set = fired where the player is aiming, not at a target
   const key = s.pistol ? 'pistol' : s.weapon, w = s.pistol ? SIDEARM : WEAPONS[s.weapon];
   const dx = target ? target.x - s.x : 0, dy = target ? target.y - s.y : 0;
@@ -173,10 +175,15 @@ function killEnemy(idx, credit) {
   enemies[idx] = enemies[enemies.length - 1]; enemies.pop();      // remove FIRST — death effects must not re-hit e
   burst(e.x, e.y, e.col, e.type === 'brute' || e.boss ? 18 : 10);
   const hd = e.lastHit, ga = (e.aim || 0) + rand(0.6, 1.5) * (Math.random() < 0.5 ? 1 : -1);
-  addCorpse({ kind: 'enemy', x: e.x + rand(-4, 4), y: e.y + rand(-3, 3), col: e.col,
+  const gunX = e.x + Math.cos(ga) * rand(14, 28), gunY = e.y + Math.sin(ga) * rand(14, 28), gunYaw = rand(0, TAU), drops = DROP_KIND[e.type];
+  if (drops) {   // the rifle they carried stays where it fell: pick it up (ENEMY GUNS)
+    const w = WEAPONS[drops];
+    dropGun(drops, gunX, gunY, drops === 'pkm' ? randi(40, 100) : randi(10, 30), w.mag, { yaw: gunYaw });
+  }
+  addCorpse({ kind: 'enemy', x: e.x + rand(-4, 4), y: e.y + rand(-3, 3), col: e.col, noGun: !!drops,
     face: e.face, sc: e.r / 14, horse: e.horse, type: e.type, aim: e.aim, src: e,
     style: !credit.wkey || credit.wkey === 'rocket' || credit.wkey === 'frag' ? 2 : hd && e.aim != null && Math.cos(e.aim) * hd.x + Math.sin(e.aim) * hd.y > 0 ? 1 : 0,
-    gunX: e.x + Math.cos(ga) * rand(14, 28), gunY: e.y + Math.sin(ga) * rand(14, 28), gunYaw: rand(0, TAU) });
+    gunX, gunY, gunYaw });
   sfxKill(e.x, e.y);
   if (!e.boss && Math.random() < 0.35) pickups.push({ x: e.x + rand(-10, 10), y: e.y + rand(-10, 10), t: 30 });
   if (e.boss) state.enemyDown = state.enemyTotal;   // the Warlord falls and the rest of them break

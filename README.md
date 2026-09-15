@@ -15,10 +15,13 @@ Installed, it opens full screen in landscape and starts offline after its first 
 - Each sector is fought over three landmark objectives; hold more than the enemy to bleed their reserves, then
   kill the Warlord.
 - Desktop: WASD move, mouse aims (click to capture it), left mouse fires, right mouse aims down sights, Shift
-  sprints, G throws a grenade, R reloads, 1/2/3 killstreaks, M mutes, O settings.
+  sprints, G throws a grenade, R reloads, Q or the mouse wheel swaps guns, hold F to take a dropped gun, 1/2/3
+  killstreaks, M mutes, O settings.
 - Phone (landscape): left thumb moves (push to the rim to sprint), right thumb looks; fire, ADS, reload and
   grenade buttons on the right.
-- Controller: sticks move and look, RT fire, LT sights, RB grenade, X reload, Y view, L3 sprint, D-pad killstreaks.
+- Controller: sticks move and look, RT fire, LT sights, RB grenade, X reload (hold it to take a dropped gun), Y swap
+  guns, L3 sprint, D-pad ← ↑ → killstreaks, D-pad ↓ view.
+- Enemy riflemen and gunners drop their AK-47s and PKMs: take one to carry a second gun beside your own.
 - Settings include graphics quality (Auto, Low, Medium, High), a frame-rate cap (Max, 60, 30), a battery saver (Off,
   On, or Auto at 20% battery where the browser reports it) and squad callouts; the firing range next to settings on
   the start menu teaches the controls.

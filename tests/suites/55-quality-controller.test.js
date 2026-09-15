@@ -93,7 +93,7 @@ suite('controller', t => {
     assert.ok(!aim.ads, 'let go');
     unplug();
   });
-  t.test('RB throws, X reloads, Y switches view, L3 sprints, the D-pad calls killstreaks', () => {
+  t.test('RB throws, X reloads, D-pad down switches view, L3 sprints, the D-pad calls killstreaks', () => {
     newCampaign(); seed(3);
     const h = battle({ clear: true });
     benchSquad();
@@ -103,7 +103,8 @@ suite('controller', t => {
     tap(GPB.RB); assert.eq(h.frags, 1, 'grenade');
     ticks(50);
     h.mag = 3; tap(GPB.X); assert.ok(h.reloadT > 0, 'reloading');
-    const fpv0 = meta.opts.fpv; tap(GPB.Y); assert.eq(meta.opts.fpv, !fpv0, 'view switched'); tap(GPB.Y);
+    const fpv0 = meta.opts.fpv; tap(GPB.Y); assert.eq(meta.opts.fpv, fpv0, 'Y no longer switches view (it swaps guns)');
+    tap(GPB.DOWN); assert.eq(meta.opts.fpv, !fpv0, 'view switched'); tap(GPB.DOWN);
     ticks(200);
     pad.axes[1] = -1; tap(GPB.L3); ticks(10, 0, () => { cam.yaw = aim.yaw; });
     assert.ok(h.sprinting, 'sprinting');

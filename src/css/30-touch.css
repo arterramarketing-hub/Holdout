@@ -24,6 +24,12 @@
   .tbtn .bullet { width:24%; height:48%; fill:rgba(255,255,255,.95); filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55)); pointer-events:none; }
   .tbtn:active .bullet { fill:#fff; }
   body.touch #firebtn, body.touch #firebtn2, body.touch #adsbtn, body.touch #reloadbtn, body.touch #nadebtn { display:flex; }
+  /* the second gun: a low pill left of the ammo corner, clear of the grenade and the trigger */
+  #swapbtn { right:calc(118px + var(--sr)); bottom:8px; height:30px; padding:0 12px 0 9px; gap:6px; border-radius:15px; border-width:1.5px;
+    font-family:var(--mono); font-weight:800; font-size:10px; letter-spacing:.14em; text-transform:uppercase; }
+  #swapbtn svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2.2; }
+  body.touch #swapbtn.on { display:flex; }
+  body.touch #pickbtn { left:61%; bottom:calc(var(--fb) * .35); pointer-events:auto; touch-action:none; padding:12px 18px 14px; }
   /* with touch buttons on screen the ammo takes the corner, the killstreaks stack under the menu buttons */
   body.touch #ammo { right:calc(8px + var(--sr)); bottom:8px; }
   body.touch #supports { top:54px; right:calc(10px + var(--sr)); bottom:auto; flex-direction:column; }

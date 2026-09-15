@@ -36,6 +36,8 @@ const GUN_ADS = {
   lmg:    { rail: 0.109, iron: { y: 0.14, z: 0.1, relief: 0.18 } },
   sniper: { rail: 0.082, scope: { y: 0.135, z: 0.17, relief: 0.13, r: 0.021 } },
   pistol: { iron: { y: 0.076, z: 0.03, relief: 0.42 } },
+  ak:     { iron: { y: 0.106, z: -0.08, relief: 0.3 } },     // taken off the dead: a U-notch well forward, so the eye sits farther back
+  pkm:    { iron: { y: 0.112, z: -0.11, relief: 0.26 } },
   rocket: { iron: { y: 0.16, z: -0.2, relief: 0.3 } },
 };
 const OPTIC_Z = { smg: 0.0, ar: 0.0, lmg: -0.02, sniper: -0.02 };   // where an optic sits along each rail
@@ -46,7 +48,7 @@ function adsInfo(key, s) {
 }
 const GUN_MUZ = {   // the barrel tip in the gun's frame: where the flash and the tracers start
   smg: { y: 0.035, z: -0.46 }, ar: { y: 0.03, z: -0.7 }, lmg: { y: 0.035, z: -0.73 }, sniper: { y: 0.035, z: -0.96 },
-  pistol: { y: 0.02, z: -0.17 }, rocket: { y: 0.08, z: -1.0 },
+  pistol: { y: 0.02, z: -0.17 }, rocket: { y: 0.08, z: -1.0 }, ak: { y: 0.018, z: -0.64 }, pkm: { y: 0.028, z: -0.71 },
 };
 const GUN_BUILD = {
   smg: a => [   // UMP45: boxy polymer receiver, top rail, straight .45 mag ahead of the trigger, short barrel, hooded post, side-folding stock
@@ -106,6 +108,35 @@ const GUN_BUILD = {
       ...ring(0.02, 0.006, 0.3, 0, 0.135, -0.02, 'gunm', 10), ...ring(0.03, 0.006, 0.08, 0, 0.135, -0.2, 'gunm', 10), ...ring(0.024, 0.006, 0.06, 0, 0.135, 0.14, 'gunm', 10),
       B(0.02, 0.03, 0.02, 0, 0.162, -0.02, 'gunm'), B(0.03, 0.02, 0.02, 0.035, 0.135, -0.02, 'gunm'),
     ] : opticRows(a.sight, 0.082, OPTIC_Z.sniper))],
+  ak: () => [   // AK-47: stamped receiver and dust cover, wood furniture, curved magazine, gas tube, slant brake; a tangent leaf with a U-notch and a post between open ears — notch top y 0.108, post tip 0.107
+    B(0.05, 0.07, 0.3, 0, 0.022, 0.02, 'gunm'), B(0.044, 0.018, 0.25, 0, 0.064, 0.045, 'gunm'),
+    B(0.03, 0.03, 0.05, 0, 0.07, -0.115, 'gunm'), B(0.024, 0.006, 0.055, 0, 0.088, -0.1, 'gunm'),
+    B(0.007, 0.017, 0.006, 0.0075, 0.0995, -0.08, 'gunm'), B(0.007, 0.017, 0.006, -0.0075, 0.0995, -0.08, 'gunm'),
+    B(0.004, 0.012, 0.1, 0.027, 0.03, 0.04, 'gunm'), B(0.02, 0.012, 0.016, 0.036, 0.048, 0.12, 'gunm'),
+    B(0.036, 0.024, 0.19, 0, 0.058, -0.27, 'wood'), B(0.054, 0.048, 0.19, 0, 0.012, -0.27, 'wood'),
+    C(0.009, 0.12, 0, 0.055, -0.42, 'gunm'), B(0.026, 0.028, 0.03, 0, 0.042, -0.49, 'gunm'), C(0.011, 0.27, 0, 0.018, -0.45, 'gunm'),
+    B(0.024, 0.03, 0.035, 0, 0.044, -0.55, 'gunm'),
+    B(0.005, 0.048, 0.005, 0, 0.083, -0.55, 'gunm'), B(0.006, 0.007, 0.006, 0, 0.1035, -0.55, 'sightw'),
+    B(0.005, 0.044, 0.01, 0.014, 0.078, -0.55, 'gunm'), B(0.005, 0.044, 0.01, -0.014, 0.078, -0.55, 'gunm'),
+    C(0.014, 0.05, 0, 0.018, -0.61, 'gunm'),
+    MAG(B(0.032, 0.1, 0.068, 0, -0.06, -0.065, 'gunm', 0.18)), MAG(B(0.031, 0.1, 0.064, 0, -0.15, -0.09, 'gunm', 0.5)),
+    B(0.012, 0.012, 0.075, 0, -0.022, 0.035, 'gunm'), B(0.034, 0.095, 0.045, 0, -0.085, 0.1, 'wood', 0.32),
+    B(0.042, 0.07, 0.26, 0, 0.0, 0.29, 'wood', 0.1), B(0.044, 0.11, 0.02, 0, -0.03, 0.42, 'gunm', 0.1)],
+  pkm: () => [   // PKM: long receiver and top cover, skeleton stock, 100-round box hung on the right with its belt, heavy barrel with a carry handle off to the side, folded bipod, flash hider; notch top y 0.114, post tip 0.113
+    B(0.056, 0.08, 0.38, 0, 0.018, 0, 'gunm'), B(0.058, 0.022, 0.28, 0, 0.069, -0.01, 'gunm'),
+    B(0.03, 0.016, 0.05, 0, 0.088, -0.13, 'gunm'),
+    B(0.009, 0.018, 0.006, 0.0085, 0.105, -0.11, 'gunm'), B(0.009, 0.018, 0.006, -0.0085, 0.105, -0.11, 'gunm'),
+    B(0.024, 0.02, 0.03, 0.04, 0.03, -0.02, 'gunm'),
+    MAG(B(0.085, 0.1, 0.13, 0.05, -0.08, -0.06, 'tube')), MAG(B(0.06, 0.02, 0.1, 0.05, -0.02, -0.06, 'tan')),
+    B(0.012, 0.012, 0.075, 0, -0.035, 0.07, 'gunm'), B(0.034, 0.095, 0.045, 0, -0.09, 0.12, 'wood', 0.32),
+    B(0.03, 0.028, 0.26, 0, 0.03, 0.33, 'wood'), B(0.028, 0.026, 0.24, 0, -0.06, 0.33, 'wood', -0.18), B(0.04, 0.13, 0.03, 0, -0.012, 0.46, 'gunm'),
+    C(0.014, 0.44, 0, 0.028, -0.41, 'gunm'), C(0.009, 0.36, 0, -0.004, -0.39, 'gunm'),
+    B(0.012, 0.045, 0.012, 0.028, 0.055, -0.3, 'gunm'), B(0.012, 0.012, 0.12, 0.028, 0.078, -0.3, 'wood'),
+    B(0.03, 0.036, 0.035, 0, 0.046, -0.6, 'gunm'),
+    B(0.005, 0.05, 0.005, 0, 0.088, -0.6, 'gunm'), B(0.006, 0.006, 0.006, 0, 0.11, -0.6, 'sightw'),
+    B(0.005, 0.046, 0.01, 0.014, 0.085, -0.6, 'gunm'), B(0.005, 0.046, 0.01, -0.014, 0.085, -0.6, 'gunm'),
+    C(0.018, 0.075, 0, 0.028, -0.67, 'gunm'),
+    B(0.01, 0.01, 0.26, 0.016, -0.02, -0.46, 'gunm'), B(0.01, 0.01, 0.26, -0.016, -0.02, -0.46, 'gunm')],
 };
 const GUN_STATIC = {
   pistol: [   // sidearm, drawn when the primary runs dry: slide, frame, mag, a white post and a notch — sight line y 0.072

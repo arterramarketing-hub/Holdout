@@ -65,6 +65,13 @@ bindHoldButton('firebtn', () => { aim.fire = true; }, () => { aim.fire = false; 
 })('firebtn2');
 $('adsbtn').addEventListener('pointerdown', e => { e.preventDefault(); aim.ads = !aim.ads; $('adsbtn').classList.toggle('on', aim.ads); });
 $('reloadbtn').addEventListener('pointerdown', e => { e.preventDefault(); heroReload(); });
+$('swapbtn').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); swapWeapon(soldiers[state.controlled]); });
+(function holdToTake(b) {   // on a phone, hold the button over a dropped gun
+  b.addEventListener('pointerdown', e => { e.preventDefault(); aim.take = true; try { b.setPointerCapture(e.pointerId); } catch (err) {} });
+  const end = e => { try { if (b.hasPointerCapture(e.pointerId)) b.releasePointerCapture(e.pointerId); } catch (err) {} aim.take = false; };
+  b.addEventListener('pointerup', end); b.addEventListener('pointercancel', end);
+  b.addEventListener('lostpointercapture', () => { aim.take = false; });
+})($('pickbtn'));
 $('tosettings').onclick = showSettings;
 $('tocfg').onclick = showSettings;
 $('tomap').onclick = () => { if (state.training) { exitTraining(); return; } if (state.mode === 'play' || state.mode === 'failed') { hideModal(); exitBattle(); } };

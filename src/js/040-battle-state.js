@@ -35,10 +35,11 @@ function buildSoldier(i) {
     walk: rand(0, TAU), moving: false, recoil: 0,
     mag: cap, reserve: cap * WEAPONS[weapon].spare, reloadT: 0, reloadDur: 1, pistol: false,
     frags: CFG.frags, throwT: 0, sprinting: false, sprintOutT: 0,
+    kit: { weapon, sight: att.sight, ext: att.ext }, alt: null, swapT: 0, pickT: 0,   // the loadout a reinforcement comes back with, and the second gun
   };
 }
 function genTerrain() {   // the same town every front; its movable cover is rolled fresh each battle
-  obstacles = []; craters = []; mines = []; fires = []; shells = []; corpses = []; rubble = []; grenades = [];
+  obstacles = []; craters = []; mines = []; fires = []; shells = []; corpses = []; rubble = []; grenades = []; weaponDrops = [];
   const k = PX, W = TOWN.w * k, H = TOWN.h * k, T = 24;
   buildings = TOWN.buildings.map(([x0, y0, x1, y1, h, style]) =>
     ({ shape: 'r', x: (x0 + x1) / 2 * k, y: (y0 + y1) / 2 * k, hw: (x1 - x0) / 2 * k, hd: (y1 - y0) / 2 * k, top: h * k, style, building: true, claims: 0 }));

@@ -71,7 +71,7 @@ function emitParts(joints, parts, pal, set, flash, cache) {
 }
 
 // ---------- poses (written straight into joint rotations) ----------
-const RECOIL_KICK = { smg: 0.12, ar: 0.2, lmg: 0.22, sniper: 0.45, rocket: 0.55, pistol: 0.1 };
+const RECOIL_KICK = { smg: 0.12, ar: 0.2, lmg: 0.22, sniper: 0.45, rocket: 0.55, pistol: 0.1, ak: 0.27, pkm: 0.25 };
 function poseAim(J, bob = 0) {
   J[HJ.uArmR].rotation.set(1.22 + bob, 0, 0.12);
   J[HJ.fArmR].rotation.set(0.32, 0, 0);

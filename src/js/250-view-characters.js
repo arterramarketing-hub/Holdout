@@ -63,6 +63,7 @@ function gunLife(r, J, kind, rt, fired, own, wdt) {   // muzzle bloom, brass and
   r.lastRt = rt;
 }
 const ENEMY_MUZ = { ak: { y: 0.04, z: -0.63 }, pkm: { y: 0.03, z: -0.67 } };
+let dropPal = null;   // guns lying on the ground are drawn in the squad's own gun colours
 function drawTarget(e, set) {   // a steel plate on a stand, hinged at its foot, folding back when it rings
   const X = e.x * XS, Z = e.y * XS, cp = VIEW.camera.position, yaw = Math.atan2(cp.x - X, cp.z - Z);
   TMP.q.setFromEuler(TMP.e.set(0, yaw, 0, 'YXZ'));
@@ -193,7 +194,7 @@ function bakeCorpse(c) {
   const lk = poseCorpse(J, c, 1);
   const cache = [];
   emitParts(J, noGun(lk.parts), lk.pal, null, false, cache);
-  emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], null, cache);
+  if (!c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], null, cache);
   rigPool.humanoid.push(J);
   return cache;
 }
@@ -221,7 +222,7 @@ function syncCorpses(wdt, set) {
     smoothPose(r, r.J, wdt, 20);
     placeRoot(r.J, c.x * XS, c.y * XS, corpseYaw(c), pitch, lk.sc[0], lk.sc[1], lk.sc[2]);
     emitParts(r.J, dropped ? noGun(lk.parts) : lk.parts, lk.pal, set);
-    if (dropped) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], set);
+    if (dropped && !c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], set);   // a gun that can be taken is drawn as a drop instead
   }
   if (staticDirty) rebuildStatic();
 }
@@ -430,6 +431,12 @@ function drawFx() {
       TMP.v2.set(o, 0, -0.34).applyQuaternion(TMP.q);
       TMP.m.compose(TMP.v.set(X + TMP.v2.x, 0.08, Z + TMP.v2.z), TMP.q, TMP.s.set(0.16, 0.13, 0.27)); D.boot.push(TMP.m, colorOf('#6a5640'));
     }
+  }
+  const me = soldiers[state.controlled], dry = me && me.alive && me.pistol;
+  for (const d of weaponDrops) {   // a gun on the ground, blinking as it times out; ringed when it's on offer, or when you're dry
+    if (d.t < 5 && Math.sin(now / 90) < 0) continue;
+    emitGround(gunParts(d.key, d), dropPal || (dropPal = soldierPalette(0, '#a09a7a', '#5a5e4a')), d.x, d.y, d.yaw, 1, D);
+    if (d === state.pickDrop || dry) decal(F.ring, d.x * XS, d.y * XS, 0.8 + Math.sin(now / 240) * 0.07, now / 700, colorOf(d === state.pickDrop ? '#ffffff' : '#ff6b2c'), 0.03);
   }
   for (const p of pickups) {   // a dropped magazine, blinking as it times out
     if (p.t < 5 && Math.sin(now / 90) < 0) continue;

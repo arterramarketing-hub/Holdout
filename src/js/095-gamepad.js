@@ -1,7 +1,8 @@
 // ---------- controller: the standard Gamepad mapping, in battle and in the menus ----------
 // Battle: left stick moves (radial deadzone 0.15), right stick looks (deadzone 0.12, response curve ^1.8, its own
-// sensitivity), RT fires, LT aims down the sights, RB throws a grenade, X reloads, Y switches view, L3 sprints (until
-// the stick comes back), D-pad ← ↑ → calls killstreaks 1-3, START opens settings, VIEW goes back to the map.
+// sensitivity), RT fires, LT aims down the sights, RB throws a grenade, X reloads (held by a dropped gun, it takes the
+// gun instead), Y swaps guns, L3 sprints (until the stick comes back), D-pad ← ↑ → calls killstreaks 1-3, D-pad ↓
+// switches view, START opens settings, VIEW goes back to the map.
 // Menus: the stick or D-pad moves focus (a visible ring), A presses, B backs out; on the start menu LB/RB cycle sectors
 // and Y opens the loadout. Rumble follows the Vibration setting. Whatever was touched last decides the prompts.
 const GPAD = { seen: false, active: false, lastInput: 'kbm', prev: [], lx: 0, ly: 0, fire: false, ads: false, navT: 0, rumbleIdx: -1 };
@@ -16,7 +17,7 @@ const padCurve = v => Math.sign(v) * Math.pow(Math.abs(v), 1.8);
 function pollPad(dt) {
   const p = currentPad();
   if (!p) {
-    if (GPAD.active) { GPAD.active = false; GPAD.lx = GPAD.ly = 0; if (GPAD.fire) aim.fire = false; if (GPAD.ads) aim.ads = false; GPAD.fire = GPAD.ads = false; aim.sprintPad = false; }
+    if (GPAD.active) { GPAD.active = false; GPAD.lx = GPAD.ly = 0; if (GPAD.fire) aim.fire = false; if (GPAD.ads) aim.ads = false; GPAD.fire = GPAD.ads = false; aim.sprintPad = false; if (GPAD.xHold != null) aim.take = false; GPAD.xHold = null; }
     return;
   }
   const val = i => (p.buttons[i] ? (typeof p.buttons[i] === 'object' ? (p.buttons[i].pressed ? Math.max(1, p.buttons[i].value || 0) : p.buttons[i].value || 0) : p.buttons[i]) : 0);
@@ -45,8 +46,13 @@ function pollPad(dt) {
     if (rt !== GPAD.fire) { GPAD.fire = rt; aim.fire = rt; }
     if (lt !== GPAD.ads) { GPAD.ads = lt; aim.ads = lt; const ab = $('adsbtn'); if (ab) ab.classList.toggle('on', lt); }
     if (hit(GPB.RB)) throwGrenade(soldiers[state.controlled]);
-    if (hit(GPB.X)) heroReload();
-    if (hit(GPB.Y)) { meta.opts.fpv = !meta.opts.fpv; applyOpts(); saveMeta(); }
+    if (hit(GPB.X)) { if (state.pickDrop) GPAD.xHold = 0; else heroReload(); }   // by a dropped gun, X waits to see if it is held
+    if (GPAD.xHold != null) {
+      if (held(GPB.X)) { GPAD.xHold += dt; aim.take = true; }
+      else { if (GPAD.xHold < CFG.pickHold) heroReload(); GPAD.xHold = null; aim.take = false; }   // a tap still reloads
+    }
+    if (hit(GPB.Y)) swapWeapon(soldiers[state.controlled]);
+    if (hit(GPB.DOWN)) { meta.opts.fpv = !meta.opts.fpv; applyOpts(); saveMeta(); }
     if (hit(GPB.L3)) aim.sprintPad = !aim.sprintPad;
     if (aim.sprintPad && ly > -0.3) aim.sprintPad = false;   // the sprint ends when the stick comes back
     if (hit(GPB.LEFT)) useSupport('napalm');

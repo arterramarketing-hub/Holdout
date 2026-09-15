@@ -7,7 +7,7 @@
 const FRAG_G = 9.8 * PX;   // gravity, px/s²
 function throwGrenade(s) {
   if (!s || !s.alive || screen !== 'battle' || state.mode !== 'play' || s.slot !== state.controlled) return false;
-  if ((s.frags || 0) <= 0 || s.throwT > 0) return false;
+  if ((s.frags || 0) <= 0 || s.throwT > 0 || s.swapT > 0) return false;
   s.frags--; s.throwT = 0.7; s.sprinting = false; s.sprintOutT = CFG.sprintOut;
   let ox = s.x, oy = s.y, oz = 1.5 * PX, yaw = aim.yaw, el = Math.atan(aim.pitch);
   if (fpvActive() || !VIEW.ready || !VIEW.camera) { const R = crosshairRay(s); ox = R.ox + R.dx * 20; oy = R.oy + R.dy * 20; oz = R.oz - 0.12 * PX; }

@@ -21,6 +21,18 @@
   Stalls over 0.2 s (a throttled or hidden page) are ignored. Under a frame-rate cap the thresholds stretch to the
   cap's frame (slow past 1.35x it, smooth under 1.05x), so a 30 fps cap never reads as a slow device.
 
+  ENEMY GUNS AND THE SECOND GUN — riflemen drop their AK-47 and gunners their PKM where they fall (DROP_KIND), with
+  what was left in the magazine (10-30, 40-100) and one spare, for CFG.dropLife 45 s (blinking the last 5). AK-47:
+  600 rpm, 1.1 damage (three hits on a rifleman out to ~21 m; FALLOFF near 18 m), 30 rounds, 2.3 s reload. PKM: 650
+  rpm, 1.1, a 100-round box, 5.2 s reload, 82% move speed; both on iron sights. You carry two guns — the loadout gun
+  and one more (s.alt; the gun in your hands keeps the soldier's own weapon/mag/reserve fields). Near a dropped gun a
+  prompt names it: hold F, X or the phone button for CFG.pickHold 0.35 s to take it; a free slot holsters what you
+  had, both full drops the gun in your hands where you stand. On the pistol with a free slot, walking over a gun
+  takes it; walking over a kind you carry takes its rounds. Q, the mouse wheel, Y or the phone's swap pill changes
+  guns in CFG.swapTime 0.45 s (they trade places halfway), no firing, reload cancelled; a gun run dry swaps itself for
+  a loaded second gun before the pistol, and with guns on the ground nearby the banner says GRAB A RIFLE and the
+  minimap blinks them. A reinforcement comes back with the loadout gun only; squadmates never pick guns up.
+
   THE INSTALLED APP — on GitHub Pages the page is an installable web app: manifest.webmanifest (full screen, landscape,
   navy, the H-in-a-scope icons that tools/icons.py draws) and sw.js (built from src/pwa/sw.js with a version hashed
   from what it caches). After one launch online it starts offline: the page is network first with a 4 s fallback to
@@ -39,8 +51,8 @@
 
   CONTROLLER — the standard Gamepad mapping. Battle: left stick moves (radial deadzone 0.15), right stick looks
   (deadzone 0.12, response curve ^1.8, SETTINGS › Controller look), RT fires, LT aims down the sights, RB throws a
-  grenade, X reloads, Y switches view, L3 sprints until the stick comes back, D-pad ← ↑ → calls killstreaks 1-3, START
-  opens settings, VIEW goes back to the map. Menus: the stick or D-pad moves focus (an orange ring), A presses (with
+  grenade, X reloads (held by a dropped gun, it takes the gun), Y swaps guns, L3 sprints until the stick comes back,
+  D-pad ← ↑ → calls killstreaks 1-3, D-pad ↓ switches view, START opens settings, VIEW goes back to the map. Menus: the stick or D-pad moves focus (an orange ring), A presses (with
   nothing focused yet, A takes a card's main button, or wakes the ring on the loadout), B backs out (and closes
   settings); on the start menu LB/RB (or ←/→) cycle sectors, A deploys and Y opens the loadout. A host page that
   refuses the Gamepad API just means no controller.

@@ -20,6 +20,7 @@ const CFG = {
   fragSpeed: 600, fragLoft: 0.21, fragFuse: 2.2,   // thrown at 15 m/s, 12° above the crosshair, bursting 2.2 s after it leaves the hand
   fragR: 200, fragDmg: 6, fragSelf: 0.5,           // 5 m blast, 6 at the centre falling to nothing at the edge; half of that to you, never to your squad
   sprintMul: 1.45, sprintOut: 0.18,                // sprint speed, and the moment it takes to get the gun up after one
+  swapTime: 0.45, pickHold: 0.35, dropLife: 45,    // changing guns; holding to take one off the ground; how long a dropped gun lies there
 };
 const TAU = Math.PI * 2;
 
@@ -32,8 +33,11 @@ const WEAPONS = {
   lmg:    { name:'M249 SAW',     cd:0.11, dmg:1, range:400, reach:1400, spread:0.07,  speed:4800, len:23, mag:100, ext:200, reload:4.2, spare:2, moveMul:0.85 },
   sniper: { name:'INTERVENTION', cd:1.05, dmg:4, range:720, reach:2600, spread:0.005, speed:8400, len:29, mag:5,   ext:8,   reload:2.9, spare:6, pierce:2 },
   rocket: { name:'ROCKET',   cd:1.50, dmg:3, range:520, reach:1000, spread:0.02,  speed:900,  len:21, mag:1,   reload:2.6, spare:6, aoe:70 },
+  // taken off the dead (see ENEMY GUNS): never in BATTLE PREP
+  ak:     { name:'AK-47',        cd:0.10, dmg:1.1, range:420, reach:1400, spread:0.05,  speed:4700, len:19, mag:30,  reload:2.3, spare:2, pickup:true },
+  pkm:    { name:'PKM',          cd:0.092, dmg:1.1, range:400, reach:1400, spread:0.085, speed:4700, len:24, mag:100, reload:5.2, spare:1, moveMul:0.82, pickup:true },
 };
-const WKEYS = Object.keys(WEAPONS);
+const WKEYS = Object.keys(WEAPONS).filter(k => !WEAPONS[k].pickup);   // what BATTLE PREP offers
 // ---------- attachments: what you look through, and how many rounds you carry in the gun ----------
 // zoom is tan-based (a 4x shows a quarter of the view); rate = how fast the sights come up; spread = ADS spread multiplier;
 // over = the DOM overlay drawn once you are settled behind the optic (null = the real iron sights, nothing drawn)

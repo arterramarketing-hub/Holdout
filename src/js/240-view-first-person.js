@@ -78,6 +78,8 @@ const VM_HOLD = {   // where the hands hold each gun: the grip [x, y, z, rake] a
   sniper: { grip: [0, -0.1, 0.07, 0.3],  sup: [0, 0.02, -0.34, 0],       guard: [0.0275, 0.03] },
   pistol: { grip: [0, -0.06, 0.02, 0.3], sup: [-0.024, -0.086, 0.016, 0.3], guard: null },
   rocket: { grip: [0, -0.04, -0.05, 0],  sup: [0, -0.04, -0.28, 0],      guard: null },
+  ak:     { grip: [0, -0.085, 0.1, 0.32], sup: [0, 0.012, -0.27, 0],     guard: [0.027, 0.024] },
+  pkm:    { grip: [0, -0.09, 0.12, 0.32], sup: [0, 0.018, -0.17, 0],     guard: [0.029, 0.04] },
 };
 const VM_WRIST = {};   // wrist points found while the hands are built: 'g' + gun in the gun's frame, 's' + gun in the support hand's frame
 function vmGripParts(key) {   // the trigger hand and its arm, in the gun's frame: it never lets go
@@ -132,6 +134,8 @@ const VM_CHG = {   // where the support hand works the action once the fresh mag
   smg: { at: [-0.05, 0.035, -0.2], rot: [0, 0, -0.25], tug: [0, 0, 0.06] },   // the UMP's handle, forward on the left
   ar:  { at: [-0.06, 0.004, -0.03], rot: [0, 0, 0.35], tug: [0.024, 0, 0] },   // a palm slap on the M4's bolt catch, left of the receiver
   lmg: { at: [-0.065, 0.1, -0.08], rot: [0, 0, -0.5], tug: [0.012, -0.034, 0] }, // the SAW's top cover, pushed shut from its left edge
+  ak:  { at: [0.02, 0.05, 0.1], rot: [0, 0, -0.5], tug: [0, 0, 0.06] },          // over the top to the AK's handle on the right, and back
+  pkm: { at: [0.035, 0.04, -0.02], rot: [0, 0, -0.5], tug: [0, 0, 0.07] },
 };
 const VM_POUCH = [-0.2, -0.46, 0.14, -0.8, 0.3, 0.5];
 const reloadKeyCache = new Map();
@@ -283,17 +287,18 @@ function drawViewmodel(s, wdt, set) {
   FPV.bobP += wdt * 9 * (0.2 + moveW) * (1 + 0.4 * (FPV.sprintK || 0));
   FPV.throwT = Math.max(0, (FPV.throwT || 0) - wdt);
   const thr = FPV.throwT > 0 ? Math.sin(Math.PI * (1 - FPV.throwT / 0.45)) : 0, spk = FPV.sprintK || 0;   // the gun dips out of the way for a throw; sprinting, it swings low and across
+  const swp = s.swapT > 0 ? Math.sin(Math.PI * clamp(1 - s.swapT / CFG.swapTime, 0, 1)) : 0;   // changing guns: this one drops out of sight, the other comes up
   FPV.sway = approach(FPV.sway, clamp(-aim.lookDx * 2.2, -0.05, 0.05), 9, wdt);
   const A = FPV.adsK, rel = 1 - A, ads = adsInfo(key, s), muz = GUN_MUZ[key] || GUN_MUZ.ar;
   const wall = clearRun(s.x, s.y, s.x + Math.sin(aim.yaw) * 60, s.y - Math.cos(aim.yaw) * 60, 4) ? 0 : 1;   // muzzle against a wall: bring it in
   const H = VM_HOLD[key] || VM_HOLD.ar, sp = splitMag(gunParts(key, s));
   const rl = s.reloadT > 0 && s.reloadDur > 0 ? clamp(1 - s.reloadT / s.reloadDur, 0, 1) : -1;
   const R = rl >= 0 ? vmReload(key, rl, sp, H.sup) : null;
-  const ox = (0.13 + Math.sin(FPV.bobP) * 0.012 * moveW + FPV.sway) * rel + (R ? R.gx : 0) - 0.05 * spk + 0.04 * thr;
+  const ox = (0.13 + Math.sin(FPV.bobP) * 0.012 * moveW + FPV.sway) * rel + (R ? R.gx : 0) - 0.05 * spk + 0.04 * thr + 0.03 * swp;
   // at full ADS the gun sits so its sight line (rear aperture / eyepiece at ads.y, ads.z) is dead on the camera axis, ads.relief in front of the eye
-  const oy = lerp(-0.15, -ads.y * VM_S, A) + Math.abs(Math.cos(FPV.bobP)) * 0.01 * moveW * rel - FPV.kick * 0.028 - wall * 0.05 * rel + (R ? R.gy : 0) - 0.07 * spk - 0.22 * thr;
+  const oy = lerp(-0.15, -ads.y * VM_S, A) + Math.abs(Math.cos(FPV.bobP)) * 0.01 * moveW * rel - FPV.kick * 0.028 - wall * 0.05 * rel + (R ? R.gy : 0) - 0.07 * spk - 0.22 * thr - 0.34 * swp;
   const oz = lerp(-0.52, -(ads.relief + ads.z * VM_S), A) + FPV.kick * 0.05 * rel + wall * 0.16 * rel + (R ? R.gz : 0);
-  TMP.e.set(FPV.kick * 0.14 + 0.05 * rel + (R ? R.rx : 0) - 0.3 * spk - 0.7 * thr, (0.1 + FPV.sway * 2) * rel + (R ? R.ry : 0) + 0.6 * spk, 0.06 * rel + (R ? R.rz : 0) + 0.3 * spk - 0.25 * thr, 'YXZ');
+  TMP.e.set(FPV.kick * 0.14 + 0.05 * rel + (R ? R.rx : 0) - 0.3 * spk - 0.7 * thr - 0.9 * swp, (0.1 + FPV.sway * 2) * rel + (R ? R.ry : 0) + 0.6 * spk, 0.06 * rel + (R ? R.rz : 0) + 0.3 * spk - 0.25 * thr, 'YXZ');
   TMP.q.setFromEuler(TMP.e);
   TMP.m2.compose(TMP.v.set(ox, oy, oz), TMP.q, TMP.s.set(VM_S, VM_S, VM_S));
   TMP.m.multiplyMatrices(cam3.matrixWorld, TMP.m2);

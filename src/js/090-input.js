@@ -13,6 +13,8 @@ window.addEventListener('keydown', e => {
   if (screen === 'battle') {
     if (e.code === 'KeyR') heroReload();
     if (e.code === 'KeyG') throwGrenade(soldiers[state.controlled]);
+    if (e.code === 'KeyQ' && !e.repeat) swapWeapon(soldiers[state.controlled]);
+    if (e.code === 'KeyF') aim.take = true;
     if (e.code === 'KeyO') showSettings();
     if (e.code === 'KeyV') { meta.opts.fpv = !meta.opts.fpv; applyOpts(); saveMeta(); }
     if (e.code === 'Digit1') useSupport('napalm');
@@ -21,7 +23,8 @@ window.addEventListener('keydown', e => {
   }
   audio(); startAmbience();
 });
-window.addEventListener('keyup', e => { keys[e.code] = false; });
+window.addEventListener('keyup', e => { keys[e.code] = false; if (e.code === 'KeyF') aim.take = false; });
+window.addEventListener('wheel', e => { if (screen === 'battle' && Math.abs(e.deltaY) > 2) swapWeapon(soldiers[state.controlled]); }, { passive: true });   // either way: two guns
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 document.addEventListener('pointerdown', () => { audio(); startAmbience(); });
 
@@ -84,7 +87,7 @@ function moveVector() {
 // ---------- free aim ----------
 // You aim and you fire, in either view: the camera looks where you look, the trigger is yours, and aim assist
 // (third person only) only nudges — it never fires.
-const aim = { yaw: 0, pitch: 0, fire: false, ads: false, sticky: false, lookDx: 0, settle: 0, settleY: 0 };
+const aim = { yaw: 0, pitch: 0, fire: false, ads: false, take: false, sticky: false, lookDx: 0, settle: 0, settleY: 0 };
 const fpvActive = () => !!meta && meta.opts.fpv && state.mode === 'play'
   && !!soldiers[state.controlled] && soldiers[state.controlled].alive && !soldiers[state.controlled].horse;
 function addLook(dx, dy, scale) {
@@ -141,7 +144,7 @@ document.addEventListener('mousemove', e => {
 cv.addEventListener('mouseleave', () => { aim.cx = null; });
 document.addEventListener('pointerlockchange', () => { if (document.pointerLockElement !== cv) { aim.fire = false; aim.ads = false; aim.cx = null; } });
 function releaseInputs() {   // let go of everything held: a trigger, a thumb, a parked cursor
-  aim.fire = false; aim.cx = null;
+  aim.fire = false; aim.take = false; aim.cx = null;
   joy.active = false; joy.id = -1; joy.dx = joy.dy = 0;
   look.id = -1;
 }

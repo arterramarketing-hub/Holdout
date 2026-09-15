@@ -98,6 +98,16 @@
   #amfrag svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:1.4; }
   #amfrag.empty { opacity:.4; }
   body.touch #amfrag { display:none; }   /* the grenade button carries the count on a phone */
+  #amalt { grid-column:1 / -1; grid-row:5; justify-self:end; margin-top:5px; font-family:var(--mono); font-weight:700; font-size:10px;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--label); white-space:nowrap; }
+  #amalt:empty, body.touch #amalt { display:none; }   /* a phone has the swap button */
+  /* a dropped gun in reach: what it is and how to take it, filling as you hold */
+  #pickbtn { left:50%; bottom:118px; transform:translateX(-50%); display:none; align-items:baseline; gap:10px; padding:9px 16px 11px; overflow:hidden;
+    font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.2em; text-transform:uppercase; white-space:nowrap;
+    color:var(--ink); background:var(--panel); border:1px solid var(--line-hi); border-radius:0; }
+  #pickbtn.on { display:flex; }
+  #pickbtn b { color:var(--accent); font-weight:800; }
+  #pickbtn i { position:absolute; left:0; bottom:0; height:3px; width:calc(var(--p, 0) * 100%); background:var(--accent); }
   /* a live frag near you: a red grenade on a ring around the crosshair, pointing at it */
   #nadewarn { position:fixed; left:0; top:0; width:44px; height:44px; margin:-22px 0 0 -22px; z-index:9; display:none; pointer-events:none;
     filter:drop-shadow(0 0 4px rgba(0,0,0,.85)); }

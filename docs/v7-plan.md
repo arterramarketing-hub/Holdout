@@ -345,3 +345,12 @@ GitHub Desktop mid-phase can never pick up half-finished work.
   stopped a reload started the game and loaded three.js from the cache. There is an install button on the start menu
   and Install app and Full screen rows in SETTINGS, with iPhone steps. The Artifact build drops the app tags. HUD,
   menus and cards respect notch insets. `96-app.test.js` adds 7 tests; 125 tests pass.
+- **Phase 4 — done.**
+  - Riflemen drop AK-47s and gunners PKMs; you can hold two guns.
+  - Taking: hold F (or X) for 0.35 s; you also take one by walking over it when on the pistol, and take ammo by
+    walking over a gun of a kind you carry.
+  - Swapping: Q, the wheel, Y, or the phone's pill. It takes 0.45 s, and a dry gun swaps itself.
+  - Both first-person models were checked in the preview, at the hip and down the sights. The AK's sights were
+    raised above the dust cover after that look.
+  - Controller view switching moved to D-pad ↓.
+  - `22-pickups.test.js` adds 12 tests; 138 tests pass.

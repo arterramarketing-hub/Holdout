@@ -82,7 +82,7 @@ function updateSoldiers(dt) {
     const w = WEAPONS[s.weapon];
     const wrange = (s.pistol ? SIDEARM.range : w.range) * vis;
     const isCtl = s.slot === state.controlled && state.mode === 'play';
-    if (isCtl) updateSprint(s, dt); else s.sprinting = false;
+    if (isCtl) { updateSprint(s, dt); updateSwap(s, dt); } else s.sprinting = false;
     const spd = (isCtl ? CFG.playerSpeed : CFG.aiSpeed) * (w.moveMul || 1) * (s.horse ? CFG.horseSpeedMul : 1)
       * (s.reloadT > 0 ? 0.85 : 1) * (isCtl && aim.ads ? 0.7 : 1) * (s.sprinting ? CFG.sprintMul : 1);
     const x0 = s.x, y0 = s.y;
@@ -105,7 +105,7 @@ function updateSoldiers(dt) {
       aimAssist(s, dt);
       s.aim = aim.yaw - Math.PI / 2;
       s.quietT = aim.fire ? 0 : (s.quietT || 0) + dt;
-      if (aim.fire && s.fireCd <= 0 && s.reloadT <= 0 && !s.sprinting && s.sprintOutT <= 0 && s.throwT <= 0.35) {
+      if (aim.fire && s.fireCd <= 0 && s.reloadT <= 0 && !s.sprinting && s.sprintOutT <= 0 && s.throwT <= 0.35 && !(s.swapT > 0)) {
         if (s.pistol || s.mag > 0) {
           s.fireCd = s.pistol ? SIDEARM.cd : w.cd;
           fire(s, null, true, s.aim);
@@ -439,6 +439,7 @@ function battleUpdate(dt) {
     updateFires(wdt);
     updateMines();
     updatePickups(wdt);
+    updateWeaponDrops(wdt);
   }
   updateFx(wdt);
   const me = soldiers[state.controlled];   // your own pulse, once you are nearly out of it

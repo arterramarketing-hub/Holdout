@@ -48,6 +48,11 @@ function updateBattleHud() {
     am.classList.toggle('low', !c.pistol && c.mag <= magCap(c) * 0.25);
     am.classList.toggle('reloading', c.reloadT > 0);
     $('reloadbtn').classList.toggle('warn', !c.pistol && c.mag <= magCap(c) * 0.25);
+    const alt = c.alt, altTxt = alt ? `⇄ ${gunName(alt.weapon)} · ${alt.mag + alt.reserve}` : '';
+    if (altTxt !== OV.altTxt) { OV.altTxt = altTxt; $('amalt').textContent = altTxt; $('swapname').textContent = alt ? gunName(alt.weapon) : ''; $('swapbtn').classList.toggle('on', !!alt); }
+    const pd = state.pickDrop, pb = $('pickbtn'), how = pd ? (GPAD.lastInput === 'pad' ? 'Hold X' : isTouch ? 'Hold' : 'Hold F') + '|' + gunName(pd.key) : '';
+    if (how !== OV.pickHow) { OV.pickHow = how; pb.classList.toggle('on', !!pd); if (pd) { $('pickkey').textContent = how.split('|')[0]; $('pickname').textContent = how.split('|')[1]; } }
+    if (pd) pb.style.setProperty('--p', clamp((c.pickT || 0) / CFG.pickHold, 0, 1).toFixed(3));
     const objs = state.objs || [];
     for (let i = 0; i < 3; i++) {
       const o = objs[i], chip = OV.objChip && OV.objChip[i] || ((OV.objChip = OV.objChip || [])[i] = $('obj' + i));
@@ -115,6 +120,8 @@ function drawMinimap() {
   for (const o of obstacles) g.fillRect(X(o.x) - 1.5, Y(o.y) - 1.5, 3, 3);
   g.fillStyle = '#ff6b2c';
   for (const p of pickups) g.fillRect(X(p.x) - 2, Y(p.y) - 2, 4, 4);
+  const dry = s.pistol, blinkOff = dry && Math.sin(performance.now() / 150) < 0;   // on the pistol, dropped guns blink
+  if (!blinkOff) { g.fillStyle = dry ? '#ff6b2c' : '#aeb6c2'; for (const d of weaponDrops) g.fillRect(X(d.x) - 3, Y(d.y) - 1, 6, 2.5); }
   g.font = '800 9px "JetBrains Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
   for (const o of state.objs || []) {   // objectives: the ring in the owner's colour, the letter in the middle
     const col = o.owner === 'p' ? '#5cb6ff' : o.owner === 'e' ? '#ff4d3d' : '#c9d1dc';
@@ -158,10 +165,10 @@ function applyOpts() {   // the options that change how the game looks and reads
   const ab = $('adsbtn');
   if (ab) ab.classList.toggle('on', aim.ads);
   el.hint.textContent = GPAD.lastInput === 'pad'
-    ? 'LS MOVE · RS LOOK · RT FIRE · LT ADS · RB GRENADE · X RELOAD · L3 SPRINT · Y VIEW · D-GPAD KILLSTREAKS'
+    ? 'LS MOVE · RS LOOK · RT FIRE · LT ADS · RB GRENADE · X RELOAD (HOLD: TAKE A GUN) · Y SWAP GUNS · L3 SPRINT · D-PAD ↓ VIEW · ← ↑ → KILLSTREAKS'
     : isTouch
     ? 'LEFT THUMB MOVES · DRAG RIGHT TO LOOK · FIRE · ADS · TAP AMMO TO RELOAD'
-    : 'WASD MOVE · MOUSE AIMS (CLICK TO CAPTURE IT, ESC FREES) · CLICK FIRE · RIGHT-CLICK ADS · SHIFT SPRINT · G GRENADE · R RELOAD · V VIEW';
+    : 'WASD MOVE · MOUSE AIMS (CLICK TO CAPTURE IT, ESC FREES) · CLICK FIRE · RIGHT-CLICK ADS · SHIFT SPRINT · G GRENADE · R RELOAD · Q SWAP GUNS · HOLD F TAKE A GUN · V VIEW';
   el.hint.style.opacity = 1;
   clearTimeout(applyOpts.t);
   applyOpts.t = setTimeout(() => { el.hint.style.opacity = 0; }, 6000);

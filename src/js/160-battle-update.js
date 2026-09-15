@@ -8,8 +8,12 @@ function collideObstacles(o) {   // push out of buildings and cover
 function startReload(s) {
   const w = WEAPONS[s.weapon];
   if (!s.alive || s.reloadT > 0 || s.pistol || s.mag >= magCap(s)) return;
-  if (s.reserve <= 0) {   // nothing left for the rifle: draw the pistol
-    if (s.mag <= 0) { s.pistol = true; if (s.slot === state.controlled) showBanner('OUT OF AMMO — SIDEARM'); }
+  if (s.reserve <= 0) {   // nothing left for this gun: the second gun if it has rounds, then the pistol
+    if (s.mag <= 0) {
+      if (s.alt && s.alt.mag + s.alt.reserve > 0 && swapWeapon(s)) return;
+      s.pistol = true;
+      if (s.slot === state.controlled) showBanner(weaponDrops.some(d => dist2(d.x, d.y, s.x, s.y) < 600 * 600) ? 'OUT OF AMMO — GRAB A RIFLE' : 'OUT OF AMMO — SIDEARM');
+    }
     return;
   }
   s.reloadT = s.reloadDur = w.reload * (s.ext ? EXT_RELOAD : 1);   // the empty magazine is dropped by the view, from the hand
@@ -21,7 +25,7 @@ function finishReload(s) {
 }
 function heroReload() {   // R / tap the ammo counter
   const s = soldiers[state.controlled];
-  if (screen === 'battle' && state.mode === 'play' && s && s.alive) startReload(s);
+  if (screen === 'battle' && state.mode === 'play' && s && s.alive && !(s.swapT > 0)) startReload(s);
 }
 function sfxReload(s) {   // mag out, fresh mag seated, charging handle racked
   const ctl = s.slot === state.controlled, m = ctl ? 1 : distMul(s.x, s.y);
