@@ -41,6 +41,28 @@
   rifleman in three. HEARING: an enemy who hears a shot knows where the shooter is for CFG.hearFor 5 s and turns on
   them over a nearer soldier up to half again as far away; a rifleman barks and re-picks cover facing that shooter.
 
+  ENEMY GRENADES — every rifleman carries one frag. It throws when the soldier it is fighting has stayed 8-22 m away
+  behind something its rounds can't get through (los3: buildings and solid cover in 3D, not the cover it hugs) for
+  3 s, and the steep lob it solves (55°) has nothing solid in the arc. At most one enemy frag is in the air; one every
+  14 s at tier 1 down to 8 s at tier 6 (CFG.eFragGap); none in a front's first 25 s, at anyone back under 4 s, or into
+  the FOB. It aims 0.5-2 m past its target, comes down dead (short bounces, little roll) and bursts 1.8 s after landing:
+  5 at the centre of the 5 m blast, walls shielding it, your squad hurt (AI squadmates at 70%), never an enemy. A red
+  grenade on the crosshair ring points at any enemy frag within 10 m (yours within 6 m), pulsing quicker as the fuse
+  burns; one landing within 10 m of you is called ("Grenade · 3 m"), and squadmates run 8 m clear of one near them.
+
+  THE ROOFTOP SNIPER — from 25% into a front (from the start at tier 3), each enemy walking on has a 35% chance of
+  being the one marksman while none is up and 40 s have passed since the last fell (SNIPER). It takes a free perch
+  more than 25 m from your squad (PERCHES: the bell tower's east belfry opening on a stone sill, sandbag nests on the
+  gas station roof, a freight wagon, the mill containers and the warehouse eaves) and never moves. It picks someone it
+  can see in 3D (los3), you first at equal range, never anyone in the FOB or so far below it (slope over 0.62) that
+  they couldn't look up at it — your view stops 35° up — then lines up for 1.4 s with its scope glinting (a blue-white
+  star sized for the screen, bigger when it's you), fires one 3D round for 2.5 (tier-scaled, capped at 3.6 so never a
+  one-shot) and works the bolt 1.6 s. Three rounds cracking within 2 m send it down behind its cover for 2 s. It is
+  hit only above its cover (e.lip), takes a rifleman's rounds (three M4 hits inside 20 m), shrugs off blasts more
+  than 2.5 m below it, dies where it knelt, and on the minimap shows only while glinting. Raised enemies: e.z lifts
+  the rig, the hit tests, the crosshair ray and the corpse; flat squad rounds never reach a roof, so squadmates fire
+  a real line up at one. The squad calls it by name the first time it glints ("Sniper · Bell tower").
+
   THE INSTALLED APP — on GitHub Pages the page is an installable web app: manifest.webmanifest (full screen, landscape,
   navy, the H-in-a-scope icons that tools/icons.py draws) and sw.js (built from src/pwa/sw.js with a version hashed
   from what it caches). After one launch online it starts offline: the page is network first with a 4 s fallback to
@@ -529,6 +551,8 @@
   #callout.left { left:22%; box-shadow:inset 3px 0 0 var(--foe); }
   #callout.right { right:22%; box-shadow:inset -3px 0 0 var(--foe); }
   #callout.behind { top:auto; bottom:22%; left:50%; transform:translateX(-50%); box-shadow:inset 0 -3px 0 var(--foe); animation:none; }
+  #callout.sniper { top:31%; left:50%; transform:translateX(-50%); box-shadow:inset 0 -3px 0 #dff2ff; animation:none; }
+  #callout.grenade { top:31%; left:50%; transform:translateX(-50%); color:#fff; background:rgba(160,24,14,.82); box-shadow:inset 0 -3px 0 var(--foe); animation:none; }
   #callout.left::before { content:'◂ '; color:var(--foe); } #callout.right::after { content:' ▸'; color:var(--foe); } #callout.behind::after { content:' ▾'; color:var(--foe); }
   @keyframes callout-in { from { opacity:0; } }
   /* basic training: the step card at the top, the ticket bar and killstreaks out of the way */
@@ -1199,6 +1223,9 @@ const CFG = {
   swapTime: 0.45, pickHold: 0.35, dropLife: 45,    // changing guns; holding to take one off the ground; how long a dropped gun lies there
   hearLoud: 1400, hearQuiet: 400, hearFor: 5,      // enemies hear a shot within 35 m, a suppressed one within 10 m, and remember the shooter 5 s
   suppressorAds: 0.88,                             // a suppressor's weight on the muzzle: the sights come up 12% slower
+  eFragDmg: 5, eFragAfter: 1.8,                    // an enemy frag: 5 at the centre of the same 5 m blast, bursting 1.8 s after it lands
+  eFragMin: 320, eFragMax: 880, eFragCovered: 3,   // thrown at a soldier 8-22 m away who has stayed behind cover its rounds can't get through for 3 s
+  eFragFirst: 25, eFragGap: [14, 8],               // none in a front's first 25 s; one every 14 s at the first tier down to one every 8 s at tier 6
 };
 const TAU = Math.PI * 2;
 
@@ -1354,7 +1381,7 @@ function respawnSoldier(s) {   // a fresh body off the reinforcement line: same 
   s.alive = true; s.hp = s.maxHp; s.pistol = false;
   s.mag = magCap(s); s.reserve = magCap(s) * w.spare; s.reloadT = 0; s.fireCd = 0;
   const p = pickSpawn('p'); s.x = p.x; s.y = p.y;
-  s.aim = -Math.PI / 2; s.invuln = CFG.spawnInvuln; s.respawnT = 0;
+  s.aim = -Math.PI / 2; s.invuln = CFG.spawnInvuln; s.respawnT = 0; s.bornT = state.frontTime;
   s.coverRef = null; s.path = null; s.tgt = null; s.supp = 0; s.recoil = 0;
   s.frags = CFG.frags; s.throwT = 0; s.sprinting = false; s.sprintOutT = 0;
 }
@@ -1396,7 +1423,7 @@ function buildSoldier(i) {
     walk: rand(0, TAU), moving: false, recoil: 0,
     mag: cap, reserve: cap * WEAPONS[weapon].spare, reloadT: 0, reloadDur: 1, pistol: false,
     frags: CFG.frags, throwT: 0, sprinting: false, sprintOutT: 0,
-    kit: { weapon, sight: att.sight, ext: att.ext, suppressor: att.suppressor }, alt: null, swapT: 0, pickT: 0,   // the loadout a reinforcement comes back with, and the second gun
+    kit: { weapon, sight: att.sight, ext: att.ext, suppressor: att.suppressor }, alt: null, swapT: 0, pickT: 0, bornT: 0,   // the loadout a reinforcement comes back with, and the second gun
   };
 }
 function genTerrain() {   // the same town every front; its movable cover is rolled fresh each battle
@@ -2475,7 +2502,7 @@ const WARLORD_EPITHETS = ['Carrier of the Other', 'Eater of Lines', 'The Borrowe
 // Yours are quiet and centred; squadmates quieter; enemies are placed in stereo and fade out by 25 m, runners and
 // breachers louder. No more than six footfalls in any quarter second.
 // BARKS: enemies shout — not words — when they spot one of yours, start a flank, change magazines or charge; placed where
-// they stand, pitched per voice, never within 1.2 s of another bark or 6 s of that enemy's last.
+// they stand, pitched per voice, never within 1.2 s of another bark or 6 s of that enemy's last (a frag's shout skips the 6 s).
 // CALLOUTS: when an enemy within 25 m is outside your view (more than 60° off your aim) and a squadmate can see it, the
 // squad net chirps and a tag says where: FLANK · LEFT, FLANK · RIGHT or BEHIND. One every 4 s, each enemy called once in
 // 8 s. The Callouts setting turns them off.
@@ -2504,10 +2531,10 @@ function stepSound(u, moved, who) {
   const k = 1 - d / 1000, base = who === 'mate' ? 0.05 : 0.12 * (STEP_GAIN[u.type] || 1);   // an enemy footfall at 10 m sits ~30 dB under your own gunshot
   if (playBuf(key, { gain: base * k * k, rate: rate * (u.boss ? 0.7 : 1), x: u.x, y: u.y, lp: 1400 + 9000 * k })) VOICE.steps++;
 }
-function bark(e, kind) {   // 'spot' | 'flank' | 'reload' | 'charge'
+function bark(e, kind, force) {   // 'spot' | 'flank' | 'reload' | 'charge' | 'throw' (forced past its own 6 s: a frag is shouted unless another shout just went)
   if (!e || screen !== 'battle' || state.mode === 'failed') return false;
   const now = state.frontTime;
-  if (now - VOICE.barkT < 1.2 || now - (e.barkT == null ? -99 : e.barkT) < 6) return false;
+  if (now - VOICE.barkT < 1.2 || (!force && now - (e.barkT == null ? -99 : e.barkT) < 6)) return false;
   const me = camTarget();
   if (!me || Math.hypot(e.x - me.x, e.y - me.y) > 1400) return false;
   VOICE.barkT = now; e.barkT = now;
@@ -2849,6 +2876,7 @@ const ETYPES = {
   rider:   { r: 16, hp: 4, sp: 185, dmg: 2, col: '#a04938', horse: true },
   gunner:  { r: 13, hp: 3, sp: 60,  dmg: 1, col: '#c2a23a', ranged: 380 },   // stops and shoots back
   spotter: { r: 12, hp: 3, sp: 85,  dmg: 0, col: '#d8d2b8', spotter: true }, // no longer spawned
+  sniper:  { r: 13, hp: 3, sp: 0,   dmg: 2.5, col: '#8c8f78', ranged: 2600 },  // the rooftop marksman: see THE ROOFTOP SNIPER
 };
 // Dedicated spawn zones, in the open ground of the town's streets and alleys. There is no front: whenever
 // someone comes onto the field — an enemy walking on, or one of yours coming back as a reinforcement — the
@@ -2860,6 +2888,8 @@ const SPAWN_ZONES = [   // [name, x0, x1, y0, y1] in metres; scaled to px below
   ['market', 10, 20, 46, 48.5], ['forecourt', 66, 70, 41, 48], ['south road west', 1, 22, 48.5, 51.5], ['south road east', 75, 95, 48.5, 51.5],
   ['motor pool', 72, 95, 61, 71], ['cemetery', 3, 23, 69, 71.5], ['fob', 43, 68, 62, 69],
 ].map(([name, x0, x1, y0, y1]) => ({ name, x0: x0 * 40, x1: x1 * 40, y0: y0 * 40, y1: y1 * 40, cx: (x0 + x1) * 20, cy: (y0 + y1) * 20, used: -99 }));
+const FOB = { x0: 41 * 40, x1: 70 * 40, y0: 60.5 * 40, y1: 72 * 40 };   // the squad's walled camp: no enemy frag lands in it
+const inFob = (x, y) => x > FOB.x0 && x < FOB.x1 && y > FOB.y0 && y < FOB.y1;
 function pickSpawn(side) {   // 'e' for the enemy, 'p' for your squad
   const foes = side === 'e' ? soldiers.filter(s => s.alive) : enemies;
   const mates = side === 'e' ? enemies : soldiers.filter(s => s.alive);
@@ -2895,11 +2925,13 @@ function spawnEnemy(type) {
   const t = ETYPES[type], dmgMul = 1 + 0.12 * (state.tier - 1);   // harder sectors hit harder; health stays put so an M4 still drops a rifleman in three
   enemies.push({ type, r: t.r, col: t.col, dmg: t.dmg * dmgMul, horse: !!t.horse,
     ranged: t.ranged || 0, spotter: !!t.spotter, spotCd: rand(3, 5), fireT: rand(0.5, 1.5), objRole: !!t.ranged && Math.random() < 0.45,
+    frags: type === 'grunt' ? 1 : 0, coverT: 0,
     hp: t.hp, maxHp: t.hp,
     sp: t.sp * (1 + 0.04 * (state.tier - 1)) * rand(0.92, 1.08),
     ...spawnPoint(),
     cd: rand(0, 0.5), flash: 0, wob: rand(0, TAU), walk: rand(0, TAU), atk: 0, face: 1,
     tac: 'hold', tacT: rand(0.2, 1.2), burst: 0, supp: 0, flankSide: Math.random() < 0.5 ? -1 : 1, path: null, pathT: 0, coverRef: null });
+  if (type === 'sniper' && !perchSniper(enemies[enemies.length - 1])) { enemies.pop(); spawnEnemy('grunt'); return; }   // no free perch: a rifleman instead
   if (t.spotter && !state.spotterSeen) {
     state.spotterSeen = true;
     showBanner('ENEMY SPOTTER — PRIORITY TARGET');
@@ -2921,6 +2953,7 @@ function spawnBoss() {
   musStinger('boss');
 }
 function pickType() {
+  if (sniperWanted()) return 'sniper';
   const r = Math.random();
   if ((state.tier >= 2 || state.wave >= 2) && r < 0.22) return 'gunner';
   if ((state.tier >= 2 || state.wave >= 5) && r < 0.32) return 'rider';
@@ -2985,6 +3018,7 @@ function coverTop(ob) {   // px: how high this piece of cover stands right now
 }
 function bodyTop(e) {   // px: the top of an enemy's head right now — riflemen kneel while they hold still
   if (e.target) return (e.down ? 0.1 : 1.3) * PX;   // a range target: a plate on a post, flat once it folds
+  if (e.duckT > 0) return 0.72 * PX;                 // a marksman down behind its cover
   const look = ENEMY_LOOK[e.type] || ENEMY_LOOK.grunt;
   return ((e.ranged && e.stillT > 0.3 ? 1.3 : 1.8) + (e.horse ? 0.35 : 0)) * look[1] * PX;
 }
@@ -2998,7 +3032,7 @@ function rayBoxT(ox, oy, oz, dx, dy, dz, x0, x1, y0, y1, z1) {   // entry distan
   else { u = (0 - oz) / dz; v = (z1 - oz) / dz; if (u > v) { s = u; u = v; v = s; } if (u > t0) t0 = u; if (v < t1) t1 = v; if (t0 > t1) return Infinity; }
   return t0;
 }
-function rayCylT(ox, oy, oz, dx, dy, dz, cx, cy, r, z1) {   // into an upright cylinder standing on the ground
+function rayCylT(ox, oy, oz, dx, dy, dz, cx, cy, r, z1, z0 = 0) {   // into an upright cylinder from z0 (the ground, unless it stands on a roof) up to z1
   const fx = ox - cx, fy = oy - cy, A = dx * dx + dy * dy, C = fx * fx + fy * fy - r * r;
   let t = 0;
   if (C > 0) {
@@ -3009,7 +3043,17 @@ function rayCylT(ox, oy, oz, dx, dy, dz, cx, cy, r, z1) {   // into an upright c
     if (t < 0) return Infinity;
   }
   const z = oz + dz * t;
-  return z >= 0 && z <= z1 ? t : Infinity;
+  return z >= z0 && z <= z1 ? t : Infinity;
+}
+function los3(ax, ay, az, bx, by, bz, skip) {   // a clear straight line in 3D between two points: no building, and no cover that stops rounds (skip: the shooter's own)
+  const dx = bx - ax, dy = by - ay, dz = bz - az;
+  for (const b of buildings) if (rayBoxT(ax, ay, az, dx, dy, dz, b.x - b.hw, b.x + b.hw, b.y - b.hd, b.y + b.hd, b.top) < 1) return false;
+  for (const ob of obstacles) {
+    if (ob === skip || COVER_KINDS[ob.kind].block < 0.5) continue;
+    const top = coverTop(ob);
+    if ((ob.shape === 'c' ? rayCylT(ax, ay, az, dx, dy, dz, ob.x, ob.y, ob.r, top) : rayBoxT(ax, ay, az, dx, dy, dz, ob.x - ob.hw, ob.x + ob.hw, ob.y - ob.hd, ob.y + ob.hd, top)) < 1) return false;
+  }
+  return true;
 }
 const SHOT = { ox: 0, oy: 0, oz: 0, dx: 0, dy: 0, dz: 0 }, AIMP = { x: 0, y: 0, z: 0 };
 function crosshairRay(s) {   // where your crosshair's ray starts and which way it points
@@ -3036,12 +3080,12 @@ function crosshairPoint(R, maxT, out) {   // the first thing along the ray: an e
     t = Math.min(t, ob.shape === 'c' ? rayCylT(ox, oy, oz, dx, dy, dz, ob.x, ob.y, ob.r, top)
       : rayBoxT(ox, oy, oz, dx, dy, dz, ob.x - ob.hw, ob.x + ob.hw, ob.y - ob.hd, ob.y + ob.hd, top));
   }
-  for (const e of enemies) t = Math.min(t, rayCylT(ox, oy, oz, dx, dy, dz, e.x, e.y, e.r, bodyTop(e)));
+  for (const e of enemies) { const ez = e.z || 0; t = Math.min(t, rayCylT(ox, oy, oz, dx, dy, dz, e.x, e.y, e.r, ez + bodyTop(e), ez)); }
   out.x = ox + dx * t; out.y = oy + dy * t; out.z = oz + dz * t;
   return t;
 }
 function headHit(e, b) {   // a round that strikes the top of the body, near its middle
-  if (b.z < bodyTop(e) * 0.8) return false;
+  if (b.z - (e.z || 0) < bodyTop(e) * 0.8) return false;
   const bl = Math.hypot(b.vx, b.vy) || 1;
   return Math.abs((e.x - b.x) * (b.vy / bl) - (e.y - b.y) * (b.vx / bl)) <= (HEAD_W[e.type] || 4) * 2.4;
 }
@@ -3089,6 +3133,10 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   if (fromPlayer) { state.shots++; MUS.heat = performance.now(); }
   const mz = (s.pistol ? SIDEARM.len : w.len) + 6;   // the barrel tip: where the round actually leaves the weapon
   let bx = s.x + Math.cos(a) * mz, by = s.y + Math.sin(a) * mz, bz = 0, ux = Math.cos(a), uy = Math.sin(a), uz = 0, ballistic = false;
+  if (!fromPlayer && target && target.z > PX) {   // a squadmate shooting up at a roof: a real line up to its chest
+    const d = Math.hypot(dx, dy) || 1, el = Math.atan2(target.z + bodyTop(target) * 0.62 - 1.35 * PX, d) + rand(-1, 1) * (w.spread + 0.03) * 0.5;
+    bz = 1.35 * PX; ux = Math.cos(el) * Math.cos(a); uy = Math.cos(el) * Math.sin(a); uz = Math.sin(el); ballistic = true;
+  }
   if (fromPlayer) {   // your round flies in 3D to whatever is under the crosshair, spread around that line
     const R = crosshairRay(s);
     crosshairPoint(R, (w.reach || w.range) + 400, AIMP);
@@ -3131,12 +3179,13 @@ function killEnemy(idx, credit) {
     const w = WEAPONS[drops];
     dropGun(drops, gunX, gunY, drops === 'pkm' ? randi(40, 100) : randi(10, 30), w.mag, { yaw: gunYaw });
   }
-  addCorpse({ kind: 'enemy', x: e.x + rand(-4, 4), y: e.y + rand(-3, 3), col: e.col, noGun: !!drops,
+  addCorpse({ kind: 'enemy', x: e.x + (e.perch ? 0 : rand(-4, 4)), y: e.y + (e.perch ? 0 : rand(-3, 3)), z: e.z || 0, col: e.col, noGun: !!drops,
     face: e.face, sc: e.r / 14, horse: e.horse, type: e.type, aim: e.aim, src: e,
     style: !credit.wkey || credit.wkey === 'rocket' || credit.wkey === 'frag' ? 2 : hd && e.aim != null && Math.cos(e.aim) * hd.x + Math.sin(e.aim) * hd.y > 0 ? 1 : 0,
     gunX, gunY, gunYaw });
   sfxKill(e.x, e.y);
-  if (!e.boss && Math.random() < 0.35) pickups.push({ x: e.x + rand(-10, 10), y: e.y + rand(-10, 10), t: 30 });
+  if (!e.boss && !e.perch && Math.random() < 0.35) pickups.push({ x: e.x + rand(-10, 10), y: e.y + rand(-10, 10), t: 30 });
+  if (e.sniper) state.sniperDownAt = state.frontTime;
   if (e.boss) state.enemyDown = state.enemyTotal;   // the Warlord falls and the rest of them break
   else state.enemyDown = Math.min(state.enemyTotal - (state.bossRef || !state.bossSpawned ? 1 : 0), state.enemyDown + 1);   // the Warlord's ticket stays on the board until it has come and fallen: a multi-kill at 89% cannot skip it
   const cap = (state.bossSpawned && state.bossRef && !e.boss) ? 99 : 100;  // boss gates the last 1%
@@ -3254,6 +3303,7 @@ function explode(x, y, r, eDmg, sDmg, credit) {
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 500 * 500) cam.shake = Math.max(cam.shake, 7);
   for (let j = enemies.length - 1; j >= 0; j--) {
     const e = enemies[j];
+    if ((e.z || 0) > 2.5 * PX) continue;   // a blast in the street never reaches a roof
     if (dist2(x, y, e.x, e.y) < (r + e.r) * (r + e.r)) {
       const d = Math.hypot(e.x - x, e.y - y) || 1;
       hurtEnemy(j, eDmg, credit, { x: (e.x - x) / d, y: (e.y - y) / d });
@@ -3426,6 +3476,12 @@ function updateMines() {
 // seconds after it leaves the hand. The blast falls off to nothing at CFG.fragR, walls of buildings shield it, it
 // hurts every enemy it reaches (a breacher's shield does not help), chews cover, never touches your squad, and hurts
 // you at CFG.fragSelf strength — never enough to kill you from full health.
+// ENEMY FRAGS: a rifleman carries one. It throws when the soldier it is fighting has stayed 8-22 m away behind cover its
+// rounds can't get through (los3) for CFG.eFragCovered s, and the lob it solves has nothing solid in the arc; at most
+// one enemy frag is ever in the air, one every CFG.eFragGap s (by tier), none in the first 25 s, never at someone who
+// came back in the last 4 s, never into the FOB. It lands 0.5-2 m past its target and bursts CFG.eFragAfter s
+// after landing: CFG.eFragDmg at the centre of the same blast, walls shielding it, your squad hurt (AI squadmates at
+// 70%, as with rounds) and no enemy. Squadmates run clear of one that lands near them, and call it.
 const FRAG_G = 9.8 * PX;   // gravity, px/s²
 function throwGrenade(s) {
   if (!s || !s.alive || screen !== 'battle' || state.mode !== 'play' || s.slot !== state.controlled) return false;
@@ -3446,8 +3502,37 @@ function throwGrenade(s) {
   supportsDirty = true;
   return true;
 }
+function enemyFragLogic(e, t, dt, d) {   // from the rifleman AI: time the target spends out of reach behind cover, then a throw
+  if (!e.frags || state.noEnemyFrags) return;
+  const blocked = d >= CFG.eFragMin && d <= CFG.eFragMax && !los3(e.x, e.y, bodyTop(e) * 0.8, t.x, t.y, soldierTop(t) * 0.62, coverNear(e, 34));   // the cover it hugs is not in its way
+  e.coverT = blocked ? (e.coverT || 0) + dt : 0;
+  if (e.coverT < CFG.eFragCovered || e.relT > 0 || !t.alive) return;
+  const gap = lerp(CFG.eFragGap[0], CFG.eFragGap[1], clamp((state.tier - 1) / 5, 0, 1));
+  if (state.frontTime < CFG.eFragFirst || state.frontTime - state.eFragAt < gap || grenades.some(g => g.hostile)) return;
+  if (state.frontTime - (t.bornT || 0) < 4 || inFob(t.x, t.y)) return;
+  if (throwEnemyFrag(e, t)) { e.frags--; e.coverT = 0; state.eFragAt = state.frontTime; }
+}
+function throwEnemyFrag(e, t) {   // a lob landing 0.5-2 m past the target (over whatever it hides behind), if nothing solid is in the arc
+  const a = Math.atan2(t.y - e.y, t.x - e.x) + rand(-1.4, 1.4), off = rand(0.5, 2) * PX;
+  const lx = clamp(t.x + Math.cos(a) * off, 20, CFG.arenaW - 20), ly = clamp(t.y + Math.sin(a) * off, 20, CFG.arenaH - 20);
+  if (inFob(lx, ly)) return false;
+  const oz = 1.5 * PX, dx = lx - e.x, dy = ly - e.y, D = Math.hypot(dx, dy), own = coverNear(e, 34);
+  if (D < PX) return false;
+  const th = 0.95, v = Math.sqrt(FRAG_G * D * D / (2 * Math.cos(th) ** 2 * (oz + D * Math.tan(th))));
+  const vh = v * Math.cos(th), vz = v * Math.sin(th), T = D / vh;
+  for (let k = 1; k < 16; k++) {
+    const tt = T * k / 16, x = e.x + dx / D * vh * tt, y = e.y + dy / D * vh * tt, z = oz + vz * tt - FRAG_G * tt * tt / 2;
+    if (buildings.some(b => insideShape(b, x, y) && z < b.top)) return false;
+    if (k < 13 && obstacles.some(ob => ob !== own && COVER_KINDS[ob.kind].block >= 0.5 && insideShape(ob, x, y) && z < coverTop(ob))) return false;   // the last stretch drops over the target's own cover
+  }
+  grenades.push({ x: e.x, y: e.y, z: oz, vx: dx / D * vh, vy: dy / D * vh, vz, fuse: T + CFG.eFragAfter, spin: rand(0, TAU), owner: null, hostile: true, rest: false, tinkT: 0, landAt: state.frontTime + T, aimX: lx, aimY: ly });
+  e.throwT = 0.5;
+  bark(e, 'throw', true);
+  playBuf('rl:out', { gain: 0.3 * distMul(e.x, e.y), rate: 0.8, x: e.x, y: e.y });
+  return true;
+}
 function bounceOff(g, ob, px, py, top, damp) {   // came in from (px, py): land on the top, or glance off the side
-  if (top != null && g.pz >= top - 2) { g.z = top; if (g.vz < 0) g.vz = -g.vz * 0.3; g.vx *= 0.7; g.vy *= 0.7; return; }
+  if (top != null && g.pz >= top - 2) { g.z = top; if (g.vz < 0) g.vz = -g.vz * (g.hostile ? 0.2 : 0.3); g.vx *= g.hostile ? 0.35 : 0.7; g.vy *= g.hostile ? 0.35 : 0.7; return; }
   coverPoint(ob, px, py, CP);
   const vn = g.vx * CP.nx + g.vy * CP.ny;
   if (vn < 0) { g.vx -= (1 + damp) * vn * CP.nx; g.vy -= (1 + damp) * vn * CP.ny; g.vx *= 0.75; g.vy *= 0.75; }
@@ -3474,7 +3559,7 @@ function updateGrenades(dt) {
         }
         if (g.z <= 0) {
           g.z = 0;
-          if (g.vz < -40) { g.vz = -g.vz * 0.32; g.vx *= 0.62; g.vy *= 0.62; hit = true; }
+          if (g.vz < -40) { g.vz = -g.vz * (g.hostile ? 0.2 : 0.32); g.vx *= g.hostile ? 0.35 : 0.62; g.vy *= g.hostile ? 0.35 : 0.62; hit = true; }   // a lobbed frag comes down steep and dies where it lands
           else { g.vz = 0; g.vx *= Math.exp(-6 * sdt); g.vy *= Math.exp(-6 * sdt); }
         }
         if (g.x < 12 || g.x > CFG.arenaW - 12) { g.vx = -g.vx * 0.4; g.x = clamp(g.x, 12, CFG.arenaW - 12); }
@@ -3482,6 +3567,11 @@ function updateGrenades(dt) {
         if (hit && g.tinkT <= 0 && Math.hypot(g.vx, g.vy, g.vz) > 60) { g.tinkT = 0.12; playBuf('tink:' + randi(0, 2), { gain: 0.35, rate: 0.55, x: g.x, y: g.y, lp: 3000 }); }
       }
       if (g.z <= 0.5 && Math.hypot(g.vx, g.vy) < 6 && Math.abs(g.vz) < 1) g.rest = true;
+    }
+    if (g.hostile && !g.called && (g.rest || g.z <= 0.5)) {   // an enemy frag down near you: someone shouts it
+      g.called = true;
+      const me = soldiers[state.controlled];
+      if (me && me.alive && dist2(g.x, g.y, me.x, me.y) < 400 * 400) { state.callout = { side: 'grenade', dist: Math.max(1, Math.round(Math.hypot(g.x - me.x, g.y - me.y) / PX)), t: 1.6 }; VOICE.callCd = Math.max(VOICE.callCd, 1.6); playBuf('radio', { gain: 0.28, force: true }); }
     }
     if (g.fuse <= 0) { grenades.splice(i, 1); fragBlast(g); }
   }
@@ -3500,9 +3590,17 @@ function fragBlast(g) {
   }
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 700 * 700) cam.shake = Math.max(cam.shake, 8);
   const reach = (tx, ty, tr) => { const d = Math.max(0, Math.hypot(tx - x, ty - y) - tr * 0.5); return d < R && losClear(x, y, tx, ty) ? 1 - d / R : 0; };
+  if (g.hostile) {   // theirs: every soldier it reaches, none of their own
+    for (const s of soldiers) {
+      if (!s.alive) continue;
+      const k = reach(s.x, s.y, s.r);
+      if (k > 0) { s.lastHit = { x: s.x - x, y: s.y - y }; s.lastSrc = 'frag'; damageSoldier(s, CFG.eFragDmg * k * (s.slot === state.controlled ? 1 : 0.7)); }
+    }
+    return;
+  }
   const credit = { player: true, wkey: 'frag', slot: g.owner };
   for (let j = enemies.length - 1; j >= 0; j--) {
-    const e = enemies[j], k = reach(e.x, e.y, e.r);
+    const e = enemies[j], k = (e.z || 0) > 2.5 * PX ? 0 : reach(e.x, e.y, e.r);
     if (k > 0) { e.lastHit = { x: e.x - x, y: e.y - y }; hurtEnemy(j, CFG.fragDmg * k, credit, null); }
   }
   const me = soldiers[state.controlled];
@@ -3586,7 +3684,7 @@ function updateObjectives(dt) {
     let p = 0, e = 0;
     const r2 = o.r * o.r;
     for (const s of soldiers) if (s.alive && dist2(s.x, s.y, o.x, o.y) < r2) p++;
-    for (const en of enemies) if (dist2(en.x, en.y, o.x, o.y) < r2) e++;
+    for (const en of enemies) if (!en.perch && dist2(en.x, en.y, o.x, o.y) < r2) e++;   // a marksman up on a roof holds nothing
     o.inP = p; o.inE = e; o.contested = p > 0 && e > 0;
     o.flashT = Math.max(0, o.flashT - dt);
     if (state.objMsg && (state.objMsg.t -= dt / state.objs.length) <= 0) state.objMsg = null;
@@ -3668,6 +3766,7 @@ function enterBattle(tid) {
   state.frontTime = 0; state.frontDeaths = 0;
   state.bossSpawned = false; state.bossRef = null; state.spotterSeen = false;
   state.slow = 0; state.slowCd = 0;
+  state.eFragAt = -99; state.noEnemyFrags = false; state.sniperDownAt = null;
   state.flyby = null; state.crossTarget = null;
   rollSky(tid);
   enemies = []; bullets = []; markers = []; floaters = []; bodies = []; particles = []; pickups = [];
@@ -4080,6 +4179,14 @@ function heroControl(s, spd, dt) {   // you move yourself: nothing latches, noth
 const SQUAD_ROLE = [null, 'point', 'flank', 'overwatch'];
 function squadAI(s, spd, dt, lead, front, wrange) {
   s.tacT = (s.tacT || 0) - dt; s.planT = (s.planT || 0) - dt;
+  for (const g of grenades) {   // an enemy frag landed close: get well clear of it before anything else
+    if (!g.hostile || g.z > 40 || dist2(g.x, g.y, s.x, s.y) > 220 * 220 || s.fleeFrom === g) continue;
+    const dx = s.x - g.x, dy = s.y - g.y, d = Math.hypot(dx, dy) || 1;
+    s.fleeFrom = g; s.coverRef = null; s.planT = s.tacT = g.fuse + 0.4;
+    s.goalX = clamp(g.x + dx / d * 320, 40, CFG.arenaW - 40); s.goalY = clamp(g.y + dy / d * 320, 40, CFG.arenaH - 40);
+    goTo(s, s.goalX, s.goalY);
+    break;
+  }
   if ((s.pistol || s.reserve < WEAPONS[s.weapon].mag) && pickups.length && s.planT <= 0) {   // low on ammo: grab a dropped magazine nearby
     let best = null, bd = 340 * 340;
     for (const p of pickups) { const d = dist2(s.x, s.y, p.x, p.y); if (d < bd) { bd = d; best = p; } }
@@ -4291,6 +4398,7 @@ function updateEnemies(dt) {
     const sp0 = e.sp, ex0 = e.x, ey0 = e.y;
     if (d > 900 && !e.boss) e.sp *= 1.8;   // far from the fight: hurry up the streets
     if (e.boss) bossLogic(e, t, dt, d, dx, dy);
+    else if (e.sniper) { sniperAI(e, dt, vis); continue; }   // on its perch: no walking, no pushing, no footsteps
     else if (e.spotter) spotterAI(e, t, dt, d);
     else if (e.ranged) riflemanAI(e, t, dt, d, vis);
     else meleeAI(e, t, dt, d);
@@ -4309,6 +4417,7 @@ function updateEnemies(dt) {
   for (let i = 0; i < enemies.length; i++)
     for (let j = i + 1; j < enemies.length; j++) {
       const a = enemies[i], b = enemies[j];
+      if (a.perch || b.perch) continue;
       const dx = b.x - a.x, dy = b.y - a.y, min = a.r + b.r, d2 = dx * dx + dy * dy;
       if (d2 < min * min && d2 > 0.01) {
         const d = Math.sqrt(d2), push = (min - d) / 2 / d;
@@ -4318,6 +4427,8 @@ function updateEnemies(dt) {
 }
 function riflemanAI(e, t, dt, d, vis) {   // bound to cover, hold and fire in bursts, get pinned, fall back when hurt
   const range = e.ranged * vis, sees = d < range && losClear(e.x, e.y, t.x, t.y);
+  enemyFragLogic(e, t, dt, d);
+  if (e.throwT > 0) e.throwT -= dt;
   if (sees && !e.saw) bark(e, 'spot');
   e.saw = sees;
   e.tacT -= dt;
@@ -4442,10 +4553,13 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
       } else {
         for (let j = 0; j < enemies.length; j++) {
           const e = enemies[j], d2 = dist2(b.x, b.y, e.x, e.y);
-          if (d2 < 60 * 60 && b.suppd !== e) { b.suppd = e; e.supp = Math.min(4, (e.supp || 0) + (b.wkey === 'lmg' ? 0.5 : 0.3)); }   // rounds cracking past keep heads down
+          const ez = e.z || 0;
+          if (d2 < 60 * 60 && b.suppd !== e && (!ez || (b.ballistic && Math.abs(b.z - ez - PX) < 2 * PX))) { b.suppd = e; e.supp = Math.min(4, (e.supp || 0) + (b.wkey === 'lmg' ? 0.5 : 0.3)); }   // rounds cracking past keep heads down
           if (b.hitList && b.hitList.includes(e)) continue;
           if (d2 >= (e.r + (b.ballistic ? 3 : 5)) ** 2) continue;
-          if (b.ballistic && b.z > bodyTop(e)) continue;   // over their head
+          if (ez && !b.ballistic) continue;   // a flat round never reaches a roof
+          if (b.ballistic && b.z > ez + bodyTop(e)) continue;   // over their head
+          if (b.ballistic && ez && b.z < ez + (e.lip || 0)) { impact(b, '#c8c0b0', false); dead = true; break; }   // into the sill or sandbags it kneels behind
           if (b.aoe) { explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }); dead = true; break; }
           const bl = Math.hypot(b.vx, b.vy) || 1;
           const head = b.ballistic ? headHit(e, b) : headShot(e, b);
@@ -4545,6 +4659,91 @@ function battleUpdate(dt) {
   updateBanner(dt);
 }
 
+// ============================================================ THE ROOFTOP SNIPER
+// From 25% into a front (from the start at tier 3 and up) the enemy can put one marksman at a time on a perch
+// (PERCHES: metres, floor height, the sill or sandbags in front of it, the way it faces). Each new enemy that walks on
+// has a 35% chance of being it while the slot is free, and not within 40 s of the last one falling. It never moves.
+// It picks someone it can see in 3D (los3 from its eye; you before a squadmate at the same range), never anyone in
+// the FOB and never anyone so far below that they couldn't look up at it (a slope over SNIPER.steep: your view stops
+// at 35° up), and lines up for SNIPER.aim seconds with its scope glinting — brighter when it is you — then fires one heavy
+// round (SNIPER.dmg, 2.5 at tier 1 and never enough to drop a full-health soldier in one) and works the bolt for
+// SNIPER.chamber. Losing sight of its target starts the aim over. Rounds cracking past it within 2 m send it below its
+// cover for SNIPER.duck seconds. It is exposed from its cover's top (e.lip) up and takes a rifleman's hits (three M4
+// rounds inside 20 m, four from the square below the bell tower); blasts more than 2.5 m below it don't reach it. Your squad calls it by its perch the first time it glints. On the minimap it shows only while glinting.
+const PERCHES = [
+  { name: 'Bell tower', x: 38.8, y: 31, z: 15.6, lip: 0.35, face: 0, nest: 'sill' },          // the belfry's east opening, over the church square
+  { name: 'Gas station roof', x: 84.7, y: 43.7, z: 3.8, lip: 0.55, face: Math.PI, nest: 'bags' },
+  { name: 'Freight wagon', x: 27, y: 17, z: 3.4, lip: 0.55, face: Math.PI / 2, nest: 'bags' },
+  { name: 'Mill containers', x: 85, y: 22, z: 2.6, lip: 0.55, face: Math.PI, nest: 'bags' },
+  { name: 'Warehouse roof', x: 76, y: 9.6, z: 7.6, lip: 0.4, face: Math.PI / 2, nest: 'bags' },
+];
+const SNIPER = { aim: 1.4, chamber: 1.6, duck: 2, dmg: 2.5, maxDmg: 3.6, eye: 1.05 * 40, speed: 3200, spread: 0.012, from: 25, gap: 40, chance: 0.35, steep: 0.62 };
+function freePerches() {   // perches with nobody on them, far enough from your squad
+  const taken = new Set(enemies.filter(e => e.perch).map(e => e.perch));
+  return PERCHES.filter(p => !taken.has(p) && soldiers.every(s => !s.alive || Math.hypot(s.x - p.x * PX, s.y - p.y * PX) > 25 * PX));
+}
+function sniperWanted() {
+  if (state.training || !(state.progress >= SNIPER.from || state.tier >= 3)) return false;
+  if (enemies.some(e => e.sniper) || state.frontTime - (state.sniperDownAt == null ? -99 : state.sniperDownAt) < SNIPER.gap) return false;
+  return freePerches().length > 0 && Math.random() < SNIPER.chance;
+}
+function perchSniper(e) {   // a new enemy spawned as the marksman: up onto a free perch
+  const free = freePerches();
+  if (!free.length) return false;
+  const p = free[randi(0, free.length - 1)];
+  const T = ETYPES.sniper;
+  Object.assign(e, { type: 'sniper', r: T.r, col: T.col, ranged: T.ranged, hp: T.hp, maxHp: T.hp,
+    x: p.x * PX, y: p.y * PX, z: p.z * PX, lip: p.lip * PX, perch: p, sniper: true, sp: 0, objRole: false, frags: 0,
+    aim: p.face, aimT: 0, glint: 0, chamberT: 0, duckT: 0, scanT: 0, tgt: null, called: false, stillT: 1 });   // kneeling from the start
+  e.dmg = Math.min(SNIPER.maxDmg, SNIPER.dmg * (1 + 0.12 * (state.tier - 1)));
+  return true;
+}
+function sniperAI(e, dt, vis) {
+  e.chamberT = Math.max(0, e.chamberT - dt);
+  if (e.duckT > 0) { e.duckT -= dt; e.aimT = 0; e.glint = 0; return; }   // below the cover
+  if (e.supp > 0.9) { e.duckT = SNIPER.duck; e.supp = 0; e.aimT = 0; e.glint = 0; return; }
+  e.scanT -= dt;
+  if (e.scanT <= 0) {   // who it can see from up there
+    e.scanT = 0.3;
+    let best = null, bs = Infinity;
+    for (const s of soldiers) {
+      if (!s.alive || inFob(s.x, s.y)) continue;
+      const d = Math.hypot(s.x - e.x, s.y - e.y);
+      if (d > e.ranged * vis || (e.z + SNIPER.eye - soldierTop(s) * 0.62) / d > SNIPER.steep || !los3(e.x, e.y, e.z + SNIPER.eye, s.x, s.y, soldierTop(s) * 0.62)) continue;
+      const score = d * (s.slot === state.controlled ? 0.6 : 1);
+      if (score < bs) { bs = score; best = s; }
+    }
+    if (best !== e.tgt) { e.tgt = best; e.aimT = 0; }
+  }
+  const t = e.tgt;
+  if (!t || !t.alive) { e.tgt = null; e.aimT = 0; e.glint = 0; return; }
+  e.aim = Math.atan2(t.y - e.y, t.x - e.x);
+  if (e.chamberT > 0) { e.glint = 0; return; }
+  e.aimT += dt;
+  e.glint = Math.min(1, e.aimT / SNIPER.aim);
+  if (!e.called) sniperCallout(e);
+  if (e.aimT >= SNIPER.aim) { sniperShot(e, t); e.aimT = 0; e.glint = 0; e.chamberT = SNIPER.chamber; }
+}
+function sniperShot(e, t) {   // one heavy round in 3D, from the scope's eye line to the chest
+  const mz = e.z + SNIPER.eye, tz = soldierTop(t) * 0.62, dx = t.x - e.x, dy = t.y - e.y, d = Math.hypot(dx, dy) || 1;
+  const spread = SNIPER.spread * (t.sprinting ? 1.6 : 1) * (t.moving ? 1.3 : 1);
+  const a = Math.atan2(dy, dx) + rand(-1, 1) * spread, el = Math.atan2(tz - mz, d) + rand(-1, 1) * spread * 0.6, h = Math.cos(el);
+  bullets.push({ x: e.x + Math.cos(a) * 20, y: e.y + Math.sin(a) * 20, z: mz, ballistic: true,
+    vx: Math.cos(a) * h * SNIPER.speed, vy: Math.sin(a) * h * SNIPER.speed, vz: Math.sin(el) * SNIPER.speed, life: e.ranged * 1.2 / SNIPER.speed, tracer: true,
+    hostile: true, dmg: e.dmg, wkey: null, slot: null, hits: 0, maxHits: 1, aoe: 0, skip: null, srcType: 'sniper' });
+  e.atk = 0.2; e.shots = (e.shots || 0) + 1;
+  const far = distMul(e.x, e.y);
+  playBuf(far < 0.5 && SFX.buf['gunf:sniper'] ? 'gunf:sniper' : 'gun:sniper:0', { gain: 0.5 * Math.max(far, 0.3), rate: rand(0.95, 1.02), x: e.x, y: e.y, lp: 1600 + 16000 * far * far, force: true });
+  state.lastContact = { x: e.x, y: e.y };
+}
+function sniperCallout(e) {   // the squad names the perch the first time the scope flashes, if you are in the fight
+  const me = soldiers[state.controlled];
+  if (!me || !me.alive || dist2(me.x, me.y, e.x, e.y) > 2600 * 2600) return;
+  e.called = true;
+  state.callout = { side: 'sniper', name: e.perch.name, dist: Math.round(Math.hypot(me.x - e.x, me.y - e.y) / PX), t: 2.2 };
+  VOICE.callCd = Math.max(VOICE.callCd, 2.2);
+  playBuf('radio', { gain: 0.28, force: true });
+}
 // ============================================================ VIEW LAYER — three.js, Ocarina-of-Time look
 // Sim units map to metres: x → X, y → Z (north is −Z), particle height z → Y.
 // Characters are rigid limb pieces on joint hierarchies, the way N64 models were
@@ -5184,6 +5383,10 @@ const ENEMY_ROWS = {   // one silhouette per enemy type
       P(HJ.head, 'cyl', 0.1, 0.06, 0.12, -0.17, 0.12, 0, 'gunm', 0, 0, Math.PI / 2), P(HJ.head, 'metal', 0.02, 0.02, 0.14, -0.15, 0.05, -0.1, 'gunm')]),
     P(HJ.torso, 'taper', 0.3, 0.34, 0.16, 0, 0.28, 0.23, 'pack'), P(HJ.torso, 'metal', 0.02, 0.7, 0.02, 0.1, 0.8, 0.26, 'metal'),
     P(HJ.fArmR, 'cyl', 0.07, 0.16, 0.07, -0.05, -0.3, -0.06, 'gunm', Math.PI / 2), P(HJ.fArmR, 'cyl', 0.07, 0.16, 0.07, 0.04, -0.3, -0.06, 'gunm', Math.PI / 2)],
+  sniper: () => [...ENEMY_BASE([P(HJ.head, 'hood', 0.36, 0.22, 0.38, 0, 0.26, 0.01, 'hood'), P(HJ.head, 'cloth', 0.3, 0.06, 0.03, 0, 0.14, -0.19, 'lens')]),   // marksman: a scrim hood, a long rifle with a scope
+    P(HJ.gun, 'wood', 0.05, 0.1, 0.3, 0, -0.01, 0.25, 'wood'), P(HJ.gun, 'metal', 0.05, 0.08, 0.34, 0, 0.02, -0.08, 'gunm'),
+    P(HJ.gun, 'cyl', 0.022, 0.62, 0.022, 0, 0.03, -0.64, 'gunm', Math.PI / 2), P(HJ.gun, 'cyl', 0.04, 0.26, 0.04, 0, 0.1, -0.06, 'gunm', Math.PI / 2),
+    P(HJ.gun, 'cyl', 0.05, 0.04, 0.05, 0, 0.1, -0.2, 'gunm', Math.PI / 2), MAG(P(HJ.gun, 'metal', 0.03, 0.1, 0.06, 0, -0.08, -0.08, 'gunm', 0.2))],
   rider: () => [...ENEMY_BASE(MODERN_HELM),
     P(HJ.gun, 'metal', 0.025, 0.07, 0.5, 0, 0, -0.28, 'metal'), P(HJ.gun, 'leather', 0.04, 0.05, 0.12, 0, 0, 0.02, 'leather')],
   boss: () => [   // juggernaut: bomb-suit armour, full helmet with a visor plate, minigun and ammo box
@@ -5226,7 +5429,7 @@ const HORSE_BARDING = [   // raider quad: bull bar and a spare tyre on the rack
 const SKIN_TONES = ['#ffffff', '#f0d8c0', '#d4ac8c', '#a47c62'];
 const ENEMY_LOOK = {   // root scale per enemy type
   grunt: [1, 1, 1], runner: [0.84, 1.02, 0.84], brute: [1.42, 1.4, 1.42], rider: [1, 1, 1],
-  gunner: [1, 1, 1], spotter: [0.95, 0.97, 0.95], boss: [2.2, 2.2, 2.2],
+  gunner: [1, 1, 1], spotter: [0.95, 0.97, 0.95], boss: [2.2, 2.2, 2.2], sniper: [1, 1, 1],
 };
 function soldierPalette(slot, col, helm) {   // multicam uniform; carriers alternate coyote and ranger green; the roster colour marks the patches
   const wren = col === '#d9dbe4';
@@ -5524,11 +5727,11 @@ function splitGun(parts) {
 }
 const noGun = parts => splitGun(parts).body;
 const gunOnly = parts => splitGun(parts).gun;
-function emitGround(parts, pal, x, y, yaw, sc, set, cache) {   // a weapon lying on its side where its owner dropped it
+function emitGround(parts, pal, x, y, yaw, sc, set, cache, lift = 0) {   // a weapon lying on its side where its owner dropped it (lift: on a roof)
   if (!parts.length || x == null) return;
   TMP.e.set(0, yaw, Math.PI / 2, 'YXZ');
   TMP.q.setFromEuler(TMP.e);
-  dropRig[HJ.gun].matrixWorld.compose(TMP.v.set(x * XS, 0.07, y * XS), TMP.q, TMP.s.set(sc, sc, sc));
+  dropRig[HJ.gun].matrixWorld.compose(TMP.v.set(x * XS, 0.07 + lift, y * XS), TMP.q, TMP.s.set(sc, sc, sc));
   emitParts(dropRig, parts, pal, set, false, cache);
   TMP.q.identity();
 }
@@ -5970,6 +6173,7 @@ function gunLife(r, J, kind, rt, fired, own, wdt, quiet) {   // muzzle bloom, br
 }
 const ENEMY_MUZ = { ak: { y: 0.04, z: -0.63 }, pkm: { y: 0.03, z: -0.67 } };
 let dropPal = null;   // guns lying on the ground are drawn in the squad's own gun colours
+const GLINT = {};     // a marksman's scope flash: colours made once the engine is up
 function drawTarget(e, set) {   // a steel plate on a stand, hinged at its foot, folding back when it rings
   const X = e.x * XS, Z = e.y * XS, cp = VIEW.camera.position, yaw = Math.atan2(cp.x - X, cp.z - Z);
   TMP.q.setFromEuler(TMP.e.set(0, yaw, 0, 'YXZ'));
@@ -5990,7 +6194,7 @@ function drawEnemy(e, wdt, set) {
   const r = recFor(e), J = r.J;
   if (!r.pal) r.pal = enemyPalette(e.col, !!e.boss);
   const look = ENEMY_LOOK[e.type] || ENEMY_LOOK.grunt, now = performance.now();
-  const X = e.x * XS, Z = e.y * XS;
+  const X = e.x * XS, Z = e.y * XS, lift = (e.z || 0) * XS;
   trackMotion(r, e.x, e.y, wdt, (e.horse ? 3.4 : 2.2) * look[1]);
   const aimYaw = simYaw(e.aim != null ? e.aim : (e.face > 0 ? 0 : Math.PI));
   let rootT = aimYaw;
@@ -6020,7 +6224,7 @@ function drawEnemy(e, wdt, set) {
   J[HJ.torso].rotation.y += twist * 0.7;
   J[HJ.head].rotation.y += twist * 0.3;
   J[HJ.head].rotation.x += e.boss || e.type === 'brute' ? 0.2 : 0.1;
-  if (e.ranged) { poseAim(J); if (e.relT > 0) poseReload(J, 1 - e.relT / 1.6); }
+  if (e.ranged) { poseAim(J); if (e.relT > 0) poseReload(J, 1 - e.relT / 1.6); if (e.throwT > 0) poseSwing(J, 1 - e.throwT / 0.5); }   // an overhand lob
   else if (e.spotter && still) poseBinoculars(J);
   else if (e.atk > 0) poseSwing(J, 1 - e.atk / (e.boss ? 0.3 : 0.25));
   else {
@@ -6037,8 +6241,8 @@ function drawEnemy(e, wdt, set) {
   J[HJ.torso].rotation.x += r.flin * 0.5 - r.kick * 0.2;
   J[HJ.head].rotation.x += r.flin * 0.4;
   if (e.horse) mountRider(r, X, Z, wdt, Math.max(r.moveW, 0.6), r.phase);
-  else placeRoot(J, X, Z, r.yaw, 0, look[0], look[1], look[2]);
-  const ert = e.ranged && e.relT > 0 ? 1 - e.relT / 1.6 : -1, ekind = e.type === 'gunner' ? 'pkm' : e.type === 'grunt' ? 'ak' : null;
+  else placeRoot(J, X, Z, r.yaw, 0, look[0], look[1], look[2], lift - (e.duckT > 0 ? 0.5 : 0));   // a marksman sinks behind its cover to duck
+  const ert = e.ranged && e.relT > 0 ? 1 - e.relT / 1.6 : -1, ekind = e.type === 'gunner' ? 'pkm' : e.type === 'grunt' ? 'ak' : e.sniper ? 'sniper' : null;
   emitParts(J, ert >= 0.14 && ert < 0.62 ? splitMag(enemyParts(e.type)).body : enemyParts(e.type), r.pal, set, e.flash > 0);
   if ((ert >= 0.14 && ert < 0.24) || (ert >= 0.44 && ert < 0.62)) emitParts(J, magHandParts(), r.pal, set, e.flash > 0);
   if (ekind) gunLife(r, J, ekind, ert, fired, false, wdt);
@@ -6055,9 +6259,16 @@ function drawEnemy(e, wdt, set) {
       set.glow.push(TMP.m, colorOf(e.phase === 3 ? '#ffe070' : '#ff3a1e'));
     }
   }
-  decal(VIEW.fx.shadow, X, Z, (e.horse ? 1.9 : 0.95) * look[0], 0, WHITE, 0.02);
+  if (e.sniper && e.glint > 0) {   // the scope catching the light while it lines up a shot: brightest when it's lined up on you
+    const vg = LT.vg || (LT.vg = new THREE.Vector3());
+    vg.set(0, 0.1, -0.22).applyMatrix4(J[HJ.gun].matrixWorld);
+    const px = vg.distanceTo(VIEW.camera.position) * linePix(), you = e.tgt === soldiers[state.controlled], k = e.glint * (0.75 + 0.25 * Math.sin(now / 55));
+    bloomAt(vg, Math.max(0.3, px * (you ? 28 : 16)) * (0.55 + 0.45 * e.glint), GLINT.wide || (GLINT.wide = colorOf('#bfe3ff')), (you ? 1.7 : 1.1) * k, now / 400);
+    bloomAt(vg, Math.max(0.12, px * (you ? 10 : 6)), GLINT.core || (GLINT.core = colorOf('#ffffff')), 1.4 * k, 0.7);
+  }
+  decal(VIEW.fx.shadow, X, Z, (e.horse ? 1.9 : 0.95) * look[0], 0, WHITE, 0.02 + lift);
   if (!e.boss && e.maxHp >= 3 && e.hp < e.maxHp)
-    hpBar(X, Z, 2.1 * look[1] + (e.horse ? 0.45 : 0), e.hp / e.maxHp, '#e0583c');
+    hpBar(X, Z, 2.1 * look[1] + (e.horse ? 0.45 : 0) + lift, e.hp / e.maxHp, '#e0583c');
 }
 function drawBody(b, wdt, set) {   // a soldier's fall, continuing from the exact pose they died in
   const r = recFor(b), slot = b.slot || 0, J = r.J;
@@ -6092,7 +6303,7 @@ function poseCorpse(J, c, t) {
   const lk = corpseLook(c);
   resetPose(J);
   const pitch = poseDeath(J, t, c.style);
-  placeRoot(J, c.x * XS, c.y * XS, corpseYaw(c), pitch, lk.sc[0], lk.sc[1], lk.sc[2]);
+  placeRoot(J, c.x * XS, c.y * XS, corpseYaw(c), pitch, lk.sc[0], lk.sc[1], lk.sc[2], (c.z || 0) * XS);
   return lk;
 }
 function bakeCorpse(c) {
@@ -6100,7 +6311,7 @@ function bakeCorpse(c) {
   const lk = poseCorpse(J, c, 1);
   const cache = [];
   emitParts(J, noGun(lk.parts), lk.pal, null, false, cache);
-  if (!c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], null, cache);
+  if (!c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], null, cache, (c.z || 0) * XS);
   rigPool.humanoid.push(J);
   return cache;
 }
@@ -6126,9 +6337,9 @@ function syncCorpses(wdt, set) {
     resetPose(r.J);
     const pitch = poseDeath(r.J, t, c.style);
     smoothPose(r, r.J, wdt, 20);
-    placeRoot(r.J, c.x * XS, c.y * XS, corpseYaw(c), pitch, lk.sc[0], lk.sc[1], lk.sc[2]);
+    placeRoot(r.J, c.x * XS, c.y * XS, corpseYaw(c), pitch, lk.sc[0], lk.sc[1], lk.sc[2], (c.z || 0) * XS);
     emitParts(r.J, dropped ? noGun(lk.parts) : lk.parts, lk.pal, set);
-    if (dropped && !c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], set);   // a gun that can be taken is drawn as a drop instead
+    if (dropped && !c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], set, null, (c.z || 0) * XS);   // a gun that can be taken is drawn as a drop instead
   }
   if (staticDirty) rebuildStatic();
 }
@@ -6143,7 +6354,7 @@ function rebuildStatic() {
     if (!c._cache) continue;
     const k = c._cache;
     for (let i = 0; i < k.length; i += 3) S[k[i]].push(k[i + 1], k[i + 2]);
-    decal(stain, c.x * XS, c.y * XS, 1.5 * (c.sc || 1), c.rot || 0, colorOf('#5c1810'), 0.025);
+    decal(stain, c.x * XS, c.y * XS, 1.5 * (c.sc || 1), c.rot || 0, colorOf('#5c1810'), 0.025 + (c.z || 0) * XS);
   }
   batchesDo(S, b => b.end());
   stain.end();
@@ -6898,6 +7109,12 @@ function buildEnvironment() {
       box(cx, 1.4, y1 + 0.07, 1.4, 2.8, 0.1, '#3a2a1e');
     }
   }
+  for (const p of PERCHES) {   // where a marksman can set up: a stone sill under the belfry opening, sandbags on a roof edge
+    if (p.nest === 'sill') { box(p.x - 0.05, p.z - 0.1, p.y, 0.75, 0.2, 1.7, '#d8d0c0'); continue; }
+    const along = Math.abs(Math.cos(p.face)) > 0.5, fx = p.x + Math.cos(p.face) * 0.62, fy = p.y + Math.sin(p.face) * 0.62;
+    for (const k of [-0.5, 0, 0.5]) box(fx + (along ? 0 : k), p.z + 0.28, fy + (along ? k : 0), along ? 0.34 : 0.52, 0.28, along ? 0.52 : 0.34, '#8f8260');
+    for (const k of [-0.25, 0.25]) box(fx + (along ? 0 : k), p.z + 0.54, fy + (along ? k : 0), along ? 0.32 : 0.5, 0.25, along ? 0.5 : 0.32, '#7f7454');
+  }
   // the perimeter, standing exactly on the edge of play
   for (const x of [-0.3, Wm + 0.3]) { pushWalls(ST, x, 0, Hm / 2, 0.6, 2.4, Hm + 1.2, colorOf('#d2ccbe'), 2.4); pushTop(ST, x, 2.4, Hm / 2, 0.8, Hm + 1.2, colorOf('#b8b2a4'), 2.4); }
   for (let x = -0.6; x <= Wm + 0.6; x += 1.1) bastion.push([x, 1.1, Hm + 0.55, 1.05, 2.2, 1.05, 0, rnd() < 0.5 ? '#ffffff' : '#e8e0d0']);
@@ -7530,16 +7747,16 @@ function updateOverlays(dt) {
       } else hideEl(tag);
     }
   }
-  {   // a live frag within 6 m: a red grenade on a ring around the crosshair, pointing at it
+  {   // a live frag near you (yours within 6 m, theirs within 10 m): a red grenade on a ring around the crosshair, pointing at it
     const me = soldiers[state.controlled], nw = OV.nade || (OV.nade = document.getElementById('nadewarn'));
-    let near = null, nd = 240 * 240;
-    if (me && me.alive && state.mode === 'play') for (const g of grenades) { const d = dist2(g.x, g.y, me.x, me.y); if (d < nd) { nd = d; near = g; } }
+    let near = null, nd = Infinity;
+    if (me && me.alive && state.mode === 'play') for (const g of grenades) { const d = dist2(g.x, g.y, me.x, me.y); if (d < (g.hostile ? 400 * 400 : 240 * 240) && d < nd) { nd = d; near = g; } }
     if (near) {
       const a = Math.atan2(near.x - me.x, -(near.y - me.y)) - cam.yaw, rad = Math.min(innerWidth, innerHeight) * 0.2;
       nw.style.display = 'block';
       nw.style.transform = `translate3d(${(innerWidth / 2 + Math.sin(a) * rad).toFixed(1)}px,${(innerHeight / 2 - Math.cos(a) * rad).toFixed(1)}px,0)`;
       nw.firstElementChild.nextElementSibling.style.transform = `rotate(${a.toFixed(3)}rad)`;
-      nw.style.opacity = (0.65 + 0.35 * Math.sin(performance.now() / 70)).toFixed(2);
+      nw.style.opacity = (0.65 + 0.35 * Math.sin(performance.now() / (25 + 45 * clamp(near.fuse / 2.5, 0, 1)))).toFixed(2);   // quicker as the fuse burns down
     } else if (nw.style.display !== 'none') nw.style.display = 'none';
   }
   const s = soldiers[state.controlled], list = [];
@@ -7889,7 +8106,7 @@ function updateBattleHud() {
     if (om.className !== mcls) { om.className = mcls; if (msg) om.textContent = msg.text; }
     const co = $('callout'), cl = state.callout;
     const ccls = 'hud' + (cl ? ' on ' + cl.side : '');   // keep .hud: it is what pins the tag to the screen
-    if (co.className !== ccls) { co.className = ccls; if (cl) co.textContent = (cl.side === 'behind' ? 'Behind' : 'Flank · ' + cl.side) + ' · ' + cl.dist + ' m'; }
+    if (co.className !== ccls) { co.className = ccls; if (cl) co.textContent = cl.side === 'sniper' ? 'Sniper · ' + cl.name : (cl.side === 'grenade' ? 'Grenade' : cl.side === 'behind' ? 'Behind' : 'Flank · ' + cl.side) + ' · ' + cl.dist + ' m'; }
     const T = state.training, tb = $('trainbox');
     if (T && (T.dirty || OV.trainKind !== inputKind())) {
       T.dirty = false; OV.trainKind = inputKind();
@@ -7950,10 +8167,10 @@ function drawMinimap() {
     g.fillStyle = col; g.fillText(o.letter, X(o.x), Y(o.y) + 0.5);
   }
   for (const e of enemies) {   // only what you could plausibly know about: close, or shooting
-    if (e.target) continue;
+    if (e.target || (e.sniper && !(e.glint > 0))) continue;   // a marksman gives itself away only by its glint
     const d = Math.hypot(e.x - s.x, e.y - s.y);
     if (d > 950 && !(e.fireT < 0.5 && d < 1600)) continue;
-    g.fillStyle = e.boss ? '#ff8a3d' : '#ff4d3d';
+    g.fillStyle = e.boss ? '#ff8a3d' : e.sniper ? '#dff2ff' : '#ff4d3d';
     g.beginPath(); g.arc(X(e.x), Y(e.y), e.boss ? 4 : 2.6, 0, TAU); g.fill();
   }
   g.fillStyle = '#5cb6ff';

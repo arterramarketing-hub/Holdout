@@ -44,6 +44,7 @@ function coverTop(ob) {   // px: how high this piece of cover stands right now
 }
 function bodyTop(e) {   // px: the top of an enemy's head right now — riflemen kneel while they hold still
   if (e.target) return (e.down ? 0.1 : 1.3) * PX;   // a range target: a plate on a post, flat once it folds
+  if (e.duckT > 0) return 0.72 * PX;                 // a marksman down behind its cover
   const look = ENEMY_LOOK[e.type] || ENEMY_LOOK.grunt;
   return ((e.ranged && e.stillT > 0.3 ? 1.3 : 1.8) + (e.horse ? 0.35 : 0)) * look[1] * PX;
 }
@@ -57,7 +58,7 @@ function rayBoxT(ox, oy, oz, dx, dy, dz, x0, x1, y0, y1, z1) {   // entry distan
   else { u = (0 - oz) / dz; v = (z1 - oz) / dz; if (u > v) { s = u; u = v; v = s; } if (u > t0) t0 = u; if (v < t1) t1 = v; if (t0 > t1) return Infinity; }
   return t0;
 }
-function rayCylT(ox, oy, oz, dx, dy, dz, cx, cy, r, z1) {   // into an upright cylinder standing on the ground
+function rayCylT(ox, oy, oz, dx, dy, dz, cx, cy, r, z1, z0 = 0) {   // into an upright cylinder from z0 (the ground, unless it stands on a roof) up to z1
   const fx = ox - cx, fy = oy - cy, A = dx * dx + dy * dy, C = fx * fx + fy * fy - r * r;
   let t = 0;
   if (C > 0) {
@@ -68,7 +69,17 @@ function rayCylT(ox, oy, oz, dx, dy, dz, cx, cy, r, z1) {   // into an upright c
     if (t < 0) return Infinity;
   }
   const z = oz + dz * t;
-  return z >= 0 && z <= z1 ? t : Infinity;
+  return z >= z0 && z <= z1 ? t : Infinity;
+}
+function los3(ax, ay, az, bx, by, bz, skip) {   // a clear straight line in 3D between two points: no building, and no cover that stops rounds (skip: the shooter's own)
+  const dx = bx - ax, dy = by - ay, dz = bz - az;
+  for (const b of buildings) if (rayBoxT(ax, ay, az, dx, dy, dz, b.x - b.hw, b.x + b.hw, b.y - b.hd, b.y + b.hd, b.top) < 1) return false;
+  for (const ob of obstacles) {
+    if (ob === skip || COVER_KINDS[ob.kind].block < 0.5) continue;
+    const top = coverTop(ob);
+    if ((ob.shape === 'c' ? rayCylT(ax, ay, az, dx, dy, dz, ob.x, ob.y, ob.r, top) : rayBoxT(ax, ay, az, dx, dy, dz, ob.x - ob.hw, ob.x + ob.hw, ob.y - ob.hd, ob.y + ob.hd, top)) < 1) return false;
+  }
+  return true;
 }
 const SHOT = { ox: 0, oy: 0, oz: 0, dx: 0, dy: 0, dz: 0 }, AIMP = { x: 0, y: 0, z: 0 };
 function crosshairRay(s) {   // where your crosshair's ray starts and which way it points
@@ -95,12 +106,12 @@ function crosshairPoint(R, maxT, out) {   // the first thing along the ray: an e
     t = Math.min(t, ob.shape === 'c' ? rayCylT(ox, oy, oz, dx, dy, dz, ob.x, ob.y, ob.r, top)
       : rayBoxT(ox, oy, oz, dx, dy, dz, ob.x - ob.hw, ob.x + ob.hw, ob.y - ob.hd, ob.y + ob.hd, top));
   }
-  for (const e of enemies) t = Math.min(t, rayCylT(ox, oy, oz, dx, dy, dz, e.x, e.y, e.r, bodyTop(e)));
+  for (const e of enemies) { const ez = e.z || 0; t = Math.min(t, rayCylT(ox, oy, oz, dx, dy, dz, e.x, e.y, e.r, ez + bodyTop(e), ez)); }
   out.x = ox + dx * t; out.y = oy + dy * t; out.z = oz + dz * t;
   return t;
 }
 function headHit(e, b) {   // a round that strikes the top of the body, near its middle
-  if (b.z < bodyTop(e) * 0.8) return false;
+  if (b.z - (e.z || 0) < bodyTop(e) * 0.8) return false;
   const bl = Math.hypot(b.vx, b.vy) || 1;
   return Math.abs((e.x - b.x) * (b.vy / bl) - (e.y - b.y) * (b.vx / bl)) <= (HEAD_W[e.type] || 4) * 2.4;
 }
@@ -148,6 +159,10 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   if (fromPlayer) { state.shots++; MUS.heat = performance.now(); }
   const mz = (s.pistol ? SIDEARM.len : w.len) + 6;   // the barrel tip: where the round actually leaves the weapon
   let bx = s.x + Math.cos(a) * mz, by = s.y + Math.sin(a) * mz, bz = 0, ux = Math.cos(a), uy = Math.sin(a), uz = 0, ballistic = false;
+  if (!fromPlayer && target && target.z > PX) {   // a squadmate shooting up at a roof: a real line up to its chest
+    const d = Math.hypot(dx, dy) || 1, el = Math.atan2(target.z + bodyTop(target) * 0.62 - 1.35 * PX, d) + rand(-1, 1) * (w.spread + 0.03) * 0.5;
+    bz = 1.35 * PX; ux = Math.cos(el) * Math.cos(a); uy = Math.cos(el) * Math.sin(a); uz = Math.sin(el); ballistic = true;
+  }
   if (fromPlayer) {   // your round flies in 3D to whatever is under the crosshair, spread around that line
     const R = crosshairRay(s);
     crosshairPoint(R, (w.reach || w.range) + 400, AIMP);
@@ -190,12 +205,13 @@ function killEnemy(idx, credit) {
     const w = WEAPONS[drops];
     dropGun(drops, gunX, gunY, drops === 'pkm' ? randi(40, 100) : randi(10, 30), w.mag, { yaw: gunYaw });
   }
-  addCorpse({ kind: 'enemy', x: e.x + rand(-4, 4), y: e.y + rand(-3, 3), col: e.col, noGun: !!drops,
+  addCorpse({ kind: 'enemy', x: e.x + (e.perch ? 0 : rand(-4, 4)), y: e.y + (e.perch ? 0 : rand(-3, 3)), z: e.z || 0, col: e.col, noGun: !!drops,
     face: e.face, sc: e.r / 14, horse: e.horse, type: e.type, aim: e.aim, src: e,
     style: !credit.wkey || credit.wkey === 'rocket' || credit.wkey === 'frag' ? 2 : hd && e.aim != null && Math.cos(e.aim) * hd.x + Math.sin(e.aim) * hd.y > 0 ? 1 : 0,
     gunX, gunY, gunYaw });
   sfxKill(e.x, e.y);
-  if (!e.boss && Math.random() < 0.35) pickups.push({ x: e.x + rand(-10, 10), y: e.y + rand(-10, 10), t: 30 });
+  if (!e.boss && !e.perch && Math.random() < 0.35) pickups.push({ x: e.x + rand(-10, 10), y: e.y + rand(-10, 10), t: 30 });
+  if (e.sniper) state.sniperDownAt = state.frontTime;
   if (e.boss) state.enemyDown = state.enemyTotal;   // the Warlord falls and the rest of them break
   else state.enemyDown = Math.min(state.enemyTotal - (state.bossRef || !state.bossSpawned ? 1 : 0), state.enemyDown + 1);   // the Warlord's ticket stays on the board until it has come and fallen: a multi-kill at 89% cannot skip it
   const cap = (state.bossSpawned && state.bossRef && !e.boss) ? 99 : 100;  // boss gates the last 1%
@@ -313,6 +329,7 @@ function explode(x, y, r, eDmg, sDmg, credit) {
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 500 * 500) cam.shake = Math.max(cam.shake, 7);
   for (let j = enemies.length - 1; j >= 0; j--) {
     const e = enemies[j];
+    if ((e.z || 0) > 2.5 * PX) continue;   // a blast in the street never reaches a roof
     if (dist2(x, y, e.x, e.y) < (r + e.r) * (r + e.r)) {
       const d = Math.hypot(e.x - x, e.y - y) || 1;
       hurtEnemy(j, eDmg, credit, { x: (e.x - x) / d, y: (e.y - y) / d });

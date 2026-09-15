@@ -4,6 +4,7 @@ suite('enemy fire in 3D', t => {
     newCampaign(); seed(seedN);
     const h = battle({ clear: true, invuln: false });
     benchSquad();
+    state.noEnemyFrags = true;   // rounds alone: the cover under test is measured against bullets
     let target = h;
     h.x = 48 * PX; h.y = 40 * PX; clearArea(h.x, h.y - 150, 520);
     if (crouchedMate) {   // the soldier under fire is an AI squadmate settled behind the cover; you stand far off, out of it

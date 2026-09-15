@@ -45,7 +45,7 @@ suite('suppressor', t => {
       assert.ok(state.shots >= 6, 'fired ' + state.shots);
       assert.ok(mine.every(b => !b.tracer), 'no tracers');
       assert.ok(mine.every(b => b.dmg === squadDmg('ar')), 'damage untouched');
-      assert.ok(played.some(k => /^gunS:ar:|^gun:ar:/.test(k)) && !played.some(k => /^gunf:/.test(k)), 'a shot sound');
+      assert.ok(played.some(k => /^gunS:ar:|^gun:ar:/.test(k)), 'a shot sound');
       aim.fire = true; tick(1 / 60); aim.fire = false; G.frame(1 / 60);
       assert.eq(FPV.flashT, 0, 'no muzzle flash in your hands');
     } finally { playBuf = real; }

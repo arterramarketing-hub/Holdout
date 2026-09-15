@@ -35,7 +35,7 @@ function buildSoldier(i) {
     walk: rand(0, TAU), moving: false, recoil: 0,
     mag: cap, reserve: cap * WEAPONS[weapon].spare, reloadT: 0, reloadDur: 1, pistol: false,
     frags: CFG.frags, throwT: 0, sprinting: false, sprintOutT: 0,
-    kit: { weapon, sight: att.sight, ext: att.ext, suppressor: att.suppressor }, alt: null, swapT: 0, pickT: 0,   // the loadout a reinforcement comes back with, and the second gun
+    kit: { weapon, sight: att.sight, ext: att.ext, suppressor: att.suppressor }, alt: null, swapT: 0, pickT: 0, bornT: 0,   // the loadout a reinforcement comes back with, and the second gun
   };
 }
 function genTerrain() {   // the same town every front; its movable cover is rolled fresh each battle

@@ -40,6 +40,28 @@
   rifleman in three. HEARING: an enemy who hears a shot knows where the shooter is for CFG.hearFor 5 s and turns on
   them over a nearer soldier up to half again as far away; a rifleman barks and re-picks cover facing that shooter.
 
+  ENEMY GRENADES — every rifleman carries one frag. It throws when the soldier it is fighting has stayed 8-22 m away
+  behind something its rounds can't get through (los3: buildings and solid cover in 3D, not the cover it hugs) for
+  3 s, and the steep lob it solves (55°) has nothing solid in the arc. At most one enemy frag is in the air; one every
+  14 s at tier 1 down to 8 s at tier 6 (CFG.eFragGap); none in a front's first 25 s, at anyone back under 4 s, or into
+  the FOB. It aims 0.5-2 m past its target, comes down dead (short bounces, little roll) and bursts 1.8 s after landing:
+  5 at the centre of the 5 m blast, walls shielding it, your squad hurt (AI squadmates at 70%), never an enemy. A red
+  grenade on the crosshair ring points at any enemy frag within 10 m (yours within 6 m), pulsing quicker as the fuse
+  burns; one landing within 10 m of you is called ("Grenade · 3 m"), and squadmates run 8 m clear of one near them.
+
+  THE ROOFTOP SNIPER — from 25% into a front (from the start at tier 3), each enemy walking on has a 35% chance of
+  being the one marksman while none is up and 40 s have passed since the last fell (SNIPER). It takes a free perch
+  more than 25 m from your squad (PERCHES: the bell tower's east belfry opening on a stone sill, sandbag nests on the
+  gas station roof, a freight wagon, the mill containers and the warehouse eaves) and never moves. It picks someone it
+  can see in 3D (los3), you first at equal range, never anyone in the FOB or so far below it (slope over 0.62) that
+  they couldn't look up at it — your view stops 35° up — then lines up for 1.4 s with its scope glinting (a blue-white
+  star sized for the screen, bigger when it's you), fires one 3D round for 2.5 (tier-scaled, capped at 3.6 so never a
+  one-shot) and works the bolt 1.6 s. Three rounds cracking within 2 m send it down behind its cover for 2 s. It is
+  hit only above its cover (e.lip), takes a rifleman's rounds (three M4 hits inside 20 m), shrugs off blasts more
+  than 2.5 m below it, dies where it knelt, and on the minimap shows only while glinting. Raised enemies: e.z lifts
+  the rig, the hit tests, the crosshair ray and the corpse; flat squad rounds never reach a roof, so squadmates fire
+  a real line up at one. The squad calls it by name the first time it glints ("Sniper · Bell tower").
+
   THE INSTALLED APP — on GitHub Pages the page is an installable web app: manifest.webmanifest (full screen, landscape,
   navy, the H-in-a-scope icons that tools/icons.py draws) and sw.js (built from src/pwa/sw.js with a version hashed
   from what it caches). After one launch online it starts offline: the page is network first with a 4 s fallback to

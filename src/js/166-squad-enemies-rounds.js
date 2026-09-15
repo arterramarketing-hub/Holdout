@@ -5,6 +5,14 @@
 const SQUAD_ROLE = [null, 'point', 'flank', 'overwatch'];
 function squadAI(s, spd, dt, lead, front, wrange) {
   s.tacT = (s.tacT || 0) - dt; s.planT = (s.planT || 0) - dt;
+  for (const g of grenades) {   // an enemy frag landed close: get well clear of it before anything else
+    if (!g.hostile || g.z > 40 || dist2(g.x, g.y, s.x, s.y) > 220 * 220 || s.fleeFrom === g) continue;
+    const dx = s.x - g.x, dy = s.y - g.y, d = Math.hypot(dx, dy) || 1;
+    s.fleeFrom = g; s.coverRef = null; s.planT = s.tacT = g.fuse + 0.4;
+    s.goalX = clamp(g.x + dx / d * 320, 40, CFG.arenaW - 40); s.goalY = clamp(g.y + dy / d * 320, 40, CFG.arenaH - 40);
+    goTo(s, s.goalX, s.goalY);
+    break;
+  }
   if ((s.pistol || s.reserve < WEAPONS[s.weapon].mag) && pickups.length && s.planT <= 0) {   // low on ammo: grab a dropped magazine nearby
     let best = null, bd = 340 * 340;
     for (const p of pickups) { const d = dist2(s.x, s.y, p.x, p.y); if (d < bd) { bd = d; best = p; } }
@@ -216,6 +224,7 @@ function updateEnemies(dt) {
     const sp0 = e.sp, ex0 = e.x, ey0 = e.y;
     if (d > 900 && !e.boss) e.sp *= 1.8;   // far from the fight: hurry up the streets
     if (e.boss) bossLogic(e, t, dt, d, dx, dy);
+    else if (e.sniper) { sniperAI(e, dt, vis); continue; }   // on its perch: no walking, no pushing, no footsteps
     else if (e.spotter) spotterAI(e, t, dt, d);
     else if (e.ranged) riflemanAI(e, t, dt, d, vis);
     else meleeAI(e, t, dt, d);
@@ -234,6 +243,7 @@ function updateEnemies(dt) {
   for (let i = 0; i < enemies.length; i++)
     for (let j = i + 1; j < enemies.length; j++) {
       const a = enemies[i], b = enemies[j];
+      if (a.perch || b.perch) continue;
       const dx = b.x - a.x, dy = b.y - a.y, min = a.r + b.r, d2 = dx * dx + dy * dy;
       if (d2 < min * min && d2 > 0.01) {
         const d = Math.sqrt(d2), push = (min - d) / 2 / d;
@@ -243,6 +253,8 @@ function updateEnemies(dt) {
 }
 function riflemanAI(e, t, dt, d, vis) {   // bound to cover, hold and fire in bursts, get pinned, fall back when hurt
   const range = e.ranged * vis, sees = d < range && losClear(e.x, e.y, t.x, t.y);
+  enemyFragLogic(e, t, dt, d);
+  if (e.throwT > 0) e.throwT -= dt;
   if (sees && !e.saw) bark(e, 'spot');
   e.saw = sees;
   e.tacT -= dt;
@@ -367,10 +379,13 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
       } else {
         for (let j = 0; j < enemies.length; j++) {
           const e = enemies[j], d2 = dist2(b.x, b.y, e.x, e.y);
-          if (d2 < 60 * 60 && b.suppd !== e) { b.suppd = e; e.supp = Math.min(4, (e.supp || 0) + (b.wkey === 'lmg' ? 0.5 : 0.3)); }   // rounds cracking past keep heads down
+          const ez = e.z || 0;
+          if (d2 < 60 * 60 && b.suppd !== e && (!ez || (b.ballistic && Math.abs(b.z - ez - PX) < 2 * PX))) { b.suppd = e; e.supp = Math.min(4, (e.supp || 0) + (b.wkey === 'lmg' ? 0.5 : 0.3)); }   // rounds cracking past keep heads down
           if (b.hitList && b.hitList.includes(e)) continue;
           if (d2 >= (e.r + (b.ballistic ? 3 : 5)) ** 2) continue;
-          if (b.ballistic && b.z > bodyTop(e)) continue;   // over their head
+          if (ez && !b.ballistic) continue;   // a flat round never reaches a roof
+          if (b.ballistic && b.z > ez + bodyTop(e)) continue;   // over their head
+          if (b.ballistic && ez && b.z < ez + (e.lip || 0)) { impact(b, '#c8c0b0', false); dead = true; break; }   // into the sill or sandbags it kneels behind
           if (b.aoe) { explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }); dead = true; break; }
           const bl = Math.hypot(b.vx, b.vy) || 1;
           const head = b.ballistic ? headHit(e, b) : headShot(e, b);

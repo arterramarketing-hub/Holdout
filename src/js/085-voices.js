@@ -4,7 +4,7 @@
 // Yours are quiet and centred; squadmates quieter; enemies are placed in stereo and fade out by 25 m, runners and
 // breachers louder. No more than six footfalls in any quarter second.
 // BARKS: enemies shout — not words — when they spot one of yours, start a flank, change magazines or charge; placed where
-// they stand, pitched per voice, never within 1.2 s of another bark or 6 s of that enemy's last.
+// they stand, pitched per voice, never within 1.2 s of another bark or 6 s of that enemy's last (a frag's shout skips the 6 s).
 // CALLOUTS: when an enemy within 25 m is outside your view (more than 60° off your aim) and a squadmate can see it, the
 // squad net chirps and a tag says where: FLANK · LEFT, FLANK · RIGHT or BEHIND. One every 4 s, each enemy called once in
 // 8 s. The Callouts setting turns them off.
@@ -33,10 +33,10 @@ function stepSound(u, moved, who) {
   const k = 1 - d / 1000, base = who === 'mate' ? 0.05 : 0.12 * (STEP_GAIN[u.type] || 1);   // an enemy footfall at 10 m sits ~30 dB under your own gunshot
   if (playBuf(key, { gain: base * k * k, rate: rate * (u.boss ? 0.7 : 1), x: u.x, y: u.y, lp: 1400 + 9000 * k })) VOICE.steps++;
 }
-function bark(e, kind) {   // 'spot' | 'flank' | 'reload' | 'charge'
+function bark(e, kind, force) {   // 'spot' | 'flank' | 'reload' | 'charge' | 'throw' (forced past its own 6 s: a frag is shouted unless another shout just went)
   if (!e || screen !== 'battle' || state.mode === 'failed') return false;
   const now = state.frontTime;
-  if (now - VOICE.barkT < 1.2 || now - (e.barkT == null ? -99 : e.barkT) < 6) return false;
+  if (now - VOICE.barkT < 1.2 || (!force && now - (e.barkT == null ? -99 : e.barkT) < 6)) return false;
   const me = camTarget();
   if (!me || Math.hypot(e.x - me.x, e.y - me.y) > 1400) return false;
   VOICE.barkT = now; e.barkT = now;

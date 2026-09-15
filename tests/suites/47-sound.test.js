@@ -104,7 +104,7 @@ suite('footsteps, barks and callouts', t => {
     assert.ok(barks.length >= 5, `enemies barked (${barks.length})`);
     for (let i = 1; i < barks.length; i++) assert.ok(barks[i].t - barks[i - 1].t >= 1.2 - 1e-6, 'global spacing');
     const byEnemy = new Map();
-    for (const b of barks) { const last = byEnemy.get(b.e); if (last != null) assert.ok(b.t - last >= 6 - 1e-6, 'per-enemy spacing'); byEnemy.set(b.e, b.t); }
+    for (const b of barks) { const last = byEnemy.get(b.e); if (last != null && b.kind !== 'throw') assert.ok(b.t - last >= 6 - 1e-6, 'per-enemy spacing'); byEnemy.set(b.e, b.t); }   // a frag's shout is allowed inside the 6 s
     return { barks: barks.length, kinds: [...new Set(barks.map(b => b.kind))].join(','), front: r.mode };
   }, { timeout: 300000 });
   t.test('the mix: a footfall at 10 m and a bark at 15 m sit under your own gunshot', async () => {

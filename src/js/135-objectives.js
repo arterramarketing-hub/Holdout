@@ -29,7 +29,7 @@ function updateObjectives(dt) {
     let p = 0, e = 0;
     const r2 = o.r * o.r;
     for (const s of soldiers) if (s.alive && dist2(s.x, s.y, o.x, o.y) < r2) p++;
-    for (const en of enemies) if (dist2(en.x, en.y, o.x, o.y) < r2) e++;
+    for (const en of enemies) if (!en.perch && dist2(en.x, en.y, o.x, o.y) < r2) e++;   // a marksman up on a roof holds nothing
     o.inP = p; o.inE = e; o.contested = p > 0 && e > 0;
     o.flashT = Math.max(0, o.flashT - dt);
     if (state.objMsg && (state.objMsg.t -= dt / state.objs.length) <= 0) state.objMsg = null;

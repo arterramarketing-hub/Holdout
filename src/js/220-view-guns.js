@@ -210,6 +210,10 @@ const ENEMY_ROWS = {   // one silhouette per enemy type
       P(HJ.head, 'cyl', 0.1, 0.06, 0.12, -0.17, 0.12, 0, 'gunm', 0, 0, Math.PI / 2), P(HJ.head, 'metal', 0.02, 0.02, 0.14, -0.15, 0.05, -0.1, 'gunm')]),
     P(HJ.torso, 'taper', 0.3, 0.34, 0.16, 0, 0.28, 0.23, 'pack'), P(HJ.torso, 'metal', 0.02, 0.7, 0.02, 0.1, 0.8, 0.26, 'metal'),
     P(HJ.fArmR, 'cyl', 0.07, 0.16, 0.07, -0.05, -0.3, -0.06, 'gunm', Math.PI / 2), P(HJ.fArmR, 'cyl', 0.07, 0.16, 0.07, 0.04, -0.3, -0.06, 'gunm', Math.PI / 2)],
+  sniper: () => [...ENEMY_BASE([P(HJ.head, 'hood', 0.36, 0.22, 0.38, 0, 0.26, 0.01, 'hood'), P(HJ.head, 'cloth', 0.3, 0.06, 0.03, 0, 0.14, -0.19, 'lens')]),   // marksman: a scrim hood, a long rifle with a scope
+    P(HJ.gun, 'wood', 0.05, 0.1, 0.3, 0, -0.01, 0.25, 'wood'), P(HJ.gun, 'metal', 0.05, 0.08, 0.34, 0, 0.02, -0.08, 'gunm'),
+    P(HJ.gun, 'cyl', 0.022, 0.62, 0.022, 0, 0.03, -0.64, 'gunm', Math.PI / 2), P(HJ.gun, 'cyl', 0.04, 0.26, 0.04, 0, 0.1, -0.06, 'gunm', Math.PI / 2),
+    P(HJ.gun, 'cyl', 0.05, 0.04, 0.05, 0, 0.1, -0.2, 'gunm', Math.PI / 2), MAG(P(HJ.gun, 'metal', 0.03, 0.1, 0.06, 0, -0.08, -0.08, 'gunm', 0.2))],
   rider: () => [...ENEMY_BASE(MODERN_HELM),
     P(HJ.gun, 'metal', 0.025, 0.07, 0.5, 0, 0, -0.28, 'metal'), P(HJ.gun, 'leather', 0.04, 0.05, 0.12, 0, 0, 0.02, 'leather')],
   boss: () => [   // juggernaut: bomb-suit armour, full helmet with a visor plate, minigun and ammo box
@@ -252,7 +256,7 @@ const HORSE_BARDING = [   // raider quad: bull bar and a spare tyre on the rack
 const SKIN_TONES = ['#ffffff', '#f0d8c0', '#d4ac8c', '#a47c62'];
 const ENEMY_LOOK = {   // root scale per enemy type
   grunt: [1, 1, 1], runner: [0.84, 1.02, 0.84], brute: [1.42, 1.4, 1.42], rider: [1, 1, 1],
-  gunner: [1, 1, 1], spotter: [0.95, 0.97, 0.95], boss: [2.2, 2.2, 2.2],
+  gunner: [1, 1, 1], spotter: [0.95, 0.97, 0.95], boss: [2.2, 2.2, 2.2], sniper: [1, 1, 1],
 };
 function soldierPalette(slot, col, helm) {   // multicam uniform; carriers alternate coyote and ranger green; the roster colour marks the patches
   const wren = col === '#d9dbe4';

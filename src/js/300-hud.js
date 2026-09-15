@@ -69,7 +69,7 @@ function updateBattleHud() {
     if (om.className !== mcls) { om.className = mcls; if (msg) om.textContent = msg.text; }
     const co = $('callout'), cl = state.callout;
     const ccls = 'hud' + (cl ? ' on ' + cl.side : '');   // keep .hud: it is what pins the tag to the screen
-    if (co.className !== ccls) { co.className = ccls; if (cl) co.textContent = (cl.side === 'behind' ? 'Behind' : 'Flank · ' + cl.side) + ' · ' + cl.dist + ' m'; }
+    if (co.className !== ccls) { co.className = ccls; if (cl) co.textContent = cl.side === 'sniper' ? 'Sniper · ' + cl.name : (cl.side === 'grenade' ? 'Grenade' : cl.side === 'behind' ? 'Behind' : 'Flank · ' + cl.side) + ' · ' + cl.dist + ' m'; }
     const T = state.training, tb = $('trainbox');
     if (T && (T.dirty || OV.trainKind !== inputKind())) {
       T.dirty = false; OV.trainKind = inputKind();
@@ -130,10 +130,10 @@ function drawMinimap() {
     g.fillStyle = col; g.fillText(o.letter, X(o.x), Y(o.y) + 0.5);
   }
   for (const e of enemies) {   // only what you could plausibly know about: close, or shooting
-    if (e.target) continue;
+    if (e.target || (e.sniper && !(e.glint > 0))) continue;   // a marksman gives itself away only by its glint
     const d = Math.hypot(e.x - s.x, e.y - s.y);
     if (d > 950 && !(e.fireT < 0.5 && d < 1600)) continue;
-    g.fillStyle = e.boss ? '#ff8a3d' : '#ff4d3d';
+    g.fillStyle = e.boss ? '#ff8a3d' : e.sniper ? '#dff2ff' : '#ff4d3d';
     g.beginPath(); g.arc(X(e.x), Y(e.y), e.boss ? 4 : 2.6, 0, TAU); g.fill();
   }
   g.fillStyle = '#5cb6ff';

@@ -50,14 +50,25 @@ function aimAt(h, tx, ty, tz) {   // first person: put the crosshair on a point 
 }
 function botTick(h) {   // one tick of a first-person player: shoot what you can see, otherwise walk toward the fight
   if (!h || !h.alive) { aim.fire = false; keys.KeyW = false; return; }
+  const chest = e => (e.z || 0) + bodyTop(e) * 0.62;
+  const canShoot = e => !e.z || (Math.hypot(e.x - h.x, e.y - h.y) > 1 && (chest(e) - eyeZ()) / Math.hypot(e.x - h.x, e.y - h.y) < 0.6 && los3(h.x, h.y, eyeZ(), e.x, e.y, chest(e)));   // a roof you can see and look up at
   const e = nearestVisibleEnemy(h.x, h.y, 900);
-  if (e) { aimAt(h, e.x, e.y, bodyTop(e) * 0.62); aim.fire = true; keys.KeyW = false; return; }
+  if (e && canShoot(e)) { aimAt(h, e.x, e.y, chest(e)); aim.fire = true; keys.KeyW = false; return; }
   aim.fire = false;
   const b = h._bot || (h._bot = { t: 0, path: null });
   b.t -= 1 / 60;
   const target = nearestEnemy(h.x, h.y, 1e9);
   if (!target) { keys.KeyW = false; return; }
-  if (b.t <= 0 || !b.path || !b.path.length) { b.t = 0.5; b.path = navPath(h.x, h.y, target.x, target.y, h.r * 0.8 + 2); }
+  if (b.t <= 0 || !b.path || !b.path.length) {
+    b.t = 0.5;
+    let gx = target.x, gy = target.y;
+    if (target.z) {   // a marksman on a roof: stand off where it can be shot at, not under it
+      const dx = h.x - target.x, dy = h.y - target.y, d = Math.hypot(dx, dy) || 1, far = 24 * PX;
+      const a = Math.atan2(dy, dx) + (d > 20 * PX && d < 30 * PX ? 0.9 : 0);   // already standing off with no line on it: circle round
+      gx = clamp(target.x + Math.cos(a) * far, 60, CFG.arenaW - 60); gy = clamp(target.y + Math.sin(a) * far, 60, CFG.arenaH - 60);
+    }
+    b.path = navPath(h.x, h.y, gx, gy, h.r * 0.8 + 2);
+  }
   while (b.path && b.path.length && Math.hypot(b.path[0].x - h.x, b.path[0].y - h.y) < 24) b.path.shift();
   const wp = b.path && b.path[0];
   if (!wp) { keys.KeyW = false; return; }

@@ -363,3 +363,33 @@ GitHub Desktop mid-phase can never pick up half-finished work.
     over a nearer soldier up to 1.5× the distance.
   - The suppressor can and muzzle point were checked in first person.
   - `24-suppressor.test.js` adds 6 tests; 144 tests pass.
+- **Phase 6 — done.**
+  - Riflemen carry one frag and throw it after 3 s of a target stuck behind cover 8–22 m away, following every
+    limit in the plan.
+  - Changed after measuring:
+    - **The lob is steep (55°), aimed 0.5–2 m past the target, and comes down dead.** At 40°, frags skipped off
+      car roofs and rolled 5–7 m on. They now burst 1.1–3.6 m from a target behind a car.
+    - **The warning is the existing crosshair-ring grenade marker**, widened to 10 m for enemy frags and pulsing
+      faster as the fuse burns, instead of a new on-screen icon.
+    - **A thrower's shout skips only its own 6 s bark limit**, not the global 1.2 s one.
+  - Callout "Grenade · N m"; squadmates run clear.
+  - `52-enemy-grenades.test.js` adds 7 tests; 151 tests pass.
+  - Soak passed.
+  - Committed together with Phase 7: the two phases changed the same files in interleaved hunks.
+- **Phase 7 — done.**
+  - Perches: the bell tower's east belfry on a stone sill, and sandbag nests on the gas station roof, a freight
+    wagon, the mill containers and the warehouse eaves. A test checks that each is clear of buildings and sees a
+    good part of the street around it.
+  - The glint, the round (2.5, capped at 3.6 at high tiers), ducking, the FOB rule, the callout, and a minimap that
+    shows it only while it glints are all in.
+  - Changed after testing:
+    - **It never targets anyone too far below it to aim back** (slope over 0.62). Your view stops 35° up, so from
+      the square right under the belfry it could not be shot back.
+    - **It takes a rifleman's hits at a rifleman's range:** three M4 rounds inside 20 m. From the only places it can
+      be seen at the bell tower (26 m or more), falloff makes it four.
+    - **Squadmates fire a real 3D line up at a raised enemy.** Flat rounds never reach a roof.
+    - **The test bot stands off 24 m from a perched enemy and aims at its real height.** Before, a whole front
+      could stall under a sniper.
+  - Checked in the preview: the glint shows at the belfry from the square, and a marksman kneels in a sandbag nest
+    on the gas station roof (a tanker between the two broke its line, so no glint there).
+  - `54-sniper.test.js` adds 8 tests; 159 tests pass.

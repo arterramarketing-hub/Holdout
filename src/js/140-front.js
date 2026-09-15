@@ -23,6 +23,7 @@ function enterBattle(tid) {
   state.frontTime = 0; state.frontDeaths = 0;
   state.bossSpawned = false; state.bossRef = null; state.spotterSeen = false;
   state.slow = 0; state.slowCd = 0;
+  state.eFragAt = -99; state.noEnemyFrags = false; state.sniperDownAt = null;
   state.flyby = null; state.crossTarget = null;
   rollSky(tid);
   enemies = []; bullets = []; markers = []; floaters = []; bodies = []; particles = []; pickups = [];

@@ -56,7 +56,7 @@ function respawnSoldier(s) {   // a fresh body off the reinforcement line: same 
   s.alive = true; s.hp = s.maxHp; s.pistol = false;
   s.mag = magCap(s); s.reserve = magCap(s) * w.spare; s.reloadT = 0; s.fireCd = 0;
   const p = pickSpawn('p'); s.x = p.x; s.y = p.y;
-  s.aim = -Math.PI / 2; s.invuln = CFG.spawnInvuln; s.respawnT = 0;
+  s.aim = -Math.PI / 2; s.invuln = CFG.spawnInvuln; s.respawnT = 0; s.bornT = state.frontTime;
   s.coverRef = null; s.path = null; s.tgt = null; s.supp = 0; s.recoil = 0;
   s.frags = CFG.frags; s.throwT = 0; s.sprinting = false; s.sprintOutT = 0;
 }

@@ -64,6 +64,7 @@ function gunLife(r, J, kind, rt, fired, own, wdt, quiet) {   // muzzle bloom, br
 }
 const ENEMY_MUZ = { ak: { y: 0.04, z: -0.63 }, pkm: { y: 0.03, z: -0.67 } };
 let dropPal = null;   // guns lying on the ground are drawn in the squad's own gun colours
+const GLINT = {};     // a marksman's scope flash: colours made once the engine is up
 function drawTarget(e, set) {   // a steel plate on a stand, hinged at its foot, folding back when it rings
   const X = e.x * XS, Z = e.y * XS, cp = VIEW.camera.position, yaw = Math.atan2(cp.x - X, cp.z - Z);
   TMP.q.setFromEuler(TMP.e.set(0, yaw, 0, 'YXZ'));
@@ -84,7 +85,7 @@ function drawEnemy(e, wdt, set) {
   const r = recFor(e), J = r.J;
   if (!r.pal) r.pal = enemyPalette(e.col, !!e.boss);
   const look = ENEMY_LOOK[e.type] || ENEMY_LOOK.grunt, now = performance.now();
-  const X = e.x * XS, Z = e.y * XS;
+  const X = e.x * XS, Z = e.y * XS, lift = (e.z || 0) * XS;
   trackMotion(r, e.x, e.y, wdt, (e.horse ? 3.4 : 2.2) * look[1]);
   const aimYaw = simYaw(e.aim != null ? e.aim : (e.face > 0 ? 0 : Math.PI));
   let rootT = aimYaw;
@@ -114,7 +115,7 @@ function drawEnemy(e, wdt, set) {
   J[HJ.torso].rotation.y += twist * 0.7;
   J[HJ.head].rotation.y += twist * 0.3;
   J[HJ.head].rotation.x += e.boss || e.type === 'brute' ? 0.2 : 0.1;
-  if (e.ranged) { poseAim(J); if (e.relT > 0) poseReload(J, 1 - e.relT / 1.6); }
+  if (e.ranged) { poseAim(J); if (e.relT > 0) poseReload(J, 1 - e.relT / 1.6); if (e.throwT > 0) poseSwing(J, 1 - e.throwT / 0.5); }   // an overhand lob
   else if (e.spotter && still) poseBinoculars(J);
   else if (e.atk > 0) poseSwing(J, 1 - e.atk / (e.boss ? 0.3 : 0.25));
   else {
@@ -131,8 +132,8 @@ function drawEnemy(e, wdt, set) {
   J[HJ.torso].rotation.x += r.flin * 0.5 - r.kick * 0.2;
   J[HJ.head].rotation.x += r.flin * 0.4;
   if (e.horse) mountRider(r, X, Z, wdt, Math.max(r.moveW, 0.6), r.phase);
-  else placeRoot(J, X, Z, r.yaw, 0, look[0], look[1], look[2]);
-  const ert = e.ranged && e.relT > 0 ? 1 - e.relT / 1.6 : -1, ekind = e.type === 'gunner' ? 'pkm' : e.type === 'grunt' ? 'ak' : null;
+  else placeRoot(J, X, Z, r.yaw, 0, look[0], look[1], look[2], lift - (e.duckT > 0 ? 0.5 : 0));   // a marksman sinks behind its cover to duck
+  const ert = e.ranged && e.relT > 0 ? 1 - e.relT / 1.6 : -1, ekind = e.type === 'gunner' ? 'pkm' : e.type === 'grunt' ? 'ak' : e.sniper ? 'sniper' : null;
   emitParts(J, ert >= 0.14 && ert < 0.62 ? splitMag(enemyParts(e.type)).body : enemyParts(e.type), r.pal, set, e.flash > 0);
   if ((ert >= 0.14 && ert < 0.24) || (ert >= 0.44 && ert < 0.62)) emitParts(J, magHandParts(), r.pal, set, e.flash > 0);
   if (ekind) gunLife(r, J, ekind, ert, fired, false, wdt);
@@ -149,9 +150,16 @@ function drawEnemy(e, wdt, set) {
       set.glow.push(TMP.m, colorOf(e.phase === 3 ? '#ffe070' : '#ff3a1e'));
     }
   }
-  decal(VIEW.fx.shadow, X, Z, (e.horse ? 1.9 : 0.95) * look[0], 0, WHITE, 0.02);
+  if (e.sniper && e.glint > 0) {   // the scope catching the light while it lines up a shot: brightest when it's lined up on you
+    const vg = LT.vg || (LT.vg = new THREE.Vector3());
+    vg.set(0, 0.1, -0.22).applyMatrix4(J[HJ.gun].matrixWorld);
+    const px = vg.distanceTo(VIEW.camera.position) * linePix(), you = e.tgt === soldiers[state.controlled], k = e.glint * (0.75 + 0.25 * Math.sin(now / 55));
+    bloomAt(vg, Math.max(0.3, px * (you ? 28 : 16)) * (0.55 + 0.45 * e.glint), GLINT.wide || (GLINT.wide = colorOf('#bfe3ff')), (you ? 1.7 : 1.1) * k, now / 400);
+    bloomAt(vg, Math.max(0.12, px * (you ? 10 : 6)), GLINT.core || (GLINT.core = colorOf('#ffffff')), 1.4 * k, 0.7);
+  }
+  decal(VIEW.fx.shadow, X, Z, (e.horse ? 1.9 : 0.95) * look[0], 0, WHITE, 0.02 + lift);
   if (!e.boss && e.maxHp >= 3 && e.hp < e.maxHp)
-    hpBar(X, Z, 2.1 * look[1] + (e.horse ? 0.45 : 0), e.hp / e.maxHp, '#e0583c');
+    hpBar(X, Z, 2.1 * look[1] + (e.horse ? 0.45 : 0) + lift, e.hp / e.maxHp, '#e0583c');
 }
 function drawBody(b, wdt, set) {   // a soldier's fall, continuing from the exact pose they died in
   const r = recFor(b), slot = b.slot || 0, J = r.J;
@@ -186,7 +194,7 @@ function poseCorpse(J, c, t) {
   const lk = corpseLook(c);
   resetPose(J);
   const pitch = poseDeath(J, t, c.style);
-  placeRoot(J, c.x * XS, c.y * XS, corpseYaw(c), pitch, lk.sc[0], lk.sc[1], lk.sc[2]);
+  placeRoot(J, c.x * XS, c.y * XS, corpseYaw(c), pitch, lk.sc[0], lk.sc[1], lk.sc[2], (c.z || 0) * XS);
   return lk;
 }
 function bakeCorpse(c) {
@@ -194,7 +202,7 @@ function bakeCorpse(c) {
   const lk = poseCorpse(J, c, 1);
   const cache = [];
   emitParts(J, noGun(lk.parts), lk.pal, null, false, cache);
-  if (!c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], null, cache);
+  if (!c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], null, cache, (c.z || 0) * XS);
   rigPool.humanoid.push(J);
   return cache;
 }
@@ -220,9 +228,9 @@ function syncCorpses(wdt, set) {
     resetPose(r.J);
     const pitch = poseDeath(r.J, t, c.style);
     smoothPose(r, r.J, wdt, 20);
-    placeRoot(r.J, c.x * XS, c.y * XS, corpseYaw(c), pitch, lk.sc[0], lk.sc[1], lk.sc[2]);
+    placeRoot(r.J, c.x * XS, c.y * XS, corpseYaw(c), pitch, lk.sc[0], lk.sc[1], lk.sc[2], (c.z || 0) * XS);
     emitParts(r.J, dropped ? noGun(lk.parts) : lk.parts, lk.pal, set);
-    if (dropped && !c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], set);   // a gun that can be taken is drawn as a drop instead
+    if (dropped && !c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], set, null, (c.z || 0) * XS);   // a gun that can be taken is drawn as a drop instead
   }
   if (staticDirty) rebuildStatic();
 }
@@ -237,7 +245,7 @@ function rebuildStatic() {
     if (!c._cache) continue;
     const k = c._cache;
     for (let i = 0; i < k.length; i += 3) S[k[i]].push(k[i + 1], k[i + 2]);
-    decal(stain, c.x * XS, c.y * XS, 1.5 * (c.sc || 1), c.rot || 0, colorOf('#5c1810'), 0.025);
+    decal(stain, c.x * XS, c.y * XS, 1.5 * (c.sc || 1), c.rot || 0, colorOf('#5c1810'), 0.025 + (c.z || 0) * XS);
   }
   batchesDo(S, b => b.end());
   stain.end();

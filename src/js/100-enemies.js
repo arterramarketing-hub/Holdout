@@ -6,6 +6,7 @@ const ETYPES = {
   rider:   { r: 16, hp: 4, sp: 185, dmg: 2, col: '#a04938', horse: true },
   gunner:  { r: 13, hp: 3, sp: 60,  dmg: 1, col: '#c2a23a', ranged: 380 },   // stops and shoots back
   spotter: { r: 12, hp: 3, sp: 85,  dmg: 0, col: '#d8d2b8', spotter: true }, // no longer spawned
+  sniper:  { r: 13, hp: 3, sp: 0,   dmg: 2.5, col: '#8c8f78', ranged: 2600 },  // the rooftop marksman: see THE ROOFTOP SNIPER
 };
 // Dedicated spawn zones, in the open ground of the town's streets and alleys. There is no front: whenever
 // someone comes onto the field — an enemy walking on, or one of yours coming back as a reinforcement — the
@@ -17,6 +18,8 @@ const SPAWN_ZONES = [   // [name, x0, x1, y0, y1] in metres; scaled to px below
   ['market', 10, 20, 46, 48.5], ['forecourt', 66, 70, 41, 48], ['south road west', 1, 22, 48.5, 51.5], ['south road east', 75, 95, 48.5, 51.5],
   ['motor pool', 72, 95, 61, 71], ['cemetery', 3, 23, 69, 71.5], ['fob', 43, 68, 62, 69],
 ].map(([name, x0, x1, y0, y1]) => ({ name, x0: x0 * 40, x1: x1 * 40, y0: y0 * 40, y1: y1 * 40, cx: (x0 + x1) * 20, cy: (y0 + y1) * 20, used: -99 }));
+const FOB = { x0: 41 * 40, x1: 70 * 40, y0: 60.5 * 40, y1: 72 * 40 };   // the squad's walled camp: no enemy frag lands in it
+const inFob = (x, y) => x > FOB.x0 && x < FOB.x1 && y > FOB.y0 && y < FOB.y1;
 function pickSpawn(side) {   // 'e' for the enemy, 'p' for your squad
   const foes = side === 'e' ? soldiers.filter(s => s.alive) : enemies;
   const mates = side === 'e' ? enemies : soldiers.filter(s => s.alive);
@@ -52,11 +55,13 @@ function spawnEnemy(type) {
   const t = ETYPES[type], dmgMul = 1 + 0.12 * (state.tier - 1);   // harder sectors hit harder; health stays put so an M4 still drops a rifleman in three
   enemies.push({ type, r: t.r, col: t.col, dmg: t.dmg * dmgMul, horse: !!t.horse,
     ranged: t.ranged || 0, spotter: !!t.spotter, spotCd: rand(3, 5), fireT: rand(0.5, 1.5), objRole: !!t.ranged && Math.random() < 0.45,
+    frags: type === 'grunt' ? 1 : 0, coverT: 0,
     hp: t.hp, maxHp: t.hp,
     sp: t.sp * (1 + 0.04 * (state.tier - 1)) * rand(0.92, 1.08),
     ...spawnPoint(),
     cd: rand(0, 0.5), flash: 0, wob: rand(0, TAU), walk: rand(0, TAU), atk: 0, face: 1,
     tac: 'hold', tacT: rand(0.2, 1.2), burst: 0, supp: 0, flankSide: Math.random() < 0.5 ? -1 : 1, path: null, pathT: 0, coverRef: null });
+  if (type === 'sniper' && !perchSniper(enemies[enemies.length - 1])) { enemies.pop(); spawnEnemy('grunt'); return; }   // no free perch: a rifleman instead
   if (t.spotter && !state.spotterSeen) {
     state.spotterSeen = true;
     showBanner('ENEMY SPOTTER — PRIORITY TARGET');
@@ -78,6 +83,7 @@ function spawnBoss() {
   musStinger('boss');
 }
 function pickType() {
+  if (sniperWanted()) return 'sniper';
   const r = Math.random();
   if ((state.tier >= 2 || state.wave >= 2) && r < 0.22) return 'gunner';
   if ((state.tier >= 2 || state.wave >= 5) && r < 0.32) return 'rider';

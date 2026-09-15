@@ -266,11 +266,11 @@ function splitGun(parts) {
 }
 const noGun = parts => splitGun(parts).body;
 const gunOnly = parts => splitGun(parts).gun;
-function emitGround(parts, pal, x, y, yaw, sc, set, cache) {   // a weapon lying on its side where its owner dropped it
+function emitGround(parts, pal, x, y, yaw, sc, set, cache, lift = 0) {   // a weapon lying on its side where its owner dropped it (lift: on a roof)
   if (!parts.length || x == null) return;
   TMP.e.set(0, yaw, Math.PI / 2, 'YXZ');
   TMP.q.setFromEuler(TMP.e);
-  dropRig[HJ.gun].matrixWorld.compose(TMP.v.set(x * XS, 0.07, y * XS), TMP.q, TMP.s.set(sc, sc, sc));
+  dropRig[HJ.gun].matrixWorld.compose(TMP.v.set(x * XS, 0.07 + lift, y * XS), TMP.q, TMP.s.set(sc, sc, sc));
   emitParts(dropRig, parts, pal, set, false, cache);
   TMP.q.identity();
 }

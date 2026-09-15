@@ -23,6 +23,9 @@ const CFG = {
   swapTime: 0.45, pickHold: 0.35, dropLife: 45,    // changing guns; holding to take one off the ground; how long a dropped gun lies there
   hearLoud: 1400, hearQuiet: 400, hearFor: 5,      // enemies hear a shot within 35 m, a suppressed one within 10 m, and remember the shooter 5 s
   suppressorAds: 0.88,                             // a suppressor's weight on the muzzle: the sights come up 12% slower
+  eFragDmg: 5, eFragAfter: 1.8,                    // an enemy frag: 5 at the centre of the same 5 m blast, bursting 1.8 s after it lands
+  eFragMin: 320, eFragMax: 880, eFragCovered: 3,   // thrown at a soldier 8-22 m away who has stayed behind cover its rounds can't get through for 3 s
+  eFragFirst: 25, eFragGap: [14, 8],               // none in a front's first 25 s; one every 14 s at the first tier down to one every 8 s at tier 6
 };
 const TAU = Math.PI * 2;
 

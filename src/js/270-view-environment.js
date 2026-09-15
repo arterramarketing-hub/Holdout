@@ -231,6 +231,12 @@ function buildEnvironment() {
       box(cx, 1.4, y1 + 0.07, 1.4, 2.8, 0.1, '#3a2a1e');
     }
   }
+  for (const p of PERCHES) {   // where a marksman can set up: a stone sill under the belfry opening, sandbags on a roof edge
+    if (p.nest === 'sill') { box(p.x - 0.05, p.z - 0.1, p.y, 0.75, 0.2, 1.7, '#d8d0c0'); continue; }
+    const along = Math.abs(Math.cos(p.face)) > 0.5, fx = p.x + Math.cos(p.face) * 0.62, fy = p.y + Math.sin(p.face) * 0.62;
+    for (const k of [-0.5, 0, 0.5]) box(fx + (along ? 0 : k), p.z + 0.28, fy + (along ? k : 0), along ? 0.34 : 0.52, 0.28, along ? 0.52 : 0.34, '#8f8260');
+    for (const k of [-0.25, 0.25]) box(fx + (along ? 0 : k), p.z + 0.54, fy + (along ? k : 0), along ? 0.32 : 0.5, 0.25, along ? 0.5 : 0.32, '#7f7454');
+  }
   // the perimeter, standing exactly on the edge of play
   for (const x of [-0.3, Wm + 0.3]) { pushWalls(ST, x, 0, Hm / 2, 0.6, 2.4, Hm + 1.2, colorOf('#d2ccbe'), 2.4); pushTop(ST, x, 2.4, Hm / 2, 0.8, Hm + 1.2, colorOf('#b8b2a4'), 2.4); }
   for (let x = -0.6; x <= Wm + 0.6; x += 1.1) bastion.push([x, 1.1, Hm + 0.55, 1.05, 2.2, 1.05, 0, rnd() < 0.5 ? '#ffffff' : '#e8e0d0']);

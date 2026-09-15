@@ -209,16 +209,16 @@ function updateOverlays(dt) {
       } else hideEl(tag);
     }
   }
-  {   // a live frag within 6 m: a red grenade on a ring around the crosshair, pointing at it
+  {   // a live frag near you (yours within 6 m, theirs within 10 m): a red grenade on a ring around the crosshair, pointing at it
     const me = soldiers[state.controlled], nw = OV.nade || (OV.nade = document.getElementById('nadewarn'));
-    let near = null, nd = 240 * 240;
-    if (me && me.alive && state.mode === 'play') for (const g of grenades) { const d = dist2(g.x, g.y, me.x, me.y); if (d < nd) { nd = d; near = g; } }
+    let near = null, nd = Infinity;
+    if (me && me.alive && state.mode === 'play') for (const g of grenades) { const d = dist2(g.x, g.y, me.x, me.y); if (d < (g.hostile ? 400 * 400 : 240 * 240) && d < nd) { nd = d; near = g; } }
     if (near) {
       const a = Math.atan2(near.x - me.x, -(near.y - me.y)) - cam.yaw, rad = Math.min(innerWidth, innerHeight) * 0.2;
       nw.style.display = 'block';
       nw.style.transform = `translate3d(${(innerWidth / 2 + Math.sin(a) * rad).toFixed(1)}px,${(innerHeight / 2 - Math.cos(a) * rad).toFixed(1)}px,0)`;
       nw.firstElementChild.nextElementSibling.style.transform = `rotate(${a.toFixed(3)}rad)`;
-      nw.style.opacity = (0.65 + 0.35 * Math.sin(performance.now() / 70)).toFixed(2);
+      nw.style.opacity = (0.65 + 0.35 * Math.sin(performance.now() / (25 + 45 * clamp(near.fuse / 2.5, 0, 1)))).toFixed(2);   // quicker as the fuse burns down
     } else if (nw.style.display !== 'none') nw.style.display = 'none';
   }
   const s = soldiers[state.controlled], list = [];
