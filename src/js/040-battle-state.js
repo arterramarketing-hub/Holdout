@@ -10,6 +10,7 @@ const state = {   // per-battle / session
   bossSpawned: false, bossRef: null, spotterSeen: false,
   streakN: 0, streakT: 0,
   crossTarget: null, flyby: null,
+  objs: [], squadObj: null, objMsg: null, objDrainT: 0, squadDrainT: 0, noDrain: false,
   tod: 1, weather: 'clear',
 };
 let screen = 'map'; // map | team | battle

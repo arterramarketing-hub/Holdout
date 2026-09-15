@@ -257,9 +257,11 @@ function buildFxBatches() {
     arrow: new Batch(new THREE.ConeGeometry(0.5, 1, 3), new THREE.MeshBasicMaterial({ fog: false, depthTest: false }), 4, 11),
     bloom: new Batch(plane, new THREE.MeshBasicMaterial({ map: T.bloom, transparent: true, opacity: 0.62, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }), 96, 6),
     brass: new Batch(VIEW.kit.cyl, VIEW.mats.shaded, 200),
+    objRing: new Batch(plane, decalMat(null, { opacity: 0.55 }), 160, 1),
+    flag: new Batch(box, new THREE.MeshLambertMaterial(), 12),
   };
 }
-const FX_FRAME = ['shadow', 'crater', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass'];
+const FX_FRAME = ['shadow', 'crater', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass', 'objRing', 'flag'];
 let TRACER_COLS = null;   // tracer palette, built once the engine is up
 const hash2 = (x, y) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };
 function muzzleWorld(s, out) {   // where the drawn weapon's barrel actually ends, this frame
@@ -365,6 +367,25 @@ function drawFx() {
     }
   }
   const D = VIEW.dyn;
+  for (const o of state.objs || []) {   // an objective: a pole, a cloth in the owner's colour that climbs as it is taken, its ring on the ground
+    const X = o.x * XS, Z = o.y * XS, col = colorOf(o.owner === 'p' ? '#4aa6f0' : o.owner === 'e' ? '#cf3a2b' : '#d9dbe4');
+    TMP.q.identity();
+    TMP.m.compose(TMP.v.set(X, 1.8, Z), TMP.q, TMP.s.set(0.07, 3.6, 0.07)); D.metal.push(TMP.m, colorOf('#8d8f8b'));
+    TMP.m.compose(TMP.v.set(X, 3.62, Z), TMP.q, TMP.s.set(0.14, 0.08, 0.14)); D.metal.push(TMP.m, colorOf('#b8b09a'));
+    TMP.q.setFromAxisAngle(TMP.up, Math.sin(now / 520 + o.x) * 0.3 + o.y * 0.001);
+    TMP.v2.set(0.5, 0, 0).applyQuaternion(TMP.q);
+    const h = 1.1 + 2.2 * Math.abs(o.cap);
+    TMP.m.compose(TMP.v.set(X + TMP.v2.x, h, Z + TMP.v2.z), TMP.q, TMP.s.set(0.96, 0.58, 0.03)); F.flag.push(TMP.m, col);
+    TMP.q.identity();
+    const R = o.r * XS, segs = 40, spin = now / 12000;   // the ring: a dashed line on the ground, slowly turning
+    for (let k = 0; k < segs; k += 2) {
+      const a = (k + 0.5) / segs * TAU + spin;
+      TMP.e.set(-Math.PI / 2, -a - Math.PI / 2, 0, 'YXZ');
+      TMP.qd.setFromEuler(TMP.e);
+      TMP.md.compose(TMP.vd.set(X + Math.cos(a) * R, 0.04, Z + Math.sin(a) * R), TMP.qd, TMP.sd.set(TAU * R / segs * 0.9, 0.16, 1));
+      F.objRing.push(TMP.md, col);
+    }
+  }
   for (const mk of markers) {   // battlefield cross where soldiers fell: rifle planted muzzle-down, helmet on the stock, boots in front
     const X = mk.x * XS, Z = mk.y * XS;
     TMP.q.setFromAxisAngle(TMP.up, hash2(mk.x, mk.y) * 0.8 - 0.4);

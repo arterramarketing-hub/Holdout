@@ -368,7 +368,8 @@ function renderBrief() {
   $('brProgFill').style.width = prog + '%';
   const line = $('brLine');
   if (own) line.textContent = t.tier === 0 ? 'Headquarters. Every push starts here.' : 'Held by the Ninth Company.';
-  else if (atk) line.innerHTML = `Break <b>${left}</b> enemy reserves. A Warlord takes the field at 90%.`;
+  else if (atk) line.innerHTML = 'Objectives ' + objectiveSites(t.id).map((o, i) => `<b>${'ABC'[i]}</b> ${o.name}`).join(' · ')
+    + `. Hold more of them than they do to bleed their <b>${left}</b> reserves; the Warlord comes at 90%.`;
   else {
     const via = t.adj.map(i => TERRITORIES[i]).filter(terrAttackable).map(x => x.name);
     line.textContent = via.length ? `Out of reach. Take ${via.join(' or ')} first.` : 'Out of reach. Push the front closer.';

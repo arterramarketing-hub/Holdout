@@ -48,6 +48,20 @@ function updateBattleHud() {
     am.classList.toggle('low', !c.pistol && c.mag <= magCap(c) * 0.25);
     am.classList.toggle('reloading', c.reloadT > 0);
     $('reloadbtn').classList.toggle('warn', !c.pistol && c.mag <= magCap(c) * 0.25);
+    const objs = state.objs || [];
+    for (let i = 0; i < 3; i++) {
+      const o = objs[i], chip = OV.objChip && OV.objChip[i] || ((OV.objChip = OV.objChip || [])[i] = $('obj' + i));
+      if (!o) { if (chip.style.display !== 'none') chip.style.display = 'none'; continue; }
+      if (chip.style.display === 'none') chip.style.display = '';
+      const cls = 'obj ' + (o.owner === 'p' ? 'p' : o.owner === 'e' ? 'e' : 'n') + (o.contested ? ' contest' : '') + (o.flashT > 0 ? ' flash' : '');
+      if (chip.className !== cls) chip.className = cls;
+      const pv = Math.abs(o.cap).toFixed(2), cv = o.cap >= 0 ? 'var(--friend)' : 'var(--foe)';
+      if (chip.dataset.p !== pv) { chip.dataset.p = pv; chip.style.setProperty('--p', pv); }
+      if (chip.dataset.c !== cv) { chip.dataset.c = cv; chip.style.setProperty('--c', cv); }
+    }
+    const om = $('objmsg'), msg = state.objMsg;
+    const mcls = msg ? 'on' + (msg.good ? ' good' : msg.bad ? ' bad' : '') : '';
+    if (om.className !== mcls) { om.className = mcls; if (msg) om.textContent = msg.text; }
     const fr = c.frags || 0;
     if (fr !== OV.frags) { OV.frags = fr; $('nadecnt').textContent = fr; $('amfragn').textContent = fr; $('nadebtn').classList.toggle('empty', !fr); $('amfrag').classList.toggle('empty', !fr); }
     if (c.reloadT > 0) $('ambar').firstChild.style.width = (1 - c.reloadT / c.reloadDur) * 100 + '%';
@@ -88,6 +102,13 @@ function drawMinimap() {
   for (const o of obstacles) g.fillRect(X(o.x) - 1.5, Y(o.y) - 1.5, 3, 3);
   g.fillStyle = '#ff6b2c';
   for (const p of pickups) g.fillRect(X(p.x) - 2, Y(p.y) - 2, 4, 4);
+  g.font = '800 9px "JetBrains Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const o of state.objs || []) {   // objectives: the ring in the owner's colour, the letter in the middle
+    const col = o.owner === 'p' ? '#5cb6ff' : o.owner === 'e' ? '#ff4d3d' : '#c9d1dc';
+    g.strokeStyle = col; g.lineWidth = 1.5;
+    g.beginPath(); g.arc(X(o.x), Y(o.y), Math.max(5, o.r * sc), 0, TAU); g.stroke();
+    g.fillStyle = col; g.fillText(o.letter, X(o.x), Y(o.y) + 0.5);
+  }
   for (const e of enemies) {   // only what you could plausibly know about: close, or shooting
     const d = Math.hypot(e.x - s.x, e.y - s.y);
     if (d > 950 && !(e.fireT < 0.5 && d < 1600)) continue;

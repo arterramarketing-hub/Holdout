@@ -26,6 +26,7 @@ function enterBattle(tid) {
   rollSky(tid);
   enemies = []; bullets = []; markers = []; floaters = []; bodies = []; particles = []; pickups = [];
   genTerrain();
+  setupObjectives(objectiveSites(tid)); state.squadObj = null;
   soldiers = meta.squad.map((m, i) => buildSoldier(i));
   const first = soldiers.findIndex(s => s.alive);
   state.controlled = first < 0 ? 0 : first;

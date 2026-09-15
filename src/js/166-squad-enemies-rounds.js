@@ -16,8 +16,16 @@ function squadAI(s, spd, dt, lead, front, wrange) {
   const moved = foe && s.foeX != null && dist2(foe.x, foe.y, s.foeX, s.foeY) > 320 * 320;
   if (s.planT <= 0 && (s.tacT <= 0 || s.goalX == null || moved)) {
     s.tacT = rand(2.6, 4.2); s.planT = 0.8;
-    let gx, gy, threat;
-    if (foe) {
+    let gx, gy, threat, onObj = false;
+    const obj = role !== 'flank' ? squadObjective(s) : null, pressed = foe && dist2(foe.x, foe.y, s.x, s.y) < (wrange * 0.6) ** 2;
+    if (obj && !pressed && role === 'point') {   // Point goes and takes the objective
+      gx = obj.x; gy = obj.y; threat = foe || obj; onObj = true;
+      if (foe) { s.foeX = foe.x; s.foeY = foe.y; }
+    } else if (obj && !pressed && role === 'overwatch' && obj.inP > 0) {   // Overwatch covers it from the near edge of its range
+      const dx = s.x - obj.x, dy = s.y - obj.y, dd = Math.hypot(dx, dy) || 1, want = Math.min(wrange * 0.8, dd);
+      gx = obj.x + dx / dd * want; gy = obj.y + dy / dd * want; threat = foe || obj;
+      if (foe) { s.foeX = foe.x; s.foeY = foe.y; }
+    } else if (foe) {
       const dx = foe.x - s.x, dy = foe.y - s.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
       // a triangle around the enemy: point straight in, flank out to the left, overwatch back and to the right
       if (role === 'flank') {
@@ -37,7 +45,7 @@ function squadAI(s, spd, dt, lead, front, wrange) {
       gx = at.x + Math.cos(ang) * off; gy = at.y + Math.sin(ang) * off;
       threat = at; s.foeX = null;
     }
-    for (let k = 0; k < 3; k++) {   // spread out: shove the spot away from teammates' spots, and from you
+    for (let k = 0; k < 3 && !onObj; k++) {   // spread out: shove the spot away from teammates' spots, and from you (not off an objective)
       let bumped = false;
       for (const o of soldiers) {
         if (o === s || !o.alive) continue;
@@ -53,8 +61,8 @@ function squadAI(s, spd, dt, lead, front, wrange) {
     }
     gx = clamp(gx, 40, CFG.arenaW - 40); gy = clamp(gy, 40, CFG.arenaH - 40);
     s.goalX = gx; s.goalY = gy;
-    const ob = pickCover(s, threat, gx, gy, 420, wrange * (role === 'overwatch' ? 0.9 : 0.62));
-    if (ob && dist2(SPOT.x, SPOT.y, gx, gy) < 260 * 260) { s.coverRef = ob; goTo(s, SPOT.x, SPOT.y); }
+    const ob = pickCover(s, threat, gx, gy, onObj ? obj.r * 0.7 : 420, wrange * (role === 'overwatch' ? 0.9 : 0.62));
+    if (ob && dist2(SPOT.x, SPOT.y, gx, gy) < (onObj ? obj.r * 0.7 : 260) ** 2) { s.coverRef = ob; goTo(s, SPOT.x, SPOT.y); }
     else { s.coverRef = null; goTo(s, gx, gy); }
   }
   const far = s.gx != null && dist2(s.x, s.y, s.gx, s.gy) > 300 * 300;
@@ -242,6 +250,18 @@ function riflemanAI(e, t, dt, d, vis) {   // bound to cover, hold and fire in bu
   if (sees) fireLogic(e, t, dt, false);
   if (e.tacT > 0) return;
   if (e.supp > 1.6 && e.coverRef) { e.tacT = rand(1, 1.8); return; }   // pinned down
+  if (e.objRole && !(sees && d < range * 0.55)) {   // this one works an objective: take it, or hold it, from cover
+    const o = enemyObjective(e);
+    if (o) {
+      if (dist2(e.x, e.y, o.x, o.y) > (o.r * 0.75) ** 2) {
+        const ob = pickCover(e, t, o.x, o.y, o.r * 0.75, range * 0.7);
+        if (ob) { e.coverRef = ob; goTo(e, SPOT.x, SPOT.y); }
+        else { e.coverRef = null; goTo(e, o.x + rand(-0.4, 0.4) * o.r, o.y + rand(-0.4, 0.4) * o.r); }
+        e.tac = 'move'; e.tacT = 8;
+      } else { e.tac = 'hold'; e.tacT = rand(2, 3.5); }
+      return;
+    }
+  }
   const hurt = e.hp < e.maxHp * 0.45 && Math.random() < 0.5;
   const ideal = range * (hurt ? 0.95 : e.type === 'gunner' ? 0.85 : 0.7);
   const ux = (e.x - t.x) / d, uy = (e.y - t.y) / d, lat = e.flankSide * (e.type === 'gunner' ? 60 : 170);
@@ -404,6 +424,7 @@ function battleUpdate(dt) {
         if (s.respawnT <= 0) respawnSoldier(s);
       }
     updateEnemies(wdt);
+    updateObjectives(wdt);
     updateBullets(wdt);
     updateShells(wdt);
     updateGrenades(wdt);

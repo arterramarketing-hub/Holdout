@@ -54,8 +54,23 @@
   FOUR AGAINST EIGHT — you and three squadmates against up to eight enemies on the field at once. The enemy has its
   own ticket pool (CFG.enemyTickets 44 + 8 per tier): every enemy death spends one, a new enemy walks on 1-2 s after
   one falls while tickets remain, and the front is won when the pool is spent (the progress bar is exactly that).
-  The Warlord arrives at 90%, and killing it breaks what is left of them. A front you walk away from resumes where
-  you left it; a lost front starts again from 0%.
+  The Warlord arrives at 90%, and killing it breaks what is left of them. Objectives spend their pool too (see
+  OBJECTIVES). A front you walk away from resumes where you left it; a lost front starts again from 0%.
+
+  OBJECTIVES — every sector is fought over three of six landmarks (OBJ_SITES: Rail yard, Market, Church square, Gas
+  station, Building site, Cemetery; SECTOR_OBJ picks each sector's three), lettered A-C north to south, each a flag
+  in a 7 m ring, all starting in enemy hands. Only one side standing in a ring moves it: one soldier takes an
+  objective in 12 s, two in 9 s, three or more in 7 s (neutral halfway); both sides in the ring freeze it. Taking one
+  spends two enemy reserves at once. Holding more objectives than the enemy drains a reserve every 4 s (every 2 s
+  with all three), never one still standing on the field and never the Warlord's own ticket, so the front is still
+  won by fighting. Holding fewer costs your squad a reinforcement every 20 s once the front is 45 s old. About 45%
+  of riflemen and gunners work objectives (take the nearest they don't hold, rush back to one under attack, hold
+  from cover inside the ring) and the enemy reinforces near objectives it holds, never into one being taken. Your
+  POINT pushes the nearest objective you don't hold and takes it from cover inside the ring; OVERWATCH covers it
+  from range; FLANK keeps hunting. The HUD shows A-C under the ticket bar (owner colour, a bar for a capture in
+  progress, a pulse when contested) with a one-line message when one changes hands; the minimap draws each ring
+  and letter; in the world each has a flag that climbs its pole as it is taken, a dashed ring on the ground, and a
+  letter tag over it that shows through fog and walls. The start menu's briefing names the sector's three.
 
   SPAWN ZONES — no front line. Fifteen zones sit in the open ground of the streets and yards (SPAWN_ZONES), and
   the FOB is your squad's alone. An enemy walks on at a zone far from your squad and preferably out of its sight,
@@ -235,7 +250,7 @@
   A reticle locks onto the selection; a tap anywhere in a region selects it; ←/→ cycle the attackable sectors and
   Enter deploys. The briefing: theater progress in 13 segments, the sector's status chip, number and grid
   reference, its name, THREAT (tier and pips), RESERVES (what is left of the enemy pool), FORECAST, a progress bar
-  when partly taken, one line of orders (or which sectors to take first), DEPLOY (RESUME when partly taken) naming
+  when partly taken, one line of orders naming the sector's objectives (or which sectors to take first), DEPLOY (RESUME when partly taken) naming
   the sector, your kit, and the squad of four with roles. Opening the map plays its entrance (land, sectors, the
   front drawing itself, markers popping out from HQ, the briefing sliding in; off under reduced motion), a sector
   just taken flashes, and the selection moves to the next fight beside it. A desktop window taller than it is wide

@@ -2,6 +2,7 @@ suite('enemies', t => {
   t.test('every enemy type fights and dies', () => {
     newCampaign(); seed(21);
     const h = battle({ clear: true });   // the simulation alone: headless software WebGL makes every rendered frame expensive
+    setupObjectives([]);                 // count kills only: no objective captures spending reserves
     const d0 = state.enemyDown;
     ['grunt', 'runner', 'brute', 'rider', 'gunner', 'spotter'].forEach((ty, i) => G.spawn(ty, h.x + (i - 2.5) * 120, h.y - 380));
     ticks(60 * 20, 0, () => { h.invuln = 1e9; botTick(h); });

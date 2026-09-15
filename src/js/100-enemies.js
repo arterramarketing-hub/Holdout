@@ -32,6 +32,11 @@ function pickSpawn(side) {   // 'e' for the enemy, 'p' for your squad
     let score = Math.min(near, 1800) - (seen ? 900 : 0) + rand(0, 240);
     if (near < 650) score -= 2000;                                        // never on top of the other side
     if (state.frontTime - z.used < 6) score -= 700;                       // spread arrivals across zones
+    if (side === 'e') for (const o of state.objs || []) {   // they reinforce near objectives they hold, never into one being taken
+      const od = Math.hypot(o.x - z.cx, o.y - z.cy);
+      if (o.owner === 'e' && od < 1000) score += 300;
+      if (o.inP > 0 && od < 520) score -= 2000;
+    }
     if (side === 'p') {
       if (z.name === 'fob') score += 150;
       if (mates.some(m => Math.hypot(m.x - z.cx, m.y - z.cy) < 900)) score += 300;
@@ -46,7 +51,7 @@ function spawnPoint() { return pickSpawn('e'); }
 function spawnEnemy(type) {
   const t = ETYPES[type], dmgMul = 1 + 0.12 * (state.tier - 1);   // harder sectors hit harder; health stays put so an M4 still drops a rifleman in three
   enemies.push({ type, r: t.r, col: t.col, dmg: t.dmg * dmgMul, horse: !!t.horse,
-    ranged: t.ranged || 0, spotter: !!t.spotter, spotCd: rand(3, 5), fireT: rand(0.5, 1.5),
+    ranged: t.ranged || 0, spotter: !!t.spotter, spotCd: rand(3, 5), fireT: rand(0.5, 1.5), objRole: !!t.ranged && Math.random() < 0.45,
     hp: t.hp, maxHp: t.hp,
     sp: t.sp * (1 + 0.04 * (state.tier - 1)) * rand(0.92, 1.08),
     ...spawnPoint(),

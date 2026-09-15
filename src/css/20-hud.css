@@ -14,7 +14,24 @@
     border-left:1px solid var(--line); border-right:1px solid var(--line); }
   .tkmid b { font-size:16px; line-height:1; color:var(--ink); font-variant-numeric:tabular-nums; }
   .tkmid em { margin-top:3px; font-style:normal; font-size:8px; font-weight:700; letter-spacing:.26em; color:var(--label); }
-  #bossbar { top:56px; left:50%; transform:translateX(-50%); width:min(420px, 58vw); display:none; text-align:center; }
+  #bossbar { top:92px; left:50%; transform:translateX(-50%); width:min(420px, 58vw); display:none; text-align:center; }
+  /* objectives: A-C under the ticket bar — owner's colour, a bar for how far a capture has got, a pulse when contested */
+  #objhud { top:52px; left:50%; transform:translateX(-50%); display:flex; gap:6px; }
+  .obj { position:relative; display:grid; place-items:center; width:30px; height:26px; overflow:hidden; font-family:var(--mono); font-weight:800; font-size:13px;
+    color:var(--ink); background:var(--panel); border:1px solid var(--line-hi); --p:0; --c:var(--foe); }
+  .obj b { position:relative; z-index:1; }
+  .obj i { position:absolute; left:0; bottom:0; height:3px; width:calc(var(--p) * 100%); background:var(--c); }
+  .obj.p { background:rgba(92,182,255,.3); border-color:var(--friend); }
+  .obj.e { background:rgba(255,77,61,.22); border-color:rgba(255,77,61,.8); }
+  .obj.contest { animation:obj-contest .5s ease-in-out infinite alternate; }
+  .obj.flash { box-shadow:0 0 0 2px #fff; }
+  @keyframes obj-contest { to { border-color:#fff; } }
+  #objmsg { position:absolute; top:32px; left:50%; transform:translateX(-50%); white-space:nowrap; font-family:var(--mono); font-weight:800; font-size:10px;
+    letter-spacing:.2em; text-transform:uppercase; color:var(--ink); text-shadow:0 1px 3px rgba(0,0,0,.9); opacity:0; transition:opacity .2s; }
+  #objmsg.on { opacity:1; } #objmsg.good { color:var(--friend); } #objmsg.bad { color:#ff8b7f; }
+  #objtags { position:fixed; inset:0; z-index:8; pointer-events:none; overflow:hidden; }
+  #objtags i { position:absolute; left:0; top:0; display:none; place-items:center; width:20px; height:20px; margin:-10px 0 0 -10px; font-style:normal;
+    font-family:var(--mono); font-weight:800; font-size:11px; color:#fff; background:rgba(9,13,21,.66); border:1.5px solid var(--c, #c9d1dc); }
   #bossname { margin-bottom:5px; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--foe); }
   #bosshp { height:5px; background:rgba(255,255,255,.08); border:1px solid var(--line); }
   #bosshp i { display:block; height:100%; width:100%; background:var(--foe); }

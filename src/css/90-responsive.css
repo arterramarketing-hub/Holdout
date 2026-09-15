@@ -12,7 +12,8 @@
     #minimap { top:6px; left:6px; width:96px; height:76px; }
     #topbar { top:6px; right:6px; gap:4px; }
     #tomap, #tocfg { height:30px; padding:0 10px; font-size:10px; } #tocfg { width:30px; padding:0; font-size:13px; }
-    #bossbar { top:44px; width:min(280px, 46vw); } #bossname { margin-bottom:3px; font-size:9px; }
+    #bossbar { top:74px; width:min(280px, 46vw); } #bossname { margin-bottom:3px; font-size:9px; }
+    #objhud { top:40px; gap:4px; } .obj { width:24px; height:20px; font-size:11px; } #objmsg { top:24px; font-size:8.5px; }
     #feed { top:auto; bottom:64px; right:6px; width:220px; font-size:10px; }
     #ammo { right:6px; bottom:6px; min-width:0; padding:6px 10px 8px; }
     #amname { margin-bottom:3px; font-size:8px; letter-spacing:.2em; } #ammag { font-size:22px; } #amres { font-size:11px; }
@@ -75,7 +76,7 @@
   /* a desktop window taller than it is wide stacks the menu columns (a phone is held sideways, so it never lands here) */
   @media (max-aspect-ratio: 1/1) {
     .menu, .menu.lo { grid-template-columns:minmax(0, 1fr); }
-    .ops { grid-template-columns:minmax(0, 1fr); grid-template-rows:minmax(52vh, 1fr) auto; }
+    .ops { grid-template-columns:minmax(0, 1fr); grid-template-rows:minmax(40vh, 1fr) auto; }
     .brief { border-left:0; border-top:1px solid var(--line); }
     .br-sector { margin-top:0; }
     .lo-rail { border-right:0; border-bottom:1px solid var(--line); }

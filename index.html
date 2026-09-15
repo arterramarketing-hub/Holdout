@@ -55,8 +55,23 @@
   FOUR AGAINST EIGHT — you and three squadmates against up to eight enemies on the field at once. The enemy has its
   own ticket pool (CFG.enemyTickets 44 + 8 per tier): every enemy death spends one, a new enemy walks on 1-2 s after
   one falls while tickets remain, and the front is won when the pool is spent (the progress bar is exactly that).
-  The Warlord arrives at 90%, and killing it breaks what is left of them. A front you walk away from resumes where
-  you left it; a lost front starts again from 0%.
+  The Warlord arrives at 90%, and killing it breaks what is left of them. Objectives spend their pool too (see
+  OBJECTIVES). A front you walk away from resumes where you left it; a lost front starts again from 0%.
+
+  OBJECTIVES — every sector is fought over three of six landmarks (OBJ_SITES: Rail yard, Market, Church square, Gas
+  station, Building site, Cemetery; SECTOR_OBJ picks each sector's three), lettered A-C north to south, each a flag
+  in a 7 m ring, all starting in enemy hands. Only one side standing in a ring moves it: one soldier takes an
+  objective in 12 s, two in 9 s, three or more in 7 s (neutral halfway); both sides in the ring freeze it. Taking one
+  spends two enemy reserves at once. Holding more objectives than the enemy drains a reserve every 4 s (every 2 s
+  with all three), never one still standing on the field and never the Warlord's own ticket, so the front is still
+  won by fighting. Holding fewer costs your squad a reinforcement every 20 s once the front is 45 s old. About 45%
+  of riflemen and gunners work objectives (take the nearest they don't hold, rush back to one under attack, hold
+  from cover inside the ring) and the enemy reinforces near objectives it holds, never into one being taken. Your
+  POINT pushes the nearest objective you don't hold and takes it from cover inside the ring; OVERWATCH covers it
+  from range; FLANK keeps hunting. The HUD shows A-C under the ticket bar (owner colour, a bar for a capture in
+  progress, a pulse when contested) with a one-line message when one changes hands; the minimap draws each ring
+  and letter; in the world each has a flag that climbs its pole as it is taken, a dashed ring on the ground, and a
+  letter tag over it that shows through fog and walls. The start menu's briefing names the sector's three.
 
   SPAWN ZONES — no front line. Fifteen zones sit in the open ground of the streets and yards (SPAWN_ZONES), and
   the FOB is your squad's alone. An enemy walks on at a zone far from your squad and preferably out of its sight,
@@ -236,7 +251,7 @@
   A reticle locks onto the selection; a tap anywhere in a region selects it; ←/→ cycle the attackable sectors and
   Enter deploys. The briefing: theater progress in 13 segments, the sector's status chip, number and grid
   reference, its name, THREAT (tier and pips), RESERVES (what is left of the enemy pool), FORECAST, a progress bar
-  when partly taken, one line of orders (or which sectors to take first), DEPLOY (RESUME when partly taken) naming
+  when partly taken, one line of orders naming the sector's objectives (or which sectors to take first), DEPLOY (RESUME when partly taken) naming
   the sector, your kit, and the squad of four with roles. Opening the map plays its entrance (land, sectors, the
   front drawing itself, markers popping out from HQ, the briefing sliding in; off under reduced motion), a sector
   just taken flashes, and the selection moves to the next fight beside it. A desktop window taller than it is wide
@@ -400,7 +415,24 @@
     border-left:1px solid var(--line); border-right:1px solid var(--line); }
   .tkmid b { font-size:16px; line-height:1; color:var(--ink); font-variant-numeric:tabular-nums; }
   .tkmid em { margin-top:3px; font-style:normal; font-size:8px; font-weight:700; letter-spacing:.26em; color:var(--label); }
-  #bossbar { top:56px; left:50%; transform:translateX(-50%); width:min(420px, 58vw); display:none; text-align:center; }
+  #bossbar { top:92px; left:50%; transform:translateX(-50%); width:min(420px, 58vw); display:none; text-align:center; }
+  /* objectives: A-C under the ticket bar — owner's colour, a bar for how far a capture has got, a pulse when contested */
+  #objhud { top:52px; left:50%; transform:translateX(-50%); display:flex; gap:6px; }
+  .obj { position:relative; display:grid; place-items:center; width:30px; height:26px; overflow:hidden; font-family:var(--mono); font-weight:800; font-size:13px;
+    color:var(--ink); background:var(--panel); border:1px solid var(--line-hi); --p:0; --c:var(--foe); }
+  .obj b { position:relative; z-index:1; }
+  .obj i { position:absolute; left:0; bottom:0; height:3px; width:calc(var(--p) * 100%); background:var(--c); }
+  .obj.p { background:rgba(92,182,255,.3); border-color:var(--friend); }
+  .obj.e { background:rgba(255,77,61,.22); border-color:rgba(255,77,61,.8); }
+  .obj.contest { animation:obj-contest .5s ease-in-out infinite alternate; }
+  .obj.flash { box-shadow:0 0 0 2px #fff; }
+  @keyframes obj-contest { to { border-color:#fff; } }
+  #objmsg { position:absolute; top:32px; left:50%; transform:translateX(-50%); white-space:nowrap; font-family:var(--mono); font-weight:800; font-size:10px;
+    letter-spacing:.2em; text-transform:uppercase; color:var(--ink); text-shadow:0 1px 3px rgba(0,0,0,.9); opacity:0; transition:opacity .2s; }
+  #objmsg.on { opacity:1; } #objmsg.good { color:var(--friend); } #objmsg.bad { color:#ff8b7f; }
+  #objtags { position:fixed; inset:0; z-index:8; pointer-events:none; overflow:hidden; }
+  #objtags i { position:absolute; left:0; top:0; display:none; place-items:center; width:20px; height:20px; margin:-10px 0 0 -10px; font-style:normal;
+    font-family:var(--mono); font-weight:800; font-size:11px; color:#fff; background:rgba(9,13,21,.66); border:1.5px solid var(--c, #c9d1dc); }
   #bossname { margin-bottom:5px; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--foe); }
   #bosshp { height:5px; background:rgba(255,255,255,.08); border:1px solid var(--line); }
   #bosshp i { display:block; height:100%; width:100%; background:var(--foe); }
@@ -822,7 +854,8 @@
     #minimap { top:6px; left:6px; width:96px; height:76px; }
     #topbar { top:6px; right:6px; gap:4px; }
     #tomap, #tocfg { height:30px; padding:0 10px; font-size:10px; } #tocfg { width:30px; padding:0; font-size:13px; }
-    #bossbar { top:44px; width:min(280px, 46vw); } #bossname { margin-bottom:3px; font-size:9px; }
+    #bossbar { top:74px; width:min(280px, 46vw); } #bossname { margin-bottom:3px; font-size:9px; }
+    #objhud { top:40px; gap:4px; } .obj { width:24px; height:20px; font-size:11px; } #objmsg { top:24px; font-size:8.5px; }
     #feed { top:auto; bottom:64px; right:6px; width:220px; font-size:10px; }
     #ammo { right:6px; bottom:6px; min-width:0; padding:6px 10px 8px; }
     #amname { margin-bottom:3px; font-size:8px; letter-spacing:.2em; } #ammag { font-size:22px; } #amres { font-size:11px; }
@@ -885,7 +918,7 @@
   /* a desktop window taller than it is wide stacks the menu columns (a phone is held sideways, so it never lands here) */
   @media (max-aspect-ratio: 1/1) {
     .menu, .menu.lo { grid-template-columns:minmax(0, 1fr); }
-    .ops { grid-template-columns:minmax(0, 1fr); grid-template-rows:minmax(52vh, 1fr) auto; }
+    .ops { grid-template-columns:minmax(0, 1fr); grid-template-rows:minmax(40vh, 1fr) auto; }
     .brief { border-left:0; border-top:1px solid var(--line); }
     .br-sector { margin-top:0; }
     .lo-rail { border-right:0; border-bottom:1px solid var(--line); }
@@ -915,6 +948,8 @@
     <span class="tkbar them"><span class="tk-track"><i id="tkthem"></i></span></span>
     <b class="them" id="enemyn">26</b>
   </div>
+  <div class="hud" id="objhud"><div class="obj" id="obj0"><b>A</b><i></i></div><div class="obj" id="obj1"><b>B</b><i></i></div><div class="obj" id="obj2"><b>C</b><i></i></div><div id="objmsg"></div></div>
+  <div class="hud" id="objtags"><i id="otag0">A</i><i id="otag1">B</i><i id="otag2">C</i></div>
   <div class="hud" id="bossbar"><div id="bossname">WARLORD</div><div id="bosshp"><i id="bosshpfill"></i></div></div>
   <canvas class="hud" id="minimap" width="150" height="120"></canvas>
   <div class="hud" id="feed"></div>
@@ -1171,6 +1206,7 @@ const state = {   // per-battle / session
   bossSpawned: false, bossRef: null, spotterSeen: false,
   streakN: 0, streakT: 0,
   crossTarget: null, flyby: null,
+  objs: [], squadObj: null, objMsg: null, objDrainT: 0, squadDrainT: 0, noDrain: false,
   tod: 1, weather: 'clear',
 };
 let screen = 'map'; // map | team | battle
@@ -2404,6 +2440,11 @@ function pickSpawn(side) {   // 'e' for the enemy, 'p' for your squad
     let score = Math.min(near, 1800) - (seen ? 900 : 0) + rand(0, 240);
     if (near < 650) score -= 2000;                                        // never on top of the other side
     if (state.frontTime - z.used < 6) score -= 700;                       // spread arrivals across zones
+    if (side === 'e') for (const o of state.objs || []) {   // they reinforce near objectives they hold, never into one being taken
+      const od = Math.hypot(o.x - z.cx, o.y - z.cy);
+      if (o.owner === 'e' && od < 1000) score += 300;
+      if (o.inP > 0 && od < 520) score -= 2000;
+    }
     if (side === 'p') {
       if (z.name === 'fob') score += 150;
       if (mates.some(m => Math.hypot(m.x - z.cx, m.y - z.cy) < 900)) score += 300;
@@ -2418,7 +2459,7 @@ function spawnPoint() { return pickSpawn('e'); }
 function spawnEnemy(type) {
   const t = ETYPES[type], dmgMul = 1 + 0.12 * (state.tier - 1);   // harder sectors hit harder; health stays put so an M4 still drops a rifleman in three
   enemies.push({ type, r: t.r, col: t.col, dmg: t.dmg * dmgMul, horse: !!t.horse,
-    ranged: t.ranged || 0, spotter: !!t.spotter, spotCd: rand(3, 5), fireT: rand(0.5, 1.5),
+    ranged: t.ranged || 0, spotter: !!t.spotter, spotCd: rand(3, 5), fireT: rand(0.5, 1.5), objRole: !!t.ranged && Math.random() < 0.45,
     hp: t.hp, maxHp: t.hp,
     sp: t.sp * (1 + 0.04 * (state.tier - 1)) * rand(0.92, 1.08),
     ...spawnPoint(),
@@ -2972,6 +3013,94 @@ function rollSky(tid) {
   delete FORECAST[tid];
 }
 
+// ============================================================ OBJECTIVES
+// Every sector is fought over three of the town's landmarks, lettered A-C from north to south. Each has a flag and a
+// 7 m ring. Only one side standing in the ring moves it: one soldier takes an objective from the enemy in 12 s, two in
+// 9 s, three or more in 7 s (half of that to neutral, half to yours); both sides in the ring freeze it. Taking one
+// costs the enemy two reserves at once. Holding more objectives than they do drains a reserve every 4 s (every 2 s
+// with all three); they never lose reserves still standing on the field that way, and the Warlord still has to be
+// killed. Holding more than you do costs your squad a reinforcement every 20 s, after the first 45 s of the front.
+const OBJ_SITES = [   // open ground at each landmark, metres
+  { name: 'Rail yard', x: 36.5, y: 12.5 },
+  { name: 'Market', x: 16, y: 41.5 },
+  { name: 'Church square', x: 49, y: 38 },
+  { name: 'Gas station', x: 76, y: 40 },
+  { name: 'Building site', x: 33, y: 61.5 },
+  { name: 'Cemetery', x: 16.5, y: 63.5 },
+];
+const SECTOR_OBJ = [null, [0, 2, 5], [1, 2, 3], [0, 3, 4], [1, 3, 5], [0, 1, 4], [2, 3, 5], [0, 2, 4], [1, 2, 4], [0, 3, 5], [2, 3, 4], [0, 1, 3], [1, 2, 5]];
+const OBJ = { r: 7 * PX, flip: [0, 12, 9, 7], capSpend: 2, drainHold: 4, drainAll: 2, squadDrain: 20, grace: 45 };
+const objectiveSites = tid => (SECTOR_OBJ[tid] || SECTOR_OBJ[1]).map(i => OBJ_SITES[i]).sort((a, b) => a.y - b.y || a.x - b.x);
+function setupObjectives(sites, opts = {}) {   // every objective starts in enemy hands (a training flag can start neutral)
+  state.objs = sites.map((o, i) => ({ letter: String.fromCharCode(65 + i), name: o.name, x: o.x * PX, y: o.y * PX, r: (o.r || 7) * PX,
+    cap: opts.neutral ? 0 : -1, owner: opts.neutral ? null : 'e', inP: 0, inE: 0, contested: false, flashT: 0 }));
+  state.objDrainT = OBJ.drainHold; state.squadDrainT = OBJ.squadDrain; state.objMsg = null;
+  state.noDrain = !!opts.noDrain;
+}
+const objHeld = side => state.objs.reduce((n, o) => n + (o.owner === side ? 1 : 0), 0);
+function updateObjectives(dt) {
+  if (!state.objs || !state.objs.length) return;
+  for (const o of state.objs) {
+    let p = 0, e = 0;
+    const r2 = o.r * o.r;
+    for (const s of soldiers) if (s.alive && dist2(s.x, s.y, o.x, o.y) < r2) p++;
+    for (const en of enemies) if (dist2(en.x, en.y, o.x, o.y) < r2) e++;
+    o.inP = p; o.inE = e; o.contested = p > 0 && e > 0;
+    o.flashT = Math.max(0, o.flashT - dt);
+    if (state.objMsg && (state.objMsg.t -= dt / state.objs.length) <= 0) state.objMsg = null;
+    if (o.contested || (!p && !e)) continue;
+    const rate = 2 / OBJ.flip[Math.min(3, p || e)], was = o.owner;
+    o.cap = clamp(o.cap + (p ? rate : -rate) * dt, -1, 1);
+    if (o.cap >= 1) o.owner = 'p';
+    else if (o.cap <= -1) o.owner = 'e';
+    else if ((o.owner === 'p' && o.cap <= 0) || (o.owner === 'e' && o.cap >= 0)) o.owner = null;   // neutral once it crosses the middle
+    if (o.owner !== was) objectiveChanged(o);
+  }
+  if (state.noDrain) return;
+  const mine = objHeld('p'), theirs = objHeld('e');
+  if (mine > theirs) {
+    state.objDrainT -= dt;
+    if (state.objDrainT <= 0) { state.objDrainT = mine === state.objs.length ? OBJ.drainAll : OBJ.drainHold; drainEnemy(1); }
+  } else state.objDrainT = OBJ.drainHold;
+  if (theirs > mine && state.frontTime > OBJ.grace) {
+    state.squadDrainT -= dt;
+    if (state.squadDrainT <= 0) { state.squadDrainT = OBJ.squadDrain; if (state.tickets > 0) { state.tickets--; OV.ticketHit = 1; } }
+  } else state.squadDrainT = OBJ.squadDrain;
+}
+function objectiveChanged(o) {
+  o.flashT = 1.4;
+  const text = o.owner === 'p' ? `Objective ${o.letter} taken` : o.owner === 'e' ? `Objective ${o.letter} lost` : `Objective ${o.letter} neutral`;
+  state.objMsg = { text, good: o.owner === 'p', bad: o.owner === 'e', t: 2.4 };
+  if (o.owner === 'p') { drainEnemy(OBJ.capSpend); beep(660, 0.12, 'square', 0.05); beep(990, 0.22, 'square', 0.05, 0, 0.12); buzz(30); }
+  else if (o.owner === 'e') { beep(520, 0.14, 'square', 0.05); beep(330, 0.3, 'square', 0.05, 0, 0.14); }
+  else beep(760, 0.08, 'square', 0.03);
+}
+function drainEnemy(n) {   // reserves spent without a kill: never the ones standing on the field, never the Warlord's own ticket
+  const onField = enemies.reduce((k, e) => k + (e.boss ? 0 : 1), 0);
+  const next = Math.min(state.enemyTotal - onField - 1, state.enemyDown + n);
+  if (next <= state.enemyDown) return 0;
+  const got = next - state.enemyDown;
+  state.enemyDown = next;
+  state.progress = Math.min(state.bossRef ? 99 : 100, state.enemyDown / state.enemyTotal * 100);
+  return got;
+}
+function enemyObjective(e) {   // theirs under attack first, then the nearest they don't hold, then the nearest of theirs
+  let best = null, bs = Infinity;
+  for (const o of state.objs || []) {
+    const s = Math.hypot(o.x - e.x, o.y - e.y) + (o.owner === 'e' ? (o.inP > 0 ? -1200 : 700) : 0);
+    if (s < bs) { bs = s; best = o; }
+  }
+  return best;
+}
+function squadObjective(s) {   // the nearest objective your squad doesn't hold, the one Point is taking if Point has one
+  if (!state.objs || !state.objs.length) return null;
+  const pointing = state.squadObj && state.squadObj.owner !== 'p' ? state.squadObj : null;
+  if (pointing && s.slot !== 1) return pointing;
+  let best = null, bd = Infinity;
+  for (const o of state.objs) { if (o.owner === 'p' && o.cap >= 1) continue; const d = Math.hypot(o.x - s.x, o.y - s.y) + (o.contested ? -300 : 0); if (d < bd) { bd = d; best = o; } }
+  if (s.slot === 1) state.squadObj = best;
+  return best;
+}
 // ============================================================ FRONT LIFECYCLE
 function enterBattle(tid) {
   if (!VIEW.ready) {   // three.js is still arriving (or failed): hold the deploy
@@ -3000,6 +3129,7 @@ function enterBattle(tid) {
   rollSky(tid);
   enemies = []; bullets = []; markers = []; floaters = []; bodies = []; particles = []; pickups = [];
   genTerrain();
+  setupObjectives(objectiveSites(tid)); state.squadObj = null;
   soldiers = meta.squad.map((m, i) => buildSoldier(i));
   const first = soldiers.findIndex(s => s.alive);
   state.controlled = first < 0 ? 0 : first;
@@ -3272,8 +3402,16 @@ function squadAI(s, spd, dt, lead, front, wrange) {
   const moved = foe && s.foeX != null && dist2(foe.x, foe.y, s.foeX, s.foeY) > 320 * 320;
   if (s.planT <= 0 && (s.tacT <= 0 || s.goalX == null || moved)) {
     s.tacT = rand(2.6, 4.2); s.planT = 0.8;
-    let gx, gy, threat;
-    if (foe) {
+    let gx, gy, threat, onObj = false;
+    const obj = role !== 'flank' ? squadObjective(s) : null, pressed = foe && dist2(foe.x, foe.y, s.x, s.y) < (wrange * 0.6) ** 2;
+    if (obj && !pressed && role === 'point') {   // Point goes and takes the objective
+      gx = obj.x; gy = obj.y; threat = foe || obj; onObj = true;
+      if (foe) { s.foeX = foe.x; s.foeY = foe.y; }
+    } else if (obj && !pressed && role === 'overwatch' && obj.inP > 0) {   // Overwatch covers it from the near edge of its range
+      const dx = s.x - obj.x, dy = s.y - obj.y, dd = Math.hypot(dx, dy) || 1, want = Math.min(wrange * 0.8, dd);
+      gx = obj.x + dx / dd * want; gy = obj.y + dy / dd * want; threat = foe || obj;
+      if (foe) { s.foeX = foe.x; s.foeY = foe.y; }
+    } else if (foe) {
       const dx = foe.x - s.x, dy = foe.y - s.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
       // a triangle around the enemy: point straight in, flank out to the left, overwatch back and to the right
       if (role === 'flank') {
@@ -3293,7 +3431,7 @@ function squadAI(s, spd, dt, lead, front, wrange) {
       gx = at.x + Math.cos(ang) * off; gy = at.y + Math.sin(ang) * off;
       threat = at; s.foeX = null;
     }
-    for (let k = 0; k < 3; k++) {   // spread out: shove the spot away from teammates' spots, and from you
+    for (let k = 0; k < 3 && !onObj; k++) {   // spread out: shove the spot away from teammates' spots, and from you (not off an objective)
       let bumped = false;
       for (const o of soldiers) {
         if (o === s || !o.alive) continue;
@@ -3309,8 +3447,8 @@ function squadAI(s, spd, dt, lead, front, wrange) {
     }
     gx = clamp(gx, 40, CFG.arenaW - 40); gy = clamp(gy, 40, CFG.arenaH - 40);
     s.goalX = gx; s.goalY = gy;
-    const ob = pickCover(s, threat, gx, gy, 420, wrange * (role === 'overwatch' ? 0.9 : 0.62));
-    if (ob && dist2(SPOT.x, SPOT.y, gx, gy) < 260 * 260) { s.coverRef = ob; goTo(s, SPOT.x, SPOT.y); }
+    const ob = pickCover(s, threat, gx, gy, onObj ? obj.r * 0.7 : 420, wrange * (role === 'overwatch' ? 0.9 : 0.62));
+    if (ob && dist2(SPOT.x, SPOT.y, gx, gy) < (onObj ? obj.r * 0.7 : 260) ** 2) { s.coverRef = ob; goTo(s, SPOT.x, SPOT.y); }
     else { s.coverRef = null; goTo(s, gx, gy); }
   }
   const far = s.gx != null && dist2(s.x, s.y, s.gx, s.gy) > 300 * 300;
@@ -3498,6 +3636,18 @@ function riflemanAI(e, t, dt, d, vis) {   // bound to cover, hold and fire in bu
   if (sees) fireLogic(e, t, dt, false);
   if (e.tacT > 0) return;
   if (e.supp > 1.6 && e.coverRef) { e.tacT = rand(1, 1.8); return; }   // pinned down
+  if (e.objRole && !(sees && d < range * 0.55)) {   // this one works an objective: take it, or hold it, from cover
+    const o = enemyObjective(e);
+    if (o) {
+      if (dist2(e.x, e.y, o.x, o.y) > (o.r * 0.75) ** 2) {
+        const ob = pickCover(e, t, o.x, o.y, o.r * 0.75, range * 0.7);
+        if (ob) { e.coverRef = ob; goTo(e, SPOT.x, SPOT.y); }
+        else { e.coverRef = null; goTo(e, o.x + rand(-0.4, 0.4) * o.r, o.y + rand(-0.4, 0.4) * o.r); }
+        e.tac = 'move'; e.tacT = 8;
+      } else { e.tac = 'hold'; e.tacT = rand(2, 3.5); }
+      return;
+    }
+  }
   const hurt = e.hp < e.maxHp * 0.45 && Math.random() < 0.5;
   const ideal = range * (hurt ? 0.95 : e.type === 'gunner' ? 0.85 : 0.7);
   const ux = (e.x - t.x) / d, uy = (e.y - t.y) / d, lat = e.flankSide * (e.type === 'gunner' ? 60 : 170);
@@ -3660,6 +3810,7 @@ function battleUpdate(dt) {
         if (s.respawnT <= 0) respawnSoldier(s);
       }
     updateEnemies(wdt);
+    updateObjectives(wdt);
     updateBullets(wdt);
     updateShells(wdt);
     updateGrenades(wdt);
@@ -5257,9 +5408,11 @@ function buildFxBatches() {
     arrow: new Batch(new THREE.ConeGeometry(0.5, 1, 3), new THREE.MeshBasicMaterial({ fog: false, depthTest: false }), 4, 11),
     bloom: new Batch(plane, new THREE.MeshBasicMaterial({ map: T.bloom, transparent: true, opacity: 0.62, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }), 96, 6),
     brass: new Batch(VIEW.kit.cyl, VIEW.mats.shaded, 200),
+    objRing: new Batch(plane, decalMat(null, { opacity: 0.55 }), 160, 1),
+    flag: new Batch(box, new THREE.MeshLambertMaterial(), 12),
   };
 }
-const FX_FRAME = ['shadow', 'crater', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass'];
+const FX_FRAME = ['shadow', 'crater', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass', 'objRing', 'flag'];
 let TRACER_COLS = null;   // tracer palette, built once the engine is up
 const hash2 = (x, y) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };
 function muzzleWorld(s, out) {   // where the drawn weapon's barrel actually ends, this frame
@@ -5365,6 +5518,25 @@ function drawFx() {
     }
   }
   const D = VIEW.dyn;
+  for (const o of state.objs || []) {   // an objective: a pole, a cloth in the owner's colour that climbs as it is taken, its ring on the ground
+    const X = o.x * XS, Z = o.y * XS, col = colorOf(o.owner === 'p' ? '#4aa6f0' : o.owner === 'e' ? '#cf3a2b' : '#d9dbe4');
+    TMP.q.identity();
+    TMP.m.compose(TMP.v.set(X, 1.8, Z), TMP.q, TMP.s.set(0.07, 3.6, 0.07)); D.metal.push(TMP.m, colorOf('#8d8f8b'));
+    TMP.m.compose(TMP.v.set(X, 3.62, Z), TMP.q, TMP.s.set(0.14, 0.08, 0.14)); D.metal.push(TMP.m, colorOf('#b8b09a'));
+    TMP.q.setFromAxisAngle(TMP.up, Math.sin(now / 520 + o.x) * 0.3 + o.y * 0.001);
+    TMP.v2.set(0.5, 0, 0).applyQuaternion(TMP.q);
+    const h = 1.1 + 2.2 * Math.abs(o.cap);
+    TMP.m.compose(TMP.v.set(X + TMP.v2.x, h, Z + TMP.v2.z), TMP.q, TMP.s.set(0.96, 0.58, 0.03)); F.flag.push(TMP.m, col);
+    TMP.q.identity();
+    const R = o.r * XS, segs = 40, spin = now / 12000;   // the ring: a dashed line on the ground, slowly turning
+    for (let k = 0; k < segs; k += 2) {
+      const a = (k + 0.5) / segs * TAU + spin;
+      TMP.e.set(-Math.PI / 2, -a - Math.PI / 2, 0, 'YXZ');
+      TMP.qd.setFromEuler(TMP.e);
+      TMP.md.compose(TMP.vd.set(X + Math.cos(a) * R, 0.04, Z + Math.sin(a) * R), TMP.qd, TMP.sd.set(TAU * R / segs * 0.9, 0.16, 1));
+      F.objRing.push(TMP.md, col);
+    }
+  }
   for (const mk of markers) {   // battlefield cross where soldiers fell: rifle planted muzzle-down, helmet on the stock, boots in front
     const X = mk.x * XS, Z = mk.y * XS;
     TMP.q.setFromAxisAngle(TMP.up, hash2(mk.x, mk.y) * 0.8 - 0.4);
@@ -6548,6 +6720,18 @@ function updateOverlays(dt) {
     const sp = !!(soldiers[state.controlled] && soldiers[state.controlled].sprinting);
     if (sp !== OV.joySprint) { OV.joySprint = sp; jb.classList.toggle('sprint', sp); }
   } else hideEl(jb);
+  {   // objective letters over each flag, through fog and walls
+    const objs = state.objs || [];
+    for (let i = 0; i < 3; i++) {
+      const tag = (OV.otag || (OV.otag = []))[i] || (OV.otag[i] = document.getElementById('otag' + i)), o = objs[i];
+      if (o && state.mode !== 'failed' && toScreen(o.x, o.y, 4.3 / ZS) && SCR.x > -20 && SCR.x < innerWidth + 20 && SCR.y > -20 && SCR.y < innerHeight + 20) {
+        if (tag.style.display !== 'grid') tag.style.display = 'grid';
+        tag.style.transform = `translate3d(${SCR.x.toFixed(1)}px,${SCR.y.toFixed(1)}px,0)`;
+        const c = o.owner === 'p' ? 'var(--friend)' : o.owner === 'e' ? 'var(--foe)' : '#c9d1dc';
+        if (tag.dataset.c !== c) { tag.dataset.c = c; tag.style.setProperty('--c', c); }
+      } else hideEl(tag);
+    }
+  }
   {   // a live frag within 6 m: a red grenade on a ring around the crosshair, pointing at it
     const me = soldiers[state.controlled], nw = OV.nade || (OV.nade = document.getElementById('nadewarn'));
     let near = null, nd = 240 * 240;
@@ -6800,6 +6984,20 @@ function updateBattleHud() {
     am.classList.toggle('low', !c.pistol && c.mag <= magCap(c) * 0.25);
     am.classList.toggle('reloading', c.reloadT > 0);
     $('reloadbtn').classList.toggle('warn', !c.pistol && c.mag <= magCap(c) * 0.25);
+    const objs = state.objs || [];
+    for (let i = 0; i < 3; i++) {
+      const o = objs[i], chip = OV.objChip && OV.objChip[i] || ((OV.objChip = OV.objChip || [])[i] = $('obj' + i));
+      if (!o) { if (chip.style.display !== 'none') chip.style.display = 'none'; continue; }
+      if (chip.style.display === 'none') chip.style.display = '';
+      const cls = 'obj ' + (o.owner === 'p' ? 'p' : o.owner === 'e' ? 'e' : 'n') + (o.contested ? ' contest' : '') + (o.flashT > 0 ? ' flash' : '');
+      if (chip.className !== cls) chip.className = cls;
+      const pv = Math.abs(o.cap).toFixed(2), cv = o.cap >= 0 ? 'var(--friend)' : 'var(--foe)';
+      if (chip.dataset.p !== pv) { chip.dataset.p = pv; chip.style.setProperty('--p', pv); }
+      if (chip.dataset.c !== cv) { chip.dataset.c = cv; chip.style.setProperty('--c', cv); }
+    }
+    const om = $('objmsg'), msg = state.objMsg;
+    const mcls = msg ? 'on' + (msg.good ? ' good' : msg.bad ? ' bad' : '') : '';
+    if (om.className !== mcls) { om.className = mcls; if (msg) om.textContent = msg.text; }
     const fr = c.frags || 0;
     if (fr !== OV.frags) { OV.frags = fr; $('nadecnt').textContent = fr; $('amfragn').textContent = fr; $('nadebtn').classList.toggle('empty', !fr); $('amfrag').classList.toggle('empty', !fr); }
     if (c.reloadT > 0) $('ambar').firstChild.style.width = (1 - c.reloadT / c.reloadDur) * 100 + '%';
@@ -6840,6 +7038,13 @@ function drawMinimap() {
   for (const o of obstacles) g.fillRect(X(o.x) - 1.5, Y(o.y) - 1.5, 3, 3);
   g.fillStyle = '#ff6b2c';
   for (const p of pickups) g.fillRect(X(p.x) - 2, Y(p.y) - 2, 4, 4);
+  g.font = '800 9px "JetBrains Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const o of state.objs || []) {   // objectives: the ring in the owner's colour, the letter in the middle
+    const col = o.owner === 'p' ? '#5cb6ff' : o.owner === 'e' ? '#ff4d3d' : '#c9d1dc';
+    g.strokeStyle = col; g.lineWidth = 1.5;
+    g.beginPath(); g.arc(X(o.x), Y(o.y), Math.max(5, o.r * sc), 0, TAU); g.stroke();
+    g.fillStyle = col; g.fillText(o.letter, X(o.x), Y(o.y) + 0.5);
+  }
   for (const e of enemies) {   // only what you could plausibly know about: close, or shooting
     const d = Math.hypot(e.x - s.x, e.y - s.y);
     if (d > 950 && !(e.fireT < 0.5 && d < 1600)) continue;
@@ -7299,7 +7504,8 @@ function renderBrief() {
   $('brProgFill').style.width = prog + '%';
   const line = $('brLine');
   if (own) line.textContent = t.tier === 0 ? 'Headquarters. Every push starts here.' : 'Held by the Ninth Company.';
-  else if (atk) line.innerHTML = `Break <b>${left}</b> enemy reserves. A Warlord takes the field at 90%.`;
+  else if (atk) line.innerHTML = 'Objectives ' + objectiveSites(t.id).map((o, i) => `<b>${'ABC'[i]}</b> ${o.name}`).join(' · ')
+    + `. Hold more of them than they do to bleed their <b>${left}</b> reserves; the Warlord comes at 90%.`;
   else {
     const via = t.adj.map(i => TERRITORIES[i]).filter(terrAttackable).map(x => x.name);
     line.textContent = via.length ? `Out of reach. Take ${via.join(' or ')} first.` : 'Out of reach. Push the front closer.';

@@ -195,6 +195,18 @@ function updateOverlays(dt) {
     const sp = !!(soldiers[state.controlled] && soldiers[state.controlled].sprinting);
     if (sp !== OV.joySprint) { OV.joySprint = sp; jb.classList.toggle('sprint', sp); }
   } else hideEl(jb);
+  {   // objective letters over each flag, through fog and walls
+    const objs = state.objs || [];
+    for (let i = 0; i < 3; i++) {
+      const tag = (OV.otag || (OV.otag = []))[i] || (OV.otag[i] = document.getElementById('otag' + i)), o = objs[i];
+      if (o && state.mode !== 'failed' && toScreen(o.x, o.y, 4.3 / ZS) && SCR.x > -20 && SCR.x < innerWidth + 20 && SCR.y > -20 && SCR.y < innerHeight + 20) {
+        if (tag.style.display !== 'grid') tag.style.display = 'grid';
+        tag.style.transform = `translate3d(${SCR.x.toFixed(1)}px,${SCR.y.toFixed(1)}px,0)`;
+        const c = o.owner === 'p' ? 'var(--friend)' : o.owner === 'e' ? 'var(--foe)' : '#c9d1dc';
+        if (tag.dataset.c !== c) { tag.dataset.c = c; tag.style.setProperty('--c', c); }
+      } else hideEl(tag);
+    }
+  }
   {   // a live frag within 6 m: a red grenade on a ring around the crosshair, pointing at it
     const me = soldiers[state.controlled], nw = OV.nade || (OV.nade = document.getElementById('nadewarn'));
     let near = null, nd = 240 * 240;
