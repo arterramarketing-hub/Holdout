@@ -200,7 +200,7 @@ function updateOverlays(dt) {
     const objs = signs ? RANGE.signs.map((p, i) => ({ x: p[0] * PX, y: p[1] * PX, letter: String(i + 1), owner: T.seen[i] ? 'p' : null })) : (state.objs || []);
     for (let i = 0; i < 3; i++) {
       const tag = (OV.otag || (OV.otag = []))[i] || (OV.otag[i] = document.getElementById('otag' + i)), o = objs[i];
-      if (o && state.mode !== 'failed' && toScreen(o.x, o.y, (signs ? 2.7 : 4.3) / ZS) && SCR.x > -20 && SCR.x < innerWidth + 20 && SCR.y > -20 && SCR.y < innerHeight + 20) {
+      if (o && state.mode !== 'failed' && toScreen(o.x, o.y, (signs ? 2.7 : 4.3) / ZS) && SCR.x > -20 && SCR.x < innerWidth + 20 && SCR.y > (innerHeight < 520 ? 70 : 96) && SCR.y < innerHeight + 20) {   // never over the ticket bar and the objective chips
         if (tag.style.display !== 'grid') tag.style.display = 'grid';
         if (tag.textContent !== o.letter) tag.textContent = o.letter;
         tag.style.transform = `translate3d(${SCR.x.toFixed(1)}px,${SCR.y.toFixed(1)}px,0)`;

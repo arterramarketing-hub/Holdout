@@ -350,7 +350,8 @@
   knee-buckle deaths continue from the pose the character died in; quad bikes roll their wheels with
   real distance and chatter on their suspension.
 
-  HANDS & RELOAD — the weapon in your hands is held by gloved hands built finger by finger (trigger hand
+  HANDS & RELOAD — the weapon in your hands is held by gloved hands built finger by finger (forearms thicken toward
+  the elbow, so the support arm reads as an arm rather than a rod on a wide phone screen) (trigger hand
   wrapped on the pistol grip with the index finger on the trigger, support hand clamped on the handguard,
   thumbs placed, knuckle guards, cuffs and sleeves running out of frame), anchored per gun (VM_HOLD). The
   first-person reload is keyframed and synced to its sounds (vmReload): the gun cants toward the support
@@ -5337,8 +5338,10 @@ function drawArm(W, E, pal, set) {   // glove cuff, camo sleeve and rolled cuff 
     set[key].push(LT.ma, pal[col] || WHITE);
   };
   seg(-0.004 * s, 0.036 * s, 0.031 * s, 'band', 'webbing', 0);
-  seg(0.05 * s, len, 0.045 * s, 'limb', 'coat', 0.05 * s);
-  seg(0.048 * s, 0.082 * s, 0.05 * s, 'band', 'carrier', 0);
+  const mid = Math.min(len, 0.3 * s);   // a forearm thickens toward the elbow; a uniform rod from the hand to the corner of the view reads as a pole
+  seg(0.05 * s, mid, 0.05 * s, 'limb', 'coat', 0.02 * s);
+  if (len > mid) seg(mid, len, 0.068 * s, 'limb', 'coat', 0.05 * s);
+  seg(0.048 * s, 0.082 * s, 0.055 * s, 'band', 'carrier', 0);
 }
 const VM_HOLD = {   // where the hands hold each gun: the grip [x, y, z, rake] and the support hand's handguard [half-width, half-height] or second grip
   smg:    { grip: [0, -0.1, 0.05, 0.3],  sup: [0, 0.02, -0.26, 0],       guard: [0.026, 0.03] },
@@ -7221,7 +7224,7 @@ function updateOverlays(dt) {
     const objs = signs ? RANGE.signs.map((p, i) => ({ x: p[0] * PX, y: p[1] * PX, letter: String(i + 1), owner: T.seen[i] ? 'p' : null })) : (state.objs || []);
     for (let i = 0; i < 3; i++) {
       const tag = (OV.otag || (OV.otag = []))[i] || (OV.otag[i] = document.getElementById('otag' + i)), o = objs[i];
-      if (o && state.mode !== 'failed' && toScreen(o.x, o.y, (signs ? 2.7 : 4.3) / ZS) && SCR.x > -20 && SCR.x < innerWidth + 20 && SCR.y > -20 && SCR.y < innerHeight + 20) {
+      if (o && state.mode !== 'failed' && toScreen(o.x, o.y, (signs ? 2.7 : 4.3) / ZS) && SCR.x > -20 && SCR.x < innerWidth + 20 && SCR.y > (innerHeight < 520 ? 70 : 96) && SCR.y < innerHeight + 20) {   // never over the ticket bar and the objective chips
         if (tag.style.display !== 'grid') tag.style.display = 'grid';
         if (tag.textContent !== o.letter) tag.textContent = o.letter;
         tag.style.transform = `translate3d(${SCR.x.toFixed(1)}px,${SCR.y.toFixed(1)}px,0)`;

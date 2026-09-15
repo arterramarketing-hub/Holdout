@@ -349,7 +349,8 @@
   knee-buckle deaths continue from the pose the character died in; quad bikes roll their wheels with
   real distance and chatter on their suspension.
 
-  HANDS & RELOAD — the weapon in your hands is held by gloved hands built finger by finger (trigger hand
+  HANDS & RELOAD — the weapon in your hands is held by gloved hands built finger by finger (forearms thicken toward
+  the elbow, so the support arm reads as an arm rather than a rod on a wide phone screen) (trigger hand
   wrapped on the pistol grip with the index finger on the trigger, support hand clamped on the handguard,
   thumbs placed, knuckle guards, cuffs and sleeves running out of frame), anchored per gun (VM_HOLD). The
   first-person reload is keyframed and synced to its sounds (vmReload): the gun cants toward the support

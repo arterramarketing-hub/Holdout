@@ -66,8 +66,10 @@ function drawArm(W, E, pal, set) {   // glove cuff, camo sleeve and rolled cuff 
     set[key].push(LT.ma, pal[col] || WHITE);
   };
   seg(-0.004 * s, 0.036 * s, 0.031 * s, 'band', 'webbing', 0);
-  seg(0.05 * s, len, 0.045 * s, 'limb', 'coat', 0.05 * s);
-  seg(0.048 * s, 0.082 * s, 0.05 * s, 'band', 'carrier', 0);
+  const mid = Math.min(len, 0.3 * s);   // a forearm thickens toward the elbow; a uniform rod from the hand to the corner of the view reads as a pole
+  seg(0.05 * s, mid, 0.05 * s, 'limb', 'coat', 0.02 * s);
+  if (len > mid) seg(mid, len, 0.068 * s, 'limb', 'coat', 0.05 * s);
+  seg(0.048 * s, 0.082 * s, 0.055 * s, 'band', 'carrier', 0);
 }
 const VM_HOLD = {   // where the hands hold each gun: the grip [x, y, z, rake] and the support hand's handguard [half-width, half-height] or second grip
   smg:    { grip: [0, -0.1, 0.05, 0.3],  sup: [0, 0.02, -0.26, 0],       guard: [0.026, 0.03] },

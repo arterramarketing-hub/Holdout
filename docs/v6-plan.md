@@ -366,3 +366,47 @@ Found along the way, to review here:
 - Callouts are tones and HUD tags, not spoken lines, so the no-dialogue rule holds.
 - Aim assist stays third person only on every input, controller included.
 - The firing range runs once automatically for new campaigns only; existing saves just see it on the menu.
+
+---
+
+## Status — complete (Sep 15, 2026)
+
+Every phase passed its audit gate: current build, the full headless suite, the phase's own tests, screenshots, performance and header notes.
+
+| Phase | Commit | Artifact | Tests after |
+|---|---|---|---|
+| 1 Source split and tests | e306e24 | — (no player-facing change) | 32 |
+| 2 Manual aim and new start menu | 15d8640 | Version 27 | 46 |
+| 3 Enemy rounds in 3D, grenades, sprint | ff25e86 | Version 28 | 67 |
+| 4 Objectives | ca022a9 | Version 29 | 80 |
+| 5 Footsteps and callouts | f18a77d | Version 30 | 88 |
+| 6 Quality and controller | 619aaab | Version 31 | 98 |
+| 7 Firing range | 33e1860 | Version 32 | 104 |
+| 8 Final audit | this commit | Version 33 | 104 |
+
+Two commits made from GitHub Desktop (3c46a71 "Another Update", 3f6fa90 "update") captured Phases 2 and 3 mid-way. Nothing was lost.
+
+**Measured**
+
+- **Open-ground damage (3D enemy rounds):** 26.8 per minute against the 12-seed baseline of 25.4, which is +5%.
+- **Behind cover:** a car cuts damage to 2.9 per minute. Sandbags no longer protect a standing player: 23.2 per minute, against 6.2 before. A squadmate crouched behind sandbags takes 5.3 against 16.3 in the open.
+- **A bot-played front:** clears in about 120 s with objectives on.
+- **Mix:** an enemy footfall at 10 m sits 30 dB under your gunshot; a bark at 15 m sits 20 dB under.
+- **Phone-sized screen (740×360):**
+
+  | Preset | Render lines | Draw calls | CPU per frame |
+  |---|---|---|---|
+  | High | 360 | ~100 | 0.8 ms |
+  | Medium | 270 | ~100 | 0.7 ms |
+  | Low | 180 | ~100 | 0.6 ms |
+
+**Polish done in Phase 8**
+
+- The first-person forearm tapers toward the elbow, so it no longer reads as a pole on phones.
+- Objective tags stay out of the ticket and objective band at the top of the screen.
+
+**Worth testing by hand**
+
+- A real controller: look speed and deadzones were tuned against a mocked pad.
+- The synthesised enemy barks, which no one has listened to yet.
+- Balance of standing behind low cover now that enemy rounds arrive in 3D.
