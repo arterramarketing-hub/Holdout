@@ -410,3 +410,24 @@ Two commits made from GitHub Desktop (3c46a71 "Another Update", 3f6fa90 "update"
 - A real controller: look speed and deadzones were tuned against a mocked pad.
 - The synthesised enemy barks, which no one has listened to yet.
 - Balance of standing behind low cover now that enemy rounds arrive in 3D.
+
+## Audit after release (Sep 15, 2026)
+
+A full review of the v6 code, plus a soak test of whole fronts back to back with everything switched on.
+
+**Bugs found and fixed**
+
+| Bug | What a player would have seen | Fix |
+|---|---|---|
+| One frag that killed several enemies near 90% could spend the Warlord's ticket before it spawned | The front won with no Warlord | `killEnemy` keeps that ticket on the board until the Warlord has come and fallen |
+| Your own soldier started a front with a random fire cooldown of up to 0.4 s | The first trigger pull after deploying could do nothing | The stagger now applies to the AI squad only |
+| A frag thrown with your face against a wall left from inside the building | The grenade vanished into the house | The throw starts from your own position when the hand is inside a building |
+| A host page that refuses the Gamepad API throws from `getGamepads()` | The game loop would stop | `currentPad()` treats a refusal as no controller |
+| A controller's A did nothing on an after-action card until the stick moved focus | Stuck on the card with a controller | A takes the card's main button, or wakes the focus ring elsewhere |
+| The range button pressed before the 3D engine had loaded opened a real front | A normal battle instead of training | It waits on a Loading card, then opens the range |
+
+**Changed on review**
+
+- Auto quality starts at High on every device, the look phones ran before presets existed, and steps down only if frames run slow.
+
+**Regression tests:** `tests/suites/98-audit.test.js` covers each fix; `tests/suites/97-soak.test.js` runs with `python3 tools/test.py --soak`.

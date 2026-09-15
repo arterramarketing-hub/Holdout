@@ -40,6 +40,12 @@ suite('graphics quality', t => {
     assert.eq(Q.level, 'high', 'and back to where it started');
     for (let i = 0; i < 60 * 30; i++) autoQuality(1 / 90);
     assert.eq(Q.level, 'high', 'never above where it started');
+    for (let i = 0; i < 125; i++) autoQuality(0.04);
+    assert.eq(Q.level, 'medium', 'High ran slow a second time');
+    for (let i = 0; i < 60 * 120; i++) autoQuality(1 / 60);
+    assert.eq(Q.level, 'medium', 'a level that has run slow twice is not tried again');
+    meta.opts.quality = 'low'; applyOpts(); meta.opts.quality = 'auto'; applyOpts();
+    assert.eq(Q.level, 'high', 'choosing Auto again starts fresh');
   });
   t.test('the Graphics setting switches between Auto and a fixed preset', () => {
     newCampaign(); showSettings();

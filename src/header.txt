@@ -16,14 +16,17 @@
   (particles 220 / 500 / 900, loose brass 40 / 100 / 160, enemy corpses 50 / 90 / 120, rain 35 / 70 / 100%); Low
   also drops the tracer glow and other soldiers' muzzle blooms (your own flash always blooms). Auto starts at High on
   every device (the look phones already ran), steps down after 3 s of frames averaging over 24 ms (and again if it
-  stays slow), and climbs back after 10 s under 17.5 ms, never within 30 s of a drop. Stalls over 0.2 s (a throttled
-  or hidden page) are ignored.
+  stays slow), and climbs back after 10 s under 17.5 ms, never within 30 s of a drop and never to a level that has
+  already run slow twice, so a phone that cannot hold High settles instead of flipping resolution every half minute.
+  Stalls over 0.2 s (a throttled or hidden page) are ignored.
 
   CONTROLLER — the standard Gamepad mapping. Battle: left stick moves (radial deadzone 0.15), right stick looks
   (deadzone 0.12, response curve ^1.8, SETTINGS › Controller look), RT fires, LT aims down the sights, RB throws a
   grenade, X reloads, Y switches view, L3 sprints until the stick comes back, D-pad ← ↑ → calls killstreaks 1-3, START
-  opens settings, VIEW goes back to the map. Menus: the stick or D-pad moves focus (an orange ring), A presses, B backs
-  out (and closes settings); on the start menu LB/RB (or ←/→) cycle sectors, A deploys and Y opens the loadout.
+  opens settings, VIEW goes back to the map. Menus: the stick or D-pad moves focus (an orange ring), A presses (with
+  nothing focused yet, A takes a card's main button, or wakes the ring on the loadout), B backs out (and closes
+  settings); on the start menu LB/RB (or ←/→) cycle sectors, A deploys and Y opens the loadout. A host page that
+  refuses the Gamepad API just means no controller.
   Rumble follows the Vibration setting. The HUD hint shows controller buttons whenever the controller was the last
   thing touched, and a key hands the prompts back. Aim assist stays third person only.
 
@@ -82,7 +85,8 @@
   FOUR AGAINST EIGHT — you and three squadmates against up to eight enemies on the field at once. The enemy has its
   own ticket pool (CFG.enemyTickets 44 + 8 per tier): every enemy death spends one, a new enemy walks on 1-2 s after
   one falls while tickets remain, and the front is won when the pool is spent (the progress bar is exactly that).
-  The Warlord arrives at 90%, and killing it breaks what is left of them. Objectives spend their pool too (see
+  The Warlord arrives at 90%, and killing it breaks what is left of them; its ticket stays on the board until it has
+  come and fallen, so no multi-kill can end a front without it. Objectives spend their pool too (see
   OBJECTIVES). A front you walk away from resumes where you left it; a lost front starts again from 0%.
 
   OBJECTIVES — every sector is fought over three of six landmarks (OBJ_SITES: Rail yard, Market, Church square, Gas
