@@ -455,7 +455,7 @@ function applyEnv(dt) {
   if (W.rain && screen === 'battle') {
     const cp = VIEW.camera.position, D = VIEW.drops;
     TMP.q.setFromEuler(TMP.e.set(0.18, 0, 0, 'YXZ'));
-    for (let k = 0; k < VIEW.dropCount; k++) {
+    for (let k = 0, kn = Math.floor(VIEW.dropCount * Q.rain); k < kn; k++) {
       let y = D[k * 3 + 1] - dt * 19;
       if (y < -1) y += 23;
       D[k * 3 + 1] = y;

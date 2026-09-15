@@ -11,6 +11,23 @@
   movement is camera-relative. Red arrows mark close enemies beside or behind you. The chase camera pulls in front
   of house walls rather than clipping through.
 
+  GRAPHICS QUALITY — SETTINGS › Graphics: Auto (the default), Low, Medium or High (QUALITY). LINES sets the N64
+  render's height (High 480, Medium 360, Low 270; the whole-number blow-up never goes much past it, so 720p renders
+  360 and 1080p 540 on High); DPR caps the output pixel ratio (1 / 1.5 / 2); caps thin out what is drawn and kept
+  (particles 220 / 500 / 900, loose brass 40 / 100 / 160, enemy corpses 50 / 90 / 120, rain 35 / 70 / 100%); Low
+  also drops the tracer glow and other soldiers' muzzle blooms (your own flash always blooms). Auto starts at Medium
+  on a phone and High on a desktop, steps down after 3 s of frames averaging over 24 ms (and again if it stays slow),
+  and climbs back after 10 s under 17.5 ms, never within 30 s of a drop and never above where it started. Stalls over
+  0.2 s (a throttled or hidden page) are ignored.
+
+  CONTROLLER — the standard Gamepad mapping. Battle: left stick moves (radial deadzone 0.15), right stick looks
+  (deadzone 0.12, response curve ^1.8, SETTINGS › Controller look), RT fires, LT aims down the sights, RB throws a
+  grenade, X reloads, Y switches view, L3 sprints until the stick comes back, D-pad ← ↑ → calls killstreaks 1-3, START
+  opens settings, VIEW goes back to the map. Menus: the stick or D-pad moves focus (an orange ring), A presses, B backs
+  out (and closes settings); on the start menu LB/RB (or ←/→) cycle sectors, A deploys and Y opens the loadout.
+  Rumble follows the Vibration setting. The HUD hint shows controller buttons whenever the controller was the last
+  thing touched, and a key hands the prompts back. Aim assist stays third person only.
+
   ORIENTATION — on a phone or tablet the game plays in landscape only: held upright it shows a rotate
   prompt and the simulation stops dead until you turn it, so nothing happens while you cannot see it.
 
@@ -32,8 +49,8 @@
   HUD EXTRAS — a minimap (top-left) draws the town, your squad, pickups and any enemy within 24 m or
   firing within 40 m, with your facing as an arrow; damage-direction arcs point back at whatever hit you;
   a kill feed lists kills and losses; short vibrations on hits, kills and your own death where the browser
-  supports them. All of those, plus squad callouts, look sensitivity, field of view (-10 to +18), sound and music,
-  are settings.
+  supports them. All of those, plus squad callouts, look sensitivity, field of view (-10 to +18), sound, music,
+  graphics quality and (once a controller has been used) controller look speed, are settings.
 
   DEATH — when your soldier falls you watch it happen: a 1.9 s letterboxed death camera, the world slowed to 30%
   for most of it, easing around and down to the body with the mix muffled behind a pulse; then a reinforcement
@@ -212,8 +229,8 @@
   (HQ kept) and every enemy tier rises by 2.
 
   N64 LOOK — three.js loads from jsdelivr at boot (the map works before it arrives; DEPLOY waits).
-  Output is N64-faithful: the scene renders at 480+ lines (the N64 hi-res mode) on the short side into a
-  render target, then a full-screen pass at native resolution quantises to RGB555 with a 4x4 ordered
+  Output is N64-faithful: the scene renders at about 480 lines on High (the N64 hi-res mode; see GRAPHICS QUALITY)
+  on the short side into a render target, then a full-screen pass at native resolution quantises to RGB555 with a 4x4 ordered
   dither and blows each scene pixel up by a whole number with nearest sampling — crisp, never smeared.
   Characters are rigid limbs on joint hierarchies (the N64 technique) built from rounded lathe-turned
   limbs, torsos and joint caps — a modern (2019-era) war: infantry in multicam with plate carriers,
@@ -411,6 +428,7 @@
     background:var(--panel); border:1px solid var(--line-hi); border-radius:0; padding:12px 18px; }
   .btn:hover { border-color:var(--accent); color:var(--accent); }
   .lost { color:var(--foe); } .gain { color:var(--ok); } .amber { color:var(--accent); }
+  body.pad :focus { outline:2px solid var(--accent); outline-offset:2px; }   /* a controller moves focus: always show where it is */
 
   /* ---------- battle HUD ---------- */
   .hud { position:fixed; z-index:10; color:var(--ink); pointer-events:none; user-select:none; -webkit-user-select:none; }
@@ -1160,7 +1178,7 @@ const cv = document.getElementById('game');
 // ============================================================ PERSISTENT META
 let meta = null;
 // ---------- player options (saved with the campaign) ----------
-const OPT_DEFAULTS = { v: 2, fpv: true, aimAssist: true, sens: 1, fovAdd: 0, minimap: true, dmgDir: true, killfeed: true, vibe: true, music: 0.6, callouts: true };
+const OPT_DEFAULTS = { v: 2, fpv: true, aimAssist: true, sens: 1, fovAdd: 0, minimap: true, dmgDir: true, killfeed: true, vibe: true, music: 0.6, callouts: true, quality: 'auto', padSens: 1 };
 const freshOpts = () => Object.assign({}, OPT_DEFAULTS);
 function freshMeta() {
   const taken = [];
@@ -2391,6 +2409,7 @@ const keys = {};
 window.addEventListener('keydown', e => {
   if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
   keys[e.code] = true;
+  if (GPAD.lastInput === 'pad') { GPAD.lastInput = 'kbm'; document.body.classList.remove('pad'); }
   if (e.code === 'KeyM' && meta) meta.muted = !meta.muted;
   if (screen === 'map' && el.modal.style.display !== 'flex' && !document.getElementById('boot')) {   // the start menu: ←/→ picks a fight, Enter takes it
     if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') cycleSector(e.code === 'ArrowRight' ? 1 : -1);
@@ -2461,6 +2480,7 @@ function moveVector() {
   if (keys.KeyA || keys.ArrowLeft) mx -= 1;
   if (keys.KeyD || keys.ArrowRight) mx += 1;
   if (mx || my) { const d = Math.hypot(mx, my); mx /= d; my /= d; }
+  else if (GPAD.lx || GPAD.ly) { mx = GPAD.lx; my = GPAD.ly; }
   else if (joy.active && (joy.dx || joy.dy)) { mx = joy.dx; my = joy.dy; }
   else return { x: 0, y: 0 };
   const c = Math.cos(cam.yaw), s = Math.sin(cam.yaw);   // camera-relative: "up" walks where the camera looks
@@ -2552,6 +2572,118 @@ function bindHoldButton(id, down, up) {
   b.addEventListener('lostpointercapture', () => up());   // hidden or cancelled mid-press: never leave the trigger held
 }
 
+// ---------- controller: the standard Gamepad mapping, in battle and in the menus ----------
+// Battle: left stick moves (radial deadzone 0.15), right stick looks (deadzone 0.12, response curve ^1.8, its own
+// sensitivity), RT fires, LT aims down the sights, RB throws a grenade, X reloads, Y switches view, L3 sprints (until
+// the stick comes back), D-pad ← ↑ → calls killstreaks 1-3, START opens settings, VIEW goes back to the map.
+// Menus: the stick or D-pad moves focus (a visible ring), A presses, B backs out; on the start menu LB/RB cycle sectors
+// and Y opens the loadout. Rumble follows the Vibration setting. Whatever was touched last decides the prompts.
+const GPAD = { seen: false, active: false, lastInput: 'kbm', prev: [], lx: 0, ly: 0, fire: false, ads: false, navT: 0, rumbleIdx: -1 };
+const GPB = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, VIEW: 8, START: 9, L3: 10, R3: 11, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+function currentPad() {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  for (const p of pads || []) if (p && p.connected !== false && p.buttons && p.buttons.length >= 16) return p;
+  return null;
+}
+const padCurve = v => Math.sign(v) * Math.pow(Math.abs(v), 1.8);
+function pollPad(dt) {
+  const p = currentPad();
+  if (!p) {
+    if (GPAD.active) { GPAD.active = false; GPAD.lx = GPAD.ly = 0; if (GPAD.fire) aim.fire = false; if (GPAD.ads) aim.ads = false; GPAD.fire = GPAD.ads = false; aim.sprintPad = false; }
+    return;
+  }
+  const val = i => (p.buttons[i] ? (typeof p.buttons[i] === 'object' ? (p.buttons[i].pressed ? Math.max(1, p.buttons[i].value || 0) : p.buttons[i].value || 0) : p.buttons[i]) : 0);
+  const held = i => val(i) > 0.35, hit = i => held(i) && !GPAD.prev[i];
+  let lx = p.axes[0] || 0, ly = p.axes[1] || 0;
+  const lm = Math.hypot(lx, ly);
+  if (lm < 0.15) lx = ly = 0; else { const k = Math.min(1, (lm - 0.15) / 0.85) / lm; lx *= k; ly *= k; }
+  let rx = p.axes[2] || 0, ry = p.axes[3] || 0;
+  rx = Math.abs(rx) < 0.12 ? 0 : Math.sign(rx) * (Math.abs(rx) - 0.12) / 0.88;
+  ry = Math.abs(ry) < 0.12 ? 0 : Math.sign(ry) * (Math.abs(ry) - 0.12) / 0.88;
+  const touched = lm > 0.3 || Math.abs(rx) > 0.25 || Math.abs(ry) > 0.25 || p.buttons.some((b, i) => held(i));
+  GPAD.seen = true; GPAD.active = true;
+  if (touched && GPAD.lastInput !== 'pad') { GPAD.lastInput = 'pad'; document.body.classList.add('pad'); if (screen === 'battle') applyOpts(); }
+  const modalOpen = el.modal.style.display === 'flex';
+  if (modalOpen) padMenu(p, hit, lx, ly, dt, $('modalbox'));
+  else if (screen === 'battle' && state.mode === 'play') {
+    GPAD.lx = lx; GPAD.ly = ly;
+    if (rx || ry) {
+      const k = (meta.opts.padSens || 1) * (aim.ads ? adsSens() : 1) * (aim.sticky ? 0.65 : 1);
+      const yawRate = padCurve(rx) * 3.4 * k, pitchRate = padCurve(ry) * 2.3 * k;
+      aim.yaw = angWrap(aim.yaw + yawRate * dt);
+      aim.pitch = clamp(aim.pitch - pitchRate * dt, -0.7, 0.7);
+      aim.lookDx = aim.lookDx * 0.6 + yawRate * dt * 0.4;
+    }
+    const rt = held(GPB.RT), lt = held(GPB.LT);
+    if (rt !== GPAD.fire) { GPAD.fire = rt; aim.fire = rt; }
+    if (lt !== GPAD.ads) { GPAD.ads = lt; aim.ads = lt; const ab = $('adsbtn'); if (ab) ab.classList.toggle('on', lt); }
+    if (hit(GPB.RB)) throwGrenade(soldiers[state.controlled]);
+    if (hit(GPB.X)) heroReload();
+    if (hit(GPB.Y)) { meta.opts.fpv = !meta.opts.fpv; applyOpts(); saveMeta(); }
+    if (hit(GPB.L3)) aim.sprintPad = !aim.sprintPad;
+    if (aim.sprintPad && ly > -0.3) aim.sprintPad = false;   // the sprint ends when the stick comes back
+    if (hit(GPB.LEFT)) useSupport('napalm');
+    if (hit(GPB.UP)) useSupport('artillery');
+    if (hit(GPB.RIGHT)) useSupport('supply');
+    if (hit(GPB.START)) showSettings();
+    if (hit(GPB.VIEW)) $('tomap').click();
+  } else if (screen === 'battle') {
+    GPAD.lx = GPAD.ly = 0;
+    if (GPAD.fire) { GPAD.fire = false; aim.fire = false; }
+  } else if (screen === 'map') {
+    GPAD.lx = GPAD.ly = 0;
+    if (!document.getElementById('boot')) {
+      if (hit(GPB.LB) || hit(GPB.LEFT)) cycleSector(-1);
+      if (hit(GPB.RB) || hit(GPB.RIGHT)) cycleSector(1);
+      if (hit(GPB.Y)) showScreen('team');
+      if (hit(GPB.START)) showSettings();
+      const focus = document.activeElement;
+      if (hit(GPB.A)) { if (focus && focus !== document.body && focus.closest('.brief')) focus.click(); else deploySelected(); }
+      padMenu(p, hit, 0, ly, dt, document.querySelector('.brief'), true);
+    }
+  } else if (screen === 'team') {
+    GPAD.lx = GPAD.ly = 0;
+    padMenu(p, hit, lx, ly, dt, $('teamscr'));
+    if (hit(GPB.B)) showScreen('map');
+  }
+  GPAD.prev = p.buttons.map((b, i) => held(i));
+}
+function padMenu(p, hit, lx, ly, dt, root, verticalOnly) {   // spatial focus: the nearest control in the direction pushed
+  if (!root) return;
+  GPAD.navT -= dt;
+  let dx = hit(GPB.RIGHT) ? 1 : hit(GPB.LEFT) ? -1 : 0, dy = hit(GPB.DOWN) ? 1 : hit(GPB.UP) ? -1 : 0;
+  if (!dx && !dy && GPAD.navT <= 0 && Math.hypot(lx, ly) > 0.6) { dx = Math.abs(lx) > Math.abs(ly) ? Math.sign(lx) : 0; dy = dx ? 0 : Math.sign(ly); GPAD.navT = 0.22; }
+  if (verticalOnly) dx = 0;
+  const focus = document.activeElement && root.contains(document.activeElement) ? document.activeElement : null;
+  if (focus && focus.type === 'range' && dx) { focus.value = +focus.value + dx * (+focus.step || 0.05) * 2; focus.dispatchEvent(new Event('input', { bubbles: true })); dx = 0; }
+  if (dx || dy) {
+    const els = [...root.querySelectorAll('button, input, select, [tabindex]')].filter(e => !e.disabled && e.offsetParent !== null);
+    if (!els.length) return;
+    if (!focus) { els[0].focus(); return; }
+    const a = focus.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+    let best = null, bs = Infinity;
+    for (const e of els) {
+      if (e === focus) continue;
+      const b = e.getBoundingClientRect(), vx = b.left + b.width / 2 - ax, vy = b.top + b.height / 2 - ay;
+      const along = vx * dx + vy * dy, across = Math.abs(vx * dy) + Math.abs(vy * dx);
+      if (along <= 4) continue;
+      const score = along + across * 2.5;
+      if (score < bs) { bs = score; best = e; }
+    }
+    if (best) best.focus();
+  }
+  if (hit(GPB.A) && focus && root !== document.querySelector('.brief')) {
+    if (focus.type === 'checkbox' || focus.type === 'radio') { focus.checked = focus.type === 'radio' ? true : !focus.checked; focus.dispatchEvent(new Event('change', { bubbles: true })); focus.dispatchEvent(new Event('input', { bubbles: true })); }
+    else if (focus.tagName === 'SELECT') { focus.selectedIndex = (focus.selectedIndex + 1) % focus.options.length; focus.dispatchEvent(new Event('change', { bubbles: true })); }
+    else focus.click();
+  }
+  if (hit(GPB.B) && root.id === 'modalbox') { const done = $('mbtn'); if (done && /done/i.test(done.textContent)) done.click(); }
+}
+function padRumble(ms, strong) {
+  const p = currentPad();
+  if (!p || !meta || !meta.opts.vibe || !p.vibrationActuator || !p.vibrationActuator.playEffect) return;
+  try { p.vibrationActuator.playEffect('dual-rumble', { duration: ms, strongMagnitude: strong ? 0.8 : 0.35, weakMagnitude: strong ? 0.5 : 0.6 }); } catch (e) {}
+}
 // ============================================================ ENEMIES / WAVES
 const ETYPES = {
   grunt:   { r: 14, hp: 3, sp: 80,  dmg: 0.5, col: '#c25b4a', ranged: 330 },   // rifleman: bounds cover to cover; 3 M4 rounds
@@ -2756,7 +2888,7 @@ const FEED = [], DMGDIR = [];   // kill feed rows and the arcs that show where f
 let gestured = false;   // vibrate() is refused (and logs an error) until the page itself has been touched
 addEventListener('pointerdown', () => { gestured = true; }, true);
 addEventListener('keydown', () => { gestured = true; }, true);
-const buzz = ms => { if (gestured && meta && meta.opts.vibe && navigator.vibrate) navigator.vibrate(ms); };
+const buzz = ms => { if (GPAD.active) padRumble(ms * 2, ms >= 50); if (gestured && meta && meta.opts.vibe && navigator.vibrate) navigator.vibrate(ms); };
 function nearestEnemy(x, y, maxD) {
   let best = null, bd = maxD * maxD;
   for (const e of enemies) { const d = dist2(x, y, e.x, e.y); if (d < bd) { bd = d; best = e; } }
@@ -2882,7 +3014,7 @@ function hurtEnemy(idx, dmg, credit, dir) {
 function addCorpse(c) {
   c.rot = rand(-0.35, 0.35);
   corpses.push(c);
-  if (corpses.length > CORPSE_CAP) {
+  if (corpses.length > Math.min(CORPSE_CAP, Q.corpses)) {
     const i = corpses.findIndex(o => o.kind === 'enemy'); // squad corpses are permanent
     if (i >= 0) corpses.splice(i, 1); else corpses.shift();
   }
@@ -5172,7 +5304,7 @@ function looseObj(list, cap) {
 function throwBrass(gunM, kind, scale, own, vx, vz) {   // out of the port to the right and up (belt-feds throw it down), spinning
   const port = EJECT[kind], c = CASING[kind];
   if (!port || !c) return;
-  const b = looseObj(BRASS, 160), down = kind === 'lmg' || kind === 'pkm';
+  const b = looseObj(BRASS, Q.brass), down = kind === 'lmg' || kind === 'pkm';
   b.p.set(port[0], port[1], port[2]).applyMatrix4(gunM);
   b.v.set(rand(0.75, 1), down ? rand(-0.8, -0.4) : rand(0.35, 0.75), rand(0.1, 0.45)).transformDirection(gunM)
     .multiplyScalar(kind === 'sniper' ? rand(1.4, 2) : rand(2.2, 3.3));
@@ -5358,7 +5490,7 @@ function gunLife(r, J, kind, rt, fired, own, wdt) {   // muzzle bloom, brass and
   const gunM = J[HJ.gun].matrixWorld;
   if (fired) { r.flashT = 0.07; r.flashRot = rand(0, TAU); if (EJECT[kind]) r.ejectT = kind === 'sniper' ? 0.45 : 1e-4; }
   const muz = GUN_MUZ[kind] || ENEMY_MUZ[kind];
-  if (muz) muzzleBloom(r, gunM, muz.y, muz.z, kind, wdt);
+  if (muz && Q.glow) muzzleBloom(r, gunM, muz.y, muz.z, kind, wdt);
   if (r.ejectT > 0) { r.ejectT -= wdt; if (r.ejectT <= 0) throwBrass(gunM, kind, 1, own, 0, 0); }
   if (kind !== 'rocket' && rt >= 0.24 && r.lastRt < 0.24) {   // let go of the empty magazine on the way down to the pouch
     LT.vl.set(0, -0.36, -0.03).applyMatrix4(J[HJ.fArmL].matrixWorld);
@@ -5620,14 +5752,14 @@ function drawFx() {
     TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail * 0.275);   // the bright core, right behind the head
     TMP.m.compose(TMP.v, TMP.q, TMP.s.set(coreW, coreW, tail * 0.55)); F.tracer.push(TMP.m, core);
     TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail * 0.5);     // the glow along the whole streak
-    TMP.m.compose(TMP.v, TMP.q, TMP.s.set(glowW, glowW, tail)); F.tracerGlow.push(TMP.m, glow);
+    if (Q.glow) { TMP.m.compose(TMP.v, TMP.q, TMP.s.set(glowW, glowW, tail)); F.tracerGlow.push(TMP.m, glow); }
     const headW = px * (rocket ? 7 : hot ? 5 : 3.4);   // the head itself burns
     TMP.m.compose(TMP.bp, TMP.q, TMP.s.set(headW, headW, headW));
     F.flash.push(TMP.m, hot ? (b.hostile ? TR.hhead : TR.head) : (b.hostile ? TR.hdimhead : TR.dimhead));
   }
   TMP.q.identity();
-  for (const p of particles) {
-    const fr = clamp(p.life / p.max, 0, 1);
+  for (let pi = Math.max(0, particles.length - Q.particles); pi < particles.length; pi++) {   // the newest, up to the preset's cap
+    const p = particles[pi], fr = clamp(p.life / p.max, 0, 1);
     TMP.v.set(p.x * XS, Math.max(0.02, p.z * ZS), p.y * XS);
     if (p.r >= 20) {
       const sz = p.r * XS * 2 * (1.25 - 0.55 * fr);
@@ -6480,7 +6612,7 @@ function applyEnv(dt) {
   if (W.rain && screen === 'battle') {
     const cp = VIEW.camera.position, D = VIEW.drops;
     TMP.q.setFromEuler(TMP.e.set(0.18, 0, 0, 'YXZ'));
-    for (let k = 0; k < VIEW.dropCount; k++) {
+    for (let k = 0, kn = Math.floor(VIEW.dropCount * Q.rain); k < kn; k++) {
       let y = D[k * 3 + 1] - dt * 19;
       if (y < -1) y += 23;
       D[k * 3 + 1] = y;
@@ -7026,11 +7158,11 @@ function initView() {
 }
 function resizeView() {   // the canvas runs at native resolution; the scene renders at ≥ N64.lines and is blown up by a whole number
   if (!VIEW.renderer) return;
-  const w = innerWidth, h = innerHeight, dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = innerWidth, h = innerHeight, dpr = Math.min(devicePixelRatio || 1, Q.dpr);   // the quality preset caps the pixel ratio
   VIEW.renderer.setPixelRatio(dpr);
   VIEW.renderer.setSize(w, h, false);
   const buf = VIEW.renderer.getDrawingBufferSize(new THREE.Vector2());
-  N64.scale = Math.max(1, Math.round(Math.min(buf.x, buf.y) / N64.lines));   // phones land near 380 lines, desktops 480–540
+  N64.scale = Math.max(1, Math.ceil(Math.min(buf.x, buf.y) / (N64.lines * 1.15)));   // whole-number blow-up, never much past the preset's lines: 720p renders 360, 1080p 540 on High
   VIEW.pr = dpr / N64.scale;
   N64.target.setSize(Math.ceil(buf.x / N64.scale), Math.ceil(buf.y / N64.scale));
   N64.mat.uniforms.uScale.value = N64.scale;
@@ -7038,7 +7170,6 @@ function resizeView() {   // the canvas runs at native resolution; the scene ren
   VIEW.camera.aspect = w / h;
   VIEW.camera.updateProjectionMatrix();
 }
-function adaptQuality() {}   // the N64 line count is fixed, so there is nothing to adapt
 function viewEnterBattle() {
   if (!VIEW.ready) return;
   sweepViews(true);
@@ -7078,7 +7209,6 @@ function renderView(dt) {
   for (const k of FX_FRAME) F[k].end();
   applyEnv(dt);
   updateSky(dt);
-  adaptQuality(dt);
   n64Render();
   updateOverlays(dt);
 }
@@ -7088,6 +7218,46 @@ function viewStats() {
     pr: VIEW.pr, corpses: corpses.length, yaw: cam.yaw };
 }
 
+// ---------- graphics quality: three presets, and Auto that steps down when frames run long ----------
+// LINES is the height of the N64 render (the look and most of the cost); DPR caps the output canvas's pixel ratio;
+// the caps thin out what is drawn (particles, loose brass, rain) and kept (enemy corpses); GLOW draws the tracer glow
+// and other soldiers' muzzle blooms (your own flash always blooms). Auto starts at Medium on a phone and High on a
+// desktop, drops a step after 3 s of frames averaging over 24 ms, and climbs back after 10 s under 17.5 ms — never above
+// where it started, and not within 30 s of a drop.
+const QUALITY = {
+  low:    { lines: 270, dpr: 1,   particles: 220, brass: 40,  corpses: 50,  rain: 0.35, glow: false },
+  medium: { lines: 360, dpr: 1.5, particles: 500, brass: 100, corpses: 90,  rain: 0.7,  glow: true },
+  high:   { lines: 480, dpr: 2,   particles: 900, brass: 160, corpses: 120, rain: 1,    glow: true },   // the N64 hi-res mode: the game's own look
+};
+const QLEVELS = ['low', 'medium', 'high'];
+const Q = Object.assign({ level: 'high', auto: true, start: 'high', emaMs: 16.7, slowT: 0, fastT: 0, holdT: 0, changes: 0 }, QUALITY.high);
+function applyQuality(level) {
+  if (!QUALITY[level]) level = 'high';
+  const changed = Q.level !== level;
+  Q.level = level;
+  Object.assign(Q, QUALITY[level]);
+  N64.lines = Q.lines;
+  if (changed) Q.changes++;
+  if (VIEW.ready) resizeView();
+}
+function setQualityOption(opt) {   // 'auto' | 'low' | 'medium' | 'high', from settings or a save
+  Q.auto = !QUALITY[opt];
+  Q.start = isTouch ? 'medium' : 'high';
+  Q.slowT = Q.fastT = Q.holdT = 0; Q.emaMs = 16.7;
+  applyQuality(Q.auto ? Q.start : opt);
+}
+function autoQuality(dt) {   // once a frame, with the real frame time
+  if (!Q.auto || screen !== 'battle' || document.hidden || dt <= 0 || dt > 0.2) return;   // over 0.2 s is a stall or a throttled page, not frame rate
+  const ms = dt * 1000;
+  Q.emaMs += (ms - Q.emaMs) * 0.05;
+  Q.holdT = Math.max(0, Q.holdT - dt);
+  if (Q.emaMs > 24) { Q.slowT += dt; Q.fastT = 0; }
+  else if (Q.emaMs < 17.5) { Q.fastT += dt; Q.slowT = 0; }
+  else { Q.slowT = 0; Q.fastT = 0; }
+  const i = QLEVELS.indexOf(Q.level);
+  if (Q.slowT > 3 && i > 0) { applyQuality(QLEVELS[i - 1]); Q.slowT = 0; Q.fastT = 0; Q.holdT = 30; Q.emaMs = 16.7; }
+  else if (Q.fastT > 10 && Q.holdT <= 0 && i < QLEVELS.indexOf(Q.start)) { applyQuality(QLEVELS[i + 1]); Q.fastT = 0; Q.holdT = 10; }
+}
 // ============================================================ HUD / SCREENS (DOM)
 let supportsDirty = true;
 const $ = id => document.getElementById(id);
@@ -7229,14 +7399,17 @@ function updateFeed() {
 }
 function applyOpts() {   // the options that change how the game looks and reads
   const o = meta.opts;
+  if ((o.quality || 'auto') !== Q.opt) { Q.opt = o.quality || 'auto'; setQualityOption(Q.opt); }
   document.body.classList.toggle('fpv', !!o.fpv);
   document.body.classList.toggle('nomap', !o.minimap);
   document.body.classList.toggle('nofeed', !o.killfeed);
   const ab = $('adsbtn');
   if (ab) ab.classList.toggle('on', aim.ads);
-  el.hint.textContent = isTouch
+  el.hint.textContent = GPAD.lastInput === 'pad'
+    ? 'LS MOVE · RS LOOK · RT FIRE · LT ADS · RB GRENADE · X RELOAD · L3 SPRINT · Y VIEW · D-GPAD KILLSTREAKS'
+    : isTouch
     ? 'LEFT THUMB MOVES · DRAG RIGHT TO LOOK · FIRE · ADS · TAP AMMO TO RELOAD'
-    : 'WASD MOVE · MOUSE AIMS (CLICK TO CAPTURE IT, ESC FREES) · CLICK FIRE · RIGHT-CLICK ADS · R RELOAD · V VIEW';
+    : 'WASD MOVE · MOUSE AIMS (CLICK TO CAPTURE IT, ESC FREES) · CLICK FIRE · RIGHT-CLICK ADS · SHIFT SPRINT · G GRENADE · R RELOAD · V VIEW';
   el.hint.style.opacity = 1;
   clearTimeout(applyOpts.t);
   applyOpts.t = setTimeout(() => { el.hint.style.opacity = 0; }, 6000);
@@ -7260,6 +7433,8 @@ function showSettings() {
     <div class="setrow"><span>Vibration</span><input type="checkbox" id="o_vb"${on(o.vibe)}${navigator.vibrate ? '' : ' disabled'}></div>
     <div class="setrow"><span>Sound</span><input type="checkbox" id="o_snd"${on(!meta.muted)}></div>
     <div class="setrow"><span>Music</span><input type="range" id="o_mus" min="0" max="1" step="0.05" value="${o.music == null ? 0.6 : o.music}"></div>
+    <div class="setrow"><span>Graphics</span><select id="o_q">${['auto', 'low', 'medium', 'high'].map(v => `<option value="${v}"${(o.quality || 'auto') === v ? ' selected' : ''}>${v === 'auto' ? 'Auto (' + Q.level + ')' : v[0].toUpperCase() + v.slice(1)}</option>`).join('')}</select></div>
+    ${GPAD.seen ? `<div class="setrow"><span>Controller look</span><input type="range" id="o_pad" min="0.4" max="2" step="0.05" value="${o.padSens || 1}"></div>` : ''}
     </div>
     <button class="cta" id="mbtn">Done</button>
     <p class="note">Hold left mouse to fire, right mouse for sights; click once to capture the mouse, Esc frees it.
@@ -7275,6 +7450,9 @@ function showSettings() {
   bind('o_co', 'callouts', e => e.checked);
   bind('o_vb', 'vibe', e => e.checked);
   bind('o_mus', 'music', e => +e.value);
+  bind('o_pad', 'padSens', e => +e.value);
+  const qs = $('o_q');
+  if (qs) qs.onchange = () => { meta.opts.quality = qs.value; applyOpts(); saveMeta(); };
   const snd = $('o_snd');
   if (snd) snd.onchange = () => { meta.muted = !snd.checked; saveMeta(); };
   $('mbtn').onclick = hideModal;
@@ -7764,6 +7942,7 @@ $('tomap').onclick = () => { if (state.mode === 'play' || state.mode === 'failed
 // ============================================================ MAIN LOOP
 function tick(dt) {
   if (isPortrait) return;                    // held upright: everything waits for the rotate prompt
+  pollPad(dt);
   updateAudio(dt);
   if (state.streakT > 0) { state.streakT -= dt; if (state.streakT <= 0) state.streakN = 0; }
   if (screen === 'battle') battleUpdate(dt);
@@ -7772,10 +7951,11 @@ function tick(dt) {
 }
 let last = performance.now();
 function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000);
+  const raw = (now - last) / 1000, dt = Math.min(0.05, raw);
   last = now;
   if (isTouch) checkOrient();   // resize/orientationchange can report stale metrics, so confirm every frame
   tick(dt);
+  autoQuality(raw);   // the real frame time: a throttled or hidden page is not a slow device
   if (screen === 'battle' && !isPortrait) { renderView(dt); updateBattleHud(); }   // nothing to draw behind the rotate prompt
   else {
   }

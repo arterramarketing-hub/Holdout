@@ -347,11 +347,11 @@ function initView() {
 }
 function resizeView() {   // the canvas runs at native resolution; the scene renders at ≥ N64.lines and is blown up by a whole number
   if (!VIEW.renderer) return;
-  const w = innerWidth, h = innerHeight, dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = innerWidth, h = innerHeight, dpr = Math.min(devicePixelRatio || 1, Q.dpr);   // the quality preset caps the pixel ratio
   VIEW.renderer.setPixelRatio(dpr);
   VIEW.renderer.setSize(w, h, false);
   const buf = VIEW.renderer.getDrawingBufferSize(new THREE.Vector2());
-  N64.scale = Math.max(1, Math.round(Math.min(buf.x, buf.y) / N64.lines));   // phones land near 380 lines, desktops 480–540
+  N64.scale = Math.max(1, Math.ceil(Math.min(buf.x, buf.y) / (N64.lines * 1.15)));   // whole-number blow-up, never much past the preset's lines: 720p renders 360, 1080p 540 on High
   VIEW.pr = dpr / N64.scale;
   N64.target.setSize(Math.ceil(buf.x / N64.scale), Math.ceil(buf.y / N64.scale));
   N64.mat.uniforms.uScale.value = N64.scale;
@@ -359,7 +359,6 @@ function resizeView() {   // the canvas runs at native resolution; the scene ren
   VIEW.camera.aspect = w / h;
   VIEW.camera.updateProjectionMatrix();
 }
-function adaptQuality() {}   // the N64 line count is fixed, so there is nothing to adapt
 function viewEnterBattle() {
   if (!VIEW.ready) return;
   sweepViews(true);
@@ -399,7 +398,6 @@ function renderView(dt) {
   for (const k of FX_FRAME) F[k].end();
   applyEnv(dt);
   updateSky(dt);
-  adaptQuality(dt);
   n64Render();
   updateOverlays(dt);
 }

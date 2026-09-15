@@ -139,14 +139,17 @@ function updateFeed() {
 }
 function applyOpts() {   // the options that change how the game looks and reads
   const o = meta.opts;
+  if ((o.quality || 'auto') !== Q.opt) { Q.opt = o.quality || 'auto'; setQualityOption(Q.opt); }
   document.body.classList.toggle('fpv', !!o.fpv);
   document.body.classList.toggle('nomap', !o.minimap);
   document.body.classList.toggle('nofeed', !o.killfeed);
   const ab = $('adsbtn');
   if (ab) ab.classList.toggle('on', aim.ads);
-  el.hint.textContent = isTouch
+  el.hint.textContent = GPAD.lastInput === 'pad'
+    ? 'LS MOVE · RS LOOK · RT FIRE · LT ADS · RB GRENADE · X RELOAD · L3 SPRINT · Y VIEW · D-GPAD KILLSTREAKS'
+    : isTouch
     ? 'LEFT THUMB MOVES · DRAG RIGHT TO LOOK · FIRE · ADS · TAP AMMO TO RELOAD'
-    : 'WASD MOVE · MOUSE AIMS (CLICK TO CAPTURE IT, ESC FREES) · CLICK FIRE · RIGHT-CLICK ADS · R RELOAD · V VIEW';
+    : 'WASD MOVE · MOUSE AIMS (CLICK TO CAPTURE IT, ESC FREES) · CLICK FIRE · RIGHT-CLICK ADS · SHIFT SPRINT · G GRENADE · R RELOAD · V VIEW';
   el.hint.style.opacity = 1;
   clearTimeout(applyOpts.t);
   applyOpts.t = setTimeout(() => { el.hint.style.opacity = 0; }, 6000);
@@ -170,6 +173,8 @@ function showSettings() {
     <div class="setrow"><span>Vibration</span><input type="checkbox" id="o_vb"${on(o.vibe)}${navigator.vibrate ? '' : ' disabled'}></div>
     <div class="setrow"><span>Sound</span><input type="checkbox" id="o_snd"${on(!meta.muted)}></div>
     <div class="setrow"><span>Music</span><input type="range" id="o_mus" min="0" max="1" step="0.05" value="${o.music == null ? 0.6 : o.music}"></div>
+    <div class="setrow"><span>Graphics</span><select id="o_q">${['auto', 'low', 'medium', 'high'].map(v => `<option value="${v}"${(o.quality || 'auto') === v ? ' selected' : ''}>${v === 'auto' ? 'Auto (' + Q.level + ')' : v[0].toUpperCase() + v.slice(1)}</option>`).join('')}</select></div>
+    ${GPAD.seen ? `<div class="setrow"><span>Controller look</span><input type="range" id="o_pad" min="0.4" max="2" step="0.05" value="${o.padSens || 1}"></div>` : ''}
     </div>
     <button class="cta" id="mbtn">Done</button>
     <p class="note">Hold left mouse to fire, right mouse for sights; click once to capture the mouse, Esc frees it.
@@ -185,6 +190,9 @@ function showSettings() {
   bind('o_co', 'callouts', e => e.checked);
   bind('o_vb', 'vibe', e => e.checked);
   bind('o_mus', 'music', e => +e.value);
+  bind('o_pad', 'padSens', e => +e.value);
+  const qs = $('o_q');
+  if (qs) qs.onchange = () => { meta.opts.quality = qs.value; applyOpts(); saveMeta(); };
   const snd = $('o_snd');
   if (snd) snd.onchange = () => { meta.muted = !snd.checked; saveMeta(); };
   $('mbtn').onclick = hideModal;

@@ -53,7 +53,7 @@ function gunLife(r, J, kind, rt, fired, own, wdt) {   // muzzle bloom, brass and
   const gunM = J[HJ.gun].matrixWorld;
   if (fired) { r.flashT = 0.07; r.flashRot = rand(0, TAU); if (EJECT[kind]) r.ejectT = kind === 'sniper' ? 0.45 : 1e-4; }
   const muz = GUN_MUZ[kind] || ENEMY_MUZ[kind];
-  if (muz) muzzleBloom(r, gunM, muz.y, muz.z, kind, wdt);
+  if (muz && Q.glow) muzzleBloom(r, gunM, muz.y, muz.z, kind, wdt);
   if (r.ejectT > 0) { r.ejectT -= wdt; if (r.ejectT <= 0) throwBrass(gunM, kind, 1, own, 0, 0); }
   if (kind !== 'rocket' && rt >= 0.24 && r.lastRt < 0.24) {   // let go of the empty magazine on the way down to the pouch
     LT.vl.set(0, -0.36, -0.03).applyMatrix4(J[HJ.fArmL].matrixWorld);
@@ -315,14 +315,14 @@ function drawFx() {
     TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail * 0.275);   // the bright core, right behind the head
     TMP.m.compose(TMP.v, TMP.q, TMP.s.set(coreW, coreW, tail * 0.55)); F.tracer.push(TMP.m, core);
     TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail * 0.5);     // the glow along the whole streak
-    TMP.m.compose(TMP.v, TMP.q, TMP.s.set(glowW, glowW, tail)); F.tracerGlow.push(TMP.m, glow);
+    if (Q.glow) { TMP.m.compose(TMP.v, TMP.q, TMP.s.set(glowW, glowW, tail)); F.tracerGlow.push(TMP.m, glow); }
     const headW = px * (rocket ? 7 : hot ? 5 : 3.4);   // the head itself burns
     TMP.m.compose(TMP.bp, TMP.q, TMP.s.set(headW, headW, headW));
     F.flash.push(TMP.m, hot ? (b.hostile ? TR.hhead : TR.head) : (b.hostile ? TR.hdimhead : TR.dimhead));
   }
   TMP.q.identity();
-  for (const p of particles) {
-    const fr = clamp(p.life / p.max, 0, 1);
+  for (let pi = Math.max(0, particles.length - Q.particles); pi < particles.length; pi++) {   // the newest, up to the preset's cap
+    const p = particles[pi], fr = clamp(p.life / p.max, 0, 1);
     TMP.v.set(p.x * XS, Math.max(0.02, p.z * ZS), p.y * XS);
     if (p.r >= 20) {
       const sz = p.r * XS * 2 * (1.25 - 0.55 * fr);

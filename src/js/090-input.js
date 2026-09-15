@@ -3,6 +3,7 @@ const keys = {};
 window.addEventListener('keydown', e => {
   if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
   keys[e.code] = true;
+  if (GPAD.lastInput === 'pad') { GPAD.lastInput = 'kbm'; document.body.classList.remove('pad'); }
   if (e.code === 'KeyM' && meta) meta.muted = !meta.muted;
   if (screen === 'map' && el.modal.style.display !== 'flex' && !document.getElementById('boot')) {   // the start menu: ←/→ picks a fight, Enter takes it
     if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') cycleSector(e.code === 'ArrowRight' ? 1 : -1);
@@ -73,6 +74,7 @@ function moveVector() {
   if (keys.KeyA || keys.ArrowLeft) mx -= 1;
   if (keys.KeyD || keys.ArrowRight) mx += 1;
   if (mx || my) { const d = Math.hypot(mx, my); mx /= d; my /= d; }
+  else if (GPAD.lx || GPAD.ly) { mx = GPAD.lx; my = GPAD.ly; }
   else if (joy.active && (joy.dx || joy.dy)) { mx = joy.dx; my = joy.dy; }
   else return { x: 0, y: 0 };
   const c = Math.cos(cam.yaw), s = Math.sin(cam.yaw);   // camera-relative: "up" walks where the camera looks

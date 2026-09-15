@@ -209,7 +209,7 @@ function looseObj(list, cap) {
 function throwBrass(gunM, kind, scale, own, vx, vz) {   // out of the port to the right and up (belt-feds throw it down), spinning
   const port = EJECT[kind], c = CASING[kind];
   if (!port || !c) return;
-  const b = looseObj(BRASS, 160), down = kind === 'lmg' || kind === 'pkm';
+  const b = looseObj(BRASS, Q.brass), down = kind === 'lmg' || kind === 'pkm';
   b.p.set(port[0], port[1], port[2]).applyMatrix4(gunM);
   b.v.set(rand(0.75, 1), down ? rand(-0.8, -0.4) : rand(0.35, 0.75), rand(0.1, 0.45)).transformDirection(gunM)
     .multiplyScalar(kind === 'sniper' ? rand(1.4, 2) : rand(2.2, 3.3));

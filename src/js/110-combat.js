@@ -105,7 +105,7 @@ const FEED = [], DMGDIR = [];   // kill feed rows and the arcs that show where f
 let gestured = false;   // vibrate() is refused (and logs an error) until the page itself has been touched
 addEventListener('pointerdown', () => { gestured = true; }, true);
 addEventListener('keydown', () => { gestured = true; }, true);
-const buzz = ms => { if (gestured && meta && meta.opts.vibe && navigator.vibrate) navigator.vibrate(ms); };
+const buzz = ms => { if (GPAD.active) padRumble(ms * 2, ms >= 50); if (gestured && meta && meta.opts.vibe && navigator.vibrate) navigator.vibrate(ms); };
 function nearestEnemy(x, y, maxD) {
   let best = null, bd = maxD * maxD;
   for (const e of enemies) { const d = dist2(x, y, e.x, e.y); if (d < bd) { bd = d; best = e; } }
@@ -231,7 +231,7 @@ function hurtEnemy(idx, dmg, credit, dir) {
 function addCorpse(c) {
   c.rot = rand(-0.35, 0.35);
   corpses.push(c);
-  if (corpses.length > CORPSE_CAP) {
+  if (corpses.length > Math.min(CORPSE_CAP, Q.corpses)) {
     const i = corpses.findIndex(o => o.kind === 'enemy'); // squad corpses are permanent
     if (i >= 0) corpses.splice(i, 1); else corpses.shift();
   }
