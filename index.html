@@ -49,8 +49,8 @@
   there is no currency, no armory, no investments, no commendations, and nothing progresses while you are
   away — the map is a level select and the only thing it tracks is which territories you hold.
 
-  FOUR A SIDE — you and three squadmates against four enemies on the field at once. The enemy has its own
-  ticket pool (CFG.enemyTickets 22 + 4 per tier): every enemy death spends one, a new enemy walks on 2-4 s
+  FOUR AGAINST EIGHT — you and three squadmates against eight enemies on the field at once. The enemy has its
+  own ticket pool (CFG.enemyTickets 44 + 8 per tier): every enemy death spends one, a new enemy walks on 1-2 s
   after one falls while tickets remain, and the front is won when the pool is spent (the progress bar is
   exactly that). The Warlord still arrives at 90%, and killing it breaks what is left of them.
 
@@ -83,13 +83,25 @@
   pierces up to 2 targets. Rockets explode (r70, no friendly fire from your own rockets). AI squadmates
   fire 2.6x slower than the controlled soldier.
 
+  DAMAGE — riflemen and gunners 3 HP, runners 2, raiders 4, breachers 9; M4A1 1.05, UMP45 0.85, SAW 1.0,
+  Intervention 4, rocket 3 (blast). So a rifleman takes 3 M4 rounds, 4 from the UMP45 up close and 5 at
+  15 m; a headshot doubles a round. Enemy health does not grow with tier (that broke the count): each tier
+  adds 12% to enemy damage instead. BATTLE PREP shows the hits it takes to drop a rifleman.
+
   DROP-OFF — a round does full damage out to the weapon's `near` distance, then falls in a straight
-  line to a floor by the time it has flown its whole reach: SMG full to 6.5 m then 40% by 22 m, AR full
-  to 12 m then 55% by 37 m, LMG full to 10.5 m then 50% by 35 m, pistol 45% by 20 m. The sniper and the
+  line to a floor by the time it has flown its whole reach: SMG full to 10 m then 60% by 22 m, AR full
+  to 20 m then 60% by 37 m, LMG full to 16 m then 55% by 35 m, pistol 50% by 20 m. The sniper and the
   rocket have none. Measured on the distance the round actually travelled, so it stacks with cover and
   with a headshot rather than replacing them. Squad fire only; enemy rounds do not drop off.
 
-  HEADSHOTS — the fight is simulated top-down, so a target is a circle and its head is the narrow
+  YOUR ROUNDS GO TO THE CROSSHAIR — with manual aim (always in first person) a shot is a ray through the
+  town: it flies in 3D to the first thing under the crosshair (an enemy, a wall, cover, the ground) with the
+  weapon's spread around that line, so aiming up and down matters. Buildings and cover have real heights
+  (COVER_TOP), riflemen are shorter while they kneel (bodyTop), and your headshots are decided by where the
+  round strikes (the top fifth of the body, near its middle). Squadmates and enemies keep level fire and the
+  probabilistic cover rule below.
+
+  HEADSHOTS (squad fire) — the fight is simulated top-down, so a target is a circle and its head is the narrow
   column at the middle of it: a round whose line passes within ~0.1 m of the target's centre (0.15 m
   on a breacher, 0.22 m on the Warlord) can take the head for CFG.headshotMul (2x) damage — one shot
   for a rifleman. Measured perpendicular to the shot, so it tracks where you actually aimed rather
@@ -123,12 +135,16 @@
   (+45% speed, 10-bullet radial burst every 5s). Killing it completes the front (+50*tier REQ).
   Offline AFK conquest skips the boss on purpose (idle stays generous).
 
-  TOWN & COVER — a fixed 80 x 60 m mountain town (TOWN): 22 solid buildings that stop movement, bullets
-  and sight, a main street, two cross streets, side streets, alleys, courtyards and a fountain square,
-  with 60 cover slots rolled each battle (85% filled). Everything can be destroyed: crates (16 HP),
-  sandbags (40), fuel barrels (5, explode r70), propane bottles (4, r95), cars (45, r85) and vans
-  (70, r100) that burn out into wrecks (80 / 110), market stalls (12), fences (8), woodpiles (24),
-  planters (50), stone walls (60), dumpsters (90), concrete barriers (120), the fountain (260).
+  TOWN & COVER — Valmont, a fixed 96 x 72 m mountain town built out of places (TOWN): the RAIL YARD (station,
+  platform, freight wagons on two tracks, water tower), the MILL YARD (warehouse, shipping containers, log
+  piles), the CHURCH SQUARE (church and 19 m bell tower, fountain, war memorial, café tables), the MARKET
+  (stalls, a produce van), the GAS STATION (four pumps that explode, a shop, a fuel tanker that makes a very
+  big bang), the CEMETERY (chapel, gravestones, hedges, trees), the BUILDING SITE (a bare frame on twelve
+  columns under a crane, gravel mounds, a mixer, a site fence), the FOB (HESCO with gates, a sandbag ring,
+  tents) and the MOTOR POOL (trucks), strung along Main Street (a burnt-out bus in it), a cross street and a
+  south road. Buildings, wagons and containers are solid with real heights; fixed cover is always there, and
+  about fifty slots roll fresh cover each battle. A wall down each side, a fence and closed gate across the
+  pass road, and HESCO to the south stand exactly on the edge of play, so you can walk up to them.
   Cover stops 35-95% of rounds (per kind) and takes their damage; blasts damage all cover in range. A unit hugging cover or a wall
   (within 18 of its edge) takes 50% (soldiers) / 35% (enemies) less ranged damage and fires over its
   own cover. Melee ignores cover. The HUD shows "IN COVER" on your soldier panel.
@@ -227,6 +243,11 @@
   held, orange ring = attackable). Every end-of-front screen is the after-action layout: eyebrow,
   headline, one line, a hairline stat grid (kills, accuracy, headshots, longest kill, reinforcements,
   time), a solid orange button and a mono note. The rotate prompt uses the same system.
+
+  MUSIC MOODS — the battle cue has six moods (MOODS), picked from the sky and re-picked as it drifts: DAY (D minor,
+  104 BPM, the driving cue), DAWN (E dorian, 96, lifting plucks and a bell), DUSK (A minor, 98, a dotted figure
+  with its echo), NIGHT (C minor, 88, drone, sparse pings, deep slow drums), RAIN (D minor, 92, trembling pad,
+  falling plucks) and FOG (F sharp minor, 84, slow swells, drone and bell). All layer in with the fight's heat.
 
   MUSIC — written in code like everything else and played live on the audio clock (updateMusic, musStep):
   a MENU cue (D minor, 72 BPM: detuned pad walking i–VI–III–VII, sub bass, a slow heartbeat, a plucked
@@ -782,8 +803,8 @@ const CFG = {
   rosterSize: 4, baseHp: 4, regenDelay: 4.0, regenRate: 2.0,   // out of fire for 4s, then back to full in ~2s
   playerSpeed: 225, aiSpeed: 195, horseSpeedMul: 1.45,
   spawnInvuln: 1.0,
-  enemyCap: 4, enemyTickets: 22, enemyTicketsPerTier: 4,   // four on the field at once; the enemy's reinforcement pool
-  arenaW: 3200, arenaH: 2400, lineY: 2080,
+  enemyCap: 8, enemyTickets: 44, enemyTicketsPerTier: 8,   // eight on the field at once; the enemy's reinforcement pool
+  arenaW: 3840, arenaH: 2880, lineY: 2560,
   saveKey: 'holdout.v2', saveEvery: 5,
   aiCdMul: 2.6,
   mineCount: 8, mineDmg: 2, mineR: 55,
@@ -796,8 +817,8 @@ const WEAPONS = {
   // `range` is how far the AI will engage from; `reach` is how far the round actually flies. They are
   // separate because you can see clear across an 80 m town in first person, and a round that quietly
   // expires at 10 m reads as the gun simply not registering.
-  smg:    { name:'UMP45',        cd:0.09, dmg:1, range:300, reach:900,  spread:0.09,  speed:4200, len:13, mag:32,  ext:48,  reload:1.7, spare:5 },
-  ar:     { name:'M4A1',         cd:0.16, dmg:1, range:430, reach:1500, spread:0.04,  speed:5100, len:19, mag:30,  ext:45,  reload:2.1, spare:5 },
+  smg:    { name:'UMP45',        cd:0.09, dmg:0.85, range:300, reach:900,  spread:0.09,  speed:4200, len:13, mag:32,  ext:48,  reload:1.7, spare:5 },
+  ar:     { name:'M4A1',         cd:0.16, dmg:1.05, range:430, reach:1500, spread:0.04,  speed:5100, len:19, mag:30,  ext:45,  reload:2.1, spare:5 },
   lmg:    { name:'M249 SAW',     cd:0.11, dmg:1, range:400, reach:1400, spread:0.07,  speed:4800, len:23, mag:100, ext:200, reload:4.2, spare:2, moveMul:0.85 },
   sniper: { name:'INTERVENTION', cd:1.05, dmg:4, range:720, reach:2600, spread:0.005, speed:8400, len:29, mag:5,   ext:8,   reload:2.9, spare:6, pierce:2 },
   rocket: { name:'ROCKET',   cd:1.50, dmg:3, range:520, reach:1000, spread:0.02,  speed:900,  len:21, mag:1,   reload:2.6, spare:6, aoe:70 },
@@ -967,7 +988,7 @@ let screen = 'map'; // map | team | battle
 let soldiers = [], enemies = [], bullets = [], particles = [], floaters = [], markers = [], bodies = [];
 let mines = [], shells = [], fires = [], craters = [], obstacles = [], corpses = [], pickups = [];
 const CORPSE_CAP = 120; // enemy corpses beyond this fade oldest-first; squad corpses never removed
-const AI_SLOTS = [0, -170, 170, -330];   // where each of the four starts at the FOB
+const AI_SLOTS = [0, -140, 140, 280];   // where each of the four starts inside the FOB, just south of its gate
 
 function buildSoldier(i) {
   const m = meta.squad[i];
@@ -986,47 +1007,87 @@ function buildSoldier(i) {
     mag: cap, reserve: cap * WEAPONS[weapon].spare, reloadT: 0, reloadDur: 1, pistol: false,
   };
 }
-function genTerrain() {   // the same town every front; its cover is rolled fresh each battle
+function genTerrain() {   // the same town every front; its movable cover is rolled fresh each battle
   obstacles = []; craters = []; mines = []; fires = []; shells = []; corpses = []; rubble = [];
-  buildings = TOWN.buildings.map(([x0, y0, x1, y1, storeys, style]) =>
-    ({ shape: 'r', x: (x0 + x1) / 2, y: (y0 + y1) / 2, hw: (x1 - x0) / 2, hd: (y1 - y0) / 2, storeys, style, building: true, claims: 0 }));
-  obstacles.push(makeCover('fountain', TOWN.fountain[0], TOWN.fountain[1]));
+  const k = PX, W = TOWN.w * k, H = TOWN.h * k, T = 24;
+  buildings = TOWN.buildings.map(([x0, y0, x1, y1, h, style]) =>
+    ({ shape: 'r', x: (x0 + x1) / 2 * k, y: (y0 + y1) / 2 * k, hw: (x1 - x0) / 2 * k, hd: (y1 - y0) / 2 * k, top: h * k, style, building: true, claims: 0 }));
+  for (const [x, y, hw, hd] of [[-T / 2, H / 2, T / 2, H / 2 + T], [W + T / 2, H / 2, T / 2, H / 2 + T], [W / 2, -T / 2, W / 2 + T, T / 2], [W / 2, H + T / 2, W / 2 + T, T / 2]])
+    buildings.push({ shape: 'r', x, y, hw, hd, top: 2.4 * k, style: 'perimeter', building: true, claims: 0 });   // standing exactly on the edge: walk up and touch it
+  for (const [kind, x, y, rot] of TOWN.fixed) obstacles.push(makeCover(kind, x * k, y * k, rot));
   for (const [x, y, kinds, rot] of TOWN.slots) {
     if (Math.random() > 0.85) continue;
-    obstacles.push(makeCover(pickL(kinds.split('|')), x + rand(-10, 10), y + rand(-8, 8), rot));
+    obstacles.push(makeCover(pickL(kinds.split('|')), x * k + rand(-10, 10), y * k + rand(-8, 8), rot));
   }
-  for (let i = 0; i < 30; i++) craters.push({ x: rand(80, CFG.arenaW - 80), y: rand(80, CFG.arenaH - 80), r: rand(24, 60) });
+  for (let i = 0; i < 40; i++) craters.push({ x: rand(80, CFG.arenaW - 80), y: rand(80, CFG.arenaH - 80), r: rand(24, 60) });
   for (let i = 0; i < CFG.mineCount; i++) { const p = openSpot(220, CFG.arenaW - 220, 120, CFG.lineY - 180); mines.push({ x: p.x, y: p.y, blink: rand(0, TAU) }); }
   NAV.dirty = true; propsDirty = true;
 }
 
-// ============================================================ TOWN — a mountain town fought street by street
-// Sim px (40 px = 1 m). Buildings are solid axis-aligned blocks: they stop movement, bullets and sight.
-// Cover is lower — crates, sandbags, cars, stalls, walls, barrels, barriers. It stops most rounds, can
-// be hugged, and much of it can be shot or blown apart (cars burn out into wrecks, barrels explode).
+// ============================================================ TOWN — Valmont, fought place by place
+// Metres (the sim multiplies by 40): 96 x 72 m inside a perimeter that stands exactly on its edge.
+// North is the pass road and the enemy; south is the FOB. Buildings are solid blocks (movement, bullets,
+// sight) with real heights; FIXED cover is always there; SLOTS roll fresh cover each battle.
 const TOWN = {
-  buildings: [   // x0, y0, x1, y1, storeys, style — four rows of blocks between the cross streets, split by alleys
-    [40, 80, 470, 480, 3, 0], [640, 60, 980, 470, 2, 1], [1100, 90, 1400, 500, 3, 2], [1800, 70, 2150, 460, 3, 0], [2270, 60, 2560, 500, 2, 1], [2730, 90, 3160, 480, 2, 2],
-    [40, 700, 520, 1120, 2, 1], [640, 660, 1040, 1000, 2, 0], [1160, 660, 1400, 960, 3, 1], [1800, 660, 2080, 980, 3, 2], [2200, 700, 2560, 1120, 2, 0], [2680, 660, 3160, 1100, 3, 1],
-    [40, 1380, 480, 1740, 2, 2], [640, 1420, 1060, 1760, 2, 1], [1180, 1480, 1400, 1760, 2, 0], [1800, 1480, 2020, 1760, 2, 2], [2140, 1400, 2560, 1760, 3, 1], [2720, 1380, 3160, 1720, 2, 0],
-    [40, 1980, 420, 2360, 2, 1], [700, 2000, 1000, 2240, 2, 0], [2200, 1990, 2500, 2230, 2, 1], [2780, 2000, 3160, 2360, 2, 2],
+  w: 96, h: 72,
+  pois: [   // name, x0, y0, x1, y1 — for the docs and the minimap
+    ['Rail yard', 0, 0, 40, 19.8], ['Mill yard', 55, 0, 96, 27], ['Church square', 29, 27, 65, 49], ['Market', 0, 30, 30, 48],
+    ['Gas station', 65, 30, 96, 48], ['Cemetery', 0, 51, 25, 72], ['Building site', 25, 51, 41, 72], ['FOB', 41, 60, 70, 72], ['Motor pool', 70, 60, 96, 72],
   ],
-  plaza: [1300, 1080, 1900, 1440],
-  fountain: [1600, 1260],
-  entries: [590, 1260],   // cross streets that run out to the town's edges: where flankers come in
-  slots: [   // x, y, cover kinds to pick from, turned 90°
-    [300, 590, 'car', 1], [820, 575, 'crates|woodpile'], [1250, 600, 'car', 1], [2000, 580, 'car', 1], [2400, 600, 'crates|barrel'], [2900, 590, 'car', 1],
-    [1450, 160, 'car|van'], [1750, 280, 'car'], [1600, 400, 'barrier|sandbags'], [1600, 700, 'stall|crates'], [1460, 830, 'car|van'], [1740, 900, 'car|dumpster'], [1600, 1000, 'fence|planter'],
-    [1450, 1570, 'car|van'], [1750, 1620, 'car'], [1600, 1690, 'sandbags|barrier'], [1600, 1850, 'wall|planter'],
-    [1380, 1150, 'stall'], [1820, 1150, 'stall'], [1380, 1380, 'crates|woodpile'], [1820, 1380, 'planter|crates'], [1480, 1430, 'planter'], [1720, 1100, 'planter'],
-    [260, 1260, 'car|van', 1], [760, 1230, 'crates|barrel'], [1100, 1280, 'car', 1], [2150, 1240, 'car', 1], [2500, 1290, 'sandbags|crates'], [2950, 1260, 'car|van', 1],
-    [580, 300, 'barrel|propane'], [580, 900, 'fence', 1], [580, 1560, 'woodpile', 1], [580, 2060, 'crates|propane'],
-    [2620, 320, 'barrel|propane'], [2620, 880, 'fence', 1], [2620, 1560, 'woodpile', 1], [2620, 2060, 'crates|propane'],
-    [1040, 300, 'barrel|propane'], [2140, 820, 'barrel'], [2210, 280, 'barrel|propane'], [1100, 1600, 'barrel'],
-    [820, 1090, 'car', 1], [1020, 1080, 'crates|woodpile'], [1260, 1040, 'dumpster|stall'], [1950, 1080, 'crates|propane'], [2900, 1150, 'woodpile|dumpster', 1],
-    [900, 1820, 'wall'], [2300, 1820, 'wall'], [1200, 1950, 'sandbags|crates'], [2000, 1950, 'sandbags|crates'], [600, 1900, 'car|van'], [2600, 1900, 'car|van'],
-    [1600, 2230, 'barrier'], [1130, 2150, 'crates|barrel'], [2080, 2150, 'crates|barrel'], [400, 1850, 'fence'], [2800, 1850, 'fence'],
-    [520, 20, 'fence'], [1600, 30, 'barrier'], [2680, 20, 'fence'],
+  buildings: [   // x0, y0, x1, y1, height m, style
+    // the rail yard and the mill, north of the tracks
+    [5, 2.5, 22, 9, 6.4, 'station'], [33, 2, 41, 8.5, 6.4, 'house1'], [55.5, 2, 60.5, 8, 6.4, 'house0'], [63, 2, 90, 10, 7.5, 'warehouse'],
+    // freight wagons on the two tracks (the level crossing on Main Street is left open)
+    [4, 12.1, 16, 14.9, 3.4, 'wagon'], [60, 12.1, 72, 14.9, 3.4, 'wagon'], [21, 15.6, 33, 18.4, 3.4, 'wagon'], [76, 15.6, 88, 18.4, 3.4, 'wagon'],
+    // shipping containers in the mill yard
+    [64, 21, 70, 23.4, 2.6, 'container'], [74, 20.5, 76.4, 26.5, 2.6, 'container'], [84, 20.8, 90, 23.2, 2.6, 'container'], [84, 23.4, 90, 25.8, 2.6, 'container'],
+    // houses between the tracks and the cross street
+    [2, 20, 12, 26, 6.4, 'house1'], [15, 20, 26, 26, 9.6, 'house0'], [30, 20.5, 40, 26, 6.4, 'house2'], [55.5, 20, 61.5, 26, 6.4, 'house0'],
+    // the church square: the church, its bell tower on the cross street, the café
+    [31, 32.5, 41, 46, 8.5, 'church'], [33.5, 28.8, 38.5, 33.2, 19, 'belltower'], [57.5, 45, 64, 49, 6.4, 'house2'],
+    // the market, framed by houses
+    [1.5, 31, 9, 38.5, 6.4, 'house2'], [1.5, 40.5, 9, 47, 9.6, 'house1'], [21, 31, 28, 37, 6.4, 'house0'],
+    // the gas station's shop and the house behind the forecourt
+    [84, 40, 94.5, 47.5, 3.8, 'shop'], [86, 30.5, 94.5, 36, 6.4, 'house1'],
+    // south of the road: the cemetery chapel and a row of houses
+    [3, 53, 10, 59, 4.6, 'chapel'], [54.5, 53, 62, 59, 6.4, 'house1'], [66, 52.5, 74, 59.5, 9.6, 'house2'], [78, 53, 90, 59, 6.4, 'house0'],
+  ],
+  fixed: [   // kind, x, y, turned 90°
+    ['barrier', 46, 1.2], ['barrier', 50, 1.2],   // the closed gate on the pass road
+    ['platform', 13.5, 10.3], ['logs', 79.5, 22.3], ['logs', 79.5, 25.2], ['bus', 47, 23],
+    ['stall', 12, 34.5], ['stall', 17, 34.5], ['stall', 12, 39], ['stall', 17, 39], ['stall', 24, 40], ['stall', 12, 43.5], ['stall', 17, 43.5], ['stall', 24, 44], ['van', 27.5, 46.6, 1],
+    ['fountain', 58, 38.5], ['statue', 60.5, 32.8], ['table', 55.5, 43.2], ['table', 58.5, 43.2], ['table', 61.5, 43.2], ['planter', 55, 34.5, 1], ['planter', 63.5, 38.5, 1], ['bench', 64, 34, 1],
+    ['pillar', 70.8, 34.6], ['pillar', 81.2, 34.6], ['pillar', 70.8, 39.4], ['pillar', 81.2, 39.4],
+    ['pump', 74, 36], ['pump', 74, 38.4], ['pump', 78, 36], ['pump', 78, 38.4], ['tanker', 78, 44.3, 1],
+    ...[56, 59, 62, 65].flatMap(y => [13, 15.5, 18, 20.5, 23].map(x => ['grave', x, y])),
+    ['hedge', 13, 51.4], ['hedge', 17.2, 51.4], ['hedge', 23.2, 51.4], ['hedge', 25.3, 55.5, 1], ['hedge', 25.3, 59.7, 1], ['hedge', 25.3, 67, 1],
+    ['tree', 6.5, 62.5], ['tree', 4.5, 69], ['tree', 11, 69.5], ['tree', 19.5, 69.5], ['tree', 11.5, 53.8], ['bench', 8.5, 66, 1],
+    ...[55, 59, 63].flatMap(y => [28, 32, 36].map(x => ['pillar', x, y])),
+    ['mixer', 31, 67.5], ['mound', 27.5, 69], ['mound', 38.2, 69.4], ['toilet', 39.2, 53], ['toilet', 39.2, 54.2],
+    ['fence', 27, 51.6], ['fence', 30.2, 51.6], ['fence', 36.8, 51.6], ['fence', 39.9, 51.6], ['fence', 40.7, 54.4, 1], ['fence', 40.7, 57.6, 1],
+    ['hesco', 42.5, 60.8], ['hesco', 53.5, 60.8], ['hesco', 56.5, 60.8], ['hesco', 59.5, 60.8], ['hesco', 62.5, 60.8], ['hesco', 65.5, 60.8], ['hesco', 68.5, 60.8],
+    ['hesco', 41.4, 62.4, 1], ['hesco', 41.4, 68.8, 1], ['hesco', 69.8, 62.4, 1], ['hesco', 69.8, 65.4, 1], ['hesco', 69.8, 68.4, 1],
+    ['sandbags', 60, 64.6], ['sandbags', 60, 68.2], ['sandbags', 57.6, 66.4, 1], ['sandbags', 62.4, 66.4, 1],
+    ['tent', 51, 70.5, 1], ['tent', 64.5, 70.6, 1], ['truck', 78, 66.5], ['truck', 85.5, 66.5],
+  ],
+  slots: [   // x, y, cover kinds to pick from, turned 90° — rolled fresh each battle
+    [47, 7, 'barrier|sandbags'], [50.5, 13, 'car|van'], [51, 27.5, 'crates|sandbags'], [44.5, 35.5, 'car'], [52, 43, 'car|van'], [45, 49.5, 'barrier|sandbags', 1], [50.5, 55, 'car|van'],
+    [5.5, 28.8, 'car', 1], [19.5, 29, 'car|van', 1], [28.5, 28.5, 'crates|barrel'], [43.5, 29.5, 'barrier', 1], [58, 29, 'car', 1], [71, 28.7, 'crates|dumpster'], [84.5, 29, 'car|van', 1],
+    [13, 49.8, 'car', 1], [28, 50, 'crates|barrel'], [37, 49.7, 'car|van', 1], [60, 50, 'car', 1], [70.5, 49.8, 'dumpster|crates'], [88, 50, 'car|van', 1],
+    [25, 13.3, 'crates|woodpile'], [39.5, 14.5, 'barrel|crates'], [56.5, 16.5, 'crates|woodpile'], [74.5, 13.2, 'barrel|propane'], [92.5, 16, 'crates'],
+    [27, 5.5, 'car|van'], [61.8, 5, 'dumpster|crates'], [93, 5.5, 'barrel|crates'],
+    [67, 25.8, 'crates|barrel'], [71.5, 22, 'woodpile'], [93, 22.5, 'crates|propane'],
+    [10.5, 36.5, 'crates|woodpile'], [15, 47, 'crates|barrel'], [20.5, 41.5, 'crates'], [27.5, 41, 'barrel|propane'],
+    [43.5, 41, 'car'], [53, 38.5, 'crates|propane'], [62.5, 30.5, 'crates|propane'],
+    [68, 32, 'car', 1], [76, 41.5, 'car', 1], [91.5, 38.5, 'barrel|propane'], [69, 46.5, 'crates|barrel'], [93, 49, 'dumpster'],
+    [64, 55.5, 'crates|woodpile'], [76, 56, 'car'], [92.5, 55.5, 'barrel'],
+    [11, 61, 'woodpile'], [4.5, 66, 'crates'], [38.5, 66, 'woodpile|crates'], [33.5, 57, 'crates|woodpile'],
+    [76, 62.8, 'crates|barrel'], [92, 64, 'van|car'], [80, 70.8, 'crates|barrel'], [56, 63.2, 'crates|sandbags'], [66, 66, 'crates'],
+  ],
+  ground: [   // x0, y0, x1, y1, surface — later entries are laid over earlier ones
+    [0, 0, 96, 10, 'dirt'], [0, 10, 96, 19.8, 'gravel'], [42, 0, 54, 31, 'asphalt'], [62, 19.8, 96, 27, 'gravel'], [0, 27, 96, 31, 'asphalt'],
+    [9, 31, 30, 48, 'cobble'], [41, 31, 65, 48, 'paving'], [65, 31, 96, 48, 'asphalt'], [0, 48, 96, 52, 'asphalt'], [42, 52, 54, 61, 'asphalt'],
+    [0, 52, 25, 72, 'grass'], [25, 51.2, 41, 72, 'gravel'], [41, 61, 70, 72, 'concrete'], [70, 60, 96, 72, 'gravel'], [54, 52, 96, 60, 'dirt'],
   ],
 };
 const COVER_KINDS = {   // half-size px, visual height m, hp, chance to stop a round, material, blast radius — everything breaks
@@ -1046,8 +1107,29 @@ const COVER_KINDS = {   // half-size px, visual height m, hp, chance to stop a r
   dumpster: { shape: 'r', hw: 40, hd: 26, hgt: 1.3, hp: 90, block: 0.95, mat: 'metal' },
   woodpile: { shape: 'r', hw: 44, hd: 22, hgt: 1.0, hp: 24, block: 0.8, mat: 'wood' },
   planter:  { shape: 'r', hw: 40, hd: 20, hgt: 0.7, hp: 50, block: 0.75, mat: 'stone' },
+  // the new town's pieces. hp 0 = can't be destroyed (drawn once with the town, not with the movable cover)
+  platform: { shape: 'r', hw: 340, hd: 26, hgt: 0.9, hp: 0, block: 1, mat: 'concrete' },
+  pillar:   { shape: 'r', hw: 12, hd: 12, hgt: 6.6, hp: 0, block: 1, mat: 'concrete' },
+  hesco:    { shape: 'r', hw: 60, hd: 24, hgt: 1.6, hp: 0, block: 1, mat: 'dirt' },
+  tree:     { shape: 'c', r: 14, hgt: 7, hp: 0, block: 0.9, mat: 'wood' },
+  statue:   { shape: 'r', hw: 32, hd: 32, hgt: 2.6, hp: 0, block: 1, mat: 'stone' },
+  tent:     { shape: 'r', hw: 48, hd: 110, hgt: 2.2, hp: 0, block: 0.25, mat: 'wood' },
+  truck:    { shape: 'r', hw: 52, hd: 144, hgt: 3.0, hp: 0, block: 1, mat: 'metal' },
+  bus:      { shape: 'r', hw: 50, hd: 216, hgt: 3.0, hp: 0, block: 1, mat: 'metal' },
+  mound:    { shape: 'c', r: 50, hgt: 1.3, hp: 0, block: 1, mat: 'dirt' },
+  grave:    { shape: 'r', hw: 16, hd: 8, hgt: 0.9, hp: 0, block: 0.95, mat: 'stone' },
+  hedge:    { shape: 'r', hw: 80, hd: 16, hgt: 1.3, hp: 0, block: 0.35, mat: 'leaf' },
+  pump:     { shape: 'r', hw: 16, hd: 24, hgt: 1.7, hp: 24, block: 0.85, mat: 'metal', boom: 80 },
+  tanker:   { shape: 'r', hw: 46, hd: 150, hgt: 3.0, hp: 150, block: 1, mat: 'metal', boom: 180, wreck: 'tankwreck' },
+  tankwreck:{ shape: 'r', hw: 46, hd: 150, hgt: 2.2, hp: 0, block: 0.9, mat: 'metal' },
+  logs:     { shape: 'r', hw: 70, hd: 32, hgt: 1.2, hp: 90, block: 0.95, mat: 'wood' },
+  mixer:    { shape: 'c', r: 26, hgt: 1.6, hp: 70, block: 0.9, mat: 'metal' },
+  toilet:   { shape: 'r', hw: 22, hd: 22, hgt: 2.3, hp: 30, block: 0.6, mat: 'wood' },
+  bench:    { shape: 'r', hw: 34, hd: 10, hgt: 0.5, hp: 14, block: 0.3, mat: 'wood' },
+  table:    { shape: 'c', r: 16, hgt: 0.75, hp: 10, block: 0.3, mat: 'wood' },
 };
-const MAT_COL = { wood: '#b8894e', dirt: '#b4a67a', metal: '#6a6a66', stone: '#a8a498', concrete: '#b8b6b0' };
+const STATIC_COVER = new Set(['platform', 'pillar', 'hesco', 'tree', 'statue', 'tent', 'truck', 'bus', 'mound', 'grave', 'hedge']);   // drawn once with the town
+const MAT_COL = { wood: '#b8894e', dirt: '#b4a67a', metal: '#6a6a66', stone: '#a8a498', concrete: '#b8b6b0', leaf: '#4e6a34' };
 let buildings = [], rubble = [], propsDirty = true, coverSeq = 1;
 const CP = { px: 0, py: 0, nx: 0, ny: 0, d: 0 };
 const SPOT = { x: 0, y: 0 };
@@ -1117,17 +1199,17 @@ function openSpot(x0, x1, y0, y1) {   // a random point in the open
 }
 
 // ---------- navigation: a 1 m grid, A* with string pulling ----------
-const NAV = { cell: 40, x0: -40, y0: -280, cols: 0, rows: 0, block: null, dirty: true };
+const NAV = { cell: 40, x0: -40, y0: -40, cols: 0, rows: 0, block: null, dirty: true };
 const PATH = { g: null, f: null, came: null, stamp: null, heap: null, id: 0 };
 function navCell(c, r) {
   const x = NAV.x0 + (c + 0.5) * NAV.cell, y = NAV.y0 + (r + 0.5) * NAV.cell;
-  if (x < 20 || x > CFG.arenaW - 20 || y > CFG.arenaH - 20) return 1;
+  if (x < 20 || x > CFG.arenaW - 20 || y < 20 || y > CFG.arenaH - 20) return 1;
   for (let i = 0; i < buildings.length; i++) { const b = buildings[i]; if (Math.abs(x - b.x) < b.hw + 14 && Math.abs(y - b.y) < b.hd + 14) return 1; }
   for (let i = 0; i < obstacles.length; i++) if (coverPoint(obstacles[i], x, y, CP).d < 12) return 1;
   return 0;
 }
 function buildNav() {
-  NAV.cols = Math.ceil((CFG.arenaW + 80) / NAV.cell); NAV.rows = Math.ceil((CFG.arenaH + 320) / NAV.cell);
+  NAV.cols = Math.ceil((CFG.arenaW + 80) / NAV.cell); NAV.rows = Math.ceil((CFG.arenaH + 80) / NAV.cell);
   NAV.block = new Uint8Array(NAV.cols * NAV.rows);
   for (let r = 0; r < NAV.rows; r++) for (let c = 0; c < NAV.cols; c++) NAV.block[r * NAV.cols + c] = navCell(c, r);
   NAV.dirty = false;
@@ -1738,9 +1820,24 @@ const MUS_BASE = 2;      // the music bus at a slider of 1
 const NOTE = n => 440 * Math.pow(2, (n - 69) / 12);   // MIDI note number to Hz
 const CUES = {
   menu: { bpm: 72, chords: [[50, 53, 57, 62], [46, 50, 53, 58], [53, 57, 60, 65], [48, 52, 55, 60]] },   // Dm Bb F C, two bars each
-  battle: { bpm: 104, progs: [[[50, 53, 57], [46, 50, 53], [48, 52, 55], [45, 49, 52]],      // Dm Bb C A
-                               [[50, 53, 57], [51, 55, 58], [48, 52, 55], [50, 53, 57]]] },   // Dm Eb C Dm
 };
+const MOODS = {   // the battle cue in six moods, picked by the time of day and the weather (tr = semitones from D minor)
+  day:   { bpm: 104, tr: 0, progs: [[[50, 53, 57], [46, 50, 53], [48, 52, 55], [45, 49, 52]], [[50, 53, 57], [51, 55, 58], [48, 52, 55], [50, 53, 57]]],   // i VI VII V | i bII VII i
+           pad: 680, padGain: 0.03, padA: 0.25, ost: 'saw16', ostCut: 2600, bass: 2, bassGain: 1, hat: 1, drums: [0, 7, 10], drumPitch: 1, drumGain: 1, rim: true, fills: true, brass: 1, brassA: 0.05 },
+  dawn:  { bpm: 96, tr: 2, progs: [[[50, 53, 57], [55, 59, 62], [46, 50, 53], [48, 52, 55]]],   // i IV VI VII: E dorian, lifting
+           pad: 1100, padGain: 0.028, padA: 0.6, ost: 'pluck8', ostCut: 3400, bass: 2, bassGain: 0.8, hat: 0.7, drums: [0, 10], drumPitch: 1, drumGain: 0.8, rim: true, fills: false, brass: 0.8, brassA: 0.12, bell: true },
+  dusk:  { bpm: 98, tr: -5, progs: [[[50, 53, 57], [46, 50, 53], [48, 52, 55], [52, 55, 59]]],   // i VI VII v: A minor, the light going
+           pad: 760, padGain: 0.032, padA: 0.45, ost: 'echo16', ostCut: 2000, bass: 2, bassGain: 0.9, hat: 0.8, drums: [0, 7, 10], drumPitch: 0.9, drumGain: 0.9, rim: true, fills: true, brass: 0.85, brassA: 0.08 },
+  night: { bpm: 88, tr: -2, progs: [[[50, 53, 57], [46, 50, 53], [43, 46, 50], [45, 49, 52]]],   // i VI iv V: C minor in the dark
+           pad: 480, padGain: 0.036, padA: 0.8, ost: 'ping', ostCut: 1400, bass: 4, bassGain: 0.9, hat: 0.35, drums: [0, 11], drumPitch: 0.75, drumGain: 1, rim: false, fills: false, brass: 0.55, brassA: 0.1, drone: true },
+  rain:  { bpm: 92, tr: 0, progs: [[[50, 53, 57], [46, 50, 53], [43, 46, 50], [45, 49, 52]]],   // i VI iv V: D minor under the rain
+           pad: 620, padGain: 0.04, padA: 0.5, ost: 'pluck8down', ostCut: 2400, bass: 2, bassGain: 0.9, hat: 0.6, drums: [0, 10], drumPitch: 0.85, drumGain: 0.85, rim: true, fills: false, brass: 0.6, brassA: 0.1, trem: true },
+  fog:   { bpm: 84, tr: 4, progs: [[[50, 53, 57], [48, 52, 55], [46, 50, 53], [48, 52, 55]]],   // i VII VI VII: F sharp minor, ghostly
+           pad: 900, padGain: 0.036, padA: 1.2, ost: 'swell', ostCut: 1800, bass: 16, bassGain: 1.1, hat: 0.25, drums: [0], drumPitch: 0.7, drumGain: 1, rim: false, fills: false, brass: 0.45, brassA: 0.2, bell: true, drone: true },
+};
+const moodNow = () => state.weather === 'rain' ? 'rain' : state.weather === 'fog' ? 'fog'
+  : ['dawn', 'day', 'dusk', 'night'][Math.round(((state.tod % 4) + 4) % 4) % 4];
+const cueBpm = cue => cue === 'menu' ? CUES.menu.bpm : (MOODS[cue.slice(7)] || MOODS.day).bpm;
 function mTone(c, t, o) {   // one voice: {type, f, f2 glide target, glide, dur, gain, a, r, perc, lp, lp2, sweep, q, detune, pan, dest, send, sendAmt}
   const osc = c.createOscillator(), g = c.createGain();
   osc.type = o.type || 'sine';
@@ -1764,7 +1861,13 @@ function mTone(c, t, o) {   // one voice: {type, f, f2 glide target, glide, dur,
     g.gain.linearRampToValueAtTime(0.0001, t + o.dur);
   }
   node.connect(g); node = g;
-  if (o.pan && c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = o.pan; g.connect(p); node = p; }
+  if (o.trem) {   // a slow tremble on the note (the rain pad): gain swings between half and full
+    const tg = c.createGain(), lfo = c.createOscillator(), depth = c.createGain();
+    tg.gain.value = 0.75; depth.gain.value = 0.25; lfo.frequency.value = 5.2;
+    lfo.connect(depth); depth.connect(tg.gain); lfo.start(t); lfo.stop(t + o.dur + 0.05);
+    node.connect(tg); node = tg;
+  }
+  if (o.pan && c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = o.pan; node.connect(p); node = p; }
   node.connect(o.dest);
   if (o.send) { const s = c.createGain(); s.gain.value = o.sendAmt || 0.3; g.connect(s); s.connect(o.send); }
   osc.start(t); osc.stop(t + o.dur + 0.05);
@@ -1778,8 +1881,9 @@ function mNoise(c, nb, t, dur, type, freq, q, gain, dest) {   // a filtered nois
   s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.02);
 }
 function musStep(c, bus, send, nb, t, cue, step, k) {   // everything that sounds on one sixteenth note; k = how hot the fight is (0..1)
-  const C = CUES[cue], spb = 60 / C.bpm / 4, bar = Math.floor(step / 16), s16 = step % 16;
+  const spb = 60 / cueBpm(cue) / 4, bar = Math.floor(step / 16), s16 = step % 16;
   if (cue === 'menu') {
+    const C = CUES.menu;
     const chord = C.chords[Math.floor(bar / 2) % 4], phrase = bar % 8;
     if (step % 32 === 0) {   // a new chord every two bars: a detuned pad, the bass under it, a bell at the top of a phrase
       const len = spb * 32 + 0.9;
@@ -1797,34 +1901,58 @@ function musStep(c, bus, send, nb, t, cue, step, k) {   // everything that sound
     }
     return;
   }
-  const prog = C.progs[Math.floor(bar / 8) % C.progs.length], chord = prog[bar % 4], root = chord[0];
-  const lOst = smooth(0.28, 0.5, k), lDrum = smooth(0.48, 0.72, k), lBrass = smooth(0.7, 0.9, k);
-  if (s16 === 0) {
-    chord.forEach((n, i) => mTone(c, t, { type: 'sawtooth', f: NOTE(n), detune: (i - 1) * 6, dur: spb * 16 + 0.3, gain: 0.03, a: 0.25, r: 0.35, lp: 680, q: 0.5, dest: bus, send, sendAmt: 0.35 }));
+  const M = MOODS[cue.slice(7)] || MOODS.day, prog = M.progs[Math.floor(bar / 8) % M.progs.length];
+  const chord = prog[bar % 4].map(n => n + M.tr), root = chord[0];
+  const lOst = smooth(0.28, 0.5, k), lDrum = smooth(0.48, 0.72, k), lBrass = smooth(0.7, 0.9, k) * M.brass;
+  if (s16 === 0) {   // the chord: a pad, dark or bright with the mood; a drone under the night and the fog; a bell over the dawn
+    chord.forEach((n, i) => mTone(c, t, { type: 'sawtooth', f: NOTE(n), detune: (i - 1) * 6, dur: spb * 16 + 0.3, gain: M.padGain, a: M.padA, r: 0.4, lp: M.pad, q: 0.5, trem: M.trem, dest: bus, send, sendAmt: 0.35 }));
+    if (M.drone) mTone(c, t, { type: 'triangle', f: NOTE(root - 12), dur: spb * 16 + 0.25, gain: 0.08, a: 0.5, r: 0.5, lp: 300, dest: bus });
+    if (M.bell && bar % 4 === 0) mTone(c, t + spb * 2, { type: 'sine', f: NOTE(chord[2] + 24), dur: 3.2, gain: 0.032, perc: true, a: 0.01, dest: bus, send, sendAmt: 0.9 });
     if (lBrass > 0.01) for (const [n, d] of [[root, -5], [root + 7, 5], [root + 12, 0]])   // brass stabs on the chord change
-      mTone(c, t, { type: 'sawtooth', f: NOTE(n), detune: d, dur: 0.95, gain: 0.058 * lBrass, a: 0.05, r: 0.55, lp: 500, lp2: 1900, sweep: 0.25, q: 1, dest: bus, send, sendAmt: 0.3 });
+      mTone(c, t, { type: 'sawtooth', f: NOTE(n), detune: d, dur: 0.95, gain: 0.058 * lBrass, a: M.brassA, r: 0.55, lp: 500, lp2: 1900, sweep: 0.25, q: 1, dest: bus, send, sendAmt: 0.3 });
     if (bar % 4 === 0 && k > 0.85) for (const [n, typ] of [[root - 24, 'sawtooth'], [root - 12, 'sawtooth'], [root - 12, 'square']])   // a braam on a new phrase at full tilt
       mTone(c, t, { type: typ, f: NOTE(n), dur: 3, gain: 0.045, a: 0.08, r: 2, lp: 160, lp2: 1500, sweep: 1.4, q: 2, dest: bus, send, sendAmt: 0.4 });
   }
-  if (step % 2 === 0) {   // the bass pulse, always there
-    const up = s16 % 8 === 6;
-    mTone(c, t, { type: 'sawtooth', f: NOTE(root - 12 + (up ? 12 : 0)), dur: spb * 1.7, gain: s16 % 8 === 0 ? 0.12 : 0.085, perc: true, a: 0.004, lp: 900, lp2: 200, sweep: spb * 1.5, q: 2.5, dest: bus });
+  if (step % M.bass === 0) {   // the bass pulse: eighths by day, quarters at night, one note a bar in the fog
+    const up = M.bass === 2 && s16 % 8 === 6;
+    mTone(c, t, { type: 'sawtooth', f: NOTE(root - 12 + (up ? 12 : 0)), dur: spb * Math.min(M.bass, 8) * 0.85, gain: (s16 % 8 === 0 ? 0.12 : 0.085) * M.bassGain, perc: true, a: 0.004, lp: 900, lp2: 200, sweep: spb * 1.5, q: 2.5, dest: bus });
   }
-  mNoise(c, nb, t, 0.035, 'highpass', 7500, 0.7, (s16 % 4 === 2 ? 0.03 : 0.014) * (0.5 + k), bus);   // hats, leaning on the offbeats
-  if (lOst > 0.01) {   // the string ostinato: sixteenths over the chord
-    const pat = [0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 3, 2, 1, 2], p = pat[s16], n = (p < 3 ? chord[p] : root + 12) + 12;
-    mTone(c, t, { type: 'sawtooth', f: NOTE(n), dur: spb * 0.9, gain: (s16 % 4 === 0 ? 0.058 : 0.04) * lOst, perc: true, a: 0.003, lp: 2600, lp2: 800, sweep: spb * 0.8, q: 1.5, pan: s16 % 2 ? 0.28 : -0.28, dest: bus, send, sendAmt: 0.2 });
-  }
-  if (lDrum > 0.01) {   // taiko and a rim on the backbeat, rolling into every fourth bar
-    const fill = bar % 4 === 3 && s16 >= 12;
-    if (s16 === 0 || s16 === 7 || s16 === 10 || (k > 0.8 && s16 === 3) || fill) {
-      mTone(c, t, { type: 'sine', f: fill ? 120 + (s16 - 12) * 20 : 150, f2: 55, glide: 0.2, dur: 0.5, gain: (s16 === 0 ? 0.19 : 0.13) * lDrum, perc: true, a: 0.002, dest: bus, send, sendAmt: 0.25 });
-      mNoise(c, nb, t, 0.09, 'lowpass', 700, 0.5, 0.06 * lDrum, bus);
+  if (M.hat > 0) mNoise(c, nb, t, 0.035, 'highpass', 7500, 0.7, (s16 % 4 === 2 ? 0.03 : 0.014) * (0.5 + k) * M.hat, bus);   // hats, leaning on the offbeats
+  if (lOst > 0.01) musLine(M, c, bus, send, t, spb, step, s16, chord, root, lOst);
+  if (lDrum > 0.01) {   // taiko, a rim on the backbeat, and rolls into every fourth bar where the mood allows
+    const fill = M.fills && bar % 4 === 3 && s16 >= 12;
+    if (M.drums.includes(s16) || (M.fills && k > 0.8 && s16 === 3) || fill) {
+      mTone(c, t, { type: 'sine', f: fill ? 120 + (s16 - 12) * 20 : 150 * M.drumPitch, f2: 55 * M.drumPitch, glide: 0.2, dur: 0.5, gain: (s16 === 0 ? 0.19 : 0.13) * lDrum * M.drumGain, perc: true, a: 0.002, dest: bus, send, sendAmt: 0.25 });
+      mNoise(c, nb, t, 0.09, 'lowpass', M.drumPitch < 0.9 ? 450 : 700, 0.5, 0.06 * lDrum * M.drumGain, bus);
     }
-    if (s16 === 4 || s16 === 12) {
+    if (M.rim && (s16 === 4 || s16 === 12)) {
       mNoise(c, nb, t, 0.14, 'bandpass', 1900, 0.9, 0.065 * lDrum, bus);
       mTone(c, t, { type: 'triangle', f: 210, f2: 140, glide: 0.08, dur: 0.1, gain: 0.045 * lDrum, perc: true, a: 0.001, dest: bus });
     }
+  }
+}
+function musLine(M, c, bus, send, t, spb, step, s16, chord, root, l) {   // the melodic line that builds with the fight, one voice per mood
+  const tone = p => (p < 3 ? chord[p] : root + 12) + 12;
+  if (M.ost === 'saw16') {   // day: spiccato sixteenths over the chord
+    const p = [0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 3, 2, 1, 2][s16];
+    mTone(c, t, { type: 'sawtooth', f: NOTE(tone(p)), dur: spb * 0.9, gain: (s16 % 4 === 0 ? 0.058 : 0.04) * l, perc: true, a: 0.003, lp: 2600, lp2: 800, sweep: spb * 0.8, q: 1.5, pan: s16 % 2 ? 0.28 : -0.28, dest: bus, send, sendAmt: 0.2 });
+  } else if (M.ost === 'echo16') {   // dusk: a dotted figure, and its echo three sixteenths later
+    const p = { 0: 0, 3: 2, 6: 1, 8: 3, 11: 2, 14: 1 }[s16];
+    if (p != null) {
+      const f = NOTE(tone(p));
+      mTone(c, t, { type: 'sawtooth', f, dur: spb * 1.4, gain: 0.055 * l, perc: true, a: 0.004, lp: M.ostCut, lp2: 700, sweep: spb, q: 1.2, pan: -0.25, dest: bus, send, sendAmt: 0.35 });
+      mTone(c, t + spb * 3, { type: 'sawtooth', f, dur: spb * 1.4, gain: 0.024 * l, perc: true, a: 0.004, lp: M.ostCut * 0.75, lp2: 600, sweep: spb, q: 1, pan: 0.3, dest: bus, send, sendAmt: 0.5 });
+    }
+  } else if (M.ost === 'pluck8' || M.ost === 'pluck8down') {   // dawn: rising plucked eighths; rain: falling ones
+    if (step % 2 === 0) {
+      const rise = M.ost === 'pluck8', p = (rise ? [0, 1, 2, 3, 2, 1, 2, 3] : [3, 2, 1, 0, 2, 1, 0, 1])[(step / 2) % 8];
+      mTone(c, t, { type: 'triangle', f: NOTE(tone(p) + (rise ? 12 : 0)), dur: 0.6, gain: 0.06 * l, perc: true, a: 0.003, lp: M.ostCut, pan: (step / 2) % 2 ? 0.25 : -0.25, dest: bus, send, sendAmt: 0.5 });
+    }
+  } else if (M.ost === 'ping') {   // night: sparse high pings in the dark
+    const i = [0, 6, 11].indexOf(s16);
+    if (i >= 0) mTone(c, t, { type: 'sine', f: NOTE(tone([0, 2, 3][i]) + 12), dur: 1.3, gain: 0.055 * l, perc: true, a: 0.004, dest: bus, send, sendAmt: 0.9 });
+  } else if (M.ost === 'swell') {   // fog: slow swells on the beat
+    if (s16 % 4 === 0) mTone(c, t, { type: 'sawtooth', f: NOTE(tone((s16 / 4) % 4)), dur: spb * 4, gain: 0.045 * l, a: spb * 3, r: spb * 0.8, lp: M.ostCut, q: 0.6, pan: s16 % 8 ? 0.3 : -0.3, dest: bus, send, sendAmt: 0.6 });
   }
 }
 function musHeat() {   // how hot the fight is, 0..1: enemies near and close, rounds flying, you hurt, the Warlord
@@ -1838,7 +1966,7 @@ function musHeat() {   // how hot the fight is, 0..1: enemies near and close, ro
   }
   const firing = performance.now() - MUS.heat < 2500 ? 0.25 : 0;
   const hurt = me.alive ? clamp(1 - me.hp / me.maxHp, 0, 1) * 0.25 : 0.3;
-  return clamp(0.15 + near * 0.08 + close * 0.12 + firing + hurt + (state.bossRef ? 0.45 : 0), 0, 1);
+  return clamp(0.15 + near * 0.05 + close * 0.09 + firing + hurt + (state.bossRef ? 0.45 : 0), 0, 1);   // eight on the field: each counts for less
 }
 function updateMusic(dt) {
   if (!AC || !master || !noiseBuf) return;
@@ -1849,7 +1977,7 @@ function updateMusic(dt) {
   }
   const now = AC.currentTime, level = meta && meta.opts && meta.opts.music != null ? meta.opts.music : 0.6;
   const fight = screen === 'battle' && (state.mode === 'play' || state.mode === 'dying' || state.mode === 'handoff' || state.mode === 'spectate');
-  const want = level <= 0.001 || (meta && meta.muted) ? null : fight ? 'battle' : 'menu';
+  const want = level <= 0.001 || (meta && meta.muted) ? null : fight ? 'battle:' + moodNow() : 'menu';   // the battle cue follows the sky
   const g = MUS.bus.gain;
   if (want !== MUS.cue && MUS.phase !== 'out') {   // fade the old cue out, then start the new one on a fresh bar
     g.cancelScheduledValues(now); g.setValueAtTime(Math.max(0.0001, g.value), now); g.linearRampToValueAtTime(0.0001, now + 0.6);
@@ -1861,10 +1989,10 @@ function updateMusic(dt) {
   }
   if (!MUS.cue || MUS.phase === 'out') return;
   if (MUS.level !== level && now > MUS.switchAt + 1.5) { g.cancelScheduledValues(now); g.setTargetAtTime(level * MUS_BASE, now, 0.08); MUS.level = level; }   // the settings slider
-  const heat = MUS.cue === 'battle' ? musHeat() : 0;
+  const heat = MUS.cue.startsWith('battle') ? musHeat() : 0;
   MUS.int += (heat - MUS.int) * Math.min(1, dt * (heat > MUS.int ? 0.9 : 0.25));   // rises fast, cools slowly
   if (MUS.next < now - 0.25) MUS.next = now + 0.05;   // the page stalled or was hidden: pick up from here, no catch-up burst
-  const spb = 60 / CUES[MUS.cue].bpm / 4;
+  const spb = 60 / cueBpm(MUS.cue) / 4;
   while (MUS.next < now + 0.15) { musStep(AC, MUS.bus, MUS.send, noiseBuf, MUS.next, MUS.cue, MUS.step, MUS.int); MUS.next += spb; MUS.step++; }
 }
 function musStinger(kind) {   // a sector taken, a front lost, the Warlord arriving: over the top of the cue change
@@ -1940,6 +2068,9 @@ addEventListener('orientationchange', checkOrient);
 const tap = { id: -1, x: 0, y: 0, t: 0 };   // right-side taps lock onto the enemy under the finger
 cv.addEventListener('touchstart', e => {
   e.preventDefault(); audio(); startAmbience();
+  const alive = id => { for (const t of e.touches) if (t.identifier === id) return true; return false; };
+  if (joy.active && !alive(joy.id)) { joy.active = false; joy.id = -1; joy.dx = joy.dy = 0; }   // a finger whose end we never heard about
+  if (look.id >= 0 && !alive(look.id)) look.id = -1;
   for (const t of e.changedTouches) {
     if (t.clientX < innerWidth * 0.55) {
       if (!joy.active) { joy.active = true; joy.id = t.identifier; joy.bx = joy.x = t.clientX; joy.by = joy.y = t.clientY; joy.dx = joy.dy = 0; }
@@ -2020,8 +2151,8 @@ function lockPointer() {   // some hosts (an iframe without allow-pointer-lock) 
     if (p && p.catch) p.catch(() => { aim.noLock = true; });
   } catch (e) { aim.noLock = true; }
 }
-function steerFromCursor(dt) {   // without pointer lock: the further the cursor sits from the middle, the faster you turn
-  if (aim.cx == null || !manualAim() || screen !== 'battle' || document.pointerLockElement === cv) return;
+function steerFromCursor(dt) {   // only a real mouse, only where the host refuses pointer lock: the further the cursor sits from the middle, the faster you turn
+  if (isTouch || !aim.noLock || aim.cx == null || !manualAim() || screen !== 'battle' || document.pointerLockElement === cv) return;
   const dx = (aim.cx - innerWidth / 2) / (innerWidth / 2), dy = (aim.cy - innerHeight / 2) / (innerHeight / 2), dead = 0.12;
   const ax = Math.abs(dx) < dead ? 0 : (dx - Math.sign(dx) * dead) / (1 - dead);
   const ay = Math.abs(dy) < dead ? 0 : (dy - Math.sign(dy) * dead) / (1 - dead);
@@ -2036,25 +2167,36 @@ window.addEventListener('mouseup', e => { if (e.button === 0) aim.fire = false; 
 document.addEventListener('mousemove', e => {
   if (screen !== 'battle' || !manualAim()) return;
   if (document.pointerLockElement === cv) addLook(e.movementX, e.movementY, 0.0024);
-  else { aim.cx = e.clientX; aim.cy = e.clientY; }
+  else if (!isTouch && !(e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) && e.target === cv) { aim.cx = e.clientX; aim.cy = e.clientY; }   // a phone's tap makes fake mouse moves: never steer from those
+  else aim.cx = null;
 });
-document.addEventListener('pointerlockchange', () => { if (document.pointerLockElement !== cv) { aim.fire = false; aim.ads = false; } });
+cv.addEventListener('mouseleave', () => { aim.cx = null; });
+document.addEventListener('pointerlockchange', () => { if (document.pointerLockElement !== cv) { aim.fire = false; aim.ads = false; aim.cx = null; } });
+function releaseInputs() {   // let go of everything held: a trigger, a thumb, a parked cursor
+  aim.fire = false; aim.cx = null;
+  joy.active = false; joy.id = -1; joy.dx = joy.dy = 0;
+  look.id = -1; tap.id = -1;
+}
+window.addEventListener('blur', releaseInputs);
+document.addEventListener('visibilitychange', () => { if (document.hidden) releaseInputs(); });
 const look = { id: -1, x: 0, y: 0 };   // the thumb that aims
 function bindHoldButton(id, down, up) {
   const b = $(id);
   if (!b) return;
+  const last = { x: 0, y: 0 };   // this button's own finger: sharing the look thumb's record made the aim jump between the two
   b.addEventListener('pointerdown', e => {
-    e.preventDefault(); look.x = e.clientX; look.y = e.clientY; down();   // act first: capture is a nicety
+    e.preventDefault(); last.x = e.clientX; last.y = e.clientY; down();   // act first: capture is a nicety
     try { b.setPointerCapture(e.pointerId); } catch (err) {}
   });
   b.addEventListener('pointermove', e => {   // dragging off the button still steers the camera
     if (!b.hasPointerCapture(e.pointerId)) return;
-    addLook(e.clientX - look.x, e.clientY - look.y, 0.006);
-    look.x = e.clientX; look.y = e.clientY;
+    addLook(e.clientX - last.x, e.clientY - last.y, 0.006);
+    last.x = e.clientX; last.y = e.clientY;
   });
   const end = e => { try { if (b.hasPointerCapture(e.pointerId)) b.releasePointerCapture(e.pointerId); } catch (err) {} up(); };
   b.addEventListener('pointerup', end);
   b.addEventListener('pointercancel', end);
+  b.addEventListener('lostpointercapture', () => up());   // hidden or cancelled mid-press: never leave the trigger held
 }
 // ---------- Z-targeting ----------
 const lock = { target: null, on: false, retargetT: 0 };
@@ -2098,25 +2240,23 @@ function tapLock(x, y) {
 
 // ============================================================ ENEMIES / WAVES
 const ETYPES = {
-  grunt:   { r: 14, hp: 2, sp: 80,  dmg: 0.5, col: '#c25b4a', ranged: 330 },   // rifleman: bounds cover to cover
-  runner:  { r: 11, hp: 1, sp: 135, dmg: 1, col: '#d18a3f' },
-  brute:   { r: 22, hp: 6, sp: 48,  dmg: 2, col: '#8e3b52' },
-  rider:   { r: 16, hp: 3, sp: 185, dmg: 2, col: '#a04938', horse: true },
-  gunner:  { r: 13, hp: 2, sp: 60,  dmg: 1, col: '#c2a23a', ranged: 380 },   // stops and shoots back
-  spotter: { r: 12, hp: 3, sp: 85,  dmg: 0, col: '#d8d2b8', spotter: true }, // calls mortars until killed
+  grunt:   { r: 14, hp: 3, sp: 80,  dmg: 0.5, col: '#c25b4a', ranged: 330 },   // rifleman: bounds cover to cover; 3 M4 rounds
+  runner:  { r: 11, hp: 2, sp: 135, dmg: 1, col: '#d18a3f' },
+  brute:   { r: 22, hp: 9, sp: 48,  dmg: 2, col: '#8e3b52' },
+  rider:   { r: 16, hp: 4, sp: 185, dmg: 2, col: '#a04938', horse: true },
+  gunner:  { r: 13, hp: 3, sp: 60,  dmg: 1, col: '#c2a23a', ranged: 380 },   // stops and shoots back
+  spotter: { r: 12, hp: 3, sp: 85,  dmg: 0, col: '#d8d2b8', spotter: true }, // no longer spawned
 };
 // Dedicated spawn zones, in the open ground of the town's streets and alleys. There is no front: whenever
 // someone comes onto the field — an enemy walking on, or one of yours coming back as a reinforcement — the
 // zone is chosen for that moment. Enemies take one far from your squad and out of its sight; your own
 // come back somewhere far from the enemy, near a teammate if possible. The FOB is yours alone.
-const SPAWN_ZONES = [   // [name, x0, x1, y0, y1]
-  ['north gate', 1480, 1720, 20, 120],   ['nw alley', 500, 610, 120, 420],     ['ne alley', 2590, 2700, 120, 420],
-  ['west road', 40, 200, 530, 630],      ['east road', 3000, 3160, 530, 630],
-  ['west cross', 40, 200, 1180, 1320],   ['east cross', 3000, 3160, 1180, 1320],
-  ['sw lane', 40, 200, 1800, 1940],      ['se lane', 3000, 3160, 1800, 1940],
-  ['south-west', 460, 660, 2060, 2340],  ['south-east', 2540, 2740, 2060, 2340],
-  ['fob', 1300, 1900, 2080, 2330],
-].map(([name, x0, x1, y0, y1]) => ({ name, x0, x1, y0, y1, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, used: -99 }));
+const SPAWN_ZONES = [   // [name, x0, x1, y0, y1] in metres; scaled to px below
+  ['north gate', 42, 54, 2.5, 4.5], ['station yard', 23, 32, 2, 9], ['mill east', 91, 95, 2, 10], ['crossing', 42, 54, 11, 18.5],
+  ['rail west', 1, 3.5, 11, 18.5], ['rail east', 89, 95, 11, 19], ['cross west', 1, 14, 27.5, 30.5], ['cross east', 63, 95, 27.5, 30.5],
+  ['market', 10, 20, 46, 48.5], ['forecourt', 66, 70, 41, 48], ['south road west', 1, 22, 48.5, 51.5], ['south road east', 75, 95, 48.5, 51.5],
+  ['motor pool', 72, 95, 61, 71], ['cemetery', 3, 23, 69, 71.5], ['fob', 43, 68, 62, 69],
+].map(([name, x0, x1, y0, y1]) => ({ name, x0: x0 * 40, x1: x1 * 40, y0: y0 * 40, y1: y1 * 40, cx: (x0 + x1) * 20, cy: (y0 + y1) * 20, used: -99 }));
 function pickSpawn(side) {   // 'e' for the enemy, 'p' for your squad
   const foes = side === 'e' ? soldiers.filter(s => s.alive) : enemies;
   const mates = side === 'e' ? enemies : soldiers.filter(s => s.alive);
@@ -2144,10 +2284,10 @@ function pickSpawn(side) {   // 'e' for the enemy, 'p' for your squad
 }
 function spawnPoint() { return pickSpawn('e'); }
 function spawnEnemy(type) {
-  const t = ETYPES[type], mult = 1 + 0.2 * (state.tier - 1);
-  enemies.push({ type, r: t.r, col: t.col, dmg: t.dmg, horse: !!t.horse,
+  const t = ETYPES[type], dmgMul = 1 + 0.12 * (state.tier - 1);   // harder sectors hit harder; health stays put so an M4 still drops a rifleman in three
+  enemies.push({ type, r: t.r, col: t.col, dmg: t.dmg * dmgMul, horse: !!t.horse,
     ranged: t.ranged || 0, spotter: !!t.spotter, spotCd: rand(3, 5), fireT: rand(0.5, 1.5),
-    hp: Math.round(t.hp * mult), maxHp: Math.round(t.hp * mult),
+    hp: t.hp, maxHp: t.hp,
     sp: t.sp * (1 + 0.04 * (state.tier - 1)) * rand(0.92, 1.08),
     ...spawnPoint(),
     cd: rand(0, 0.5), flash: 0, wob: rand(0, TAU), walk: rand(0, TAU), atk: 0, face: 1,
@@ -2186,7 +2326,7 @@ function updateWaves(dt) {   // four a side: whenever the enemy is short-handed 
   const unspent = state.enemyTotal - state.enemyDown - onField - (state.bossRef ? 1 : 0);   // the Warlord's ticket is its own, not a spare
   if (enemies.length < CFG.enemyCap && unspent > 0) {
     state.spawnT -= dt;
-    if (state.spawnT <= 0) { spawnEnemy(pickType()); state.spawnT = rand(2.2, 3.6); }
+    if (state.spawnT <= 0) { spawnEnemy(pickType()); state.spawnT = rand(1.2, 2.2); }
   } else state.spawnT = Math.max(state.spawnT, 1.2);
 }
 
@@ -2196,10 +2336,10 @@ const HITFX = { hit: 0, kill: 0, head: 0 };   // hitmarker flashes on the crossh
 // the time it has flown the weapon's whole reach. Distances in px (40 px = 1 m). Sniper and rocket are
 // absent on purpose: a .50 does not care how far it went, and a blast is handled by its own radius.
 const FALLOFF = {
-  smg:    { near: 260, min: 0.40 },   // full to 6.5 m, 40% by 22 m
-  ar:     { near: 480, min: 0.55 },   // full to 12 m,  55% by 37 m
-  lmg:    { near: 420, min: 0.50 },   // full to 10.5 m, 50% by 35 m
-  pistol: { near: 240, min: 0.45 },
+  smg:    { near: 400, min: 0.60 },   // full to 10 m, 60% by 22 m: 4 rounds on a rifleman up close, 5 at 15 m
+  ar:     { near: 800, min: 0.60 },   // full to 20 m, 60% by 37 m: 3 rounds on a rifleman anywhere in the square
+  lmg:    { near: 640, min: 0.55 },   // full to 16 m, 55% by 35 m
+  pistol: { near: 320, min: 0.50 },
 };
 function falloffMul(key, travelled) {
   const f = FALLOFF[key];
@@ -2220,6 +2360,79 @@ function headShot(e, b) {   // did this round's line pass through the centre col
   // decides whether you did. Without this, a close-range burst down the sights is a headshot every time.
   return perp <= (HEAD_W[e.type] || 4) && Math.random() < CFG.headshotChance;
 }
+// ---------- your rounds go where the crosshair is: a 3D line through the town ----------
+// Sim px everywhere (40 px = 1 m), z up. Buildings and cover have tops; enemies are upright cylinders.
+const PX = 40;
+const COVER_TOP = { crates: 1.42, sandbags: 0.72, barrel: 1.0, propane: 0.9, car: 1.6, van: 1.9, wreck: 1.2, vanwreck: 1.5, stall: 0.95,
+  wall: 1.1, barrier: 0.9, fountain: 0.68, fence: 1.0, dumpster: 1.32, woodpile: 0.9, planter: 0.72,
+  platform: 0.9, pillar: 6.6, hesco: 1.6, tree: 7, statue: 2.6, tent: 2.2, truck: 3.0, bus: 3.0, mound: 1.3, grave: 0.9, hedge: 1.3,
+  pump: 1.7, tanker: 3.0, tankwreck: 2.2, logs: 1.2, mixer: 1.6, toilet: 2.3, bench: 0.5, table: 0.75 };   // metres, as the view draws them
+const COVER_HURT = { crates: 0.5, sandbags: 0.67, wall: 0.55, woodpile: 0.66 };   // what's left of them below half health
+function coverTop(ob) {   // px: how high this piece of cover stands right now
+  const h = COVER_TOP[ob.kind] != null ? COVER_TOP[ob.kind] : (COVER_KINDS[ob.kind].hgt || 1);
+  return h * PX * (ob.maxHp > 0 && ob.hp / ob.maxHp <= 0.5 ? (COVER_HURT[ob.kind] || 1) : 1);
+}
+function bodyTop(e) {   // px: the top of an enemy's head right now — riflemen kneel while they hold still
+  const look = ENEMY_LOOK[e.type] || ENEMY_LOOK.grunt;
+  return ((e.ranged && e.stillT > 0.3 ? 1.3 : 1.8) + (e.horse ? 0.35 : 0)) * look[1] * PX;
+}
+function rayBoxT(ox, oy, oz, dx, dy, dz, x0, x1, y0, y1, z1) {   // entry distance along a ray into a box standing on the ground; Infinity if it misses
+  let t0 = 0, t1 = Infinity, u, v, s;
+  if (Math.abs(dx) < 1e-9) { if (ox < x0 || ox > x1) return Infinity; }
+  else { u = (x0 - ox) / dx; v = (x1 - ox) / dx; if (u > v) { s = u; u = v; v = s; } if (u > t0) t0 = u; if (v < t1) t1 = v; if (t0 > t1) return Infinity; }
+  if (Math.abs(dy) < 1e-9) { if (oy < y0 || oy > y1) return Infinity; }
+  else { u = (y0 - oy) / dy; v = (y1 - oy) / dy; if (u > v) { s = u; u = v; v = s; } if (u > t0) t0 = u; if (v < t1) t1 = v; if (t0 > t1) return Infinity; }
+  if (Math.abs(dz) < 1e-9) { if (oz < 0 || oz > z1) return Infinity; }
+  else { u = (0 - oz) / dz; v = (z1 - oz) / dz; if (u > v) { s = u; u = v; v = s; } if (u > t0) t0 = u; if (v < t1) t1 = v; if (t0 > t1) return Infinity; }
+  return t0;
+}
+function rayCylT(ox, oy, oz, dx, dy, dz, cx, cy, r, z1) {   // into an upright cylinder standing on the ground
+  const fx = ox - cx, fy = oy - cy, A = dx * dx + dy * dy, C = fx * fx + fy * fy - r * r;
+  let t = 0;
+  if (C > 0) {
+    if (A < 1e-9) return Infinity;
+    const B = 2 * (fx * dx + fy * dy), disc = B * B - 4 * A * C;
+    if (disc < 0) return Infinity;
+    t = (-B - Math.sqrt(disc)) / (2 * A);
+    if (t < 0) return Infinity;
+  }
+  const z = oz + dz * t;
+  return z >= 0 && z <= z1 ? t : Infinity;
+}
+const SHOT = { ox: 0, oy: 0, oz: 0, dx: 0, dy: 0, dz: 0 }, AIMP = { x: 0, y: 0, z: 0 };
+function crosshairRay(s) {   // where your crosshair's ray starts and which way it points
+  if (fpvActive() || !VIEW.ready || !VIEW.camera) {   // first person: from the eyes, along the view
+    const L = Math.hypot(1, aim.pitch);
+    SHOT.ox = s.x; SHOT.oy = s.y; SHOT.oz = (FPV.eyeY == null ? 1.62 : FPV.eyeY) * PX;
+    SHOT.dx = Math.sin(aim.yaw) / L; SHOT.dy = -Math.cos(aim.yaw) / L; SHOT.dz = aim.pitch / L;
+  } else {   // over the shoulder: from the camera through the crosshair, drawn 46% of the way down the screen
+    const c3 = VIEW.camera, v = crosshairRay.v || (crosshairRay.v = new THREE.Vector3());
+    v.set(0, 1 - 2 * 0.46, 0.5).unproject(c3).sub(c3.position).normalize();
+    SHOT.ox = c3.position.x * PX; SHOT.oy = c3.position.z * PX; SHOT.oz = c3.position.y * PX;
+    SHOT.dx = v.x; SHOT.dy = v.z; SHOT.dz = v.y;
+  }
+  return SHOT;
+}
+function crosshairPoint(R, maxT, out) {   // the first thing along the ray: an enemy, a building, cover or the ground
+  const { ox, oy, oz, dx, dy, dz } = R;
+  let t = maxT;
+  if (dz < -1e-6) t = Math.min(t, -oz / dz);
+  for (const b of buildings) t = Math.min(t, rayBoxT(ox, oy, oz, dx, dy, dz, b.x - b.hw, b.x + b.hw, b.y - b.hd, b.y + b.hd, b.top));
+  for (const ob of obstacles) {
+    if (COVER_KINDS[ob.kind].block < 0.5) continue;   // you aim through a fence, a hedge, a tent
+    const top = coverTop(ob);
+    t = Math.min(t, ob.shape === 'c' ? rayCylT(ox, oy, oz, dx, dy, dz, ob.x, ob.y, ob.r, top)
+      : rayBoxT(ox, oy, oz, dx, dy, dz, ob.x - ob.hw, ob.x + ob.hw, ob.y - ob.hd, ob.y + ob.hd, top));
+  }
+  for (const e of enemies) t = Math.min(t, rayCylT(ox, oy, oz, dx, dy, dz, e.x, e.y, e.r, bodyTop(e)));
+  out.x = ox + dx * t; out.y = oy + dy * t; out.z = oz + dz * t;
+  return t;
+}
+function headHit(e, b) {   // a round that strikes the top of the body, near its middle
+  if (b.z < bodyTop(e) * 0.8) return false;
+  const bl = Math.hypot(b.vx, b.vy) || 1;
+  return Math.abs((e.x - b.x) * (b.vy / bl) - (e.y - b.y) * (b.vx / bl)) <= (HEAD_W[e.type] || 4) * 2.4;
+}
 const FEED = [], DMGDIR = [];   // kill feed rows and the arcs that show where fire came from
 let gestured = false;   // vibrate() is refused (and logs an error) until the page itself has been touched
 addEventListener('pointerdown', () => { gestured = true; }, true);
@@ -2235,12 +2448,13 @@ function nearestSoldier(x, y) {
   for (const s of soldiers) { if (!s.alive) continue; const d = dist2(x, y, s.x, s.y); if (d < bd) { bd = d; best = s; } }
   return best;
 }
+const hitsToDrop = k => Math.ceil(ETYPES.grunt.hp / squadDmg(k) - 1e-9);   // body hits on a rifleman at full damage
 const GUN_KICK = { smg: 0.6, ar: 1.0, lmg: 1.4, sniper: 2.6, rocket: 3.2, pistol: 0.4 };
 function fire(s, target, fromPlayer, angle) {   // angle set = fired where the player is aiming, not at a target
   const key = s.pistol ? 'pistol' : s.weapon, w = s.pistol ? SIDEARM : WEAPONS[s.weapon];
   const dx = target ? target.x - s.x : 0, dy = target ? target.y - s.y : 0;
   const spread = w.spread * (fromPlayer && aim.ads ? heroSight().spread : 1) + (fromPlayer ? 0 : 0.03);
-  const a = (angle != null ? angle : Math.atan2(dy, dx)) + rand(-1, 1) * spread;
+  const jit = rand(-1, 1) * spread, a = (angle != null ? angle : Math.atan2(dy, dx)) + jit;
   s.aim = a; s.recoil = 0.09;
   if (fromPlayer && manualAim()) {   // the weapon climbs: your next round goes where the recoil left the muzzle
     const rk = RECOIL_KICK[key] || 0.2, steady = aim.ads ? 0.6 : 1;
@@ -2254,8 +2468,21 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   s.shotN = (s.shotN || 0) + 1;
   if (fromPlayer) { state.shots++; MUS.heat = performance.now(); }
   const mz = (s.pistol ? SIDEARM.len : w.len) + 6;   // the barrel tip: where the round actually leaves the weapon
-  bullets.push({ x: s.x + Math.cos(a) * mz, y: s.y + Math.sin(a) * mz,
-    vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed,
+  let bx = s.x + Math.cos(a) * mz, by = s.y + Math.sin(a) * mz, bz = 0, ux = Math.cos(a), uy = Math.sin(a), uz = 0, ballistic = false;
+  if (fromPlayer && manualAim()) {   // your round flies in 3D to whatever is under the crosshair, spread around that line
+    const R = crosshairRay(s);
+    crosshairPoint(R, (w.reach || w.range) + 400, AIMP);
+    if (fpvActive()) { bx = R.ox + R.dx * 18; by = R.oy + R.dy * 18; bz = R.oz + R.dz * 18; }   // from just ahead of the eyes; the tracer is drawn from the barrel you see
+    else bz = 1.35 * PX;
+    let ex = AIMP.x - bx, ey = AIMP.y - by, ez = AIMP.z - bz;
+    const L = Math.hypot(ex, ey, ez);
+    if (L < 30) { ex = R.dx; ey = R.dy; ez = R.dz; } else { ex /= L; ey /= L; ez /= L; }
+    const cone = w.spread * (aim.ads ? heroSight().spread * 0.3 : 0.6), rr = cone * Math.sqrt(Math.random()), ra = rand(0, TAU);   // inside a disc: most rounds near the middle
+    const yaw = Math.atan2(ey, ex) + rr * Math.cos(ra), el = Math.asin(clamp(ez, -1, 1)) + rr * Math.sin(ra);
+    ux = Math.cos(el) * Math.cos(yaw); uy = Math.cos(el) * Math.sin(yaw); uz = Math.sin(el); ballistic = true;
+  }
+  bullets.push({ x: bx, y: by, z: bz, vz: uz * w.speed, ballistic,
+    vx: ux * w.speed, vy: uy * w.speed,
     tracer: key === 'rocket' || key === 'sniper' || s.shotN % 3 === 0,   // every third round is loaded as a tracer; the .50 and the rocket always burn
     life: (w.reach || w.range) / w.speed, age: 0, fromPlayer, wkey: key, slot: s.slot,
     dmg: s.pistol ? SIDEARM.dmg : squadDmg(s.weapon), hits: 0, maxHits: w.pierce || 1, aoe: w.aoe || 0, skip: coverNear(s, 34) });
@@ -2539,7 +2766,8 @@ function enterBattle(tid) {
   const opening = Math.min(CFG.enemyCap, state.enemyTotal - state.enemyDown);   // their first four, somewhere far from the FOB
   for (let i = 0; i < opening; i++) spawnEnemy(pickType());
   lockRelease();
-  aim.yaw = 0; aim.pitch = 0; aim.fire = false; aim.ads = false; aim.lookDx = 0; aim.settle = 0; aim.settleY = 0;   // every front opens facing the line, not wherever you last looked
+  aim.yaw = 0; aim.pitch = 0; aim.fire = false; aim.ads = false; aim.lookDx = 0; aim.settle = 0; aim.settleY = 0;
+  releaseInputs();   // every front opens facing the line, not wherever you last looked
   applyOpts.wasManual = manualAim();
   viewEnterBattle();
   supportsDirty = true;
@@ -2800,7 +3028,7 @@ function squadAI(s, spd, dt, lead, front, wrange) {
       }
       threat = foe; s.foeX = foe.x; s.foeY = foe.y;
     } else {   // nobody on the field: sweep toward where they were last heard, or the middle of town
-      const at = state.lastContact || { x: CFG.arenaW / 2, y: 1250 };
+      const at = state.lastContact || { x: CFG.arenaW / 2, y: CFG.arenaH * 0.45 };
       const ang = s.slot * 2.1 + state.frontTime * 0.05, off = role === 'overwatch' ? 0 : role === 'flank' ? 520 : 260;
       gx = at.x + Math.cos(ang) * off; gy = at.y + Math.sin(ang) * off;
       threat = at; s.foeX = null;
@@ -2862,7 +3090,7 @@ function updateSoldiers(dt) {
     else { s.dive = null; squadAI(s, spd, dt, lead, front, wrange); }
     s.moving = Math.hypot(s.x - x0, s.y - y0) > spd * dt * 0.25;
     if (s.moving) s.walk += dt * (s.horse ? 13 : 10);
-    s.x = clamp(s.x, 30, CFG.arenaW - 30); s.y = clamp(s.y, 30, CFG.arenaH - 30);
+    s.x = clamp(s.x, 12, CFG.arenaW - 12); s.y = clamp(s.y, 12, CFG.arenaH - 12);   // the perimeter stands on the edge: walk up to it
     collideObstacles(s);
     s.tgtT = (s.tgtT || 0) - dt;
     if (s.tgtT <= 0 || (s.tgt && (s.tgt.hp <= 0 || !enemies.includes(s.tgt)))) {
@@ -2969,15 +3197,16 @@ function updateEnemies(dt) {
     const dx = t.x - e.x, dy = t.y - e.y, d = Math.hypot(dx, dy) || 1;
     e.face = dx >= 0 ? 1 : -1;
     e.aim = Math.atan2(dy, dx);
-    const sp0 = e.sp;
+    const sp0 = e.sp, ex0 = e.x, ey0 = e.y;
     if (d > 900 && !e.boss) e.sp *= 1.8;   // far from the fight: hurry up the streets
     if (e.boss) bossLogic(e, t, dt, d, dx, dy);
     else if (e.spotter) spotterAI(e, t, dt, d);
     else if (e.ranged) riflemanAI(e, t, dt, d, vis);
     else meleeAI(e, t, dt, d);
     e.sp = sp0;
-    e.x = clamp(e.x, 20, CFG.arenaW - 20);
+    e.x = clamp(e.x, 16, CFG.arenaW - 16); e.y = clamp(e.y, 16, CFG.arenaH - 16);
     collideObstacles(e);
+    e.stillT = Math.hypot(e.x - ex0, e.y - ey0) < sp0 * dt * 0.25 ? (e.stillT || 0) + dt : 0;
     e.chkT = (e.chkT || 0) - dt;
     if (e.chkT <= 0) {   // wedged on a corner: plan again
       e.chkT = 0.8;
@@ -3068,19 +3297,24 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
     const b = bullets[i];
     if (b.wkey === 'rocket' && Math.random() < dt * 30)
       particles.push({ x: b.x, y: b.y, z: 15, vx: rand(-15, 15), vy: rand(-15, 15), vz: rand(5, 25), life: 0.35, max: 0.35, col: '#8a8a80', r: 2.5 });
-    const steps = Math.max(1, Math.ceil(Math.hypot(b.vx, b.vy) * dt / 10)), sdt = dt / steps;
+    const steps = Math.max(1, Math.ceil(Math.hypot(b.vx, b.vy, b.vz || 0) * dt / 10)), sdt = dt / steps;
     let dead = false;
     for (let k = 0; k < steps && !dead; k++) {
       b.x += b.vx * sdt; b.y += b.vy * sdt; b.life -= sdt; b.age = (b.age || 0) + sdt;
+      if (b.ballistic) {
+        b.z += b.vz * sdt;
+        if (b.z <= 0) { b.z = 0; impact(b, '#8a7a5a', false); dead = true; break; }   // into the ground where you aimed low
+      }
       if (b.life <= 0) {
         if (b.aoe) explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey });
         dead = true; break;
       }
-      for (const bd of buildings) if (insideShape(bd, b.x, b.y)) { impact(b, '#c8c0b0', true); dead = true; break; }
+      for (const bd of buildings) if (insideShape(bd, b.x, b.y) && (!b.ballistic || b.z < bd.top)) { impact(b, '#c8c0b0', true); dead = true; break; }
       if (dead) break;
       for (const ob of obstacles) {
         if (ob === b.skip || ob === b.over || !insideShape(ob, b.x, b.y)) continue;
-        if (!b.aoe && Math.random() > ob.block) { b.over = ob; continue; }   // this one flies over the top
+        if (b.ballistic && COVER_KINDS[ob.kind].block >= 0.5) { if (b.z >= coverTop(ob)) continue; }   // a real line: over the top of it, or into it
+        else if (!b.aoe && Math.random() > ob.block) { b.over = ob; continue; }   // this one flies over the top
         impact(b, MAT_COL[COVER_KINDS[ob.kind].mat] || '#999999', false);
         if (!b.aoe) damageCover(ob, b.dmg);
         dead = true; break;
@@ -3101,13 +3335,14 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
           const e = enemies[j], d2 = dist2(b.x, b.y, e.x, e.y);
           if (d2 < 60 * 60 && b.suppd !== e) { b.suppd = e; e.supp = Math.min(4, (e.supp || 0) + (b.wkey === 'lmg' ? 0.5 : 0.3)); }   // rounds cracking past keep heads down
           if (b.hitList && b.hitList.includes(e)) continue;
-          if (d2 >= (e.r + 5) * (e.r + 5)) continue;
+          if (d2 >= (e.r + (b.ballistic ? 3 : 5)) ** 2) continue;
+          if (b.ballistic && b.z > bodyTop(e)) continue;   // over their head
           if (b.aoe) { explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }); dead = true; break; }
           const bl = Math.hypot(b.vx, b.vy) || 1;
-          const head = headShot(e, b);
+          const head = b.ballistic ? headHit(e, b) : headShot(e, b);
           if (b.fromPlayer) { state.hits++; if (head) state.heads++; }
-          const cdmg = (inCover(e) ? b.dmg * 0.65 : b.dmg) * (head ? CFG.headshotMul : 1)
-            * falloffMul(b.wkey, b.age * bl);   // how far this round had flown by the time it arrived
+          const cdmg = (b.ballistic || !inCover(e) ? b.dmg : b.dmg * 0.65) * (head ? CFG.headshotMul : 1)   // your rounds meet cover as geometry, not a discount
+            * falloffMul(b.wkey, b.age * Math.hypot(b.vx, b.vy, b.vz || 0));   // how far this round had flown by the time it arrived
           particles.push({ x: e.x, y: e.y, z: head ? 22 : 14, vx: rand(-40, 40), vy: rand(-40, 40), vz: rand(30, 90), life: 0.08, max: 0.08, col: '#fff0b0', r: 1.4 });
           const died = hurtEnemy(j, cdmg, { player: b.fromPlayer, wkey: b.wkey, slot: b.slot, head }, { x: b.vx / bl, y: b.vy / bl });
           b.hits++;
@@ -3123,7 +3358,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
 function impact(b, col, wall) {   // a round striking a wall or cover: rockets detonate, everything else throws chips
   if (b.aoe) { explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }); return; }
   for (let k = 0; k < 3; k++)
-    particles.push({ x: b.x, y: b.y, z: rand(10, 18), vx: rand(-60, 60), vy: rand(-60, 60), vz: rand(30, 100), life: 0.25, max: 0.25, col: k ? col : '#ffe8a0', r: k ? 1.8 : 1.2 });
+    particles.push({ x: b.x, y: b.y, z: b.ballistic ? b.z / (PX * ZS) : rand(10, 18), vx: rand(-60, 60), vy: rand(-60, 60), vz: rand(30, 100), life: 0.25, max: 0.25, col: k ? col : '#ffe8a0', r: k ? 1.8 : 1.2 });
   if (Math.random() < (wall ? 0.12 : 0.22)) sfxRicochet(b.x, b.y);
 }
 function updateFx(dt) {
@@ -3539,7 +3774,7 @@ class Batch {
 }
 function makePartBatches(capCloth, capOther) {
   const set = {};
-  for (const k of PART_KEYS) set[k] = new Batch(VIEW.kit[k], VIEW.mats.shaded, k === 'limb' || k === 'band' ? capCloth : capOther);
+  for (const k of PART_KEYS) set[k] = new Batch(VIEW.kit[k], VIEW.mats.shaded, k === 'limb' || k === 'band' || k === 'metal' ? capCloth : capOther);
   set.glow = new Batch(new THREE.BoxGeometry(1, 1, 1), VIEW.mats.unlit, capOther);
   return set;
 }
@@ -4809,8 +5044,8 @@ function drawFx() {
   const lines = (N64.target && N64.target.height) || N64.lines;
   const PIX = 2 * Math.tan(VIEW.camera.fov * Math.PI / 360) / lines;   // metres per render line, per metre of distance
   for (const b of bullets) {
-    const sp = Math.hypot(b.vx, b.vy) || 1, rocket = b.wkey === 'rocket', sniper = b.wkey === 'sniper';
-    const hot = b.tracer || rocket, y = b.hostile ? 1.0 : 1.08;
+    const sp = Math.hypot(b.vx, b.vy, b.vz || 0) || 1, rocket = b.wkey === 'rocket', sniper = b.wkey === 'sniper';
+    const hot = b.tracer || rocket, y = b.ballistic ? b.z * XS : b.hostile ? 1.0 : 1.08;
     TMP.bp.set(b.x * XS, y, b.y * XS);   // the head of the round
     const perFrame = sp * XS / 60;       // metres it covers in one frame
     let tail = rocket ? 0.55 : sniper ? 3.0
@@ -4821,7 +5056,7 @@ function drawFx() {
       if (dl < 0.03) continue;
       TMP.dir.divideScalar(dl);
       tail = Math.min(tail, dl);
-    } else TMP.dir.set(b.vx / sp, 0, b.vy / sp);
+    } else TMP.dir.set(b.vx / sp, (b.vz || 0) / sp, b.vy / sp);
     TMP.q.setFromUnitVectors(TMP.zax, TMP.dir);
     // Sized in render lines, not metres: the same on screen at 1 m or 40 m. A fixed size in metres is a thick
     // bar right in front of your eye and nothing at all down the street.
@@ -5105,6 +5340,35 @@ function paintEnvTextures() {
       for (const ox of [0, -s]) { g.beginPath(); g.ellipse(x + ox + c / 2, r * c + c / 2, c * 0.44, c * 0.4, 0, 0, TAU); g.fill(); }
     }
   }, true);
+  tex.asphalt = soft(64, 4, (g, s) => {   // worn asphalt: dark grain, pale aggregate, a crack or two
+    g.fillStyle = '#6c6c6a'; g.fillRect(0, 0, s, s);
+    for (let k = 0; k < 2600; k++) { g.fillStyle = rnd() < 0.5 ? 'rgba(30,30,30,0.35)' : 'rgba(210,210,200,0.2)'; g.fillRect(rnd() * s, rnd() * s, 2, 2); }
+    for (let k = 0; k < 18; k++) wrap(g, s, rnd() * s, rnd() * s, (x, y) => blotch(g, x, y, 14 + rnd() * 30, rnd() < 0.5 ? '40,40,40' : '160,160,150', 0.16));
+    g.strokeStyle = 'rgba(25,25,25,0.5)'; g.lineWidth = 2;
+    for (let k = 0; k < 3; k++) { g.beginPath(); let x = rnd() * s, y = rnd() * s; g.moveTo(x, y); for (let q = 0; q < 5; q++) { x += rnd() * 30 - 15; y += rnd() * 30 - 15; g.lineTo(x, y); } g.stroke(); }
+  }, true);
+  tex.paving = soft(64, 4, (g, s) => {   // square flagstones, each its own shade
+    g.fillStyle = '#8e8a82'; g.fillRect(0, 0, s, s);
+    const n = 4, c = s / n;
+    for (let r = 0; r < n; r++) for (let q = 0; q < n; q++) {
+      const v = 175 + (rnd() * 45 | 0);
+      g.fillStyle = `rgb(${v},${v - 3},${v - 10})`; g.fillRect(q * c + 3, r * c + 3, c - 6, c - 6);
+      for (let d = 0; d < 12; d++) { g.fillStyle = 'rgba(60,56,50,0.15)'; g.fillRect(q * c + 3 + rnd() * (c - 8), r * c + 3 + rnd() * (c - 8), 3, 3); }
+    }
+  }, true);
+  tex.gravel = soft(64, 4, (g, s) => {
+    g.fillStyle = '#9a9488'; g.fillRect(0, 0, s, s);
+    for (let k = 0; k < 3000; k++) { const v = 90 + (rnd() * 140 | 0); g.fillStyle = `rgba(${v},${v - 6},${v - 14},0.6)`; g.fillRect(rnd() * s, rnd() * s, 2 + rnd() * 3, 2 + rnd() * 2); }
+  }, true);
+  tex.metalWall = soft(64, 4, (g, s) => {   // corrugated sheet: ridges and streaks of rust
+    g.fillStyle = '#c8c8c4'; g.fillRect(0, 0, s, s);
+    for (let x = 0; x < s; x += 12) { g.fillStyle = 'rgba(255,255,255,0.28)'; g.fillRect(x, 0, 4, s); g.fillStyle = 'rgba(40,40,40,0.25)'; g.fillRect(x + 7, 0, 4, s); }
+    for (let k = 0; k < 14; k++) { const x = rnd() * s, gr = g.createLinearGradient(0, 0, 0, s); gr.addColorStop(0, 'rgba(120,70,30,0.35)'); gr.addColorStop(1, 'rgba(120,70,30,0)'); g.fillStyle = gr; g.fillRect(x, 0, 3 + rnd() * 6, s * (0.2 + rnd() * 0.7)); }
+  }, true);
+  tex.chain = soft(64, 4, (g, s) => {   // chain-link: a diamond mesh with holes, alpha-tested
+    g.clearRect(0, 0, s, s); g.strokeStyle = 'rgba(196,200,204,1)'; g.lineWidth = 5;
+    for (let k = -s; k < s * 2; k += s / 4) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k + s, s); g.moveTo(k + s, 0); g.lineTo(k, s); g.stroke(); }
+  }, true);
   return tex;
 }
 function crossCards(n) {   // n vertical quads crossed through the Y axis, base at y = 0: N64 foliage
@@ -5134,30 +5398,52 @@ function rockGeometry(seed) {   // faceted boulder: an icosahedron with its corn
   g.computeVertexNormals();
   return g;
 }
-function groundColor(x, z, h, out) {   // alpine meadow outside; in town cobbled streets, a paved square, sidewalks, churned checkpoint
+function groundColor(x, z, h, out) {   // alpine meadow outside; trodden earth inside the perimeter (streets and squares are laid over it)
   const n1 = Math.sin(x * 0.23 + Math.cos(z * 0.19) * 2.1) * Math.cos(z * 0.21 - x * 0.07);
   const n2 = Math.sin(x * 0.61 + z * 0.37) * Math.sin(z * 0.53 - x * 0.29);
   out.copy(colorOf('#8a9a52')).lerp(colorOf('#667a3e'), clamp(n1 * 0.6 + 0.2, 0, 1) * 0.7)
     .lerp(colorOf('#b4b46a'), clamp(n2, 0, 1) * 0.4);
   const sx = x / XS, sy = z / XS;
-  const town = smooth(-240, -140, sy) * smooth(CFG.arenaH + 60, CFG.arenaH - 40, sy) * smooth(-120, -20, sx) * smooth(CFG.arenaW + 120, CFG.arenaW + 20, sx);
-  if (town > 0) {
-    const P = TOWN.plaza, plaza = sx > P[0] && sx < P[2] && sy > P[1] && sy < P[3];
-    out.lerp(colorOf(plaza ? '#aaa292' : '#8c8578'), town * 0.92);
-    let side = 0;
-    for (const b of TOWN.buildings) {
-      const ex = Math.max(b[0] - sx, 0, sx - b[2]) + Math.max(b[1] - sy, 0, sy - b[3]);
-      if (ex < 60) side = Math.max(side, 1 - ex / 60);
-    }
-    out.lerp(colorOf('#b4ac9c'), side * 0.55 * town);
-    out.lerp(colorOf('#8a7a5a'), smooth(CFG.lineY - 120, CFG.lineY + 160, sy) * 0.55 * town);
-    out.multiplyScalar(0.94 + n2 * 0.06);
-  }
+  const town = smooth(-80, 0, sy) * smooth(CFG.arenaH + 80, CFG.arenaH, sy) * smooth(-80, 0, sx) * smooth(CFG.arenaW + 80, CFG.arenaW, sx);
+  if (town > 0) { out.lerp(colorOf('#8c7e64'), town * 0.8); out.multiplyScalar(0.94 + n2 * 0.06); }
   const roadX = ARENA.cx + (Math.sin(z * 0.11) * 6 + Math.sin(z * 0.043 + 1) * 4) * smooth(0, 14, Math.max(-z, z - ARENA.hd * 2));
-  const road = z > -70 && z < 90 ? smooth(3.2, 1.6, Math.abs(x - roadX) + n2 * 0.45) * (1 - town) : 0;
+  const road = (z < 0 && z > -70) || (z > ARENA.hd * 2 && z < ARENA.hd * 2 + 70) ? smooth(3.2, 1.6, Math.abs(x - roadX) + n2 * 0.45) * (1 - town) : 0;
   out.lerp(colorOf('#5e5c58'), road * 0.9);
   out.lerp(colorOf('#c8c8b8'), smooth(8, 26, h) * 0.35);
   return out;
+}
+function pushTop(A, cx, y, cz, w, d, col, tile) {   // a flat face looking up
+  pushQuad(A, [cx - w / 2, y, cz + d / 2], [cx + w / 2, y, cz + d / 2], [cx + w / 2, y, cz - d / 2], [cx - w / 2, y, cz - d / 2], [0, 1, 0], w / tile, d / tile, col);
+}
+function pushSlab(A, cx, y, cz, w, t, d, col, tile) {   // a box you can see from underneath too: floor slabs, the platform
+  pushWalls(A, cx, y, cz, w, t, d, col, tile);
+  pushTop(A, cx, y + t, cz, w, d, col, tile);
+  pushQuad(A, [cx - w / 2, y, cz - d / 2], [cx + w / 2, y, cz - d / 2], [cx + w / 2, y, cz + d / 2], [cx - w / 2, y, cz + d / 2], [0, -1, 0], w / tile, d / tile, col);
+}
+function buildGroundZones(E) {   // streets, squares, gravel and grass laid over the field, resolved on a 1 m grid so nothing overlaps
+  const Wm = TOWN.w, Hm = TOWN.h, types = ['dirt', 'gravel', 'asphalt', 'cobble', 'paving', 'grass', 'concrete'], grid = new Int8Array(Wm * Hm).fill(-1);
+  for (const [x0, y0, x1, y1, type] of TOWN.ground) {
+    const ti = types.indexOf(type);
+    for (let y = Math.max(0, Math.floor(y0)); y < Math.min(Hm, Math.ceil(y1)); y++)
+      for (let x = Math.max(0, Math.floor(x0)); x < Math.min(Wm, Math.ceil(x1)); x++) grid[y * Wm + x] = ti;
+  }
+  const SURF = { dirt: [E.ground, 3.2, '#a8926a'], gravel: [E.gravel, 2.6, '#ffffff'], asphalt: [E.asphalt, 3.2, '#ffffff'], cobble: [E.cobble, 2.2, '#ffffff'],
+    paving: [E.paving, 2.4, '#ffffff'], grass: [E.ground, 3.2, '#9ab45a'], concrete: [E.concrete, 3.2, '#e8e6e0'] };
+  types.forEach((type, ti) => {
+    const A = geoArrays(), [tex, tile, colHex] = SURF[type], col = colorOf(colHex);
+    for (let y = 0; y < Hm; y++) for (let x = 0; x < Wm;) {
+      if (grid[y * Wm + x] !== ti) { x++; continue; }
+      let x1 = x;
+      while (x1 < Wm && grid[y * Wm + x1] === ti) x1++;
+      const v = [[x, 0.012, y + 1], [x1, 0.012, y + 1], [x1, 0.012, y], [x, 0.012, y]];   // counter-clockwise seen from above; uv in world metres
+      for (const q of [0, 1, 2, 0, 2, 3]) { A.pos.push(...v[q]); A.nor.push(0, 1, 0); A.uv.push(v[q][0] / tile, v[q][2] / tile); A.col.push(col.r, col.g, col.b); }
+      x = x1;
+    }
+    if (!A.pos.length) return;
+    const t = tex.clone();
+    t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    meshFrom(A, new THREE.MeshLambertMaterial({ map: t, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
+  });
 }
 
 // ---------- environment: a mountain town ----------
@@ -5270,7 +5556,8 @@ function buildEnvironment() {
   const field = new THREE.PlaneGeometry(FW, FD, Math.round(FW * 2), Math.round(FD * 2));
   field.rotateX(-Math.PI / 2); field.translate(ARENA.cx, 0, ARENA.cz);
   paintGround(field, false);
-  groundMesh(field, FW / 2.2, FD / 2.2, E.cobble);
+  groundMesh(field, FW / 3.2, FD / 3.2, E.ground);
+  buildGroundZones(E);
 
   const sky = new THREE.SphereGeometry(480, 16, 12);        // sky dome, recoloured each frame by applyEnv
   const sp = sky.attributes.position, sc = new Float32Array(sp.count * 3);
@@ -5323,10 +5610,14 @@ function buildEnvironment() {
   E.bark.repeat.set(1, 3);
   const jersey = new THREE.BoxGeometry(1, 1, 1);   // concrete barrier: the top pinched in across its width
   { const p = jersey.attributes.position; for (let i = 0; i < p.count; i++) if (p.getY(i) > 0) p.setX(i, p.getX(i) * 0.38); jersey.computeVertexNormals(); }
-  const trunks = [], boughs = [], bushes = [], rocks = [[], [], []], slabs = [], bastion = [], poles = [], hulls = [], tents = [];
-  const stones = [], balconies = [], spires = [], placed = [];
-  const W = geoArrays(), RF = geoArrays();
+  const trunks = [], boughs = [], bushes = [], rocks = [[], [], []], bastion = [], poles = [], hulls = [], tents = [];
+  const stones = [], balconies = [], spires = [], placed = [], detail = [], sleepers = [], tanks = [], graves = [], hedges = [], mounds = [];
+  const W = geoArrays(), RF = geoArrays(), ST = geoArrays(), MT = geoArrays(), CN = geoArrays();
+  const stoneWallMat = new THREE.MeshLambertMaterial({ map: E.stone, vertexColors: true });
+  const metalMat = new THREE.MeshLambertMaterial({ map: E.metalWall, vertexColors: true, side: THREE.DoubleSide });
+  const concreteWallMat = new THREE.MeshLambertMaterial({ map: E.concrete, vertexColors: true });
   const PLASTER = ['#efe6d6', '#e8d2a8', '#d8c0b0', '#c8d4d8', '#f2ece2'], ROOFS = ['#5a5e66', '#8a5238', '#6a5a4a', '#4e525a'];
+  const box = (x, y, z, sx, sy, sz, col, yaw = 0) => detail.push([x, y, z, sx, sy, sz, yaw, col]);   // a small painted box
   const house = (x, z, w, d, storeys, style, ground) => {
     const h = storeys * 3.2, pick = Math.abs(Math.round(x * 7 + z * 3));
     pushWalls(W, x, ground, z, w, h, d, colorOf(PLASTER[pick % PLASTER.length]), 3.2);
@@ -5336,26 +5627,147 @@ function buildEnvironment() {
     if (style === 2) balconies.push([x, ground + 3.3, z + d / 2 + 0.5, w * 0.7, 0.14, 1.0, 0, '#7a5a3a'], [x, ground + 3.8, z + d / 2 + 0.95, w * 0.7, 0.9, 0.08, 0, '#6a4a2c']);
     placed.push([x, z, Math.max(w, d) * 0.75]);
   };
-  for (const [x0, y0, x1, y1, st, sty] of TOWN.buildings)   // the town
-    house((x0 + x1) / 2 * XS, (y0 + y1) / 2 * XS, (x1 - x0) * XS, (y1 - y0) * XS, st, sty, 0);
+  const Wm = TOWN.w, Hm = TOWN.h;
+  for (const [x0, y0, x1, y1, h, style] of TOWN.buildings) {   // the town, place by place
+    const cx = (x0 + x1) / 2, cz = (y0 + y1) / 2, w = x1 - x0, d = y1 - y0, pick = Math.abs(Math.round(cx * 7 + cz * 3));
+    if (style.startsWith('house')) { house(cx, cz, w, d, Math.max(1, Math.round(h / 3.2)), +style.slice(5), 0); continue; }
+    placed.push([cx, cz, Math.max(w, d) * 0.6]);
+    if (style === 'station') {
+      pushWalls(W, cx, 0, cz, w, h, d, colorOf('#c98a66'), 3.2);
+      pushRoof(RF, cx, h, cz, w, d, Math.min(w, d) * 0.3, colorOf('#4e525a'), 1.6);
+      for (let x = x0 + 1.2; x <= x1 - 1; x += 3.9) box(x, 1.75, y1 + 1.9, 0.14, 3.5, 0.14, '#43474b');   // the platform canopy on its posts
+      box(cx, 3.55, y1 + 1.25, w - 0.4, 0.14, 2.9, '#5a5e64');
+      box(cx, h * 0.62, y1 + 0.08, 1.2, 1.2, 0.1, '#f2eee2'); box(cx, h * 0.62, y1 + 0.15, 0.08, 0.42, 0.04, '#1a1a1a');   // the station clock
+    } else if (style === 'warehouse') {
+      pushWalls(MT, cx, 0, cz, w, h, d, colorOf('#a4a9ad'), 3);
+      pushRoof(MT, cx, h, cz, w, d, Math.min(w, d) * 0.16, colorOf('#8a7a66'), 3);
+      for (let q = 0; q < 3; q++) box(x0 + w * (0.2 + q * 0.3), 2.2, y1 + 0.07, 4.2, 4.4, 0.12, '#3c4044');   // roller doors onto the tracks
+      box(x0 + 2, h + 1.6, cz, 0.9, 3.2, 0.9, '#6a6a66');   // a flue
+    } else if (style === 'wagon') {
+      const col = colorOf(['#8a3a2a', '#5a5a4e', '#2e5a5a', '#7a5a2a'][pick % 4]);
+      pushWalls(MT, cx, 1.0, cz, w, h - 1.0, d, col, 2.4); pushTop(MT, cx, h, cz, w + 0.2, d + 0.2, col, 2.4);
+      box(cx, 0.75, cz, w - 0.6, 0.35, d - 0.8, '#1c1c1c');   // underframe
+      for (const bx of [x0 + 2.2, x1 - 2.2]) box(bx, 0.45, cz, 2.4, 0.7, d - 0.4, '#2a2a28');   // bogies
+      box(cx, 2.3, y1 + 0.06, 2.4, 2.2, 0.08, '#3a2a22');   // the sliding door
+    } else if (style === 'container') {
+      const col = colorOf(['#2e5a8a', '#a83a2a', '#3a6a3a', '#c86a2a', '#6a6a70'][pick % 5]), endX = w > d;
+      pushWalls(MT, cx, 0, cz, w, h, d, col, 2.4); pushTop(MT, cx, h, cz, w, d, col, 2.4);
+      box(endX ? x1 + 0.04 : cx, h / 2, endX ? cz : y1 + 0.04, endX ? 0.06 : 0.1, h - 0.3, endX ? 0.1 : 0.06, '#1e1e1e');   // the door seam on a short end
+    } else if (style === 'church') {
+      pushWalls(ST, cx, 0, cz, w, h, d, colorOf('#e6e0d2'), 3);
+      pushRoof(RF, cx, h, cz, w, d, Math.min(w, d) * 0.62, colorOf('#4a4e56'), 1.6);
+      box(x1 + 0.08, 1.7, cz, 0.12, 3.4, 2.2, '#3a2a1e');   // doors onto the square
+      box(x1 + 0.1, 5.9, cz, 0.1, 1.8, 1.8, '#2a3a5a');     // a rose window above them
+      for (let z = y0 + 2.5; z < y1 - 1; z += 3.2) for (const x of [x0 - 0.06, x1 + 0.06]) if (Math.abs(z - cz) > 2) box(x, 4.4, z, 0.1, 3.2, 0.9, '#2a3a5a');
+    } else if (style === 'belltower') {
+      pushWalls(ST, cx, 0, cz, w, h, d, colorOf('#ebe5d8'), 3);
+      spires.push([cx, h + 3.6, cz, w * 1.1, 7.2, d * 1.1, Math.PI / 4, '#4a4e56']);
+      for (const [dx, dz] of [[w / 2 + 0.05, 0], [-w / 2 - 0.05, 0], [0, d / 2 + 0.05], [0, -d / 2 - 0.05]]) {
+        const onX = dx !== 0;
+        box(cx + dx, h - 2.2, cz + dz, onX ? 0.1 : 1.5, 2.4, onX ? 1.5 : 0.1, '#141414');   // belfry openings
+        box(cx + dx * 1.01, h - 5.8, cz + dz * 1.01, onX ? 0.1 : 1.4, 1.4, onX ? 1.4 : 0.1, '#f0ece0');   // clock faces
+      }
+    } else if (style === 'shop') {
+      pushWalls(CN, cx, 0, cz, w, h, d, colorOf('#ecebe6'), 3.2); pushTop(CN, cx, h, cz, w, d, colorOf('#bdbcb6'), 3.2);
+      box(x0 - 0.06, 1.5, cz, 0.1, 2.4, d - 1.6, '#1e3450');   // the glass front, onto the pumps
+      box(x0 - 0.1, h - 0.45, cz, 0.16, 0.7, d + 0.2, '#e8742c');   // the sign band
+    } else if (style === 'chapel') {
+      const rh = Math.min(w, d) * 0.55;
+      pushWalls(ST, cx, 0, cz, w, h, d, colorOf('#d6cebd'), 3);
+      pushRoof(RF, cx, h, cz, w, d, rh, colorOf('#565a62'), 1.6);
+      box(cx, h + rh + 0.6, y0 + 0.9, 0.14, 1.4, 0.14, '#3a3a3a'); box(cx, h + rh + 0.9, y0 + 0.9, 0.7, 0.14, 0.14, '#3a3a3a');   // the cross
+      box(cx, 1.4, y1 + 0.07, 1.4, 2.8, 0.1, '#3a2a1e');
+    }
+  }
+  // the perimeter, standing exactly on the edge of play
+  for (const x of [-0.3, Wm + 0.3]) { pushWalls(ST, x, 0, Hm / 2, 0.6, 2.4, Hm + 1.2, colorOf('#d2ccbe'), 2.4); pushTop(ST, x, 2.4, Hm / 2, 0.8, Hm + 1.2, colorOf('#b8b2a4'), 2.4); }
+  for (let x = -0.6; x <= Wm + 0.6; x += 1.1) bastion.push([x, 1.1, Hm + 0.55, 1.05, 2.2, 1.05, 0, rnd() < 0.5 ? '#ffffff' : '#e8e0d0']);
+  for (let x = 0; x <= Wm; x += 3) box(x, 1.2, -0.12, 0.1, 2.4, 0.1, '#5a5e62');
+  box(Wm / 2, 2.35, -0.12, Wm, 0.06, 0.06, '#6a6e72'); box(Wm / 2, 0.15, -0.12, Wm, 0.06, 0.06, '#6a6e72');
+  {
+    const t = E.chain.clone();
+    t.needsUpdate = true; t.repeat.set(Wm / 1.2, 2.3 / 1.2);
+    const fence = new THREE.Mesh(new THREE.PlaneGeometry(Wm, 2.3), new THREE.MeshLambertMaterial({ map: t, alphaTest: 0.5, side: THREE.DoubleSide }));
+    fence.position.set(Wm / 2, 1.2, -0.12);
+    S.add(fence);
+  }
+  box(48, 1.05, -0.5, 7.6, 0.12, 0.12, '#d23a2a');   // the gate's striped boom
+  for (let q = 0; q < 4; q++) box(45 + q * 1.9, 1.05, -0.5, 0.95, 0.13, 0.13, '#f2eee2');
+  // the rail yard: two tracks, the water tower
+  for (const tz of [13.5, 17]) {
+    for (const off of [-0.72, 0.72]) box(Wm / 2, 0.14, tz + off, Wm, 0.12, 0.1, '#7a7a74');
+    for (let x = 0.4; x < Wm; x += 0.72) sleepers.push([x, 0.05, tz, 0.26, 0.1, 2.4, 0, rnd() < 0.5 ? '#ffffff' : '#d8ccc0']);
+  }
+  for (const [dx, dz] of [[-1.1, -1.1], [1.1, -1.1], [-1.1, 1.1], [1.1, 1.1]]) box(27.5 + dx, 4.2, 5.5 + dz, 0.22, 8.4, 0.22, '#5a4a3a');
+  tanks.push([27.5, 9.9, 5.5, 3.4, 3, 3.4, 0, '#8a7a62']);
+  spires.push([27.5, 12.3, 5.5, 3.8, 1.8, 3.8, 0, '#5a5e66']);
+  // the building site: floor slabs on the frame, scaffolding, the crane with a beam on its hook
+  pushSlab(CN, 32, 3.3, 59, 9.6, 0.3, 9.6, colorOf('#c4c2bb'), 3.2);
+  pushSlab(CN, 29.6, 6.6, 59, 5.2, 0.3, 9.6, colorOf('#bcbab2'), 3.2);
+  for (let z = 54.8; z <= 63.4; z += 1.2) box(32.3, 7.2, z, 0.05, 1.2, 0.05, '#5a3a2a');   // rebar where the next floor would go
+  for (let z = 54.6; z <= 63.6; z += 2.2) for (const x of [37.2, 38.1]) box(x, 3.6, z, 0.07, 7.2, 0.07, '#8a8e92');
+  for (const y of [3.3, 6.6]) box(37.65, y, 59, 1.0, 0.06, 9.2, '#9a7a50');
+  box(26.8, 12, 53.2, 1.3, 24, 1.3, '#d8a82a'); box(34.8, 23.6, 53.2, 18, 0.9, 1.0, '#d8a82a'); box(23.3, 23.6, 53.2, 6, 0.8, 1.0, '#d8a82a');
+  box(21.2, 22.8, 53.2, 1.6, 1.2, 1.2, '#6a6a66'); box(27.6, 22.2, 53.2, 1.4, 1.6, 1.5, '#e8e4d8');
+  box(38.5, 16, 53.2, 0.05, 15, 0.05, '#1a1a1a'); box(38.5, 8.3, 53.2, 0.5, 0.6, 0.5, '#d8a82a'); box(38.5, 7.7, 53.2, 3.6, 0.3, 0.3, '#5a5e62');
+  // the gas station: canopy over the pumps, price sign; the café awning
+  box(76, 4.5, 37, 12, 0.5, 6.4, '#e8742c'); box(76, 4.8, 37, 11.8, 0.15, 6.2, '#ecebe6'); box(76, 4.22, 37, 10, 0.05, 4.4, '#fff6d8');
+  box(65.6, 3.1, 32.6, 0.25, 6.2, 0.25, '#4a4e52'); box(65.6, 5.4, 32.6, 0.25, 1.8, 2.6, '#e8742c'); box(65.45, 5.2, 32.6, 0.05, 0.9, 2.2, '#1a1a1a');
+  box(60.75, 2.7, 44.4, 6.2, 0.1, 1.3, '#b8382a');
+  for (let q = 0; q < 4; q++) box(58.4 + q * 1.55, 2.72, 44.4, 0.5, 0.1, 1.32, '#f2eee2');
+  // streetlights, dashed lines and crossings on the streets
+  for (const [x, z, s] of [[42.35, 5, 1], [53.65, 12, -1], [42.35, 24, 1], [53.65, 33, -1], [42.35, 43, 1], [53.65, 52, -1], [42.35, 58, 1]]) {
+    box(x, 2.6, z, 0.14, 5.2, 0.14, '#3a3e42'); box(x + s * 0.55, 5.15, z, 1.1, 0.08, 0.08, '#3a3e42'); box(x + s * 1.05, 5.02, z, 0.42, 0.14, 0.26, '#fff2c0');
+  }
+  const dash = (x, z, alongZ) => box(x, 0.03, z, alongZ ? 0.14 : 1.6, 0.02, alongZ ? 1.6 : 0.14, '#e4e2d4');
+  for (let z = 2; z < 26; z += 3.2) dash(48, z, true);
+  for (let z = 54; z < 60; z += 3.2) dash(48, z, true);
+  for (let x = 1.5; x < 95; x += 3.2) if (x < 41.5 || x > 54.5) { dash(x, 29, false); dash(x, 50, false); }
+  for (let x = 42.6; x < 53.6; x += 0.9) { box(x, 0.03, 26.1, 0.45, 0.02, 1.7, '#e4e2d4'); box(x, 0.03, 52.9, 0.45, 0.02, 1.7, '#e4e2d4'); }
+  box(55.5, 4.5, 62.5, 0.1, 9, 0.1, '#8a8e92'); box(56.2, 8.5, 62.5, 1.3, 0.8, 0.04, '#3a5a8a');   // the FOB flag
+  // the fixed cover that can't be destroyed is drawn once, here, with the town
+  const treeAt = (x, z, H) => {
+    trunks.push([x, H * 0.5, z, 0.5, H, 0.5, rnd() * TAU, rnd() < 0.5 ? '#ffffff' : '#e4dccf']);
+    [[0.3, 5.0, 1.9], [0.5, 4.1, 1.7], [0.68, 3.1, 1.5], [0.84, 2.0, 1.3], [0.96, 0.9, 1.0]].forEach(([f, w, h]) =>
+      boughs.push([x, H * f, z, w * (0.85 + rnd() * 0.3), h, w, rnd() * TAU, rnd() < 0.5 ? '#ffffff' : '#dfe8cc']));
+  };
+  for (const [kind, fx, fz, rot] of TOWN.fixed) {
+    if (!STATIC_COVER.has(kind)) continue;
+    const Kc = COVER_KINDS[kind], hw = (rot ? Kc.hd : Kc.hw) / 40 || 0, hd = (rot ? Kc.hw : Kc.hd) / 40 || 0, yaw = rot ? Math.PI / 2 : 0;
+    if (kind === 'platform') { pushSlab(CN, fx, 0, fz, hw * 2, 0.9, hd * 2, colorOf('#bfbdb6'), 3.2); box(fx, 0.91, fz + hd - 0.12, hw * 2, 0.02, 0.18, '#e8c42a'); }
+    else if (kind === 'pillar') pushWalls(CN, fx, 0, fz, hw * 2, 6.6, hd * 2, colorOf('#c4c2bb'), 3.2);
+    else if (kind === 'hesco') bastion.push([fx, 0.8, fz, hw * 2, 1.6, hd * 2, 0, '#ffffff']);
+    else if (kind === 'tree') treeAt(fx, fz, 7 + hash2(fx, fz) * 3);
+    else if (kind === 'tent') tents.push([fx, 0, fz, 1.2, 2.2, 5.5, yaw, '#b8ae8a']);
+    else if (kind === 'mound') mounds.push([fx, 0.25, fz, 2.7, 1.45, 2.7, hash2(fx, fz) * TAU, '#e0d4b8']);
+    else if (kind === 'hedge') hedges.push([fx, 0.65, fz, hw * 2, 1.3, hd * 2, 0, '#ffffff']);
+    else if (kind === 'grave') {
+      graves.push([fx, 0.45, fz, 0.8, 0.9, 0.22, 0, '#ffffff']);
+      if (hash2(fz, fx) < 0.5) { box(fx, 1.08, fz, 0.1, 0.5, 0.08, '#8a8a84'); box(fx, 1.18, fz, 0.36, 0.08, 0.08, '#8a8a84'); }
+    } else if (kind === 'statue') {   // the war memorial: a soldier on a plinth, rifle raised
+      box(fx, 0.12, fz, 2.1, 0.24, 2.1, '#b8b2a4'); box(fx, 0.72, fz, 1.6, 1.0, 1.6, '#c8c2b4');
+      box(fx, 1.67, fz, 0.34, 0.9, 0.22, '#6a5a3a'); box(fx, 2.42, fz, 0.46, 0.62, 0.28, '#6a5a3a'); box(fx, 2.88, fz, 0.24, 0.26, 0.24, '#6a5a3a');
+      box(fx + 0.3, 2.78, fz, 0.12, 0.7, 0.12, '#6a5a3a'); box(fx + 0.42, 3.15, fz, 0.08, 0.95, 0.08, '#5a4a2e');
+    } else if (kind === 'truck') {   // a covered army truck
+      box(fx, 0.95, fz, 2.3, 0.5, 7, '#2a2a28'); box(fx, 2.25, fz + 0.9, 2.5, 2.1, 5.0, '#6a6c50'); box(fx, 1.85, fz - 2.7, 2.4, 1.8, 1.6, '#5e6048');
+      box(fx, 2.3, fz - 3.52, 2.0, 0.6, 0.05, '#1e2a34');
+      for (const [a, b] of [[-1, -2.6], [1, -2.6], [-1, 1.2], [1, 1.2], [-1, 2.6], [1, 2.6]]) box(fx + a * 1.1, 0.5, fz + b, 0.35, 1.0, 1.0, '#141414');
+    } else if (kind === 'bus') {   // a burnt-out bus
+      box(fx, 1.55, fz, 2.4, 2.3, 10.6, '#3a3632'); box(fx, 2.75, fz, 2.2, 0.12, 10.2, '#2a2622');
+      for (const a of [-1, 1]) { box(fx + a * 1.21, 2.0, fz, 0.04, 0.8, 9.6, '#141414'); for (const b of [-3.6, 3.4]) box(fx + a * 1.05, 0.45, fz + b, 0.3, 0.9, 1.0, '#1a1a1a'); }
+    }
+  }
+  // the slopes around the town: chalets, forest, scrub and scree
   const free = (x, z, r) => placed.every(([px, pz, pr]) => Math.hypot(x - px, z - pz) > r + pr);
-  const cx = ARENA.cx + 16, cz = -36;   // the church above the town, tower toward the square
-  pushWalls(W, cx, groundHeight(cx, cz) - 1, cz, 8, 7.5, 15, colorOf('#f2ece2'), 3.2);
-  pushRoof(RF, cx, groundHeight(cx, cz) + 6.5, cz, 8, 15, 4, colorOf('#5a5e66'), 1.6);
-  pushWalls(W, cx, groundHeight(cx, cz + 9) - 1, cz + 9, 3.8, 18, 3.8, colorOf('#e8e2d6'), 3.2);
-  spires.push([cx, groundHeight(cx, cz + 9) + 17 + 3.5, cz + 9, 5.4, 7, 5.4, Math.PI / 4, '#4e525a']);
-  placed.push([cx, cz, 10], [cx, cz + 9, 4]);
-  for (let i = 0, tries = 0; i < 34 && tries < 320; tries++) {   // chalets climbing the slopes
+  for (let i = 0, tries = 0; i < 34 && tries < 320; tries++) {
     const side = tries % 3;
-    const x = side === 0 ? -34 + rnd() * 118 : side === 1 ? -14 - rnd() * 30 : ARENA.hw * 2 + 14 + rnd() * 30;
-    const z = side === 0 ? -16 - rnd() * 44 : -8 + rnd() * (ARENA.hd * 2 + 10), w = 6 + rnd() * 3, d = 6 + rnd() * 3;
-    if (side === 0 && Math.abs(x - ARENA.cx) < 7) continue;   // keep the road clear
+    const x = side === 0 ? -34 + rnd() * (Wm + 68) : side === 1 ? -14 - rnd() * 30 : Wm + 14 + rnd() * 30;
+    const z = side === 0 ? -16 - rnd() * 44 : -8 + rnd() * (Hm + 10), w = 6 + rnd() * 3, d = 6 + rnd() * 3;
+    if (side === 0 && Math.abs(x - Wm / 2) < 7) continue;   // keep the pass road clear
     if (!free(x, z, Math.max(w, d) * 0.75)) continue;
     house(x, z, w, d, 2, (rnd() * 3) | 0, groundHeight(x, z) - 0.8);
     i++;
   }
-  meshFrom(W, houseMat);
-  meshFrom(RF, roofMat);
   const tree = (x, z, H) => {
     if (!free(x, z, 2)) return;
     const y = groundHeight(x, z);
@@ -5363,54 +5775,52 @@ function buildEnvironment() {
     [[0.3, 5.0, 1.9], [0.5, 4.1, 1.7], [0.68, 3.1, 1.5], [0.84, 2.0, 1.3], [0.96, 0.9, 1.0]].forEach(([f, w, h]) =>
       boughs.push([x, y + H * f, z, w * (0.85 + rnd() * 0.3), h, w, rnd() * TAU, rnd() < 0.5 ? '#ffffff' : '#dfe8cc']));
   };
-  for (let i = 0; i < 140; i++) tree(-50 + rnd() * (ARENA.hw * 2 + 100), -12 - rnd() * 70, 6 + rnd() * 5);
-  for (let i = 0; i < 70; i++) {
+  for (let i = 0; i < 140; i++) tree(-50 + rnd() * (Wm + 100), -12 - rnd() * 70, 6 + rnd() * 5);
+  for (let i = 0; i < 90; i++) {
     const side = rnd() < 0.5 ? -1 : 1;
-    tree(side < 0 ? -12 - rnd() * 60 : ARENA.hw * 2 + 12 + rnd() * 60, -30 + rnd() * (ARENA.hd * 2 + 70), 6 + rnd() * 5);
+    tree(side < 0 ? -12 - rnd() * 60 : Wm + 12 + rnd() * 60, -30 + rnd() * (Hm + 70), 6 + rnd() * 5);
   }
-  for (let i = 0; i < 90; i++) {   // scrub along the town's edges
+  for (let i = 0; i < 60; i++) tree(-40 + rnd() * (Wm + 80), Hm + 10 + rnd() * 50, 6 + rnd() * 5);
+  for (let i = 0; i < 90; i++) {   // scrub just outside the walls
     const edge = rnd();
-    const x = edge < 0.35 ? -2.8 - rnd() * 3 : edge < 0.7 ? ARENA.hw * 2 + 2.8 + rnd() * 3 : rnd() * ARENA.hw * 2;
-    const z = edge < 0.7 ? -4 + rnd() * (ARENA.hd * 2 + 4) : -5 - rnd() * 4;
+    const x = edge < 0.35 ? -2.2 - rnd() * 3 : edge < 0.7 ? Wm + 2.2 + rnd() * 3 : rnd() * Wm;
+    const z = edge < 0.7 ? -4 + rnd() * (Hm + 4) : -2.5 - rnd() * 4;
     const w = 1.3 + rnd() * 1.1;
     bushes.push([x, groundHeight(x, z), z, w, w * 0.62, w, rnd() * TAU, rnd() < 0.5 ? '#ffffff' : '#e2ecd0']);
   }
   for (let i = 0; i < 90; i++) {   // scree and boulders on the slopes
-    const a = rnd() * TAU, d = 50 + rnd() * 80, x = ARENA.cx + Math.cos(a) * d, z = ARENA.cz + Math.sin(a) * d;
-    if (Math.abs(x - ARENA.cx) < ARENA.hw + 4 && z > -6 && z < ARENA.hd * 2 + 4) continue;
+    const a = rnd() * TAU, d = 55 + rnd() * 80, x = ARENA.cx + Math.cos(a) * d, z = ARENA.cz + Math.sin(a) * d;
+    if (x > -6 && x < Wm + 6 && z > -6 && z < Hm + 6) continue;
     const s = 0.6 + rnd() * 2.2;
     rocks[i % 3].push([x, groundHeight(x, z) + s * 0.25, z, s, s, s, rnd() * TAU, rnd() < 0.5 ? '#ffffff' : '#d8d2c8']);
   }
-  for (let z = -5; z <= ARENA.hd * 2 + 1; z += 2.3)   // dry-stone retaining walls down both sides of the town
-    for (const x of [-1.6, ARENA.hw * 2 + 1.6]) slabs.push([x, 0.6, z, 0.9, 1.2, 2.4, 0, rnd() < 0.5 ? '#ffffff' : '#e2ded4']);
-  for (let x = -4; x <= ARENA.hw * 2 + 4; x += 1.1)   // the squad's checkpoint: HESCO wall across the south road
-    if (Math.abs(x - ARENA.cx) > 3) bastion.push([x, 0.7, ARENA.hd * 2 + 2.6, 1.05, 1.4, 1.05, 0, rnd() < 0.5 ? '#ffffff' : '#e8e0d0']);
-  for (let i = 0; i < 4; i++)
-    tents.push([ARENA.cx - 17 + i * 11.5, 0, ARENA.hd * 2 + 9 + (i % 2) * 2.5, 2.4, 2.2, 5.5, (i % 2) * Math.PI / 2, rnd() < 0.5 ? '#c8bc98' : '#a8a684']);
-  for (const [x, z] of [[ARENA.cx - 11, ARENA.hd * 2 + 5.6], [ARENA.cx + 12, ARENA.hd * 2 + 6.2]])
-    hulls.push([x, 1.35, z, 2.4, 1.8, 5.0, 0, '#6a6c50'], [x, 2.55, z - 1.2, 2.3, 0.7, 2.2, 0, '#5e6048'], [x, 0.5, z, 2.5, 1.0, 4.6, 0, '#2a2a28']);
   for (let i = 0; i < 6; i++) {   // burnt-out cars on the road down from the pass
     const x = ARENA.cx + (rnd() - 0.5) * 14, z = -8 - rnd() * 14, yaw = rnd() * TAU;
     hulls.push([x, 0.55, z, 1.9, 0.8, 4.2, yaw, '#3a3632'], [x, 1.18, z, 1.6, 0.55, 2.2, yaw, '#2e2a26']);
   }
-  for (let z = -64; z <= ARENA.hd * 2 + 50; z += 12) {   // power line down the valley road
-    if (z > -12 && z < ARENA.hd * 2 + 5) continue;
+  for (let z = -64; z <= Hm + 50; z += 12) {   // power line down the valley road
+    if (z > -12 && z < Hm + 5) continue;
     const x = ARENA.cx + Math.sin(z * 0.11) * 6 + Math.sin(z * 0.043 + 1) * 4 + 3.6;
     poles.push([x, groundHeight(x, z) + 4, z, 0.22, 8, 0.22, 0, '#6a5a48']);
     hulls.push([x, groundHeight(x, z) + 7.4, z, 1.6, 0.12, 0.12, 0, '#4a3a2c']);
   }
-  hulls.push([ARENA.hw * 2 - 1.5, 9, ARENA.hd * 2 + 10, 0.25, 18, 0.25, 0, '#8a8e92']);
+  meshFrom(W, houseMat); meshFrom(RF, roofMat); meshFrom(ST, stoneWallMat); meshFrom(MT, metalMat); meshFrom(CN, concreteWallMat);
   staticInstances(new THREE.CylinderGeometry(0.44, 0.62, 1, 6), barkMat, trunks);
   staticInstances(crossCards(3), cardMat, boughs);
   staticInstances(crossCards(3), bushMat, bushes);
-  rocks.forEach((list, k) => staticInstances(rockGeometry(7 + k * 13), rockMat, list));
-  staticInstances(new THREE.BoxGeometry(1, 1, 1), stoneMat, slabs);
+  rocks.forEach((list, q) => staticInstances(rockGeometry(7 + q * 13), rockMat, list));
+  staticInstances(rockGeometry(31), rockMat, mounds);
   staticInstances(new THREE.BoxGeometry(1, 1, 1), hescoMat, bastion);
   staticInstances(new THREE.BoxGeometry(1, 1, 1), stoneMat, stones);
+  staticInstances(new THREE.BoxGeometry(1, 1, 1), stoneMat, graves);
+  staticInstances(toCell(new THREE.BoxGeometry(1, 1, 1), () => CELLS.leaf), lit, hedges);
   staticInstances(K.wood, lit, balconies);
+  staticInstances(K.wood, lit, sleepers);
   staticInstances(toCell(new THREE.ConeGeometry(0.72, 1, 4), () => CELLS.white), lit, spires);
   staticInstances(toCell(new THREE.CylinderGeometry(0.5, 0.5, 1, 6), () => CELLS.wood), lit, poles);
+  staticInstances(toCell(new THREE.CylinderGeometry(0.5, 0.5, 1, 12), () => CELLS.wood), lit, tanks);
   staticInstances(K.metal, lit, hulls);
+  staticInstances(K.metal, lit, detail);
   staticInstances(toCell(new THREE.CylinderGeometry(1, 1, 1, 10, 1, false, Math.PI / 2, Math.PI).rotateX(Math.PI / 2), () => CELLS.cloth), lit, tents);
 
   // night sky, rain, and the sun/moon direction the presets drive
@@ -5438,8 +5848,8 @@ function buildEnvironment() {
   };
   VIEW.props = {
     bags: coverMesh(K.burlap, lit, 600), crates: coverMesh(K.crate, lit, 260),
-    drums: coverMesh(toCell(new THREE.CylinderGeometry(0.5, 0.5, 1, 10), () => CELLS.metal), lit, 96),
-    cars: coverMesh(K.metal, lit, 420), wood: coverMesh(K.wood, lit, 420), cloth: coverMesh(K.white, lit, 120),
+    drums: coverMesh(toCell(new THREE.CylinderGeometry(0.5, 0.5, 1, 10), () => CELLS.metal), lit, 200),
+    cars: coverMesh(K.metal, lit, 640), wood: coverMesh(K.wood, lit, 420), cloth: coverMesh(K.white, lit, 120),
     walls: coverMesh(new THREE.BoxGeometry(1, 1, 1), stoneMat, 220), barriers: coverMesh(jersey, concreteMat, 120),
     basin: coverMesh(new THREE.CylinderGeometry(0.5, 0.5, 1, 18), stoneMat, 8),
     rubble: coverMesh(new THREE.DodecahedronGeometry(0.5, 0), rockMat, 700),
@@ -5517,11 +5927,21 @@ function buildProps() {   // every cover piece, drawn battered below half health
     mesh.setColorAt(n[k], colorOf(col));
     n[k]++;
   };
+  const putE = (k, x, y, z, sx, sy, sz, yaw, ex, ez, col) => {   // like put, with a tilt: cylinders lying down
+    const mesh = P[k];
+    if (n[k] >= mesh.instanceMatrix.count) return;
+    TMP.e.set(ex, yaw, ez, 'YXZ'); TMP.q.setFromEuler(TMP.e);
+    TMP.m.compose(TMP.v.set(x, y, z), TMP.q, TMP.s.set(sx, sy, sz));
+    mesh.setMatrixAt(n[k], TMP.m); mesh.setColorAt(n[k], colorOf(col));
+    n[k]++;
+  };
   for (const ob of obstacles) {
+    if (STATIC_COVER.has(ob.kind)) continue;   // drawn once with the town
     const K = COVER_KINDS[ob.kind], X = ob.x * XS, Z = ob.y * XS, yaw = ob.rot90 ? Math.PI / 2 : 0;
     const hurt = ob.maxHp > 0 && ob.hp / ob.maxHp <= 0.5, h = hash2(ob.x, ob.y), HW = (K.hw || 0) * XS, HD = (K.hd || 0) * XS;
     const at = (k, lx, y, lz, sx, sy, sz, col, dyaw = 0) =>   // local offsets turn with the piece
       put(k, ob.rot90 ? X + lz : X + lx, y, ob.rot90 ? Z - lx : Z + lz, sx, sy, sz, yaw + dyaw, col);
+    const atE = (k, lx, y, lz, sx, sy, sz, col, ex, ez) => putE(k, ob.rot90 ? X + lz : X + lx, y, ob.rot90 ? Z - lx : Z + lz, sx, sy, sz, yaw, ex, ez, col);
     switch (ob.kind) {
       case 'crates': {
         const c = Math.min(HW, HD) * 0.95, cols = ['#8a7a56', '#6e7250', '#7a6a4a'];
@@ -5602,6 +6022,49 @@ function buildProps() {   // every cover piece, drawn battered below half health
         }
         break;
       }
+      case 'pump': {   // a fuel pump on its island: curb, body, display, hose
+        at('walls', 0, 0.1, 0, HW * 2.6, 0.2, HD * 2.6, '#d8d4c8');
+        at('cars', 0, 0.95, 0, HW * 1.6, 1.5, HD * 1.4, hurt ? '#6a3a2a' : '#d8342a');
+        at('cars', 0, 1.35, -HD * 0.72, HW * 1.3, 0.4, 0.04, '#10161c');
+        at('cars', 0, 1.8, 0, HW * 1.7, 0.18, HD * 1.5, '#f2eee6');
+        at('cars', HW * 0.85, 0.9, 0, 0.05, 0.9, 0.05, '#1a1a1a');
+        break;
+      }
+      case 'tanker': case 'tankwreck': {   // a fuel tanker: chassis, cab, the tank lying along it
+        const wreck = ob.kind === 'tankwreck';
+        at('cars', 0, 0.7, 0, HW * 1.9, 0.4, HD * 2, '#1e1e1e');
+        at('cars', 0, 1.6, -HD * 0.78, HW * 2, 1.7, HD * 0.42, wreck ? '#2a2622' : '#e8e4dc');
+        if (!wreck) at('cars', 0, 1.95, -HD * 0.99, HW * 1.7, 0.6, 0.05, '#1e2a34');
+        atE('drums', 0, 1.9, HD * 0.2, HW * 1.95, HD * 1.5, HW * 1.95, wreck ? '#2e2a26' : '#c8ccd0', Math.PI / 2, 0);
+        for (const [a, b] of [[-1, -0.7], [1, -0.7], [-1, 0.25], [1, 0.25], [-1, 0.75], [1, 0.75]]) at('cars', a * HW * 0.95, 0.45, b * HD, 0.35, 0.9, 0.9, '#141414');
+        break;
+      }
+      case 'logs': {   // a log pile: rows of trunks lying along it
+        for (let l = 0; l < (hurt ? 2 : 3); l++) for (let i = 0; i < 3 - l; i++)
+          atE('drums', 0, 0.22 + l * 0.38, (i - (2 - l) / 2) * 0.42, 0.44, HW * 2, 0.44, hash2(i, l + ob.x) < 0.5 ? '#8a6038' : '#7a5230', 0, Math.PI / 2);
+        break;
+      }
+      case 'mixer': {   // a cement mixer: frame and a tilted orange drum
+        at('cars', 0, 0.5, 0, 1.0, 0.18, 1.6, '#3a3a38');
+        atE('drums', 0, 1.1, 0.1, 1.1, 1.2, 1.1, hurt ? '#6a4a2a' : '#e07a28', 0.6, 0);
+        at('cars', 0, 0.3, -0.6, 0.12, 0.6, 0.12, '#2a2a28');
+        break;
+      }
+      case 'toilet':
+        at('cars', 0, 1.1, 0, HW * 2, 2.2, HD * 2, hurt ? '#2a3a4a' : '#2a6aa8');
+        at('cars', 0, 2.28, 0, HW * 2.1, 0.12, HD * 2.1, '#e8e4dc');
+        at('cars', 0, 1.1, -HD - 0.02, HW * 1.4, 1.9, 0.04, '#1e4a7a');
+        break;
+      case 'bench':
+        at('wood', 0, 0.45, 0, HW * 2, 0.08, 0.42, '#8a6a44');
+        at('wood', 0, 0.8, 0.18, HW * 2, 0.4, 0.06, '#7a5a38');
+        for (const a of [-0.8, 0.8]) at('cars', a * HW, 0.22, 0, 0.08, 0.44, 0.4, '#2a2a28');
+        break;
+      case 'table':
+        at('wood', 0, 0.74, 0, 0.8, 0.05, 0.8, '#e8e2d0');
+        at('cars', 0, 0.37, 0, 0.06, 0.74, 0.06, '#3a3a38');
+        if (!hurt) { at('cars', 0, 1.3, 0, 0.05, 1.2, 0.05, '#3a3a38'); at('cloth', 0, 2.0, 0, 2.2, 0.1, 2.2, h < 0.5 ? '#c8382a' : '#2a6a8a'); }
+        break;
       case 'fountain': {
         const R = ob.r * XS;
         at('basin', 0, 0.3, 0, R * 2, 0.6, R * 2, '#ffffff');
@@ -5674,6 +6137,7 @@ function updateCamera3(dt) {
   const reloading = soldiers[state.controlled] && soldiers[state.controlled].reloadT > 0;   // the sights come down while you reload, and back up after
   FPV.adsK = approach(FPV.adsK, aim.ads && manualAim() && !reloading ? 1 : 0, heroSight().rate, dt);   // sights come up at the optic's own pace, in both views
   steerFromCursor(dt);
+  aim.lookDx *= Math.exp(-dt * 8);   // the viewmodel's sway settles back to centre once you stop turning
   {   // recoil recovery: the muzzle drifts back to where you were pointing once you stop firing
     const rate = dt * (aim.fire ? 0.35 : 1.8);
     if (aim.settle > 0) { const d = Math.min(aim.settle, rate); aim.pitch -= d; aim.settle -= d; }
@@ -6346,7 +6810,7 @@ function renderMap() {
     $('terrmeta').textContent = `Tier ${effTier(t)} · ` + (owned ? 'Held' : atk ? (prog > 0 ? `${Math.floor(prog)}% taken` : 'Attackable') : 'Out of reach');
     $('terrname').textContent = t.name;
     $('terrhint').textContent = owned ? 'Held by your company.'
-      : atk ? `Four a side · ${CFG.enemyTickets + CFG.enemyTicketsPerTier * effTier(t)} enemy reinforcements`
+      : atk ? `Your four against ${CFG.enemyCap} at a time · ${CFG.enemyTickets + CFG.enemyTicketsPerTier * effTier(t)} enemy reinforcements`
       : 'Take a neighbouring sector first.';
     db.disabled = !atk;
     db.onclick = atk ? () => { meta.activeTid = t.id; saveMeta(); enterBattle(t.id); } : null;
@@ -6366,7 +6830,7 @@ function renderTeam() {   // the rail picks the gun; the panel lays out the one 
   for (const k of WKEYS) {
     const b = document.createElement('button');
     b.className = 'wrow' + (k === cur ? ' on' : '');
-    b.innerHTML = `<span class="wr-n">${WEAPONS[k].name}</span><span class="wr-d">${squadDmg(k).toFixed(1)}</span><span class="wr-c">${WCLASS[k] || ''}</span>`;
+    b.innerHTML = `<span class="wr-n">${WEAPONS[k].name}</span><span class="wr-d">${hitsToDrop(k)} ${hitsToDrop(k) === 1 ? 'HIT' : 'HITS'}</span><span class="wr-c">${WCLASS[k] || ''}</span>`;
     b.onclick = () => { meta.loadout = k; saveMeta(); renderTeam(); };
     list.appendChild(b);
   }
@@ -6384,7 +6848,8 @@ function renderTeam() {   // the rail picks the gun; the panel lays out the one 
   box.innerHTML = `
     <div class="lo-head"><div><div class="lo-cls">${WCLASS[k] || ''}</div><h2 class="xl lo-name">${w.name}</h2></div><span class="lo-tag">Equipped</span></div>
     <div class="lo-stats">
-      ${stat('Damage', squadDmg(k).toFixed(1), squadDmg(k) / top(squadDmg))}
+      ${stat('Damage', squadDmg(k).toFixed(2), squadDmg(k) / top(squadDmg))}
+      ${stat('To drop', `${hitsToDrop(k)} <small>${hitsToDrop(k) === 1 ? 'hit' : 'hits'}</small>`, 1 / hitsToDrop(k))}
       ${stat('Fire rate', (1 / w.cd).toFixed(1) + '/s', (1 / w.cd) / top(q => 1 / WEAPONS[q].cd))}
       ${stat('Range', Math.round(reach) + ' m', (w.reach || w.range) / top(q => WEAPONS[q].reach || WEAPONS[q].range))}
       ${stat('Magazine', `${mag} <small>×${w.spare}</small>`, Math.sqrt(mag / top(q => WEAPONS[q].ext || WEAPONS[q].mag)))}
@@ -6423,6 +6888,7 @@ bindHoldButton('firebtn', () => { aim.fire = true; }, () => { aim.fire = false; 
   });
   const end = e => { try { if (b.hasPointerCapture(e.pointerId)) b.releasePointerCapture(e.pointerId); } catch (err) {} aim.fire = false; };
   b.addEventListener('pointerup', end); b.addEventListener('pointercancel', end);
+  b.addEventListener('lostpointercapture', () => { aim.fire = false; });
 })('firebtn2');
 $('adsbtn').addEventListener('pointerdown', e => { e.preventDefault(); aim.ads = !aim.ads; $('adsbtn').classList.toggle('on', aim.ads); });
 $('reloadbtn').addEventListener('pointerdown', e => { e.preventDefault(); heroReload(); });
