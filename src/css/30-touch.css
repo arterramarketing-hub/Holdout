@@ -1,0 +1,29 @@
+  /* ---------- touch controls: Call of Duty Mobile's look and proportions ----------
+     Flat translucent circles sized off the screen height (--fb, the fire button), so the set keeps the same
+     proportions on every phone: fire 1, lock .82, left trigger .8, ADS .68, reload .6. Placed the way CoD
+     Mobile places them: the trigger up off the corner under the right thumb, sights above-right of it, reload
+     to its left, a second trigger above the left thumb, and the corner itself left clear for the ammo. */
+  .tbtn { position:fixed; z-index:11; display:none; align-items:center; justify-content:center; padding:0; border-radius:50%;
+    touch-action:none; line-height:1; font-family:var(--body); font-weight:600; color:rgba(255,255,255,.95);
+    background:rgba(9,13,21,.34); border:2px solid rgba(255,255,255,.55); box-shadow:0 0 0 1px rgba(0,0,0,.28); }
+  .tbtn:active { background:rgba(255,255,255,.3); border-color:#fff; }
+  #firebtn { width:var(--fb); height:var(--fb); right:calc(var(--fb) * .9); bottom:calc(var(--fb) * .95); }
+  #lockbtn { width:calc(var(--fb) * .82); height:calc(var(--fb) * .82); right:calc(var(--fb) * .99); bottom:calc(var(--fb) * 1.04); font-size:calc(var(--fb) * .32); }
+  #adsbtn { width:calc(var(--fb) * .68); height:calc(var(--fb) * .68); right:calc(var(--fb) * .12); bottom:calc(var(--fb) * 1.88);
+    font-family:var(--mono); font-weight:800; font-size:calc(var(--fb) * .19); letter-spacing:.04em; }
+  #adsbtn.on { background:rgba(255,255,255,.55); border-color:#fff; color:#0a0e16; }
+  #reloadbtn { width:calc(var(--fb) * .6); height:calc(var(--fb) * .6); right:calc(var(--fb) * 2.02); bottom:calc(var(--fb) * 1.5); font-size:calc(var(--fb) * .28); }
+  #reloadbtn.warn { border-color:var(--foe); color:#ffa596; }
+  #firebtn2 { width:calc(var(--fb) * .8); height:calc(var(--fb) * .8); left:calc(var(--fb) * 1.3); bottom:calc(var(--fb) * 1.9); }
+  /* both triggers carry a round, the way CoD Mobile marks its fire buttons */
+  .tbtn .bullet { width:24%; height:48%; fill:rgba(255,255,255,.95); filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55)); pointer-events:none; }
+  .tbtn:active .bullet { fill:#fff; }
+  body.touch.manual #firebtn, body.touch.manual #firebtn2, body.touch.manual #adsbtn { display:flex; }
+  body.touch #lockbtn, body.touch #reloadbtn { display:flex; }
+  body.manual #lockbtn { display:none !important; }
+  /* with touch buttons on screen the ammo takes the corner, the killstreaks stack under the menu buttons */
+  body.touch #ammo { right:8px; bottom:8px; }
+  body.touch #supports { top:54px; right:10px; bottom:auto; flex-direction:column; }
+  body.touch #feed { top:148px; bottom:auto; left:10px; right:auto; align-items:flex-start; }
+  body.touch .frow { box-shadow:inset 2px 0 0 var(--friend); } body.touch .frow.bad { box-shadow:inset 2px 0 0 var(--foe); }
+

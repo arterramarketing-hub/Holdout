@@ -1,0 +1,303 @@
+<!--
+  HOLDOUT — single-file browser game
+
+  TUNING VALUES — every number lives in a table below: CFG, WEAPONS, SIGHTS, FALLOFF, ETYPES, COVER_KINDS, TOWN,
+  SPAWN_ZONES, TERRITORIES, KILLSTREAKS, MOODS.
+
+  CAMERA — real 3D (three.js r186). First person is the default (see CONTROLS). The third-person chase cam sits
+  4.2 m behind and 2.0 m above the controlled soldier's right shoulder, looking 5 m ahead; a desktop window taller
+  than it is wide pulls back to 5.6 m / 2.6 m / FOV 72. With manual aim you steer it yourself. With auto-fire it
+  faces north and leans 35% toward the nearest threat within ±60°, Q/E nudge it ±25° for 2 s, and a lock-on
+  swings it to the target. Movement is camera-relative. Auto-fire (controlled soldier) picks the nearest enemy
+  within ±70° of the camera, else anything within 45% of weapon range in any direction. Red arrows mark close
+  enemies beside or behind you. The chase camera pulls in front of house walls rather than clipping through.
+
+  ORIENTATION — on a phone or tablet the game plays in landscape only: held upright it shows a rotate
+  prompt and the simulation stops dead until you turn it, so nothing happens while you cannot see it.
+
+  CONTROLS — first person with manual fire is the DEFAULT (existing saves are migrated to it once). Two schemes,
+  switchable any time in SETTINGS (map screen, the cog in battle, or O): AUTO-FIRE keeps the soldier picking
+  targets and shooting for you (Tab / right-click / tap to lock on), or MANUAL hands you the crosshair — the mouse
+  aims (click to capture the pointer, Esc frees it), left mouse fires, right mouse aims down sights; on a phone
+  the right side of the screen looks, a FIRE button shoots (drag off it and you keep aiming) and ADS toggles
+  sights. First person is always manual. Aim assist (on by default; manual aim in third person only — first
+  person is yours to aim) pulls the crosshair toward a target already under it and slows the look 35% while it
+  is there; it never fires for you. Down the sights your cone shrinks to a quarter of the hip cone (a fifth or
+  less through the ACOG or scope), the view zooms by the sight's magnification, and you move at 70% speed.
+  V switches between third and first person: first person puts the camera at the soldier's eyes with a weapon
+  viewmodel (bob, sway, recoil kick, the full reload, muzzle bloom, the weapon pulled in against walls); the
+  death camera still plays in third person. Switching apps, a notification or a lost touch releases every held
+  input, so the view never keeps turning on its own.
+
+  HUD EXTRAS — a minimap (top-left) draws the town, your squad, pickups and any enemy within 24 m or
+  firing within 40 m, with your facing as an arrow; damage-direction arcs point back at whatever hit you;
+  a kill feed lists kills and losses; short vibrations on hits, kills and your own death where the browser
+  supports them. All of those, plus look sensitivity, field of view (-10 to +18) and sound, are settings.
+
+  DEATH — when your soldier falls you watch it happen: a 1.9 s letterboxed death camera, the world slowed to 30%
+  for most of it, easing around and down to the body with the mix muffled behind a pulse; then a reinforcement
+  puts you back on the line. Bodies take 1.6 s to drop (enemies 1.1 s) in three beats — hit jolt, knees,
+  gravity — falling backward when shot from the front and forward when shot in the back, and the weapon lands
+  on the ground beside them and stays there.
+
+  REINFORCEMENTS — you are one soldier and you stay that soldier. Die and you watch it happen, then you come back
+  at a reinforcement spawn as the death camera ends; squadmates walk back on by themselves after CFG.respawn
+  (3 s). The squad shares one pool of CFG.tickets (20) and every death on your side spends one, yours and theirs
+  alike. Once the pool is empty, squadmates who fall stay down and your own next death loses the front (so does
+  losing all four). No body-swapping.
+
+  KILLSTREAKS — supports are earned, not bought: 4 kills without dying gives INCENDIARY, 7 ARTILLERY,
+  10 SUPPLY DROP (KILLSTREAKS table). Dying resets the count. Nothing is purchased anywhere in the game:
+  there is no currency, no armory, no investments, no commendations, and nothing progresses while you are
+  away — the map is a level select and the only thing it tracks is which territories you hold. Holding one
+  grants nothing but the ground: there are no passive bonuses.
+
+  FOUR AGAINST EIGHT — you and three squadmates against up to eight enemies on the field at once. The enemy has its
+  own ticket pool (CFG.enemyTickets 44 + 8 per tier): every enemy death spends one, a new enemy walks on 1-2 s after
+  one falls while tickets remain, and the front is won when the pool is spent (the progress bar is exactly that).
+  The Warlord arrives at 90%, and killing it breaks what is left of them. A front you walk away from resumes where
+  you left it; a lost front starts again from 0%.
+
+  SPAWN ZONES — no front line. Fifteen zones sit in the open ground of the streets and yards (SPAWN_ZONES), and
+  the FOB is your squad's alone. An enemy walks on at a zone far from your squad and preferably out of its sight,
+  never within ~16 m of it and rarely the zone used a moment ago; your reinforcements come back far from the
+  enemy and near a teammate, favouring the FOB. Only the opening is a standoff: you start at the FOB.
+
+  SQUAD ROLES — your three do not trail you. Each fights its own nearest enemy in a fixed role: POINT closes
+  to 60% of its range, FLANK swings wide to one side, OVERWATCH holds at the edge of its range. Spots are
+  pushed apart so nobody stands within ~8 m of a teammate or of you. With nothing on the field they sweep
+  toward the last gunfire.
+
+  WEAPONS — UMP45 (SMG) / M4A1 (AR) / M249 SAW (LMG) / Intervention (sniper) / Rocket, stats in the
+  WEAPONS table and fixed: there are no weapon levels and no weapon XP, so a rifle is the same rifle on
+  the first front and the last.
+  ATTACHMENTS (BATTLE PREP; saved per weapon in meta.attach; your own rifle only, squadmates carry the
+  stock gun): a SIGHT — iron sights (1.45x), a 1.2x red dot, a 4x ACOG, and on the Intervention its own
+  6x scope in place of irons — and a MAGAZINE, standard or extended (UMP45 32/48, M4A1 30/45, SAW
+  100/200, Intervention 5/8; an extended mag adds 10% to the reload). Zoom is tan-based (the 4x shows a
+  quarter of the view), look sensitivity scales down with it, the ACOG and scope shoulder slower than a
+  dot, and a magnified optic tightens ADS spread a little more. Every sight is real geometry on the
+  model (GUN_BUILD): at full ADS the viewmodel is placed so the rear aperture and the front post — or
+  the optic's eyepiece — sit exactly on the camera axis at a short eye relief (adsInfo), and the
+  crosshair steps aside. Magnified optics add a DOM window (#sight) whose radius is computed from the
+  eyepiece ring's real size at that relief, with the chevron or crosshair drawn on top; the red dot is a
+  DOM dot glowing inside its 3D housing. The muzzle flash and tracers start at the model's own barrel
+  tip (GUN_MUZ). Nothing changes squad damage: no upgrades, no perks. Sniper pierces up to 2 targets.
+  Rockets explode (r70, no friendly fire from your own rockets). AI squadmates fire 2.6x slower than the
+  controlled soldier.
+
+  DAMAGE — riflemen and gunners 3 HP, runners 2, raiders 4, breachers 9; M4A1 1.05, UMP45 0.85, SAW 1.0,
+  Intervention 4, rocket 3 (blast). So a rifleman takes 3 M4 rounds, 4 from the UMP45 up close and 5 at
+  15 m; a headshot doubles a round. Enemy health does not grow with tier (that broke the count): each tier
+  adds 12% to enemy damage instead. BATTLE PREP shows the hits it takes to drop a rifleman.
+
+  DROP-OFF — a round does full damage out to the weapon's `near` distance, then falls in a straight
+  line to a floor by the time it has flown its whole reach: SMG full to 10 m then 60% by 22 m, AR full
+  to 20 m then 60% by 37 m, LMG full to 16 m then 55% by 35 m, pistol 50% by 20 m. The sniper and the
+  rocket have none. Measured on the distance the round actually travelled, so it stacks with cover and
+  with a headshot rather than replacing them. Squad fire only; enemy rounds do not drop off.
+
+  YOUR ROUNDS GO TO THE CROSSHAIR — with manual aim (always in first person) a shot is a ray through the
+  town: it flies in 3D to the first thing under the crosshair (an enemy, a wall, cover, the ground) with the
+  weapon's spread around that line, so aiming up and down matters. Buildings and cover have real heights
+  (COVER_TOP), riflemen are shorter while they kneel (bodyTop), and your headshots are decided by where the
+  round strikes (the top fifth of the body, near its middle). Squadmates and enemies keep level fire and the
+  probabilistic cover rule below.
+
+  HEADSHOTS (squadmates, and your rounds on auto-fire) — these rounds fly level, so a target is a circle and its
+  head is the narrow column at the middle of it: a round whose line passes within ~0.1 m of the target's centre
+  (0.15 m on a breacher, 0.22 m on the Warlord) can take the head for CFG.headshotMul (2x) damage. Measured
+  perpendicular to the shot, so it tracks where the round was aimed. Being in that column is necessary but not
+  sufficient: a level round has no height, so the rest is rolled at CFG.headshotChance (35%). Explosions never
+  headshot, and enemy rounds have no headshot, so nothing can one-shot your soldiers out of nowhere. A headshot
+  gives a sharper hitmarker (gold), a harder buzz, a higher spray and an HS tag in the kill feed.
+
+  AMMO — magazines are finite: UMP45 32, M4A1 30, SAW 100, Intervention 5, Rocket 1 (extended mags
+  48 / 45 / 200 / 8), with 2-6 spare mags each.
+  Reloads (1.7-4.2 s) play out in full — mag out, hand to the pouch, fresh mag in, charging handle —
+  and start automatically when the mag runs dry, on R or a tap of the ammo counter, or in any lull once
+  the mag is under half. Out of spares, everyone falls back to a bottomless pistol. Enemy dead drop a
+  magazine 35% of the time (one mag, 30 s on the ground); care packages refill the whole squad.
+
+  HAZARDS — mines (8/front, r55 blast, 2 dmg, triggered by either side) and fire patches from incendiary
+  strikes, which burn BOTH sides (enemies 1.6/s, soldiers 0.8/s). Your artillery also has friendly-fire
+  (3 enemy / 1.5 soldier dmg). There is no enemy bombardment: no mortars, no spotters calling them in, and
+  no distant artillery in the ambience.
+
+  ENEMIES (ETYPES) — rifleman 3 HP (330 range, 2–3 round bursts of 0.5 dmg), runner 2 HP / 1 dmg melee (wave 2+),
+  breacher 9 HP / 2 dmg behind a riot shield that soaks 70% of frontal fire (wave 3+), ATV raider 4 HP / 2 dmg
+  (tier 2+ or wave 5+), PKM gunner 3 HP / 1 dmg (tier 2+ or wave 2+: 380 range, 4–7 round bursts). Each tier adds
+  12% damage and 4% speed; health never scales. The radio spotter still has a model but is not spawned.
+
+  BOSS — at 90% front progress a WARLORD spawns (60 HP +35%/tier, HUD health bar) and holds progress at 99% until
+  killed. Phases by HP: above 66% it fights in melee; from 66% to 33% it also summons up to 3 riflemen every 8 s,
+  never taking the field past eight besides itself; under 33% it enrages (+45% speed, a 10-round radial burst
+  every 5 s). Killing it wins the front.
+
+  TOWN & COVER — Valmont, a fixed 96 x 72 m mountain town built out of places (TOWN): the RAIL YARD (station,
+  platform, freight wagons on two tracks, water tower), the MILL YARD (warehouse, shipping containers, log
+  piles), the CHURCH SQUARE (church and 19 m bell tower, fountain, war memorial, café tables), the MARKET
+  (stalls, a produce van), the GAS STATION (four pumps that explode, a shop, a fuel tanker that makes a very
+  big bang), the CEMETERY (chapel, gravestones, hedges, trees), the BUILDING SITE (a bare frame on twelve
+  columns under a crane, gravel mounds, a mixer, a site fence), the FOB (HESCO with gates, a sandbag emplacement
+  open at its corners, tents) and the MOTOR POOL (trucks), strung along Main Street (a burnt-out bus in it), a
+  cross street and a south road. Buildings, wagons and containers are solid with real heights; fixed cover is
+  always there, and 55 slots roll fresh cover each battle. A wall down each side, a fence and closed gate across the
+  pass road, and HESCO to the south stand exactly on the edge of play, so you can walk up to them.
+  Cover stops 35-95% of level rounds (per kind) and takes their damage; blasts damage all cover in range. A unit
+  hugging cover or a wall (within 18 px of its edge) takes 50% (soldiers) / 35% (enemies) less damage from level
+  rounds and fires over its own cover; your manually aimed rounds meet cover as geometry instead of a discount.
+  Melee ignores cover.
+
+  TACTICS — everyone paths around buildings and cover on a 1 m A* grid. Riflemen and PKM gunners bound to the free
+  cover nearest a point at 70% / 85% of their range (offset toward a flank), hold 2.6–5 s firing bursts, get
+  pinned when rounds crack within 1.5 m (suppression slows them and spoils their aim), and fall back when under
+  45% HP. Runners flank 13 m wide down side streets, and breachers come straight in behind their shields. Your
+  own soldier goes exactly where you move it: nothing latches onto cover or crouches for you.
+
+  NO DIALOGUE — there is no radio chatter, no comm box and no personalities. Soldiers keep names (the kill feed
+  uses them on desktop) and nothing else talks. The one story beat left is CPL Dana Wren joining the squad when
+  you take territory 7 in the first theater.
+
+  TOUCH CONTROLS — Call of Duty Mobile's layout and proportions (both triggers marked with a round, sights
+  marked ADS): left thumb moves, right thumb looks, and
+  the trigger is duplicated on both sides so you can fire with whichever thumb is free. Flat translucent
+  circles sized off the screen height (--fb = 22vh, clamped 66-108 px) so they keep CoD Mobile's ratios on
+  every phone: fire 1, lock-on .82, left trigger .8, ADS .68, reload .6. The fire button sits up off the
+  corner under the right thumb, ADS above-right of it, reload to its left, the left trigger above the
+  left thumb, and the corner is left clear for the ammo count. Reload outlines red under a quarter mag.
+
+  MAP — 13 hand-authored territories in a Risk-style adjacency graph; attack any enemy territory next to one you
+  hold. Taking one flips it to you, and that is all it does. Taking them all starts a new theater: the map resets
+  (HQ kept) and every enemy tier rises by 2.
+
+  N64 LOOK — three.js loads from jsdelivr at boot (the map works before it arrives; DEPLOY waits).
+  Output is N64-faithful: the scene renders at 480+ lines (the N64 hi-res mode) on the short side into a
+  render target, then a full-screen pass at native resolution quantises to RGB555 with a 4x4 ordered
+  dither and blows each scene pixel up by a whole number with nearest sampling — crisp, never smeared.
+  Characters are rigid limbs on joint hierarchies (the N64 technique) built from rounded lathe-turned
+  limbs, torsos and joint caps — a modern (2019-era) war: infantry in multicam with plate carriers,
+  mag pouches, knee pads and ballistic helmets with NVG mounts and ear pro (roster colour on IR and
+  shoulder patches; carriers alternate coyote and ranger green), carbines with optics, suppressed
+  SMGs, belt-fed LMGs, anti-materiel sniper rifles and RPGs, against a paramilitary force in
+  balaclavas, goggles and chest rigs carrying AKs and PKMs. All textures are hand-painted on canvases
+  at 4x and shrunk to 64 px cells; every piece carries baked vertex shading. The battlefield is
+  Valmont (see TOWN & COVER) under snow-capped ranges and painted clouds. Every character and settled
+  corpse draws through shared instance batches. ?fps=1 shows fps / draw calls.
+
+  Z-TARGETING — Tab or right-click (desktop), a quick tap on an enemy or the ◎ LOCK button (touch; hold
+  to release), Esc to release. Pressing again cycles targets (ahead-of-camera and close first; the
+  Warlord and spotters jump the queue). The camera swings to face the target and pulls back up to 1.5 m
+  to frame both; auto-fire prefers the lock within 110% of weapon range. A locked target that dies
+  passes the lock to the next after 0.25 s. The crosshair is white, turns RED the moment an enemy is
+  lined up under it, and blooms while you move, fire or reload. Hits punch a four-tick marker across it:
+  white for a hit, red for a kill, longer for a headshot.
+  Q/E nudge the camera ±25° for 2 s.
+
+  ENEMY MODELS & SET PIECES — every enemy type has its own model (knit-cap knife runner, breacher with riot shield
+  and sledgehammer, kneeling PKM gunner, radio spotter with binoculars, machete raider on a quad bike, and the
+  Warlord as a bomb-suit juggernaut with a minigun whose armour and visor heat up in later phases). Warlord
+  arrival: 1.9 s letterboxed hero shot + OoT-style title card with an epithet, world at 30%. Cover pieces look
+  battered below half health and leave rubble when destroyed. Shells visibly fall for their last 0.35 s, the
+  incendiary strike brings a jet pass, care packages parachute in. Fallen soldiers get a battlefield cross (rifle,
+  helmet, boots). Damaged squadmates and 3+ HP enemies show floating health bars.
+
+  DAY/NIGHT & WEATHER — each battle rolls a time of day (dawn 15%, day 40%, dusk 25%, night 20%; the
+  campaign's very first battle is always dawn) that drifts forward one step every 150 s, and weather
+  (clear / overcast / fog / rain; rain and fog get 4% likelier per tier, capped at +20%). Sight =
+  time-of-day visibility (dawn 90%, day 100%, dusk 88%, night 78%) × weather (overcast 95%, fog 80%,
+  rain 85%), floored at 70%. Sight scales squad weapon range, AI engage radius, lock-on range and enemy
+  gunner range equally. Rain adds streaks, a hiss layer, and
+  lightning with thunder.
+
+  MENUS — laid out for a landscape screen with nothing to scroll. The start menu is the operations map on the
+  left and a command column on the right (title, the selected sector, DEPLOY, the loadout you carry, settings);
+  it opens with an attackable sector already selected. LOADOUT is the five guns in a rail on the left and the
+  one you carry on the right: stat bars (damage, fire rate, range, magazine, mobility, reload), sight and
+  magazine choices, DONE. A desktop window taller than it is wide stacks the columns.
+
+  UI — flat and modern, in the Battlefield manner, built on the brand sheet: near-black navy (#05080f),
+  hairline slate rules, one orange accent (#ff6b2c), square corners, and only the call to action glows.
+  Archivo Expanded for headlines and buttons, Archivo for reading, JetBrains Mono for labels and numbers
+  (Google Fonts; system fallbacks offline). The HUD is a two-sided TICKET BAR top-centre (your
+  reinforcements in blue, the enemy's in red, your kills between), the minimap top-left, the menu
+  buttons top-right, and the weapon block and killstreak slots bottom-right. Menus are an eyebrow with a
+  rule, an expanded headline, and hairline panels; the operations map is a dark tactical grid (blue =
+  held, orange ring = attackable). Every end-of-front screen is the after-action layout: eyebrow,
+  headline, one line, a hairline stat grid (kills, accuracy, headshots, longest kill, reinforcements,
+  time), a solid orange button and a mono note. The rotate prompt uses the same system.
+
+  MUSIC MOODS — the battle cue has six moods (MOODS), picked from the sky and re-picked as it drifts: DAY (D minor,
+  104 BPM, the driving cue), DAWN (E dorian, 96, lifting plucks and a bell), DUSK (A minor, 98, a dotted figure
+  with its echo), NIGHT (C minor, 88, drone, sparse pings, deep slow drums), RAIN (D minor, 92, trembling pad,
+  falling plucks) and FOG (F sharp minor, 84, slow swells, drone and bell). All layer in with the fight's heat.
+
+  MUSIC — written in code like everything else and played live on the audio clock (updateMusic, musStep):
+  a MENU cue (D minor, 72 BPM: detuned pad walking i–VI–III–VII, sub bass, a slow heartbeat, a plucked
+  arpeggio, a bell at phrase starts) and a BATTLE cue (D minor, 104 BPM, i–VI–VII–V then i–bII–VII–i: bass
+  pulse, dark pad and hats always; string ostinato, taiko with a backbeat rim and fills, and brass stabs
+  layer in with the heat of the fight — enemies near and close, rounds flying, you hurt, the Warlord — with
+  a braam per phrase at full tilt). Stingers for a sector taken, a front lost and the Warlord's arrival.
+  Cues cross-fade on screen changes; the MUSIC slider in settings sets the level (0 is off); M mutes it and
+  the death cam muffles it with everything else.
+
+  SOUND — no sample files: at the first tap every weapon sound is synthesised offline into 32 kHz
+  stereo buffers (sub-millisecond attack, saturated muzzle blast, a falling pressure thump, early
+  reflections at 70–620 ms, a rolling outdoor tail, the action cycling), 1–3 variants per weapon plus
+  a distant variant, rendered in 10 ms slices. Playback adds ±3% pitch, distance low-pass and stereo
+  placement around the camera. Squad carbines/SMGs/LMGs/.50 sniper/RPG, enemy AKs and PKMs, supersonic
+  near-miss snaps (within 1.75 m), ricochets, brass casings, layered explosions with
+  debris, body falls, a strike-jet flyby and outgoing artillery. Ambience: wind, a low front rumble
+  that swells with enemy count, distant firefights, radio squelch, rain. AI squad fire
+  is thinned 45%. 'M' mutes everything via the master bus.
+
+  BULLETS — squad rounds fly 4200–8400 px/s (105–210 m/s; rockets 900, enemy rifles 1500, Warlord burst
+  650) and move in ≤10 px sub-steps so they can't tunnel through bodies. Every round is visible: a short
+  streak (rifles 1.3–3 m, tied to how far it travels in about a frame and a half, so it reads as a bullet
+  moving rather than a laser) with a burning head, amber for the squad, red for the enemy. It is sized in
+  lines of the render (core 1.6, glow 5, head 3.4-5), not metres, so a round 40 m away still shows
+  instead of being dropped by the dither. Tracer-loaded rounds (every third squad round, every other enemy
+  round, every .50 and rocket) are brighter and a little longer. Your own rounds start at the barrel.
+
+  ANIMATION — every joint eases toward its target pose (no popping between run, aim, kneel, swing and
+  death); stride phase comes from real distance moved (no foot sliding); legs face the movement while
+  the upper body twists up to ~70° toward the aim (backpedalling when retreating); recoil and hit
+  flinch are damped springs; idle breathing and glancing; melee wind-up as a strike comes due;
+  knee-buckle deaths continue from the pose the character died in; quad bikes roll their wheels with
+  real distance and chatter on their suspension.
+
+  HANDS & RELOAD — the weapon in your hands is held by gloved hands built finger by finger (trigger hand
+  wrapped on the pistol grip with the index finger on the trigger, support hand clamped on the handguard,
+  thumbs placed, knuckle guards, cuffs and sleeves running out of frame), anchored per gun (VM_HOLD). The
+  first-person reload is keyframed and synced to its sounds (vmReload): the gun cants toward the support
+  hand, the magazine (its own MAG() part on every model) is stripped out and dropped to the ground, a fresh
+  one comes up from the pouch and seats with a bump, the action is worked (UMP and M4 pull back, the SAW
+  slaps its top cover shut), and the sights come down for the duration. The rocket loads a warhead into the
+  front of the tube and stands empty after a shot. Everyone else drops their empty magazines too.
+
+  MUZZLE FLASH & BRASS — each shot is a soft, semi-transparent additive bloom at the drawn muzzle (a warm wide
+  glow and a hot core, rolled differently each time, 3-4 frames, sized in render lines so it reads at range,
+  dimmed down the sights). Every shot throws a casing from the ejection port (EJECT, real sizes per calibre;
+  belt-feds throw down and right, the Intervention when its bolt is worked) that spins, inherits your
+  movement, bounces, settles on its side and tinks when your own lands. Brass lasts ~3 s (160 at most),
+  dropped magazines 15 s (12 at most).
+
+  JUICE — muzzle smoke, blood spurts biased along the hit
+  direction, per-weapon-class camera kick (SMG light -> rocket heavy), tracer glow pass, and a 0.5s
+  slow-motion beat (world at 30%, camera zoom punch) when the last enemy on the field falls (from wave 2 on,
+  10 s cooldown).
+
+  CARNAGE — corpses are persistent: dead soldiers and enemies stay on the field for the whole front
+  (enemy corpses capped at 120, oldest culled; squad corpses never removed), plus blood stains, craters
+  and cross markers.
+
+  SOURCE & TESTS — index.html is built; edit src/ and run `python3 tools/build.py` (`--check` verifies the built file
+  is current). src/js/*.js is one classic script cut into files and joined in filename order, so top-level names
+  stay shared. `python3 tools/test.py` runs the suites in tests/suites in headless Chrome, as a 1280x720 desktop and
+  as an 844x390 touch phone, against an in-memory save; `--baseline` records the balance numbers in
+  tests/baseline.json.
+
+  MISC — soldiers have 4 HP and regenerate 2 HP/s after 4 s out of fire. 'M' mutes. ?reset=1 wipes the save (key
+  holdout.v2 — v1 saves are ignored). window.G exposes debug helpers, including G.step(seconds) to fast-forward
+  the simulation and G.frame(dt) to render one frame.
+-->

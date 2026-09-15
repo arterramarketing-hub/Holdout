@@ -1,0 +1,69 @@
+  @media (prefers-reduced-motion: reduce) {
+    #bootbox .boot-press, #titlecard.show .tc-name, #hurt.crit, #rotate .rot-icon { animation:none; }
+    #reticle .hm { transition:none; }
+  }
+  /* compact: phones, and any window too narrow for the spread-out layout */
+  @media (max-width:899px), (max-height:520px) {
+    #tickets { top:6px; height:30px; }
+    #tickets > b { min-width:40px; font-size:14px; }
+    .tkbar { width:min(110px, 13vw); padding:0 7px; }
+    .tkmid { min-width:50px; padding:0 8px; } .tkmid b { font-size:13px; } .tkmid em { font-size:7px; letter-spacing:.2em; }
+    #minimap { top:6px; left:6px; width:96px; height:76px; }
+    #topbar { top:6px; right:6px; gap:4px; }
+    #tomap, #tocfg { height:30px; padding:0 10px; font-size:10px; } #tocfg { width:30px; padding:0; font-size:13px; }
+    #bossbar { top:44px; width:min(280px, 46vw); } #bossname { margin-bottom:3px; font-size:9px; }
+    #feed { top:auto; bottom:64px; right:6px; width:220px; font-size:10px; }
+    #ammo { right:6px; bottom:6px; min-width:0; padding:6px 10px 8px; }
+    #amname { margin-bottom:3px; font-size:8px; letter-spacing:.2em; } #ammag { font-size:22px; } #amres { font-size:11px; }
+    #supports { right:auto; left:6px; bottom:6px; gap:4px; }
+    .supbtn { width:98px; gap:4px; padding:5px 8px 6px; }
+    .ks-top { font-size:8.5px; } .ks-name { font-size:8.5px; }
+    body.touch #ammo { right:6px; bottom:6px; }
+    body.touch #supports { top:42px; right:6px; left:auto; bottom:auto; }
+    body.touch #feed { top:88px; bottom:auto; left:6px; }
+    #hint { bottom:70px; font-size:10px; }
+    #dmgdir i { width:210px; height:180px; margin:-180px 0 0 -105px; }
+    .menu { grid-template-columns:minmax(0, 1fr) clamp(220px, 34vw, 300px); }
+    .menu.lo { grid-template-columns:clamp(190px, 30vw, 260px) minmax(0, 1fr); }
+  }
+  /* phones in landscape: every pixel is the fight */
+  @media (max-height:520px) {
+    #banner, #hint, #floaters, #feed { display:none !important; }   /* no text toasts on a phone */
+    .menu .eyebrow { margin-bottom:5px; font-size:9.5px; letter-spacing:.26em; } .menu .ttl .xl { font-size:28px; }
+    .menu-map { padding:10px 0 10px 10px; } .map-key { left:22px; bottom:18px; gap:10px; font-size:8.5px; }
+    .menu-side, .lo-rail { gap:8px; padding:10px 12px; }
+    .sector { padding-top:8px; }
+    #terrmeta { font-size:9px; } #terrname { margin-top:3px; font-size:18px; } #terrhint { margin-top:3px; font-size:9.5px; line-height:1.35; }
+    .kitbtn { gap:1px 8px; padding:7px 10px; } .kb-v { font-size:14px; } .kb-s { font-size:9px; }
+    .menu .btn { padding:8px 12px; font-size:10.5px; }
+    .cta { padding:12px 18px; font-size:13px; }
+    .wrow { padding:5px 10px; } .wr-n { font-size:12px; } .wr-d { font-size:10px; } .wr-c { font-size:8px; letter-spacing:.16em; }
+    .lo-detail { gap:8px; padding:10px 14px; }
+    .lo-head { padding-bottom:6px; } .lo-cls { font-size:9px; } .lo-name { margin-top:2px; font-size:26px; } .lo-tag { padding:3px 7px; font-size:8.5px; }
+    .lo-stats { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px 16px; }
+    .lstat { gap:3px 8px; } .lstat .k { font-size:8.5px; letter-spacing:.14em; } .lstat .v { font-size:11px; }
+    .att { padding:4px 7px; font-size:9px; } .attrow > span { min-width:40px; font-size:8.5px; }
+    .lo-note { font-size:9.5px; line-height:1.45; }
+    #modal { padding:14px 26px; }
+    #modalbox .eyebrow { margin-bottom:8px; font-size:10px; }
+    #modalbox h2 { margin-bottom:10px; font-size:40px; }
+    #modalbox .lede { margin-bottom:12px; font-size:13px; }
+    #modalbox .stats, #modalbox .setlist { margin-bottom:12px; }
+    .stats { grid-template-columns:repeat(3, 1fr); } .stat.wide { grid-column:auto; }
+    .stat { padding:8px 12px 9px; } .stat .k { font-size:8.5px; letter-spacing:.16em; }
+    .stat .v { margin-top:4px; font-size:18px; } .stat .v.hot { font-size:22px; } .stat .v small { font-size:9px; }
+    .setlist { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); }   /* two columns so DONE stays on screen */
+    .setrow { padding:6px 12px; font-size:9.5px; border-top:0; background:var(--panel-solid); }
+    .setrow label { margin-left:8px; }
+    .setrow:last-child:nth-child(odd) { grid-column:1 / -1; }   /* an odd row out spans the width instead of leaving a hole */
+    #modalbox .note { margin-top:10px; font-size:10px; }
+    #bootbox h1 { font-size:64px; } #bootbox .boot-press { margin:12px 0 14px; } #bootlines { min-height:0; font-size:10px; }
+    body.touch #supports { gap:3px; } body.touch .supbtn { gap:2px; padding:4px 8px 5px; }   /* clear of the ADS button below */
+  }
+  /* a desktop window taller than it is wide stacks the menu columns (a phone is held sideways, so it never lands here) */
+  @media (max-aspect-ratio: 1/1) {
+    .menu, .menu.lo { grid-template-columns:minmax(0, 1fr); }
+    .menu-map { min-height:52vh; padding-right:clamp(12px, 2.4vw, 32px); }
+    .menu-side { border-left:0; border-top:1px solid var(--line); }
+    .lo-rail { border-right:0; border-bottom:1px solid var(--line); }
+  }

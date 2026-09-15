@@ -1,0 +1,19 @@
+  /* HOLDOUT — flat and modern, the Battlefield way: near-black navy, hairline slate rules, one orange accent.
+     Archivo Expanded for the loud words, Archivo for reading, JetBrains Mono for labels and every number.
+     Square corners throughout; nothing is bevelled, and only the call to action glows. */
+  :root { color-scheme: dark;
+    --bg: #05080f; --panel: rgba(6, 10, 17, .82); --panel-solid: #070b14;
+    --line: #262f3d; --line-hi: #3a4454;
+    --ink: #f1f3f6; --text: #c9d1dc; --label: #a6b0bf; --muted: #7b879a;
+    --accent: #ff6b2c; --accent-hi: #ff8551; --accent-ink: #140903; --accent-glow: rgba(255, 107, 44, .36);
+    --friend: #5cb6ff; --foe: #ff4d3d; --ok: #86dd90;
+    --display: 'Archivo', 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+    --body: 'Archivo', 'Helvetica Neue', Arial, system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --fb: clamp(66px, 22vh, 108px); }
+  * { box-sizing:border-box; }
+  html, body { margin:0; padding:0; height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--body); }
+  button { font:inherit; color:inherit; cursor:pointer; }
+  button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  #game { display:block; width:100vw; height:100vh; touch-action:none; image-rendering:pixelated; }
+

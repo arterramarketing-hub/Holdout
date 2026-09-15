@@ -292,6 +292,12 @@
   (enemy corpses capped at 120, oldest culled; squad corpses never removed), plus blood stains, craters
   and cross markers.
 
+  SOURCE & TESTS — index.html is built; edit src/ and run `python3 tools/build.py` (`--check` verifies the built file
+  is current). src/js/*.js is one classic script cut into files and joined in filename order, so top-level names
+  stay shared. `python3 tools/test.py` runs the suites in tests/suites in headless Chrome, as a 1280x720 desktop and
+  as an 844x390 touch phone, against an in-memory save; `--baseline` records the balance numbers in
+  tests/baseline.json.
+
   MISC — soldiers have 4 HP and regenerate 2 HP/s after 4 s out of fire. 'M' mutes. ?reset=1 wipes the save (key
   holdout.v2 — v1 saves are ignored). window.G exposes debug helpers, including G.step(seconds) to fast-forward
   the simulation and G.frame(dt) to render one frame.

@@ -1,0 +1,17 @@
+  /* ---------- rotate prompt and title screen ---------- */
+  #rotate { position:fixed; inset:0; z-index:60; display:none; flex-direction:column; justify-content:center; gap:14px; padding:34px; background:var(--bg); }
+  body.portrait #rotate { display:flex; }
+  #rotate .rot-icon { width:fit-content; font-size:52px; line-height:1; color:var(--accent); transform:rotate(90deg); animation:rotHint 2.2s ease-in-out infinite; }
+  #rotate .xl { font-size:clamp(30px, 10vw, 56px); }
+  @keyframes rotHint { 0%, 45% { transform:rotate(0deg); } 55%, 100% { transform:rotate(90deg); } }
+  #boot { position:fixed; inset:0; z-index:39; display:flex; align-items:center; justify-content:center; padding:32px; cursor:pointer; transition:opacity .6s; background:var(--bg); }
+  #boot.off { opacity:0; pointer-events:none; }
+  #bootbox { width:min(760px, 100%); }
+  #bootbox .eyebrow { margin-bottom:14px; }
+  #bootbox h1 { font-size:clamp(56px, 12vw, 136px); }
+  #bootbox .boot-press { margin:24px 0 26px; font-family:var(--mono); font-weight:700; font-size:12px; letter-spacing:.32em; text-transform:uppercase; color:var(--ink);
+    animation:blink 1.1s steps(2, jump-none) infinite; }
+  @keyframes blink { 50% { opacity:.25; } }
+  #bootlines { min-height:110px; white-space:pre-wrap; font-family:var(--mono); font-size:12px; line-height:1.9; color:var(--muted); }
+  #bootlines .ok { color:var(--accent); }
+

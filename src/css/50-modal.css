@@ -1,0 +1,19 @@
+  /* ---------- modal: the after-action layout from the brand sheet, over the blurred fight ---------- */
+  #modal { position:fixed; inset:0; z-index:30; display:none; align-items:center; justify-content:center; overflow:auto; padding:32px;
+    background:rgba(3,5,10,.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+  #modalbox { width:min(760px, 100%); margin:auto; text-align:left; color:var(--text); }
+  #modalbox .eyebrow { margin-bottom:14px; }
+  #modalbox h2 { margin:0 0 18px; font-family:var(--display); font-stretch:125%; font-weight:800; font-size:clamp(40px, 8vw, 96px); line-height:.92;
+    text-transform:uppercase; color:var(--accent); text-wrap:balance; }
+  #modalbox .lede { margin:0 0 24px; }
+  #modalbox .stats, #modalbox .setlist { margin:0 0 26px; }
+  #modalbox .btn { display:block; width:100%; margin-top:10px; }
+  #modalbox .note { margin:18px 0 0; }
+  .setlist { border:1px solid var(--line-hi); background:var(--panel-solid); }
+  .setrow { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:12px 16px; border-top:1px solid var(--line);
+    font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--label); }
+  .setrow:first-child { border-top:0; }
+  .setrow label { margin-left:14px; white-space:nowrap; font-weight:500; letter-spacing:.04em; text-transform:none; color:var(--text); }
+  .setrow input[type=range] { width:150px; accent-color:var(--accent); }
+  .setrow input[type=checkbox], .setrow input[type=radio] { accent-color:var(--accent); }
+

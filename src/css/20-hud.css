@@ -1,0 +1,141 @@
+  /* ---------- battle HUD ---------- */
+  .hud { position:fixed; z-index:10; color:var(--ink); pointer-events:none; user-select:none; -webkit-user-select:none; }
+  /* tickets: your reinforcements in blue on the left, theirs in red on the right, your kills between */
+  #tickets { top:10px; left:50%; transform:translateX(-50%); display:flex; align-items:stretch; height:36px;
+    background:var(--panel); border:1px solid var(--line); font-family:var(--mono); font-weight:800; }
+  #tickets > b { display:flex; align-items:center; justify-content:center; min-width:54px; font-size:18px; font-variant-numeric:tabular-nums; }
+  #tickets > b.us { color:var(--friend); } #tickets > b.them { color:var(--foe); }
+  .tkbar { display:flex; align-items:center; width:min(190px, 15vw); padding:0 10px; }
+  .tkbar.us { color:var(--friend); } .tkbar.them { color:var(--foe); }
+  .tk-track { position:relative; flex:1; height:6px; background:rgba(255,255,255,.07); }
+  .tk-track i { position:absolute; top:0; bottom:0; width:100%; background:currentColor; transition:width .35s ease; }
+  .tkbar.us .tk-track i { right:0; } .tkbar.them .tk-track i { left:0; }
+  .tkmid { display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:66px; padding:0 12px;
+    border-left:1px solid var(--line); border-right:1px solid var(--line); }
+  .tkmid b { font-size:16px; line-height:1; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .tkmid em { margin-top:3px; font-style:normal; font-size:8px; font-weight:700; letter-spacing:.26em; color:var(--label); }
+  #bossbar { top:56px; left:50%; transform:translateX(-50%); width:min(420px, 58vw); display:none; text-align:center; }
+  #bossname { margin-bottom:5px; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--foe); }
+  #bosshp { height:5px; background:rgba(255,255,255,.08); border:1px solid var(--line); }
+  #bosshp i { display:block; height:100%; width:100%; background:var(--foe); }
+  #minimap { top:10px; left:10px; width:160px; height:128px; background:var(--panel); border:1px solid var(--line); }
+  body.nomap #minimap { display:none; }
+  #topbar { top:10px; right:10px; display:flex; gap:6px; pointer-events:auto; }
+  #tomap, #tocfg { height:36px; padding:0 14px; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.2em;
+    text-transform:uppercase; color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:0; }
+  #tocfg { width:36px; padding:0; font-size:15px; letter-spacing:0; }
+  #tomap:hover, #tocfg:hover { border-color:var(--accent); color:var(--accent); }
+  #feed { top:56px; right:10px; width:260px; display:flex; flex-direction:column; align-items:flex-end; gap:3px; font-family:var(--mono); font-size:11px; }
+  body.nofeed #feed { display:none; }
+  .frow { padding:4px 9px; background:var(--panel); color:var(--text); box-shadow:inset -2px 0 0 var(--friend); white-space:nowrap; }
+  .frow b { color:var(--ink); font-weight:800; } .frow i { font-style:normal; font-weight:800; color:var(--accent); }
+  .frow.bad { box-shadow:inset -2px 0 0 var(--foe); } .frow.bad b { color:var(--foe); }
+  #dmgdir i { position:fixed; left:50%; top:50%; width:280px; height:240px; margin:-240px 0 0 -140px; transform-origin:50% 100%;
+    background:radial-gradient(ellipse at 50% 0%, rgba(255,70,45,.6), rgba(255,70,45,0) 62%);
+    clip-path:polygon(18% 0, 82% 0, 63% 44%, 37% 44%); display:none; }
+  /* weapon: name above, magazine large, reserve beside it, the reload filling underneath */
+  #ammo { right:14px; bottom:14px; display:grid; grid-template-columns:auto auto; justify-content:end; align-items:baseline; column-gap:7px;
+    min-width:156px; padding:10px 14px 12px; text-align:right; background:var(--panel); border:1px solid var(--line);
+    box-shadow:inset -2px 0 0 var(--accent); pointer-events:auto; cursor:pointer; }
+  #amname { grid-column:1 / -1; grid-row:1; justify-self:end; margin-bottom:5px; font-family:var(--mono); font-weight:700; font-size:10px;
+    letter-spacing:.26em; text-transform:uppercase; color:var(--label); }
+  #ammag { grid-row:2; grid-column:1; font-family:var(--mono); font-weight:800; font-size:34px; line-height:1; color:var(--ink); font-variant-numeric:tabular-nums; }
+  #amres { grid-row:2; grid-column:2; font-family:var(--mono); font-weight:700; font-size:13px; color:var(--label); font-variant-numeric:tabular-nums; }
+  #ammo.low #ammag { color:var(--foe); }
+  #ammo.reloading #amname { color:var(--accent); }
+  #ambar { grid-column:1 / -1; grid-row:3; height:3px; margin-top:7px; background:rgba(255,255,255,.08); display:none; }
+  #ammo.reloading #ambar { display:block; }
+  #ambar i { display:block; height:100%; width:0%; background:var(--accent); }
+  /* killstreaks: three slots, orange when earned */
+  #supports { right:182px; bottom:14px; display:flex; gap:6px; pointer-events:auto; }
+  .supbtn { display:flex; flex-direction:column; justify-content:space-between; gap:9px; width:120px; padding:8px 10px 9px; text-align:left;
+    background:var(--panel); border:1px solid var(--line); border-radius:0; color:var(--ink); }
+  .ks-top { display:flex; justify-content:space-between; align-items:center; gap:6px; font-family:var(--mono); font-weight:800; font-size:10px; letter-spacing:.1em; }
+  .supbtn .ckey { color:var(--muted); }
+  .supbtn .cnt { color:var(--accent); } .supbtn .need { color:var(--muted); }
+  .ks-name { font-family:var(--display); font-stretch:112%; font-weight:800; font-size:10px; letter-spacing:.03em; text-transform:uppercase; white-space:nowrap; }
+  .supbtn.locked { opacity:.62; cursor:default; }
+  .supbtn:not(.locked) { border-color:var(--accent); box-shadow:inset 0 -2px 0 var(--accent); }
+  .supbtn:not(.locked):hover { background:rgba(255,107,44,.12); }
+  #banner { top:22%; left:50%; transform:translate(-50%,-50%); padding:9px 20px 10px 16px; white-space:nowrap; opacity:0;
+    font-family:var(--display); font-stretch:125%; font-weight:800; font-size:clamp(16px, 2.2vw, 26px); letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ink); background:linear-gradient(90deg, rgba(6,10,17,.88), rgba(6,10,17,.3)); box-shadow:inset 3px 0 0 var(--accent); }
+  #hint { bottom:96px; left:50%; transform:translateX(-50%); max-width:min(92vw, 760px); text-align:center; line-height:1.7;
+    font-family:var(--mono); font-size:11px; letter-spacing:.08em; color:var(--text); text-shadow:0 1px 3px rgba(0,0,0,.9); transition:opacity 1s; }
+  /* No health bar: how hurt you are is the blood on the glass, and it clears itself if you break contact. */
+  #hurt { position:fixed; inset:0; z-index:6; pointer-events:none; opacity:0; transition:opacity .18s linear;
+    background:radial-gradient(ellipse at center, rgba(120,0,0,0) 26%, rgba(140,8,8,.5) 64%, rgba(86,0,0,.94) 100%); }
+  #hurt.crit { animation:hurtBeat .95s ease-in-out infinite; }
+  @keyframes hurtBeat { 0%, 100% { filter:brightness(1); } 50% { filter:brightness(1.5) saturate(1.3); } }
+  #deathfx { position:fixed; inset:0; z-index:7; pointer-events:none; opacity:0; transition:opacity .45s;
+    background:radial-gradient(ellipse at center, rgba(120,0,0,0) 32%, rgba(80,0,0,.6) 100%); }
+  body.dying #deathfx { opacity:1; }
+  /* crosshair over whatever the soldier is shooting at */
+  #reticle { position:fixed; left:0; top:0; width:46px; height:46px; margin:-23px 0 0 -23px; z-index:8; display:none; pointer-events:none; color:#e6f4ff; --g:0px; }
+  #reticle i { position:absolute; background:currentColor; box-shadow:0 0 0 1px rgba(0,0,0,.65); }
+  #reticle .rt-t { left:22px; top:2px; width:2px; height:9px; transform:translateY(calc(-1 * var(--g))); }
+  #reticle .rt-b { left:22px; bottom:2px; width:2px; height:9px; transform:translateY(var(--g)); }
+  #reticle .rt-l { top:22px; left:2px; height:2px; width:9px; transform:translateX(calc(-1 * var(--g))); }
+  #reticle .rt-r { top:22px; right:2px; height:2px; width:9px; transform:translateX(var(--g)); }
+  #reticle .rt-dot { left:21px; top:21px; width:4px; height:4px; border-radius:50%; }
+  #reticle.ads .rt-t, #reticle.ads .rt-b, #reticle.ads .rt-l, #reticle.ads .rt-r, #reticle.ads .rt-dot { opacity:0; }   /* the real sights take over */
+  /* What you see through an optic once you are settled in behind it. The mask is a black field with a round
+     window whose radius the HUD sets from the eyepiece's real size; the reticle sits at the centre. */
+  #sight { position:fixed; inset:0; z-index:7; display:none; pointer-events:none; --cx:50vw; --cy:50vh; --r:200px; }
+  #sg-mask { position:absolute; inset:0;
+    background:radial-gradient(circle at var(--cx) var(--cy), transparent calc(var(--r) - 1px), rgba(0,0,0,.94) calc(var(--r) + 2px)); }
+  #sight.dot #sg-mask { display:none; }
+  #sg-ret { position:absolute; left:var(--cx); top:var(--cy); }
+  #sight.dot #sg-ret { width:7px; height:7px; margin:-3.5px 0 0 -3.5px; border-radius:50%; background:#ff3b2f;
+    box-shadow:0 0 3px 1px rgba(255,70,50,.85), 0 0 9px 3px rgba(255,60,40,.35); }
+  #sight.acog #sg-ret { width:2px; height:calc(var(--r) - 8px); margin:8px 0 0 -1px; background:rgba(255,59,47,.85); }
+  #sight.acog #sg-ret::before, #sight.acog #sg-ret::after { content:''; position:absolute; left:-1px; top:-9px; width:4px; height:17px;
+    background:#ff3b2f; transform-origin:50% 0; box-shadow:0 0 3px rgba(255,59,47,.6); }
+  #sight.acog #sg-ret::before { transform:rotate(-42deg); }
+  #sight.acog #sg-ret::after { transform:rotate(42deg); }
+  #sight.acog #sg-mask::after { content:''; position:absolute; left:var(--cx); top:var(--cy); width:calc(var(--r) * 2); height:calc(var(--r) * 2);
+    margin:calc(-1 * var(--r)) 0 0 calc(-1 * var(--r)); border-radius:50%; box-shadow:inset 0 0 22px 6px rgba(0,0,0,.55); }
+  #sight.scope #sg-ret { width:calc(var(--r) * 2); height:2px; margin:-1px 0 0 calc(-1 * var(--r)); background:#0a0a0a; }
+  #sight.scope #sg-ret::before { content:''; position:absolute; left:50%; top:calc(-1 * var(--r)); width:2px; height:calc(var(--r) * 2); margin-left:-1px; background:#0a0a0a; }
+  #sight.scope #sg-ret::after { content:''; position:absolute; left:50%; top:50%; width:5px; height:5px; margin:-2.5px 0 0 -2.5px; border-radius:50%;
+    border:1.5px solid #0a0a0a; }
+  #sight.scope #sg-mask::after { content:''; position:absolute; left:var(--cx); top:var(--cy); width:calc(var(--r) * 2); height:calc(var(--r) * 2);
+    margin:calc(-1 * var(--r)) 0 0 calc(-1 * var(--r)); border-radius:50%; box-shadow:inset 0 0 40px 14px rgba(0,0,0,.7); }
+  #reticle.hot { color:#ff3b30; }   /* an enemy is lined up under it */
+  /* Hit marker, the Call of Duty way: four short diagonal ticks that snap on at the instant of the hit
+     and fade outward. White for a hit, red for a kill, longer for a headshot. Stays white over a red
+     reticle, so the marker always reads. */
+  #reticle .hm { left:50%; top:50%; width:10px; height:2px; margin:-1px 0 0 -5px; background:#fff; opacity:0;
+    transition:opacity .2s ease-out, transform .2s ease-out; box-shadow:0 0 0 1px rgba(0,0,0,.75); }
+  #reticle .hm.a { transform:rotate(45deg)  translateX(14px); }
+  #reticle .hm.b { transform:rotate(135deg) translateX(14px); }
+  #reticle .hm.c { transform:rotate(225deg) translateX(14px); }
+  #reticle .hm.d { transform:rotate(315deg) translateX(14px); }
+  #reticle.hit .hm { opacity:1; transition:none; }
+  #reticle.hit .hm.a { transform:rotate(45deg)  translateX(10px); }
+  #reticle.hit .hm.b { transform:rotate(135deg) translateX(10px); }
+  #reticle.hit .hm.c { transform:rotate(225deg) translateX(10px); }
+  #reticle.hit .hm.d { transform:rotate(315deg) translateX(10px); }
+  #reticle.kill .hm { background:#ff4438; }
+  #reticle.head .hm { width:15px; margin-left:-7.5px; height:3px; }
+  #vig { position:fixed; inset:0; z-index:5; pointer-events:none; background:radial-gradient(ellipse at center, transparent 62%, rgba(0,2,8,.42) 100%); }
+  #cine-top, #cine-bot { position:fixed; left:0; right:0; height:11vh; background:#000; z-index:9; pointer-events:none; transition:transform .25s ease; }
+  #cine-top { top:0; transform:translateY(-100%); } #cine-bot { bottom:0; transform:translateY(100%); }
+  body.cine #cine-top, body.cine #cine-bot { transform:none; }
+  #floaters, #threats { position:fixed; inset:0; z-index:8; pointer-events:none; overflow:hidden; }
+  .floater { position:absolute; left:0; top:0; display:none; white-space:nowrap; will-change:transform;
+    font:800 13px var(--mono); letter-spacing:.06em; color:var(--accent); text-shadow:0 1px 3px rgba(0,0,0,.95); }
+  .threat { position:absolute; left:0; top:0; width:0; height:0; display:none; border-left:10px solid transparent; border-right:10px solid transparent;
+    border-bottom:20px solid var(--foe); filter:drop-shadow(0 0 3px rgba(0,0,0,.8)); }
+  #joy { position:fixed; width:124px; height:124px; margin:-62px 0 0 -62px; z-index:9; display:none; pointer-events:none; border-radius:50%;
+    border:1.5px solid rgba(255,255,255,.38); background:rgba(8,12,20,.18); }
+  #joyknob { position:absolute; left:41px; top:41px; width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,.6); }
+  #titlecard { position:fixed; left:0; right:0; bottom:15vh; z-index:12; text-align:center; pointer-events:none; opacity:0; transition:opacity .35s ease; }
+  #titlecard.show { opacity:1; }
+  #titlecard .tc-sub { margin-bottom:10px; font-family:var(--mono); font-weight:700; font-size:clamp(11px, 1.4vw, 14px); letter-spacing:.34em; text-transform:uppercase; color:var(--accent); }
+  #titlecard .tc-name { font-family:var(--display); font-stretch:125%; font-weight:800; font-size:clamp(30px, 6.4vw, 74px); line-height:.95;
+    text-transform:uppercase; color:var(--ink); text-shadow:0 4px 30px rgba(0,0,0,.65); }
+  #titlecard.show .tc-name { animation:tcIn 1.9s ease-out both; }
+  @keyframes tcIn { from { letter-spacing:.24em; opacity:0; } 25% { opacity:1; } to { letter-spacing:0; } }
+  #fpsbox { position:fixed; left:10px; top:148px; z-index:50; display:none; pointer-events:none; padding:3px 6px; font:11px var(--mono); color:#fff; background:rgba(0,0,0,.6); }
+
