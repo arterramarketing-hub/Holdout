@@ -16,6 +16,10 @@ const CFG = {
   mineCount: 8, mineDmg: 2, mineR: 55,
   headshotMul: 2,         // damage multiplier for a round that goes through the head column
   headshotChance: 0.35,   // ...and happened to be at head height (the sim has no elevation, so it is rolled)
+  frags: 2,               // grenades each life; a care package tops them up
+  fragSpeed: 600, fragLoft: 0.21, fragFuse: 2.2,   // thrown at 15 m/s, 12° above the crosshair, bursting 2.2 s after it leaves the hand
+  fragR: 200, fragDmg: 6, fragSelf: 0.5,           // 5 m blast, 6 at the centre falling to nothing at the edge; half of that to you, never to your squad
+  sprintMul: 1.45, sprintOut: 0.18,                // sprint speed, and the moment it takes to get the gun up after one
 };
 const TAU = Math.PI * 2;
 

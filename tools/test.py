@@ -57,6 +57,9 @@ def build_page():
     suites = sorted(glob.glob(arg('--suites', os.path.join(TESTS, 'suites', '*.test.js'))))
     after = ['harness.js', 'helpers.js'] + [os.path.relpath(s, TESTS) for s in suites]
     tail = ''.join(f'<script src="{s}"></script>\n' for s in after)
+    base_path = os.path.join(TESTS, 'baseline.json')
+    if os.path.exists(base_path):
+        tail = f'<script>window.HT_BASELINE = {open(base_path).read()};</script>\n' + tail
     page = html[:game] + '<script src="pre.js"></script>\n' + html[game:end + len('</script>')] + '\n' + tail + html[end + len('</script>'):]
     open(os.path.join(TESTS, 'run.html'), 'w', encoding='utf-8').write(page)
     return len(suites)

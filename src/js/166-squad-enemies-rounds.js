@@ -74,8 +74,9 @@ function updateSoldiers(dt) {
     const w = WEAPONS[s.weapon];
     const wrange = (s.pistol ? SIDEARM.range : w.range) * vis;
     const isCtl = s.slot === state.controlled && state.mode === 'play';
+    if (isCtl) updateSprint(s, dt); else s.sprinting = false;
     const spd = (isCtl ? CFG.playerSpeed : CFG.aiSpeed) * (w.moveMul || 1) * (s.horse ? CFG.horseSpeedMul : 1)
-      * (s.reloadT > 0 ? 0.85 : 1) * (isCtl && aim.ads ? 0.7 : 1);
+      * (s.reloadT > 0 ? 0.85 : 1) * (isCtl && aim.ads ? 0.7 : 1) * (s.sprinting ? CFG.sprintMul : 1);
     const x0 = s.x, y0 = s.y;
     if (isCtl) heroControl(s, spd, dt);
     else squadAI(s, spd, dt, lead, front, wrange);
@@ -95,7 +96,7 @@ function updateSoldiers(dt) {
       aimAssist(s, dt);
       s.aim = aim.yaw - Math.PI / 2;
       s.quietT = aim.fire ? 0 : (s.quietT || 0) + dt;
-      if (aim.fire && s.fireCd <= 0 && s.reloadT <= 0) {
+      if (aim.fire && s.fireCd <= 0 && s.reloadT <= 0 && !s.sprinting && s.sprintOutT <= 0 && s.throwT <= 0.35) {
         if (s.pistol || s.mag > 0) {
           s.fireCd = s.pistol ? SIDEARM.cd : w.cd;
           fire(s, null, true, s.aim);
@@ -128,10 +129,19 @@ function updateSoldiers(dt) {
       if (d2 < 900 && d2 > 0.01) { const d = Math.sqrt(d2), push = (30 - d) / 2 / d; a.x -= dx * push; a.y -= dy * push; b.x += dx * push; b.y += dy * push; }
     }
 }
-function enemyFire(e, t, spread) {
-  const a = Math.atan2(t.y - e.y, t.x - e.x) + rand(-1, 1) * spread;
-  bullets.push({ x: e.x + Math.cos(a) * 16, y: e.y + Math.sin(a) * 16,
-    vx: Math.cos(a) * 1500, vy: Math.sin(a) * 1500, life: (e.ranged || 400) * 1.5 / 1500, tracer: Math.random() < 0.5,
+function soldierTop(s) {   // px: the top of a soldier right now — an AI squadmate settled behind cover is crouched
+  const crouched = s.slot !== state.controlled && s.coverRef && (s.peekT || 0) <= 0 && !s.moving && (!s.path || !s.path.length);
+  return (s.horse ? 2.15 : crouched ? 1.1 : 1.8) * PX;
+}
+function enemyFire(e, t, spread) {   // a real line in 3D: from the shoulder to the chest, so cover stops what its height stops
+  if (t.sprinting) spread *= 1.4;   // a sprinting soldier is a harder shot
+  const dx = t.x - e.x, dy = t.y - e.y, d = Math.hypot(dx, dy) || 1;
+  const a = Math.atan2(dy, dx) + rand(-1, 1) * spread;
+  const mz = bodyTop(e) * 0.8, tz = soldierTop(t) * 0.62;
+  const el = Math.atan2(tz - mz, d) + rand(-1, 1) * spread * 0.5;
+  const sp = 1500, h = Math.cos(el);
+  bullets.push({ x: e.x + Math.cos(a) * 16, y: e.y + Math.sin(a) * 16, z: mz, ballistic: true,
+    vx: Math.cos(a) * h * sp, vy: Math.sin(a) * h * sp, vz: Math.sin(el) * sp, life: (e.ranged || 400) * 1.5 / 1500, tracer: Math.random() < 0.5,
     hostile: true, dmg: e.dmg, wkey: null, slot: null, hits: 0, maxHits: 1, aoe: 0, skip: coverNear(e, 34), srcType: e.type });
   sfxEnemyShot(e.x, e.y, e.type === 'gunner' ? 1.1 : 0.85);
   state.lastContact = { x: e.x, y: e.y };   // gunfire gives a position away
@@ -169,8 +179,8 @@ function bossLogic(e, t, dt, d, dx, dy) {
       e.radT = 5;
       for (let k = 0; k < 10; k++) {
         const a = k / 10 * TAU;
-        bullets.push({ x: e.x, y: e.y, vx: Math.cos(a) * 650, vy: Math.sin(a) * 650, life: 0.65, tracer: true,
-          hostile: true, dmg: 1, wkey: null, slot: null, hits: 0, maxHits: 1, aoe: 0 });
+        bullets.push({ x: e.x, y: e.y, z: 1.2 * PX, vz: 0, ballistic: true, vx: Math.cos(a) * 650, vy: Math.sin(a) * 650, life: 0.65, tracer: true,
+          hostile: true, dmg: 1, wkey: null, slot: null, hits: 0, maxHits: 1, aoe: 0, srcType: 'boss' });
       }
       sfxBossBurst(e.x, e.y);
     }
@@ -316,7 +326,8 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
         if (!b.whizzed && ctl && ctl.alive && dist2(b.x, b.y, ctl.x, ctl.y) < 70 * 70) { b.whizzed = true; sfxWhiz(b.x, b.y); }
         for (const s of soldiers) {
           if (!s.alive || dist2(b.x, b.y, s.x, s.y) >= (s.r + 5) * (s.r + 5)) continue;
-          let dmg = inCover(s) ? b.dmg * 0.5 : b.dmg;
+          if (b.ballistic && b.z > soldierTop(s)) continue;   // over their head
+          let dmg = b.ballistic ? b.dmg : inCover(s) ? b.dmg * 0.5 : b.dmg;   // a 3D round has already met the cover as geometry
           if (s.slot !== state.controlled) dmg *= 0.7;   // AI squadmates can't dodge — soften ranged fire on them
           s.lastHit = { x: b.vx, y: b.vy }; s.lastSrc = b.srcType;
           damageSoldier(s, dmg);
@@ -395,6 +406,7 @@ function battleUpdate(dt) {
     updateEnemies(wdt);
     updateBullets(wdt);
     updateShells(wdt);
+    updateGrenades(wdt);
     updateFires(wdt);
     updateMines();
     updatePickups(wdt);

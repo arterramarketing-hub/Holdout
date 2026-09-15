@@ -51,6 +51,7 @@ $('toteam').onclick = () => showScreen('team');
 $('deploybtn').onclick = deploySelected;
 $('backmap').onclick = () => showScreen('map');
 $('ammo').addEventListener('pointerdown', e => { e.preventDefault(); heroReload(); });
+$('nadebtn').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); throwGrenade(soldiers[state.controlled]); });
 bindHoldButton('firebtn', () => { aim.fire = true; }, () => { aim.fire = false; });
 (function leftTrigger(id) {   // the left-thumb trigger only fires; looking stays with the right thumb
   const b = $(id); if (!b) return;

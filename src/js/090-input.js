@@ -11,6 +11,7 @@ window.addEventListener('keydown', e => {
   }
   if (screen === 'battle') {
     if (e.code === 'KeyR') heroReload();
+    if (e.code === 'KeyG') throwGrenade(soldiers[state.controlled]);
     if (e.code === 'KeyO') showSettings();
     if (e.code === 'KeyV') { meta.opts.fpv = !meta.opts.fpv; applyOpts(); saveMeta(); }
     if (e.code === 'Digit1') useSupport('napalm');

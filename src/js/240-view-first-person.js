@@ -278,18 +278,20 @@ function drawViewmodel(s, wdt, set) {
   if (FPV.px != null && wdt > 0) { FPV.vx = (s.x - FPV.px) * XS / wdt; FPV.vz = (s.y - FPV.py) * XS / wdt; }
   FPV.px = s.x; FPV.py = s.y;
   const moveW = clamp(moved / Math.max(wdt, 1e-4) / 220, 0, 1);
-  FPV.bobP += wdt * 9 * (0.2 + moveW);
+  FPV.bobP += wdt * 9 * (0.2 + moveW) * (1 + 0.4 * (FPV.sprintK || 0));
+  FPV.throwT = Math.max(0, (FPV.throwT || 0) - wdt);
+  const thr = FPV.throwT > 0 ? Math.sin(Math.PI * (1 - FPV.throwT / 0.45)) : 0, spk = FPV.sprintK || 0;   // the gun dips out of the way for a throw; sprinting, it swings low and across
   FPV.sway = approach(FPV.sway, clamp(-aim.lookDx * 2.2, -0.05, 0.05), 9, wdt);
   const A = FPV.adsK, rel = 1 - A, ads = adsInfo(key, s), muz = GUN_MUZ[key] || GUN_MUZ.ar;
   const wall = clearRun(s.x, s.y, s.x + Math.sin(aim.yaw) * 60, s.y - Math.cos(aim.yaw) * 60, 4) ? 0 : 1;   // muzzle against a wall: bring it in
   const H = VM_HOLD[key] || VM_HOLD.ar, sp = splitMag(gunParts(key, s));
   const rl = s.reloadT > 0 && s.reloadDur > 0 ? clamp(1 - s.reloadT / s.reloadDur, 0, 1) : -1;
   const R = rl >= 0 ? vmReload(key, rl, sp, H.sup) : null;
-  const ox = (0.13 + Math.sin(FPV.bobP) * 0.012 * moveW + FPV.sway) * rel + (R ? R.gx : 0);
+  const ox = (0.13 + Math.sin(FPV.bobP) * 0.012 * moveW + FPV.sway) * rel + (R ? R.gx : 0) - 0.05 * spk + 0.04 * thr;
   // at full ADS the gun sits so its sight line (rear aperture / eyepiece at ads.y, ads.z) is dead on the camera axis, ads.relief in front of the eye
-  const oy = lerp(-0.15, -ads.y * VM_S, A) + Math.abs(Math.cos(FPV.bobP)) * 0.01 * moveW * rel - FPV.kick * 0.028 - wall * 0.05 * rel + (R ? R.gy : 0);
+  const oy = lerp(-0.15, -ads.y * VM_S, A) + Math.abs(Math.cos(FPV.bobP)) * 0.01 * moveW * rel - FPV.kick * 0.028 - wall * 0.05 * rel + (R ? R.gy : 0) - 0.07 * spk - 0.22 * thr;
   const oz = lerp(-0.52, -(ads.relief + ads.z * VM_S), A) + FPV.kick * 0.05 * rel + wall * 0.16 * rel + (R ? R.gz : 0);
-  TMP.e.set(FPV.kick * 0.14 + 0.05 * rel + (R ? R.rx : 0), (0.1 + FPV.sway * 2) * rel + (R ? R.ry : 0), 0.06 * rel + (R ? R.rz : 0), 'YXZ');
+  TMP.e.set(FPV.kick * 0.14 + 0.05 * rel + (R ? R.rx : 0) - 0.3 * spk - 0.7 * thr, (0.1 + FPV.sway * 2) * rel + (R ? R.ry : 0) + 0.6 * spk, 0.06 * rel + (R ? R.rz : 0) + 0.3 * spk - 0.25 * thr, 'YXZ');
   TMP.q.setFromEuler(TMP.e);
   TMP.m2.compose(TMP.v.set(ox, oy, oz), TMP.q, TMP.s.set(VM_S, VM_S, VM_S));
   TMP.m.multiplyMatrices(cam3.matrixWorld, TMP.m2);

@@ -48,6 +48,8 @@ function updateBattleHud() {
     am.classList.toggle('low', !c.pistol && c.mag <= magCap(c) * 0.25);
     am.classList.toggle('reloading', c.reloadT > 0);
     $('reloadbtn').classList.toggle('warn', !c.pistol && c.mag <= magCap(c) * 0.25);
+    const fr = c.frags || 0;
+    if (fr !== OV.frags) { OV.frags = fr; $('nadecnt').textContent = fr; $('amfragn').textContent = fr; $('nadebtn').classList.toggle('empty', !fr); $('amfrag').classList.toggle('empty', !fr); }
     if (c.reloadT > 0) $('ambar').firstChild.style.width = (1 - c.reloadT / c.reloadDur) * 100 + '%';
     const f = c.alive ? clamp(1 - c.hp / c.maxHp, 0, 1) : 1;
     OV.hurt = Math.max(f, (OV.hurt || 0) - 0.05);          // a hit flashes harder, then falls back to how hurt you are
@@ -65,7 +67,7 @@ function updateBattleHud() {
   } else bb.style.display = 'none';
 }
 // ---------- minimap, kill feed, damage direction, settings ----------
-const ENEMY_LABEL = { grunt: 'RIFLEMAN', runner: 'RUNNER', brute: 'BREACHER', gunner: 'GUNNER', spotter: 'SPOTTER', rider: 'RAIDER', boss: 'WARLORD' };
+const ENEMY_LABEL = { grunt: 'RIFLEMAN', runner: 'RUNNER', brute: 'BREACHER', gunner: 'GUNNER', spotter: 'SPOTTER', rider: 'RAIDER', boss: 'WARLORD', frag: 'OWN FRAG', blast: 'BLAST' };
 const labelOf = type => ENEMY_LABEL[type] || 'ENEMY';
 function feedPush(who, whom, bad, head) {
   FEED.push({ who, whom, bad, head, t: performance.now() });

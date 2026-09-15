@@ -16,7 +16,7 @@ suite('baseline', t => {
   t.test('damage per minute: standing in the open, behind a car, behind sandbags', () => {
     const out = {};
     for (const c of ['open', 'car', 'sandbags']) {
-      const runs = [1, 2, 3].map(n => standoff(c, n));
+      const runs = Array.from({ length: 12 }, (_, i) => standoff(c, i + 1));   // 12 seeds: 3 swung the average by 20%
       out[c] = +(runs.reduce((a, b) => a + b, 0) / runs.length).toFixed(2);
     }
     HT.baseline.dpm = out;

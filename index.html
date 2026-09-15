@@ -406,6 +406,17 @@
   #ambar { grid-column:1 / -1; grid-row:3; height:3px; margin-top:7px; background:rgba(255,255,255,.08); display:none; }
   #ammo.reloading #ambar { display:block; }
   #ambar i { display:block; height:100%; width:0%; background:var(--accent); }
+  #amfrag { grid-column:1 / -1; grid-row:4; justify-self:end; display:flex; align-items:center; gap:5px; margin-top:6px;
+    font-family:var(--mono); font-weight:800; font-size:12px; color:var(--label); font-variant-numeric:tabular-nums; }
+  #amfrag svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:1.4; }
+  #amfrag.empty { opacity:.4; }
+  body.touch #amfrag { display:none; }   /* the grenade button carries the count on a phone */
+  /* a live frag near you: a red grenade on a ring around the crosshair, pointing at it */
+  #nadewarn { position:fixed; left:0; top:0; width:44px; height:44px; margin:-22px 0 0 -22px; z-index:9; display:none; pointer-events:none;
+    filter:drop-shadow(0 0 4px rgba(0,0,0,.85)); }
+  #nadewarn svg { width:100%; height:100%; fill:rgba(255,77,61,.22); stroke:var(--foe); stroke-width:1.6; }
+  #nadewarn .nw-arrow { position:absolute; left:16px; top:-10px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent;
+    border-bottom:9px solid var(--foe); transform-origin:6px 32px; }
   /* killstreaks: three slots, orange when earned */
   #supports { right:182px; bottom:14px; display:flex; gap:6px; pointer-events:auto; }
   .supbtn { display:flex; flex-direction:column; justify-content:space-between; gap:9px; width:120px; padding:8px 10px 9px; text-align:left;
@@ -490,6 +501,9 @@
   #joy { position:fixed; width:124px; height:124px; margin:-62px 0 0 -62px; z-index:9; display:none; pointer-events:none; border-radius:50%;
     border:1.5px solid rgba(255,255,255,.38); background:rgba(8,12,20,.18); }
   #joyknob { position:absolute; left:41px; top:41px; width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,.6); }
+  #joy.sprint { border-color:var(--accent); }   /* pushed to the rim: sprinting, a chevron above the stick */
+  #joy.sprint::before { content:''; position:absolute; left:50%; top:-22px; width:12px; height:12px; margin-left:-7px;
+    border-left:3px solid var(--accent); border-top:3px solid var(--accent); transform:rotate(45deg); }
   #titlecard { position:fixed; left:0; right:0; bottom:15vh; z-index:12; text-align:center; pointer-events:none; opacity:0; transition:opacity .35s ease; }
   #titlecard.show { opacity:1; }
   #titlecard .tc-sub { margin-bottom:10px; font-family:var(--mono); font-weight:700; font-size:clamp(11px, 1.4vw, 14px); letter-spacing:.34em; text-transform:uppercase; color:var(--accent); }
@@ -501,9 +515,10 @@
 
   /* ---------- touch controls: Call of Duty Mobile's look and proportions ----------
      Flat translucent circles sized off the screen height (--fb, the fire button), so the set keeps the same
-     proportions on every phone: fire 1, lock .82, left trigger .8, ADS .68, reload .6. Placed the way CoD
+     proportions on every phone: fire 1, left trigger .8, ADS .68, grenade .62, reload .6. Placed the way CoD
      Mobile places them: the trigger up off the corner under the right thumb, sights above-right of it, reload
-     to its left, a second trigger above the left thumb, and the corner itself left clear for the ammo. */
+     up and to its left, the grenade low beside the trigger (a short slide of the thumb, clear of the killstreaks),
+     a second trigger above the left thumb, and the corner itself left clear for the ammo. */
   .tbtn { position:fixed; z-index:11; display:none; align-items:center; justify-content:center; padding:0; border-radius:50%;
     touch-action:none; line-height:1; font-family:var(--body); font-weight:600; color:rgba(255,255,255,.95);
     background:rgba(9,13,21,.34); border:2px solid rgba(255,255,255,.55); box-shadow:0 0 0 1px rgba(0,0,0,.28); }
@@ -515,10 +530,15 @@
   #reloadbtn { width:calc(var(--fb) * .6); height:calc(var(--fb) * .6); right:calc(var(--fb) * 2.02); bottom:calc(var(--fb) * 1.5); font-size:calc(var(--fb) * .28); }
   #reloadbtn.warn { border-color:var(--foe); color:#ffa596; }
   #firebtn2 { width:calc(var(--fb) * .8); height:calc(var(--fb) * .8); left:calc(var(--fb) * 1.3); bottom:calc(var(--fb) * 1.9); }
+  #nadebtn { width:calc(var(--fb) * .62); height:calc(var(--fb) * .62); right:calc(var(--fb) * 2.04); bottom:calc(var(--fb) * .62); }
+  #nadebtn svg { width:48%; height:48%; fill:rgba(255,255,255,.16); stroke:rgba(255,255,255,.95); stroke-width:1.7; pointer-events:none; }
+  #nadebtn .cnt { position:absolute; right:-3px; top:-3px; display:grid; place-items:center; min-width:18px; height:18px; padding:0 4px; box-sizing:border-box;
+    border-radius:9px; font-family:var(--mono); font-weight:800; font-size:11px; color:var(--accent-ink); background:var(--accent); pointer-events:none; }
+  #nadebtn.empty { opacity:.45; } #nadebtn.empty .cnt { color:var(--text); background:#3a4454; }
   /* both triggers carry a round, the way CoD Mobile marks its fire buttons */
   .tbtn .bullet { width:24%; height:48%; fill:rgba(255,255,255,.95); filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55)); pointer-events:none; }
   .tbtn:active .bullet { fill:#fff; }
-  body.touch #firebtn, body.touch #firebtn2, body.touch #adsbtn, body.touch #reloadbtn { display:flex; }
+  body.touch #firebtn, body.touch #firebtn2, body.touch #adsbtn, body.touch #reloadbtn, body.touch #nadebtn { display:flex; }
   /* with touch buttons on screen the ammo takes the corner, the killstreaks stack under the menu buttons */
   body.touch #ammo { right:8px; bottom:8px; }
   body.touch #supports { top:54px; right:10px; bottom:auto; flex-direction:column; }
@@ -873,7 +893,8 @@
   <canvas class="hud" id="minimap" width="150" height="120"></canvas>
   <div class="hud" id="feed"></div>
   <div class="hud" id="dmgdir"><i></i><i></i><i></i></div>
-  <div class="hud" id="ammo"><div id="ammag">30</div><div id="amres">/ 150</div><div id="amname">AR</div><div id="ambar"><i></i></div></div>
+  <div class="hud" id="ammo"><div id="ammag">30</div><div id="amres">/ 150</div><div id="amname">AR</div><div id="ambar"><i></i></div><div id="amfrag"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 5.2a4.4 4.6 0 1 0 .01 0Z M6.6 3.2h2.8v2H6.6z M9.4 3.9l2.6-1.4"/></svg><b id="amfragn">2</b></div></div>
+  <div class="hud" id="nadewarn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6a5.4 5.6 0 1 0 .01 0Z M10.3 6.2h3.4v2.4h-3.4z M13.7 7l3.2-1.8"/></svg><i class="nw-arrow"></i></div>
   <div class="hud" id="banner"></div>
   <div class="hud" id="hint"></div>
   <div class="hud" id="topbar"><button id="tomap">◂ MAP</button><button id="tocfg" title="Settings">⚙</button></div>
@@ -882,6 +903,7 @@
   <button class="tbtn" id="firebtn" aria-label="Fire"><svg class="bullet" viewBox="0 0 24 48" aria-hidden="true"><path d="M12 1.5C15.7 5.2 17 10.6 17 16.4V18H7v-1.6C7 10.6 8.3 5.2 12 1.5Z"/><path d="M6.6 19.6h10.8v20.9H6.6z"/><path d="M5.2 41.8h13.6v4.7H5.2z"/></svg></button>
   <button class="tbtn" id="adsbtn" aria-label="Aim down sights">ADS</button>
   <button class="tbtn" id="reloadbtn">⟳</button>
+  <button class="tbtn" id="nadebtn" aria-label="Throw grenade"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.4a5.6 5.8 0 1 0 .01 0Z M10.2 5.8h3.6v2.6h-3.6z M13.8 6.6l3.4-1.9"/></svg><b class="cnt" id="nadecnt">2</b></button>
 </div>
 
 <!-- ============ START MENU: the theater map beside the briefing ============ -->
@@ -956,6 +978,10 @@ const CFG = {
   mineCount: 8, mineDmg: 2, mineR: 55,
   headshotMul: 2,         // damage multiplier for a round that goes through the head column
   headshotChance: 0.35,   // ...and happened to be at head height (the sim has no elevation, so it is rolled)
+  frags: 2,               // grenades each life; a care package tops them up
+  fragSpeed: 600, fragLoft: 0.21, fragFuse: 2.2,   // thrown at 15 m/s, 12° above the crosshair, bursting 2.2 s after it leaves the hand
+  fragR: 200, fragDmg: 6, fragSelf: 0.5,           // 5 m blast, 6 at the centre falling to nothing at the edge; half of that to you, never to your squad
+  sprintMul: 1.45, sprintOut: 0.18,                // sprint speed, and the moment it takes to get the gun up after one
 };
 const TAU = Math.PI * 2;
 
@@ -1104,6 +1130,7 @@ function respawnSoldier(s) {   // a fresh body off the reinforcement line: same 
   const p = pickSpawn('p'); s.x = p.x; s.y = p.y;
   s.aim = -Math.PI / 2; s.invuln = CFG.spawnInvuln; s.respawnT = 0;
   s.coverRef = null; s.path = null; s.tgt = null; s.supp = 0; s.recoil = 0;
+  s.frags = CFG.frags; s.throwT = 0; s.sprinting = false; s.sprintOutT = 0;
 }
 
 // ============================================================ BATTLE STATE
@@ -1122,7 +1149,7 @@ const state = {   // per-battle / session
 };
 let screen = 'map'; // map | team | battle
 let soldiers = [], enemies = [], bullets = [], particles = [], floaters = [], markers = [], bodies = [];
-let mines = [], shells = [], fires = [], craters = [], obstacles = [], corpses = [], pickups = [];
+let mines = [], shells = [], fires = [], craters = [], obstacles = [], corpses = [], pickups = [], grenades = [];
 const CORPSE_CAP = 120; // enemy corpses beyond this fade oldest-first; squad corpses never removed
 const AI_SLOTS = [0, -140, 140, 280];   // where each of the four starts inside the FOB, just south of its gate
 
@@ -1141,10 +1168,11 @@ function buildSoldier(i) {
     fireCd: rand(0, 0.4), regenCd: 0, invuln: 0, aim: -Math.PI / 2, r: 13,
     walk: rand(0, TAU), moving: false, recoil: 0,
     mag: cap, reserve: cap * WEAPONS[weapon].spare, reloadT: 0, reloadDur: 1, pistol: false,
+    frags: CFG.frags, throwT: 0, sprinting: false, sprintOutT: 0,
   };
 }
 function genTerrain() {   // the same town every front; its movable cover is rolled fresh each battle
-  obstacles = []; craters = []; mines = []; fires = []; shells = []; corpses = []; rubble = [];
+  obstacles = []; craters = []; mines = []; fires = []; shells = []; corpses = []; rubble = []; grenades = [];
   const k = PX, W = TOWN.w * k, H = TOWN.h * k, T = 24;
   buildings = TOWN.buildings.map(([x0, y0, x1, y1, h, style]) =>
     ({ shape: 'r', x: (x0 + x1) / 2 * k, y: (y0 + y1) / 2 * k, hw: (x1 - x0) / 2 * k, hd: (y1 - y0) / 2 * k, top: h * k, style, building: true, claims: 0 }));
@@ -2163,6 +2191,7 @@ window.addEventListener('keydown', e => {
   }
   if (screen === 'battle') {
     if (e.code === 'KeyR') heroReload();
+    if (e.code === 'KeyG') throwGrenade(soldiers[state.controlled]);
     if (e.code === 'KeyO') showSettings();
     if (e.code === 'KeyV') { meta.opts.fpv = !meta.opts.fpv; applyOpts(); saveMeta(); }
     if (e.code === 'Digit1') useSupport('napalm');
@@ -2583,7 +2612,7 @@ function killEnemy(idx, credit) {
   const hd = e.lastHit, ga = (e.aim || 0) + rand(0.6, 1.5) * (Math.random() < 0.5 ? 1 : -1);
   addCorpse({ kind: 'enemy', x: e.x + rand(-4, 4), y: e.y + rand(-3, 3), col: e.col,
     face: e.face, sc: e.r / 14, horse: e.horse, type: e.type, aim: e.aim, src: e,
-    style: !credit.wkey || credit.wkey === 'rocket' ? 2 : hd && e.aim != null && Math.cos(e.aim) * hd.x + Math.sin(e.aim) * hd.y > 0 ? 1 : 0,
+    style: !credit.wkey || credit.wkey === 'rocket' || credit.wkey === 'frag' ? 2 : hd && e.aim != null && Math.cos(e.aim) * hd.x + Math.sin(e.aim) * hd.y > 0 ? 1 : 0,
     gunX: e.x + Math.cos(ga) * rand(14, 28), gunY: e.y + Math.sin(ga) * rand(14, 28), gunYaw: rand(0, TAU) });
   sfxKill(e.x, e.y);
   if (!e.boss && Math.random() < 0.35) pickups.push({ x: e.x + rand(-10, 10), y: e.y + rand(-10, 10), t: 30 });
@@ -2752,7 +2781,7 @@ function updateShells(dt) {
     else if (sh.kind === 'fire') { fires.push({ x: sh.x, y: sh.y, r: 30, t: 8 }); burst(sh.x, sh.y, '#e8843a', 8, 6); }
     else if (sh.kind === 'crate') {
       burst(sh.x, sh.y, '#b7d34a', 14, 10); sfxBuy();
-      for (const s of soldiers) if (s.alive) { const w = WEAPONS[s.weapon]; s.hp = s.maxHp; s.mag = magCap(s); s.reserve = magCap(s) * w.spare; s.pistol = false; s.reloadT = 0; }
+      for (const s of soldiers) if (s.alive) { const w = WEAPONS[s.weapon]; s.hp = s.maxHp; s.mag = magCap(s); s.reserve = magCap(s) * w.spare; s.pistol = false; s.reloadT = 0; s.frags = Math.max(s.frags || 0, CFG.frags); }
       floaters.push({ x: sh.x, y: sh.y, z: 34, txt: 'HEALED & RESUPPLIED', life: 1.4 });
     }
     shells.splice(i, 1);
@@ -2783,6 +2812,102 @@ function updateMines() {
   }
 }
 
+// ---------- frag grenades: thrown along the crosshair, bouncing through the town, bursting on a fuse ----------
+// Sim px, z up, like rounds. A frag is thrown from the eyes (first person) or the shoulder (third person) along your aim
+// with a little loft, falls under gravity, skips off the ground, walls and the tops of cover, and bursts CFG.fragFuse
+// seconds after it leaves the hand. The blast falls off to nothing at CFG.fragR, walls of buildings shield it, it
+// hurts every enemy it reaches (a breacher's shield does not help), chews cover, never touches your squad, and hurts
+// you at CFG.fragSelf strength — never enough to kill you from full health.
+const FRAG_G = 9.8 * PX;   // gravity, px/s²
+function throwGrenade(s) {
+  if (!s || !s.alive || screen !== 'battle' || state.mode !== 'play' || s.slot !== state.controlled) return false;
+  if ((s.frags || 0) <= 0 || s.throwT > 0) return false;
+  s.frags--; s.throwT = 0.7; s.sprinting = false; s.sprintOutT = CFG.sprintOut;
+  let ox = s.x, oy = s.y, oz = 1.5 * PX, yaw = aim.yaw, el = Math.atan(aim.pitch);
+  if (fpvActive() || !VIEW.ready || !VIEW.camera) { const R = crosshairRay(s); ox = R.ox + R.dx * 20; oy = R.oy + R.dy * 20; oz = R.oz - 0.12 * PX; }
+  else { const R = crosshairRay(s); yaw = Math.atan2(R.dx, -R.dy); el = Math.asin(clamp(R.dz, -1, 1)); }
+  el += CFG.fragLoft;
+  const h = Math.cos(el) * CFG.fragSpeed;
+  const g = { x: ox, y: oy, z: oz, vx: Math.sin(yaw) * h, vy: -Math.cos(yaw) * h, vz: Math.sin(el) * CFG.fragSpeed,
+    fuse: CFG.fragFuse, spin: rand(0, TAU), owner: s.slot, rest: false, tinkT: 0 };
+  grenades.push(g);
+  FPV.throwT = 0.45;
+  noise({ freq: 900, type: 'bandpass', q: 0.8, dur: 0.22, gain: 0.08, slide: -500 });   // the arm going over
+  beep(2600, 0.04, 'square', 0.02, -900, 0.05);                                        // the spoon flying off
+  supportsDirty = true;
+  return true;
+}
+function bounceOff(g, ob, px, py, top, damp) {   // came in from (px, py): land on the top, or glance off the side
+  if (top != null && g.pz >= top - 2) { g.z = top; if (g.vz < 0) g.vz = -g.vz * 0.3; g.vx *= 0.7; g.vy *= 0.7; return; }
+  coverPoint(ob, px, py, CP);
+  const vn = g.vx * CP.nx + g.vy * CP.ny;
+  if (vn < 0) { g.vx -= (1 + damp) * vn * CP.nx; g.vy -= (1 + damp) * vn * CP.ny; g.vx *= 0.75; g.vy *= 0.75; }
+  g.x = px; g.y = py;
+}
+function updateGrenades(dt) {
+  for (let i = grenades.length - 1; i >= 0; i--) {
+    const g = grenades[i];
+    g.fuse -= dt; g.tinkT -= dt;
+    if (!g.rest) {
+      const steps = Math.max(1, Math.ceil(Math.hypot(g.vx, g.vy, g.vz) * dt / 8)), sdt = dt / steps;
+      for (let k = 0; k < steps; k++) {
+        const px = g.x, py = g.y;
+        g.pz = g.z;
+        g.vz -= FRAG_G * sdt;
+        g.x += g.vx * sdt; g.y += g.vy * sdt; g.z += g.vz * sdt;
+        g.spin += sdt * Math.hypot(g.vx, g.vy) * 0.05;
+        let hit = false;
+        for (const b of buildings) if (insideShape(b, g.x, g.y) && g.z < b.top) { bounceOff(g, b, px, py, null, 0.45); hit = true; break; }
+        if (!hit) for (const ob of obstacles) {
+          if (!insideShape(ob, g.x, g.y)) continue;
+          const top = coverTop(ob);
+          if (g.z < top) { bounceOff(g, ob, px, py, top, 0.4); hit = true; break; }
+        }
+        if (g.z <= 0) {
+          g.z = 0;
+          if (g.vz < -40) { g.vz = -g.vz * 0.32; g.vx *= 0.62; g.vy *= 0.62; hit = true; }
+          else { g.vz = 0; g.vx *= Math.exp(-6 * sdt); g.vy *= Math.exp(-6 * sdt); }
+        }
+        if (g.x < 12 || g.x > CFG.arenaW - 12) { g.vx = -g.vx * 0.4; g.x = clamp(g.x, 12, CFG.arenaW - 12); }
+        if (g.y < 12 || g.y > CFG.arenaH - 12) { g.vy = -g.vy * 0.4; g.y = clamp(g.y, 12, CFG.arenaH - 12); }
+        if (hit && g.tinkT <= 0 && Math.hypot(g.vx, g.vy, g.vz) > 60) { g.tinkT = 0.12; playBuf('tink:' + randi(0, 2), { gain: 0.35, rate: 0.55, x: g.x, y: g.y, lp: 3000 }); }
+      }
+      if (g.z <= 0.5 && Math.hypot(g.vx, g.vy) < 6 && Math.abs(g.vz) < 1) g.rest = true;
+    }
+    if (g.fuse <= 0) { grenades.splice(i, 1); fragBlast(g); }
+  }
+}
+function fragBlast(g) {
+  const R = CFG.fragR, x = g.x, y = g.y;
+  sfxExplosion(x, y, true);
+  burst(x, y, '#e8a75a', 26, 8);
+  particles.push({ x, y, z: 6, vx: 0, vy: 0, vz: 0, life: 0.24, max: 0.24, col: 'rgba(255,220,140,0.9)', r: R * 0.55 });
+  for (let k = 0; k < 10; k++) { const a = rand(0, TAU), v = rand(120, 260); particles.push({ x, y, z: 8, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vz: rand(60, 160), life: rand(0.4, 0.8), max: 0.8, col: '#3a3a34', r: rand(1.5, 2.6) }); }
+  craters.push({ x, y, r: R * 0.22 }); if (craters.length > 44) craters.shift();
+  for (const ob of obstacles.slice()) {
+    if (!ob.hp) continue;
+    const d = coverPoint(ob, x, y, CP).d;
+    if (d < R) damageCover(ob, 26 * (1 - Math.max(0, d) / R) + 6);
+  }
+  const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 700 * 700) cam.shake = Math.max(cam.shake, 8);
+  const reach = (tx, ty, tr) => { const d = Math.max(0, Math.hypot(tx - x, ty - y) - tr * 0.5); return d < R && losClear(x, y, tx, ty) ? 1 - d / R : 0; };
+  const credit = { player: true, wkey: 'frag', slot: g.owner };
+  for (let j = enemies.length - 1; j >= 0; j--) {
+    const e = enemies[j], k = reach(e.x, e.y, e.r);
+    if (k > 0) { e.lastHit = { x: e.x - x, y: e.y - y }; hurtEnemy(j, CFG.fragDmg * k, credit, null); }
+  }
+  const me = soldiers[state.controlled];
+  if (me && me.alive) {
+    const k = reach(me.x, me.y, me.r);
+    if (k > 0) {
+      const full = me.hp >= me.maxHp - 1e-6;
+      let dmg = CFG.fragDmg * CFG.fragSelf * k;
+      if (full) dmg = Math.min(dmg, me.maxHp - 0.5);   // your own frag never kills you from full health
+      me.lastHit = { x: me.x - x, y: me.y - y }; me.lastSrc = 'frag';
+      damageSoldier(me, dmg);
+    }
+  }
+}
 // ============================================================ TIME OF DAY & WEATHER
 // Each battle rolls a time of day and weather. Night, fog and rain shorten sight lines,
 // which caps squad weapon range, lock-on range and enemy gunner range alike.
@@ -3077,6 +3202,25 @@ function nearestVisibleEnemy(x, y, maxD) {
 }
 
 // ---------- the hero ----------
+function sprintWanted(s, dt) {   // Shift on a keyboard; on a phone, the stick pushed out to its rim and forward for a beat
+  let want = !!(keys.ShiftLeft || keys.ShiftRight || aim.sprintPad);
+  if (joy.active) {
+    const m = Math.hypot(joy.dx, joy.dy), ang = Math.abs(Math.atan2(joy.dx, -joy.dy));
+    const onRim = joy.dy < 0 && m >= (s.sprinting ? 0.8 : 0.95) && ang < (s.sprinting ? 0.87 : 0.61);   // ±35° to start, ±50° to keep going
+    joy.rimT = onRim ? (joy.rimT || 0) + dt : 0;
+    if (joy.rimT >= 0.15) want = true;
+  } else joy.rimT = 0;
+  return want;
+}
+function updateSprint(s, dt) {   // forward only, never with the trigger or the sights; the gun takes a moment to come up after
+  s.throwT = Math.max(0, (s.throwT || 0) - dt);
+  s.sprintOutT = Math.max(0, (s.sprintOutT || 0) - dt);
+  const mv = moveVector(), ml = Math.hypot(mv.x, mv.y);
+  const forward = ml > 0.3 && (mv.x * Math.sin(aim.yaw) - mv.y * Math.cos(aim.yaw)) / ml >= Math.cos(50 * Math.PI / 180);
+  const want = sprintWanted(s, dt), blocked = aim.fire || aim.ads || s.throwT > 0.45 || s.horse;
+  if (s.sprinting && (blocked || !want || !forward)) { s.sprinting = false; s.sprintOutT = CFG.sprintOut; }
+  else if (!s.sprinting && want && forward && !blocked) s.sprinting = true;
+}
 function heroControl(s, spd, dt) {   // you move yourself: nothing latches, nothing crouches for you
   const mv = moveVector();
   s.coverRef = null;
@@ -3160,8 +3304,9 @@ function updateSoldiers(dt) {
     const w = WEAPONS[s.weapon];
     const wrange = (s.pistol ? SIDEARM.range : w.range) * vis;
     const isCtl = s.slot === state.controlled && state.mode === 'play';
+    if (isCtl) updateSprint(s, dt); else s.sprinting = false;
     const spd = (isCtl ? CFG.playerSpeed : CFG.aiSpeed) * (w.moveMul || 1) * (s.horse ? CFG.horseSpeedMul : 1)
-      * (s.reloadT > 0 ? 0.85 : 1) * (isCtl && aim.ads ? 0.7 : 1);
+      * (s.reloadT > 0 ? 0.85 : 1) * (isCtl && aim.ads ? 0.7 : 1) * (s.sprinting ? CFG.sprintMul : 1);
     const x0 = s.x, y0 = s.y;
     if (isCtl) heroControl(s, spd, dt);
     else squadAI(s, spd, dt, lead, front, wrange);
@@ -3181,7 +3326,7 @@ function updateSoldiers(dt) {
       aimAssist(s, dt);
       s.aim = aim.yaw - Math.PI / 2;
       s.quietT = aim.fire ? 0 : (s.quietT || 0) + dt;
-      if (aim.fire && s.fireCd <= 0 && s.reloadT <= 0) {
+      if (aim.fire && s.fireCd <= 0 && s.reloadT <= 0 && !s.sprinting && s.sprintOutT <= 0 && s.throwT <= 0.35) {
         if (s.pistol || s.mag > 0) {
           s.fireCd = s.pistol ? SIDEARM.cd : w.cd;
           fire(s, null, true, s.aim);
@@ -3214,10 +3359,19 @@ function updateSoldiers(dt) {
       if (d2 < 900 && d2 > 0.01) { const d = Math.sqrt(d2), push = (30 - d) / 2 / d; a.x -= dx * push; a.y -= dy * push; b.x += dx * push; b.y += dy * push; }
     }
 }
-function enemyFire(e, t, spread) {
-  const a = Math.atan2(t.y - e.y, t.x - e.x) + rand(-1, 1) * spread;
-  bullets.push({ x: e.x + Math.cos(a) * 16, y: e.y + Math.sin(a) * 16,
-    vx: Math.cos(a) * 1500, vy: Math.sin(a) * 1500, life: (e.ranged || 400) * 1.5 / 1500, tracer: Math.random() < 0.5,
+function soldierTop(s) {   // px: the top of a soldier right now — an AI squadmate settled behind cover is crouched
+  const crouched = s.slot !== state.controlled && s.coverRef && (s.peekT || 0) <= 0 && !s.moving && (!s.path || !s.path.length);
+  return (s.horse ? 2.15 : crouched ? 1.1 : 1.8) * PX;
+}
+function enemyFire(e, t, spread) {   // a real line in 3D: from the shoulder to the chest, so cover stops what its height stops
+  if (t.sprinting) spread *= 1.4;   // a sprinting soldier is a harder shot
+  const dx = t.x - e.x, dy = t.y - e.y, d = Math.hypot(dx, dy) || 1;
+  const a = Math.atan2(dy, dx) + rand(-1, 1) * spread;
+  const mz = bodyTop(e) * 0.8, tz = soldierTop(t) * 0.62;
+  const el = Math.atan2(tz - mz, d) + rand(-1, 1) * spread * 0.5;
+  const sp = 1500, h = Math.cos(el);
+  bullets.push({ x: e.x + Math.cos(a) * 16, y: e.y + Math.sin(a) * 16, z: mz, ballistic: true,
+    vx: Math.cos(a) * h * sp, vy: Math.sin(a) * h * sp, vz: Math.sin(el) * sp, life: (e.ranged || 400) * 1.5 / 1500, tracer: Math.random() < 0.5,
     hostile: true, dmg: e.dmg, wkey: null, slot: null, hits: 0, maxHits: 1, aoe: 0, skip: coverNear(e, 34), srcType: e.type });
   sfxEnemyShot(e.x, e.y, e.type === 'gunner' ? 1.1 : 0.85);
   state.lastContact = { x: e.x, y: e.y };   // gunfire gives a position away
@@ -3255,8 +3409,8 @@ function bossLogic(e, t, dt, d, dx, dy) {
       e.radT = 5;
       for (let k = 0; k < 10; k++) {
         const a = k / 10 * TAU;
-        bullets.push({ x: e.x, y: e.y, vx: Math.cos(a) * 650, vy: Math.sin(a) * 650, life: 0.65, tracer: true,
-          hostile: true, dmg: 1, wkey: null, slot: null, hits: 0, maxHits: 1, aoe: 0 });
+        bullets.push({ x: e.x, y: e.y, z: 1.2 * PX, vz: 0, ballistic: true, vx: Math.cos(a) * 650, vy: Math.sin(a) * 650, life: 0.65, tracer: true,
+          hostile: true, dmg: 1, wkey: null, slot: null, hits: 0, maxHits: 1, aoe: 0, srcType: 'boss' });
       }
       sfxBossBurst(e.x, e.y);
     }
@@ -3402,7 +3556,8 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
         if (!b.whizzed && ctl && ctl.alive && dist2(b.x, b.y, ctl.x, ctl.y) < 70 * 70) { b.whizzed = true; sfxWhiz(b.x, b.y); }
         for (const s of soldiers) {
           if (!s.alive || dist2(b.x, b.y, s.x, s.y) >= (s.r + 5) * (s.r + 5)) continue;
-          let dmg = inCover(s) ? b.dmg * 0.5 : b.dmg;
+          if (b.ballistic && b.z > soldierTop(s)) continue;   // over their head
+          let dmg = b.ballistic ? b.dmg : inCover(s) ? b.dmg * 0.5 : b.dmg;   // a 3D round has already met the cover as geometry
           if (s.slot !== state.controlled) dmg *= 0.7;   // AI squadmates can't dodge — soften ranged fire on them
           s.lastHit = { x: b.vx, y: b.vy }; s.lastSrc = b.srcType;
           damageSoldier(s, dmg);
@@ -3481,6 +3636,7 @@ function battleUpdate(dt) {
     updateEnemies(wdt);
     updateBullets(wdt);
     updateShells(wdt);
+    updateGrenades(wdt);
     updateFires(wdt);
     updateMines();
     updatePickups(wdt);
@@ -4754,18 +4910,20 @@ function drawViewmodel(s, wdt, set) {
   if (FPV.px != null && wdt > 0) { FPV.vx = (s.x - FPV.px) * XS / wdt; FPV.vz = (s.y - FPV.py) * XS / wdt; }
   FPV.px = s.x; FPV.py = s.y;
   const moveW = clamp(moved / Math.max(wdt, 1e-4) / 220, 0, 1);
-  FPV.bobP += wdt * 9 * (0.2 + moveW);
+  FPV.bobP += wdt * 9 * (0.2 + moveW) * (1 + 0.4 * (FPV.sprintK || 0));
+  FPV.throwT = Math.max(0, (FPV.throwT || 0) - wdt);
+  const thr = FPV.throwT > 0 ? Math.sin(Math.PI * (1 - FPV.throwT / 0.45)) : 0, spk = FPV.sprintK || 0;   // the gun dips out of the way for a throw; sprinting, it swings low and across
   FPV.sway = approach(FPV.sway, clamp(-aim.lookDx * 2.2, -0.05, 0.05), 9, wdt);
   const A = FPV.adsK, rel = 1 - A, ads = adsInfo(key, s), muz = GUN_MUZ[key] || GUN_MUZ.ar;
   const wall = clearRun(s.x, s.y, s.x + Math.sin(aim.yaw) * 60, s.y - Math.cos(aim.yaw) * 60, 4) ? 0 : 1;   // muzzle against a wall: bring it in
   const H = VM_HOLD[key] || VM_HOLD.ar, sp = splitMag(gunParts(key, s));
   const rl = s.reloadT > 0 && s.reloadDur > 0 ? clamp(1 - s.reloadT / s.reloadDur, 0, 1) : -1;
   const R = rl >= 0 ? vmReload(key, rl, sp, H.sup) : null;
-  const ox = (0.13 + Math.sin(FPV.bobP) * 0.012 * moveW + FPV.sway) * rel + (R ? R.gx : 0);
+  const ox = (0.13 + Math.sin(FPV.bobP) * 0.012 * moveW + FPV.sway) * rel + (R ? R.gx : 0) - 0.05 * spk + 0.04 * thr;
   // at full ADS the gun sits so its sight line (rear aperture / eyepiece at ads.y, ads.z) is dead on the camera axis, ads.relief in front of the eye
-  const oy = lerp(-0.15, -ads.y * VM_S, A) + Math.abs(Math.cos(FPV.bobP)) * 0.01 * moveW * rel - FPV.kick * 0.028 - wall * 0.05 * rel + (R ? R.gy : 0);
+  const oy = lerp(-0.15, -ads.y * VM_S, A) + Math.abs(Math.cos(FPV.bobP)) * 0.01 * moveW * rel - FPV.kick * 0.028 - wall * 0.05 * rel + (R ? R.gy : 0) - 0.07 * spk - 0.22 * thr;
   const oz = lerp(-0.52, -(ads.relief + ads.z * VM_S), A) + FPV.kick * 0.05 * rel + wall * 0.16 * rel + (R ? R.gz : 0);
-  TMP.e.set(FPV.kick * 0.14 + 0.05 * rel + (R ? R.rx : 0), (0.1 + FPV.sway * 2) * rel + (R ? R.ry : 0), 0.06 * rel + (R ? R.rz : 0), 'YXZ');
+  TMP.e.set(FPV.kick * 0.14 + 0.05 * rel + (R ? R.rx : 0) - 0.3 * spk - 0.7 * thr, (0.1 + FPV.sway * 2) * rel + (R ? R.ry : 0) + 0.6 * spk, 0.06 * rel + (R ? R.rz : 0) + 0.3 * spk - 0.25 * thr, 'YXZ');
   TMP.q.setFromEuler(TMP.e);
   TMP.m2.compose(TMP.v.set(ox, oy, oz), TMP.q, TMP.s.set(VM_S, VM_S, VM_S));
   TMP.m.multiplyMatrices(cam3.matrixWorld, TMP.m2);
@@ -5160,6 +5318,17 @@ function drawFx() {
       TMP.m.compose(TMP.v.set(X + Math.cos(a) * rr0, h * 0.5, Z + Math.sin(a) * rr0), TMP.q, TMP.s.set(0.45, h, 0.45));
       F.flame.push(TMP.m, colorOf(k === 1 ? '#ffd35a' : '#ff6a1e'));
     }
+  }
+  for (const g of grenades) {   // a frag in flight or rolling to a stop: olive body, steel spoon, its shadow on the ground
+    const X = g.x * XS, Y = g.z * XS, Z = g.y * XS;
+    TMP.q.setFromEuler(TMP.e.set(g.spin, g.spin * 0.6, 0.4));
+    TMP.m.compose(TMP.v.set(X, Y + 0.06, Z), TMP.q, TMP.s.set(0.1, 0.12, 0.1));
+    F.mine.push(TMP.m, colorOf('#4e5636'));
+    TMP.v2.set(0, 0.07, 0.035).applyQuaternion(TMP.q);
+    TMP.m.compose(TMP.v.set(X + TMP.v2.x, Y + 0.06 + TMP.v2.y, Z + TMP.v2.z), TMP.q, TMP.s.set(0.03, 0.05, 0.02));
+    F.mine.push(TMP.m, colorOf('#9a9c96'));
+    TMP.q.identity();
+    decal(F.shadow, X, Z, 0.24, 0, WHITE, 0.02);
   }
   for (const m of mines) {
     TMP.m.compose(TMP.v.set(m.x * XS, 0.04, m.y * XS), TMP.q, TMP.s.set(0.34, 0.08, 0.34));
@@ -6183,6 +6352,8 @@ function updateCamera3(dt) {
   cam.punch = Math.max(0, cam.punch - dt * 0.35);
   const reloading = soldiers[state.controlled] && soldiers[state.controlled].reloadT > 0;   // the sights come down while you reload, and back up after
   FPV.adsK = approach(FPV.adsK, aim.ads && !reloading ? 1 : 0, heroSight().rate, dt);   // sights come up at the optic's own pace, in both views
+  const hs = soldiers[state.controlled];
+  FPV.sprintK = approach(FPV.sprintK || 0, hs && hs.alive && hs.sprinting && state.mode === 'play' ? 1 : 0, 6, dt);   // sprinting: the view widens, the gun drops
   steerFromCursor(dt);
   aim.lookDx *= Math.exp(-dt * 8);   // the viewmodel's sway settles back to centre once you stop turning
   {   // recoil recovery: the muzzle drifts back to where you were pointing once you stop firing
@@ -6254,7 +6425,7 @@ function updateCamera3(dt) {
   if (cam.shake > 0) cam3.position.add(TMP.v.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).multiplyScalar(cam.shake * 0.012));
   cam3.lookAt(C.look);
   if (cam.shake > 0) cam3.rotateZ(rand(-1, 1) * cam.shake * 0.0025);
-  const base = (fpvActive() ? 68 : pr.fov) + (meta.opts.fovAdd || 0);
+  const base = (fpvActive() ? 68 : pr.fov) + (meta.opts.fovAdd || 0) + 8 * FPV.sprintK;
   const adsFov = 2 * Math.atan(Math.tan(base * Math.PI / 360) / heroZoom()) * 180 / Math.PI;   // a 4x shows a quarter of the view
   const fov = lerp(base, adsFov, FPV.adsK) * (1 - cam.punch * 1.5) * (state.mode === 'dying' ? 0.88 : 1);
   if (Math.abs(cam3.fov - fov) > 0.01) { cam3.fov = fov; cam3.updateProjectionMatrix(); }
@@ -6348,7 +6519,21 @@ function updateOverlays(dt) {
     jb.style.display = 'block';
     jb.style.left = joy.bx + 'px'; jb.style.top = joy.by + 'px';
     document.getElementById('joyknob').style.transform = `translate(${joy.dx * 32}px,${joy.dy * 32}px)`;
+    const sp = !!(soldiers[state.controlled] && soldiers[state.controlled].sprinting);
+    if (sp !== OV.joySprint) { OV.joySprint = sp; jb.classList.toggle('sprint', sp); }
   } else hideEl(jb);
+  {   // a live frag within 6 m: a red grenade on a ring around the crosshair, pointing at it
+    const me = soldiers[state.controlled], nw = OV.nade || (OV.nade = document.getElementById('nadewarn'));
+    let near = null, nd = 240 * 240;
+    if (me && me.alive && state.mode === 'play') for (const g of grenades) { const d = dist2(g.x, g.y, me.x, me.y); if (d < nd) { nd = d; near = g; } }
+    if (near) {
+      const a = Math.atan2(near.x - me.x, -(near.y - me.y)) - cam.yaw, rad = Math.min(innerWidth, innerHeight) * 0.2;
+      nw.style.display = 'block';
+      nw.style.transform = `translate3d(${(innerWidth / 2 + Math.sin(a) * rad).toFixed(1)}px,${(innerHeight / 2 - Math.cos(a) * rad).toFixed(1)}px,0)`;
+      nw.firstElementChild.nextElementSibling.style.transform = `rotate(${a.toFixed(3)}rad)`;
+      nw.style.opacity = (0.65 + 0.35 * Math.sin(performance.now() / 70)).toFixed(2);
+    } else if (nw.style.display !== 'none') nw.style.display = 'none';
+  }
   const s = soldiers[state.controlled], list = [];
   if (s && s.alive && state.mode === 'play') {   // close enemies beside or behind the camera
     const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
@@ -6589,6 +6774,8 @@ function updateBattleHud() {
     am.classList.toggle('low', !c.pistol && c.mag <= magCap(c) * 0.25);
     am.classList.toggle('reloading', c.reloadT > 0);
     $('reloadbtn').classList.toggle('warn', !c.pistol && c.mag <= magCap(c) * 0.25);
+    const fr = c.frags || 0;
+    if (fr !== OV.frags) { OV.frags = fr; $('nadecnt').textContent = fr; $('amfragn').textContent = fr; $('nadebtn').classList.toggle('empty', !fr); $('amfrag').classList.toggle('empty', !fr); }
     if (c.reloadT > 0) $('ambar').firstChild.style.width = (1 - c.reloadT / c.reloadDur) * 100 + '%';
     const f = c.alive ? clamp(1 - c.hp / c.maxHp, 0, 1) : 1;
     OV.hurt = Math.max(f, (OV.hurt || 0) - 0.05);          // a hit flashes harder, then falls back to how hurt you are
@@ -6606,7 +6793,7 @@ function updateBattleHud() {
   } else bb.style.display = 'none';
 }
 // ---------- minimap, kill feed, damage direction, settings ----------
-const ENEMY_LABEL = { grunt: 'RIFLEMAN', runner: 'RUNNER', brute: 'BREACHER', gunner: 'GUNNER', spotter: 'SPOTTER', rider: 'RAIDER', boss: 'WARLORD' };
+const ENEMY_LABEL = { grunt: 'RIFLEMAN', runner: 'RUNNER', brute: 'BREACHER', gunner: 'GUNNER', spotter: 'SPOTTER', rider: 'RAIDER', boss: 'WARLORD', frag: 'OWN FRAG', blast: 'BLAST' };
 const labelOf = type => ENEMY_LABEL[type] || 'ENEMY';
 function feedPush(who, whom, bad, head) {
   FEED.push({ who, whom, bad, head, t: performance.now() });
@@ -7165,6 +7352,7 @@ $('toteam').onclick = () => showScreen('team');
 $('deploybtn').onclick = deploySelected;
 $('backmap').onclick = () => showScreen('map');
 $('ammo').addEventListener('pointerdown', e => { e.preventDefault(); heroReload(); });
+$('nadebtn').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); throwGrenade(soldiers[state.controlled]); });
 bindHoldButton('firebtn', () => { aim.fire = true; }, () => { aim.fire = false; });
 (function leftTrigger(id) {   // the left-thumb trigger only fires; looking stays with the right thumb
   const b = $(id); if (!b) return;

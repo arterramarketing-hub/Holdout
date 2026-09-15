@@ -345,6 +345,17 @@ function drawFx() {
       F.flame.push(TMP.m, colorOf(k === 1 ? '#ffd35a' : '#ff6a1e'));
     }
   }
+  for (const g of grenades) {   // a frag in flight or rolling to a stop: olive body, steel spoon, its shadow on the ground
+    const X = g.x * XS, Y = g.z * XS, Z = g.y * XS;
+    TMP.q.setFromEuler(TMP.e.set(g.spin, g.spin * 0.6, 0.4));
+    TMP.m.compose(TMP.v.set(X, Y + 0.06, Z), TMP.q, TMP.s.set(0.1, 0.12, 0.1));
+    F.mine.push(TMP.m, colorOf('#4e5636'));
+    TMP.v2.set(0, 0.07, 0.035).applyQuaternion(TMP.q);
+    TMP.m.compose(TMP.v.set(X + TMP.v2.x, Y + 0.06 + TMP.v2.y, Z + TMP.v2.z), TMP.q, TMP.s.set(0.03, 0.05, 0.02));
+    F.mine.push(TMP.m, colorOf('#9a9c96'));
+    TMP.q.identity();
+    decal(F.shadow, X, Z, 0.24, 0, WHITE, 0.02);
+  }
   for (const m of mines) {
     TMP.m.compose(TMP.v.set(m.x * XS, 0.04, m.y * XS), TMP.q, TMP.s.set(0.34, 0.08, 0.34));
     F.mine.push(TMP.m, colorOf('#4a4c44'));

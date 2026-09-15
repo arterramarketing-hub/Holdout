@@ -46,6 +46,17 @@
   #ambar { grid-column:1 / -1; grid-row:3; height:3px; margin-top:7px; background:rgba(255,255,255,.08); display:none; }
   #ammo.reloading #ambar { display:block; }
   #ambar i { display:block; height:100%; width:0%; background:var(--accent); }
+  #amfrag { grid-column:1 / -1; grid-row:4; justify-self:end; display:flex; align-items:center; gap:5px; margin-top:6px;
+    font-family:var(--mono); font-weight:800; font-size:12px; color:var(--label); font-variant-numeric:tabular-nums; }
+  #amfrag svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:1.4; }
+  #amfrag.empty { opacity:.4; }
+  body.touch #amfrag { display:none; }   /* the grenade button carries the count on a phone */
+  /* a live frag near you: a red grenade on a ring around the crosshair, pointing at it */
+  #nadewarn { position:fixed; left:0; top:0; width:44px; height:44px; margin:-22px 0 0 -22px; z-index:9; display:none; pointer-events:none;
+    filter:drop-shadow(0 0 4px rgba(0,0,0,.85)); }
+  #nadewarn svg { width:100%; height:100%; fill:rgba(255,77,61,.22); stroke:var(--foe); stroke-width:1.6; }
+  #nadewarn .nw-arrow { position:absolute; left:16px; top:-10px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent;
+    border-bottom:9px solid var(--foe); transform-origin:6px 32px; }
   /* killstreaks: three slots, orange when earned */
   #supports { right:182px; bottom:14px; display:flex; gap:6px; pointer-events:auto; }
   .supbtn { display:flex; flex-direction:column; justify-content:space-between; gap:9px; width:120px; padding:8px 10px 9px; text-align:left;
@@ -130,6 +141,9 @@
   #joy { position:fixed; width:124px; height:124px; margin:-62px 0 0 -62px; z-index:9; display:none; pointer-events:none; border-radius:50%;
     border:1.5px solid rgba(255,255,255,.38); background:rgba(8,12,20,.18); }
   #joyknob { position:absolute; left:41px; top:41px; width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,.6); }
+  #joy.sprint { border-color:var(--accent); }   /* pushed to the rim: sprinting, a chevron above the stick */
+  #joy.sprint::before { content:''; position:absolute; left:50%; top:-22px; width:12px; height:12px; margin-left:-7px;
+    border-left:3px solid var(--accent); border-top:3px solid var(--accent); transform:rotate(45deg); }
   #titlecard { position:fixed; left:0; right:0; bottom:15vh; z-index:12; text-align:center; pointer-events:none; opacity:0; transition:opacity .35s ease; }
   #titlecard.show { opacity:1; }
   #titlecard .tc-sub { margin-bottom:10px; font-family:var(--mono); font-weight:700; font-size:clamp(11px, 1.4vw, 14px); letter-spacing:.34em; text-transform:uppercase; color:var(--accent); }

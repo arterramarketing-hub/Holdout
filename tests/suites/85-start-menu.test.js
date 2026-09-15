@@ -65,6 +65,22 @@ suite('start menu', t => {
     assert.eq($('dbMain').textContent, 'Resume');
   });
 });
+suite('touch layout', t => {
+  t.test('no two touch buttons overlap, and none sits on the HUD panels', () => {
+    newCampaign(); battle({ clear: true }); frames(2);
+    const rect = id => { const e = $(id); const r = e.getBoundingClientRect(); return getComputedStyle(e).display === 'none' ? null : r; };
+    const btns = ['firebtn', 'firebtn2', 'adsbtn', 'reloadbtn', 'nadebtn'].map(id => [id, rect(id)]).filter(x => x[1]);
+    assert.eq(btns.length, 5, 'all five buttons on screen');
+    const panels = ['ammo', 'supports', 'topbar', 'tickets', 'minimap'].map(id => [id, rect(id)]).filter(x => x[1] && x[1].width);
+    const hit = (a, b, pad = 2) => a.left < b.right - pad && b.left < a.right - pad && a.top < b.bottom - pad && b.top < a.bottom - pad;
+    for (let i = 0; i < btns.length; i++) {
+      const [ia, ra] = btns[i];
+      assert.ok(ra.left >= 0 && ra.right <= innerWidth && ra.top >= 0 && ra.bottom <= innerHeight, `${ia} inside the screen`);
+      for (let j = i + 1; j < btns.length; j++) assert.ok(!hit(ra, btns[j][1]), `${ia} overlaps ${btns[j][0]}`);
+      for (const [ip, rp] of panels) assert.ok(!hit(ra, rp), `${ia} overlaps ${ip}`);
+    }
+  });
+}, { pass: ['touch', 'small'] });
 suite('start menu layout', t => {
   t.test('everything fits on screen with nothing to scroll', () => {
     newCampaign();

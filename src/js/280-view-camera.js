@@ -25,6 +25,8 @@ function updateCamera3(dt) {
   cam.punch = Math.max(0, cam.punch - dt * 0.35);
   const reloading = soldiers[state.controlled] && soldiers[state.controlled].reloadT > 0;   // the sights come down while you reload, and back up after
   FPV.adsK = approach(FPV.adsK, aim.ads && !reloading ? 1 : 0, heroSight().rate, dt);   // sights come up at the optic's own pace, in both views
+  const hs = soldiers[state.controlled];
+  FPV.sprintK = approach(FPV.sprintK || 0, hs && hs.alive && hs.sprinting && state.mode === 'play' ? 1 : 0, 6, dt);   // sprinting: the view widens, the gun drops
   steerFromCursor(dt);
   aim.lookDx *= Math.exp(-dt * 8);   // the viewmodel's sway settles back to centre once you stop turning
   {   // recoil recovery: the muzzle drifts back to where you were pointing once you stop firing
@@ -96,7 +98,7 @@ function updateCamera3(dt) {
   if (cam.shake > 0) cam3.position.add(TMP.v.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).multiplyScalar(cam.shake * 0.012));
   cam3.lookAt(C.look);
   if (cam.shake > 0) cam3.rotateZ(rand(-1, 1) * cam.shake * 0.0025);
-  const base = (fpvActive() ? 68 : pr.fov) + (meta.opts.fovAdd || 0);
+  const base = (fpvActive() ? 68 : pr.fov) + (meta.opts.fovAdd || 0) + 8 * FPV.sprintK;
   const adsFov = 2 * Math.atan(Math.tan(base * Math.PI / 360) / heroZoom()) * 180 / Math.PI;   // a 4x shows a quarter of the view
   const fov = lerp(base, adsFov, FPV.adsK) * (1 - cam.punch * 1.5) * (state.mode === 'dying' ? 0.88 : 1);
   if (Math.abs(cam3.fov - fov) > 0.01) { cam3.fov = fov; cam3.updateProjectionMatrix(); }
@@ -190,7 +192,21 @@ function updateOverlays(dt) {
     jb.style.display = 'block';
     jb.style.left = joy.bx + 'px'; jb.style.top = joy.by + 'px';
     document.getElementById('joyknob').style.transform = `translate(${joy.dx * 32}px,${joy.dy * 32}px)`;
+    const sp = !!(soldiers[state.controlled] && soldiers[state.controlled].sprinting);
+    if (sp !== OV.joySprint) { OV.joySprint = sp; jb.classList.toggle('sprint', sp); }
   } else hideEl(jb);
+  {   // a live frag within 6 m: a red grenade on a ring around the crosshair, pointing at it
+    const me = soldiers[state.controlled], nw = OV.nade || (OV.nade = document.getElementById('nadewarn'));
+    let near = null, nd = 240 * 240;
+    if (me && me.alive && state.mode === 'play') for (const g of grenades) { const d = dist2(g.x, g.y, me.x, me.y); if (d < nd) { nd = d; near = g; } }
+    if (near) {
+      const a = Math.atan2(near.x - me.x, -(near.y - me.y)) - cam.yaw, rad = Math.min(innerWidth, innerHeight) * 0.2;
+      nw.style.display = 'block';
+      nw.style.transform = `translate3d(${(innerWidth / 2 + Math.sin(a) * rad).toFixed(1)}px,${(innerHeight / 2 - Math.cos(a) * rad).toFixed(1)}px,0)`;
+      nw.firstElementChild.nextElementSibling.style.transform = `rotate(${a.toFixed(3)}rad)`;
+      nw.style.opacity = (0.65 + 0.35 * Math.sin(performance.now() / 70)).toFixed(2);
+    } else if (nw.style.display !== 'none') nw.style.display = 'none';
+  }
   const s = soldiers[state.controlled], list = [];
   if (s && s.alive && state.mode === 'play') {   // close enemies beside or behind the camera
     const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);

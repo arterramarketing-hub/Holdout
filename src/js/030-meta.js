@@ -55,5 +55,6 @@ function respawnSoldier(s) {   // a fresh body off the reinforcement line: same 
   const p = pickSpawn('p'); s.x = p.x; s.y = p.y;
   s.aim = -Math.PI / 2; s.invuln = CFG.spawnInvuln; s.respawnT = 0;
   s.coverRef = null; s.path = null; s.tgt = null; s.supp = 0; s.recoil = 0;
+  s.frags = CFG.frags; s.throwT = 0; s.sprinting = false; s.sprintOutT = 0;
 }
 

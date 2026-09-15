@@ -38,7 +38,7 @@ function updateShells(dt) {
     else if (sh.kind === 'fire') { fires.push({ x: sh.x, y: sh.y, r: 30, t: 8 }); burst(sh.x, sh.y, '#e8843a', 8, 6); }
     else if (sh.kind === 'crate') {
       burst(sh.x, sh.y, '#b7d34a', 14, 10); sfxBuy();
-      for (const s of soldiers) if (s.alive) { const w = WEAPONS[s.weapon]; s.hp = s.maxHp; s.mag = magCap(s); s.reserve = magCap(s) * w.spare; s.pistol = false; s.reloadT = 0; }
+      for (const s of soldiers) if (s.alive) { const w = WEAPONS[s.weapon]; s.hp = s.maxHp; s.mag = magCap(s); s.reserve = magCap(s) * w.spare; s.pistol = false; s.reloadT = 0; s.frags = Math.max(s.frags || 0, CFG.frags); }
       floaters.push({ x: sh.x, y: sh.y, z: 34, txt: 'HEALED & RESUPPLIED', life: 1.4 });
     }
     shells.splice(i, 1);

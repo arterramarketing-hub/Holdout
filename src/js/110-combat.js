@@ -174,7 +174,7 @@ function killEnemy(idx, credit) {
   const hd = e.lastHit, ga = (e.aim || 0) + rand(0.6, 1.5) * (Math.random() < 0.5 ? 1 : -1);
   addCorpse({ kind: 'enemy', x: e.x + rand(-4, 4), y: e.y + rand(-3, 3), col: e.col,
     face: e.face, sc: e.r / 14, horse: e.horse, type: e.type, aim: e.aim, src: e,
-    style: !credit.wkey || credit.wkey === 'rocket' ? 2 : hd && e.aim != null && Math.cos(e.aim) * hd.x + Math.sin(e.aim) * hd.y > 0 ? 1 : 0,
+    style: !credit.wkey || credit.wkey === 'rocket' || credit.wkey === 'frag' ? 2 : hd && e.aim != null && Math.cos(e.aim) * hd.x + Math.sin(e.aim) * hd.y > 0 ? 1 : 0,
     gunX: e.x + Math.cos(ga) * rand(14, 28), gunY: e.y + Math.sin(ga) * rand(14, 28), gunYaw: rand(0, TAU) });
   sfxKill(e.x, e.y);
   if (!e.boss && Math.random() < 0.35) pickups.push({ x: e.x + rand(-10, 10), y: e.y + rand(-10, 10), t: 30 });

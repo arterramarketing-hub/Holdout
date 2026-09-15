@@ -14,7 +14,7 @@ const state = {   // per-battle / session
 };
 let screen = 'map'; // map | team | battle
 let soldiers = [], enemies = [], bullets = [], particles = [], floaters = [], markers = [], bodies = [];
-let mines = [], shells = [], fires = [], craters = [], obstacles = [], corpses = [], pickups = [];
+let mines = [], shells = [], fires = [], craters = [], obstacles = [], corpses = [], pickups = [], grenades = [];
 const CORPSE_CAP = 120; // enemy corpses beyond this fade oldest-first; squad corpses never removed
 const AI_SLOTS = [0, -140, 140, 280];   // where each of the four starts inside the FOB, just south of its gate
 
@@ -33,10 +33,11 @@ function buildSoldier(i) {
     fireCd: rand(0, 0.4), regenCd: 0, invuln: 0, aim: -Math.PI / 2, r: 13,
     walk: rand(0, TAU), moving: false, recoil: 0,
     mag: cap, reserve: cap * WEAPONS[weapon].spare, reloadT: 0, reloadDur: 1, pistol: false,
+    frags: CFG.frags, throwT: 0, sprinting: false, sprintOutT: 0,
   };
 }
 function genTerrain() {   // the same town every front; its movable cover is rolled fresh each battle
-  obstacles = []; craters = []; mines = []; fires = []; shells = []; corpses = []; rubble = [];
+  obstacles = []; craters = []; mines = []; fires = []; shells = []; corpses = []; rubble = []; grenades = [];
   const k = PX, W = TOWN.w * k, H = TOWN.h * k, T = 24;
   buildings = TOWN.buildings.map(([x0, y0, x1, y1, h, style]) =>
     ({ shape: 'r', x: (x0 + x1) / 2 * k, y: (y0 + y1) / 2 * k, hw: (x1 - x0) / 2 * k, hd: (y1 - y0) / 2 * k, top: h * k, style, building: true, claims: 0 }));

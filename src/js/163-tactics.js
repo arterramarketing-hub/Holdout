@@ -41,6 +41,25 @@ function nearestVisibleEnemy(x, y, maxD) {
 }
 
 // ---------- the hero ----------
+function sprintWanted(s, dt) {   // Shift on a keyboard; on a phone, the stick pushed out to its rim and forward for a beat
+  let want = !!(keys.ShiftLeft || keys.ShiftRight || aim.sprintPad);
+  if (joy.active) {
+    const m = Math.hypot(joy.dx, joy.dy), ang = Math.abs(Math.atan2(joy.dx, -joy.dy));
+    const onRim = joy.dy < 0 && m >= (s.sprinting ? 0.8 : 0.95) && ang < (s.sprinting ? 0.87 : 0.61);   // ±35° to start, ±50° to keep going
+    joy.rimT = onRim ? (joy.rimT || 0) + dt : 0;
+    if (joy.rimT >= 0.15) want = true;
+  } else joy.rimT = 0;
+  return want;
+}
+function updateSprint(s, dt) {   // forward only, never with the trigger or the sights; the gun takes a moment to come up after
+  s.throwT = Math.max(0, (s.throwT || 0) - dt);
+  s.sprintOutT = Math.max(0, (s.sprintOutT || 0) - dt);
+  const mv = moveVector(), ml = Math.hypot(mv.x, mv.y);
+  const forward = ml > 0.3 && (mv.x * Math.sin(aim.yaw) - mv.y * Math.cos(aim.yaw)) / ml >= Math.cos(50 * Math.PI / 180);
+  const want = sprintWanted(s, dt), blocked = aim.fire || aim.ads || s.throwT > 0.45 || s.horse;
+  if (s.sprinting && (blocked || !want || !forward)) { s.sprinting = false; s.sprintOutT = CFG.sprintOut; }
+  else if (!s.sprinting && want && forward && !blocked) s.sprinting = true;
+}
 function heroControl(s, spd, dt) {   // you move yourself: nothing latches, nothing crouches for you
   const mv = moveVector();
   s.coverRef = null;

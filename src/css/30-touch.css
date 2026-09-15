@@ -1,8 +1,9 @@
   /* ---------- touch controls: Call of Duty Mobile's look and proportions ----------
      Flat translucent circles sized off the screen height (--fb, the fire button), so the set keeps the same
-     proportions on every phone: fire 1, lock .82, left trigger .8, ADS .68, reload .6. Placed the way CoD
+     proportions on every phone: fire 1, left trigger .8, ADS .68, grenade .62, reload .6. Placed the way CoD
      Mobile places them: the trigger up off the corner under the right thumb, sights above-right of it, reload
-     to its left, a second trigger above the left thumb, and the corner itself left clear for the ammo. */
+     up and to its left, the grenade low beside the trigger (a short slide of the thumb, clear of the killstreaks),
+     a second trigger above the left thumb, and the corner itself left clear for the ammo. */
   .tbtn { position:fixed; z-index:11; display:none; align-items:center; justify-content:center; padding:0; border-radius:50%;
     touch-action:none; line-height:1; font-family:var(--body); font-weight:600; color:rgba(255,255,255,.95);
     background:rgba(9,13,21,.34); border:2px solid rgba(255,255,255,.55); box-shadow:0 0 0 1px rgba(0,0,0,.28); }
@@ -14,10 +15,15 @@
   #reloadbtn { width:calc(var(--fb) * .6); height:calc(var(--fb) * .6); right:calc(var(--fb) * 2.02); bottom:calc(var(--fb) * 1.5); font-size:calc(var(--fb) * .28); }
   #reloadbtn.warn { border-color:var(--foe); color:#ffa596; }
   #firebtn2 { width:calc(var(--fb) * .8); height:calc(var(--fb) * .8); left:calc(var(--fb) * 1.3); bottom:calc(var(--fb) * 1.9); }
+  #nadebtn { width:calc(var(--fb) * .62); height:calc(var(--fb) * .62); right:calc(var(--fb) * 2.04); bottom:calc(var(--fb) * .62); }
+  #nadebtn svg { width:48%; height:48%; fill:rgba(255,255,255,.16); stroke:rgba(255,255,255,.95); stroke-width:1.7; pointer-events:none; }
+  #nadebtn .cnt { position:absolute; right:-3px; top:-3px; display:grid; place-items:center; min-width:18px; height:18px; padding:0 4px; box-sizing:border-box;
+    border-radius:9px; font-family:var(--mono); font-weight:800; font-size:11px; color:var(--accent-ink); background:var(--accent); pointer-events:none; }
+  #nadebtn.empty { opacity:.45; } #nadebtn.empty .cnt { color:var(--text); background:#3a4454; }
   /* both triggers carry a round, the way CoD Mobile marks its fire buttons */
   .tbtn .bullet { width:24%; height:48%; fill:rgba(255,255,255,.95); filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55)); pointer-events:none; }
   .tbtn:active .bullet { fill:#fff; }
-  body.touch #firebtn, body.touch #firebtn2, body.touch #adsbtn, body.touch #reloadbtn { display:flex; }
+  body.touch #firebtn, body.touch #firebtn2, body.touch #adsbtn, body.touch #reloadbtn, body.touch #nadebtn { display:flex; }
   /* with touch buttons on screen the ammo takes the corner, the killstreaks stack under the menu buttons */
   body.touch #ammo { right:8px; bottom:8px; }
   body.touch #supports { top:54px; right:10px; bottom:auto; flex-direction:column; }
