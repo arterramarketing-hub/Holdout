@@ -18,7 +18,7 @@ const OBJ = { r: 7 * PX, flip: [0, 12, 9, 7], capSpend: 2, drainHold: 4, drainAl
 const objectiveSites = tid => (SECTOR_OBJ[tid] || SECTOR_OBJ[1]).map(i => OBJ_SITES[i]).sort((a, b) => a.y - b.y || a.x - b.x);
 function setupObjectives(sites, opts = {}) {   // every objective starts in enemy hands (a training flag can start neutral)
   state.objs = sites.map((o, i) => ({ letter: String.fromCharCode(65 + i), name: o.name, x: o.x * PX, y: o.y * PX, r: (o.r || 7) * PX,
-    cap: opts.neutral ? 0 : -1, owner: opts.neutral ? null : 'e', inP: 0, inE: 0, contested: false, flashT: 0 }));
+    cap: opts.neutral ? 0 : -1, owner: opts.neutral ? null : 'e', inP: 0, inE: 0, contested: false, flashT: 0, speed: opts.speed || 1 }));
   state.objDrainT = OBJ.drainHold; state.squadDrainT = OBJ.squadDrain; state.objMsg = null;
   state.noDrain = !!opts.noDrain;
 }
@@ -34,7 +34,7 @@ function updateObjectives(dt) {
     o.flashT = Math.max(0, o.flashT - dt);
     if (state.objMsg && (state.objMsg.t -= dt / state.objs.length) <= 0) state.objMsg = null;
     if (o.contested || (!p && !e)) continue;
-    const rate = 2 / OBJ.flip[Math.min(3, p || e)], was = o.owner;
+    const rate = 2 / OBJ.flip[Math.min(3, p || e)] * o.speed, was = o.owner;
     o.cap = clamp(o.cap + (p ? rate : -rate) * dt, -1, 1);
     if (o.cap >= 1) o.owner = 'p';
     else if (o.cap <= -1) o.owner = 'e';

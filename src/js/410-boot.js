@@ -34,6 +34,7 @@ loadThree().then(() => { const g = document.getElementById('bootgl'); if (g) g.i
     clearInterval(iv);
     bootEl.classList.add('off');
     setTimeout(() => bootEl.remove(), 600);
+    if (!loadedFromSave) setTimeout(offerTraining, 700);   // a new campaign: offer the firing range first
   }
   bootEl.addEventListener('click', finish);
   window.addEventListener('keydown', finish, { once: true });

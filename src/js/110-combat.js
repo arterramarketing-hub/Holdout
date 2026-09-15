@@ -41,6 +41,7 @@ function coverTop(ob) {   // px: how high this piece of cover stands right now
   return h * PX * (ob.maxHp > 0 && ob.hp / ob.maxHp <= 0.5 ? (COVER_HURT[ob.kind] || 1) : 1);
 }
 function bodyTop(e) {   // px: the top of an enemy's head right now — riflemen kneel while they hold still
+  if (e.target) return (e.down ? 0.1 : 1.3) * PX;   // a range target: a plate on a post, flat once it folds
   const look = ENEMY_LOOK[e.type] || ENEMY_LOOK.grunt;
   return ((e.ranged && e.stillT > 0.3 ? 1.3 : 1.8) + (e.horse ? 0.35 : 0)) * look[1] * PX;
 }
@@ -210,6 +211,7 @@ function killEnemy(idx, credit) {
 function hurtEnemy(idx, dmg, credit, dir) {
   const e = enemies[idx];
   if (e.hp <= 0) return false;                                    // already dead this frame
+  if (e.target) { targetHit(e, credit); return false; }           // a range target folds; it never dies
   if (e.type === 'brute' && dir && e.aim != null && Math.cos(e.aim) * dir.x + Math.sin(e.aim) * dir.y < -0.35) {   // riot shield soaks frontal fire
     dmg *= 0.3;
     particles.push({ x: e.x, y: e.y, z: 16, vx: rand(-50, 50), vy: rand(-50, 50), vz: rand(40, 90), life: 0.15, max: 0.15, col: '#fff4c0', r: 1.4 });

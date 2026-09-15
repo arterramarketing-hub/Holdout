@@ -63,7 +63,23 @@ function gunLife(r, J, kind, rt, fired, own, wdt) {   // muzzle bloom, brass and
   r.lastRt = rt;
 }
 const ENEMY_MUZ = { ak: { y: 0.04, z: -0.63 }, pkm: { y: 0.03, z: -0.67 } };
+function drawTarget(e, set) {   // a steel plate on a stand, hinged at its foot, folding back when it rings
+  const X = e.x * XS, Z = e.y * XS, cp = VIEW.camera.position, yaw = Math.atan2(cp.x - X, cp.z - Z);
+  TMP.q.setFromEuler(TMP.e.set(0, yaw, 0, 'YXZ'));
+  TMP.m.compose(TMP.v.set(X, 0.14, Z), TMP.q, TMP.s.set(0.7, 0.28, 0.4)); set.metal.push(TMP.m, colorOf('#3f423e'));
+  TMP.q.setFromEuler(TMP.e.set(-e.fold * 1.4, yaw, 0, 'YXZ'));
+  const plate = e.down ? colorOf('#5e615b') : colorOf('#eef0e8');
+  TMP.v2.set(0, 0.5, 0).applyQuaternion(TMP.q);
+  TMP.m.compose(TMP.v.set(X + TMP.v2.x, 0.28 + TMP.v2.y, Z + TMP.v2.z), TMP.q, TMP.s.set(0.6, 0.86, 0.05)); VIEW.fx.flag.push(TMP.m, plate);
+  TMP.v2.set(0, 1.1, 0).applyQuaternion(TMP.q);
+  TMP.m.compose(TMP.v.set(X + TMP.v2.x, 0.28 + TMP.v2.y, Z + TMP.v2.z), TMP.q, TMP.s.set(0.32, 0.3, 0.05)); VIEW.fx.flag.push(TMP.m, plate);
+  TMP.v2.set(0, 0.56, 0.035).applyQuaternion(TMP.q);
+  TMP.m.compose(TMP.v.set(X + TMP.v2.x, 0.28 + TMP.v2.y, Z + TMP.v2.z), TMP.q, TMP.s.set(0.24, 0.24, 0.02)); VIEW.fx.flag.push(TMP.m, e.down ? colorOf('#7a4a30') : colorOf('#ff6b2c'));
+  TMP.q.identity();
+  decal(VIEW.fx.shadow, X, Z, 0.8, 0, WHITE, 0.02);
+}
 function drawEnemy(e, wdt, set) {
+  if (e.target) { drawTarget(e, set); return; }
   const r = recFor(e), J = r.J;
   if (!r.pal) r.pal = enemyPalette(e.col, !!e.boss);
   const look = ENEMY_LOOK[e.type] || ENEMY_LOOK.grunt, now = performance.now();
@@ -258,7 +274,7 @@ function buildFxBatches() {
     bloom: new Batch(plane, new THREE.MeshBasicMaterial({ map: T.bloom, transparent: true, opacity: 0.62, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }), 96, 6),
     brass: new Batch(VIEW.kit.cyl, VIEW.mats.shaded, 200),
     objRing: new Batch(plane, decalMat(null, { opacity: 0.55 }), 160, 1),
-    flag: new Batch(box, new THREE.MeshLambertMaterial(), 12),
+    flag: new Batch(box, new THREE.MeshLambertMaterial(), 40),
   };
 }
 const FX_FRAME = ['shadow', 'crater', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass', 'objRing', 'flag'];
@@ -384,6 +400,24 @@ function drawFx() {
       TMP.qd.setFromEuler(TMP.e);
       TMP.md.compose(TMP.vd.set(X + Math.cos(a) * R, 0.04, Z + Math.sin(a) * R), TMP.qd, TMP.sd.set(TAU * R / segs * 0.9, 0.16, 1));
       F.objRing.push(TMP.md, col);
+    }
+  }
+  if (state.training) {   // the range: the marker this step wants you at, and the three signs to look at
+    const m = trainingMarker(), now2 = now / 1000;
+    if (m) {
+      const X = m.x * XS, Z = m.y * XS, R = m.r * XS;
+      for (let k = 0; k < 24; k += 2) {
+        const a = (k + 0.5) / 24 * TAU + now2 * 0.6;
+        TMP.e.set(-Math.PI / 2, -a - Math.PI / 2, 0, 'YXZ'); TMP.qd.setFromEuler(TMP.e);
+        TMP.md.compose(TMP.vd.set(X + Math.cos(a) * R, 0.05, Z + Math.sin(a) * R), TMP.qd, TMP.sd.set(TAU * R / 24 * 0.9, 0.14, 1));
+        F.objRing.push(TMP.md, colorOf('#ff6b2c'));
+      }
+      TMP.m.compose(TMP.v.set(X, 1.6 + Math.sin(now2 * 3) * 0.12, Z), TMP.q, TMP.s.set(0.22, 0.22, 0.22)); F.spark.push(TMP.m, colorOf('#ff6b2c'));
+    }
+    for (const [sx, sy] of RANGE.signs) {
+      const X = sx * PX * XS, Z = sy * PX * XS;
+      TMP.m.compose(TMP.v.set(X, 0.9, Z), TMP.q, TMP.s.set(0.08, 1.8, 0.08)); D.metal.push(TMP.m, colorOf('#5a5c58'));
+      TMP.m.compose(TMP.v.set(X, 1.95, Z), TMP.q, TMP.s.set(0.9, 0.6, 0.06)); F.flag.push(TMP.m, colorOf('#e8e2cf'));
     }
   }
   for (const mk of markers) {   // battlefield cross where soldiers fell: rifle planted muzzle-down, helmet on the stock, boots in front

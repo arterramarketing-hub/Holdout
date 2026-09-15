@@ -200,6 +200,7 @@ function updateEnemies(dt) {
   tallyClaims();
   for (const e of enemies) {
     e.flash = Math.max(0, e.flash - dt);
+    if (e.target) continue;   // a range target stands where it was put
     e.cd -= dt; e.wob += dt * 6; e.atk = Math.max(0, e.atk - dt);
     e.supp = Math.max(0, (e.supp || 0) - dt * 0.6);
     if (e.relT > 0) e.relT -= dt;
@@ -431,6 +432,7 @@ function battleUpdate(dt) {
       }
     updateEnemies(wdt);
     updateObjectives(wdt);
+    if (state.training) updateTraining(wdt);
     updateBullets(wdt);
     updateShells(wdt);
     updateGrenades(wdt);

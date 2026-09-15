@@ -65,6 +65,16 @@ function updateBattleHud() {
     const co = $('callout'), cl = state.callout;
     const ccls = 'hud' + (cl ? ' on ' + cl.side : '');   // keep .hud: it is what pins the tag to the screen
     if (co.className !== ccls) { co.className = ccls; if (cl) co.textContent = (cl.side === 'behind' ? 'Behind' : 'Flank · ' + cl.side) + ' · ' + cl.dist + ' m'; }
+    const T = state.training, tb = $('trainbox');
+    if (T && (T.dirty || OV.trainKind !== inputKind())) {
+      T.dirty = false; OV.trainKind = inputKind();
+      const st = TRAIN_STEPS[Math.min(T.step, TRAIN_STEPS.length - 1)];
+      $('tbStep').textContent = `Basic training · ${Math.min(T.step + 1, TRAIN_STEPS.length)} / ${TRAIN_STEPS.length}`;
+      $('tbTitle').textContent = st.title + (st.id === 'look' ? ` (${T.seen.filter(Boolean).length}/3)` : '');
+      $('tbHint').textContent = st.hint[OV.trainKind];
+      $('tbDots').innerHTML = TRAIN_STEPS.map((_, i) => `<i class="${i < T.step || (i === T.step && T.wait > 0) ? 'done' : i === T.step ? 'now' : ''}"></i>`).join('');
+      tb.classList.toggle('ok', T.wait > 0);
+    }
     const fr = c.frags || 0;
     if (fr !== OV.frags) { OV.frags = fr; $('nadecnt').textContent = fr; $('amfragn').textContent = fr; $('nadebtn').classList.toggle('empty', !fr); $('amfrag').classList.toggle('empty', !fr); }
     if (c.reloadT > 0) $('ambar').firstChild.style.width = (1 - c.reloadT / c.reloadDur) * 100 + '%';
@@ -113,6 +123,7 @@ function drawMinimap() {
     g.fillStyle = col; g.fillText(o.letter, X(o.x), Y(o.y) + 0.5);
   }
   for (const e of enemies) {   // only what you could plausibly know about: close, or shooting
+    if (e.target) continue;
     const d = Math.hypot(e.x - s.x, e.y - s.y);
     if (d > 950 && !(e.fireT < 0.5 && d < 1600)) continue;
     g.fillStyle = e.boss ? '#ff8a3d' : '#ff4d3d';

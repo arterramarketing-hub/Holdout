@@ -97,6 +97,7 @@ function crosshairTarget(s, cone) {   // the enemy nearest the middle of the scr
   const fx = Math.sin(aim.yaw), fy = -Math.cos(aim.yaw);
   let best = null, bs = cone;
   for (const e of enemies) {
+    if (e.down) continue;
     const dx = e.x - s.x, dy = e.y - s.y, d = Math.hypot(dx, dy) || 1;
     if (d > 950) continue;
     const score = Math.acos(clamp((dx * fx + dy * fy) / d, -1, 1)) + d / 950 * 0.04;

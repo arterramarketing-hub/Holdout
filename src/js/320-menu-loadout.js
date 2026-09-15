@@ -67,5 +67,7 @@ $('adsbtn').addEventListener('pointerdown', e => { e.preventDefault(); aim.ads =
 $('reloadbtn').addEventListener('pointerdown', e => { e.preventDefault(); heroReload(); });
 $('tosettings').onclick = showSettings;
 $('tocfg').onclick = showSettings;
-$('tomap').onclick = () => { if (state.mode === 'play' || state.mode === 'failed') { hideModal(); exitBattle(); } };
+$('tomap').onclick = () => { if (state.training) { exitTraining(); return; } if (state.mode === 'play' || state.mode === 'failed') { hideModal(); exitBattle(); } };
+$('torange').onclick = () => enterTraining();
+$('tbSkip').onclick = () => { meta.trained = true; saveMeta(); exitTraining(); };
 

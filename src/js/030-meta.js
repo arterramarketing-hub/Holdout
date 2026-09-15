@@ -17,6 +17,7 @@ function freshMeta() {
     attach: freshAttach(),
     opts: freshOpts(),
     story: { wren: 'none', wrenPending: false, seen: {}, seenTheater: -1 },
+    trained: false,
     squad,
     terr: TERRITORIES.map(t => ({ owner: t.tier === 0 ? 'p' : 'e', progress: 0 })),
     activeTid: 1,

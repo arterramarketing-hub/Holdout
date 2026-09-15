@@ -28,6 +28,16 @@
   Rumble follows the Vibration setting. The HUD hint shows controller buttons whenever the controller was the last
   thing touched, and a key hands the prompts back. Aim assist stays third person only.
 
+  BASIC TRAINING — the firing range, run up Main Street from the FOB gate (RANGE, TRAIN_STEPS): move to a marker,
+  look at three signs, knock down three pop-up steel targets at 10 m, two at 22 m down the sights, reload, sprint to
+  the square, frag a cluster of three, and take a training flag (a 4 m ring, neutral, quicker to take). Each step's
+  card says what to do in the words of the input you last used — keyboard and mouse, touch, or controller — with
+  progress dots, a check when it is done, and SKIP. Targets ring and fold when hit and never die (no kills, no
+  killstreaks); there are no enemy waves, no reserves, no Warlord, nothing can hurt you, and nothing is saved to a
+  sector. A new campaign is offered it on first launch (Skip remembers the answer; a save from before the range
+  never asks), and the range button beside the start menu's settings opens it any time. The finish card deploys to
+  the selected sector or goes back to the map; ◂ MAP leaves it at any point.
+
   ORIENTATION — on a phone or tablet the game plays in landscape only: held upright it shows a rotate
   prompt and the simulation stops dead until you turn it, so nothing happens while you cannot see it.
 
@@ -267,7 +277,7 @@
   pulse for attackable, a dim red diamond for out of reach, a double diamond for the capital, and a progress ring
   for a sector partly taken. Routes: blue supply lines behind the front, orange arrows along each axis of advance.
   A reticle locks onto the selection; a tap anywhere in a region selects it; ←/→ cycle the attackable sectors and
-  Enter deploys. The briefing: theater progress in 13 segments, the sector's status chip, number and grid
+  Enter deploys. The briefing: theater progress in 13 segments with the firing range and settings buttons, the sector's status chip, number and grid
   reference, its name, THREAT (tier and pips), RESERVES (what is left of the enemy pool), FORECAST, a progress bar
   when partly taken, one line of orders naming the sector's objectives (or which sectors to take first), DEPLOY (RESUME when partly taken) naming
   the sector, your kit, and the squad of four with roles. Opening the map plays its entrance (land, sectors, the
@@ -471,6 +481,23 @@
   #callout.behind { top:auto; bottom:22%; left:50%; transform:translateX(-50%); box-shadow:inset 0 -3px 0 var(--foe); animation:none; }
   #callout.left::before { content:'◂ '; color:var(--foe); } #callout.right::after { content:' ▸'; color:var(--foe); } #callout.behind::after { content:' ▾'; color:var(--foe); }
   @keyframes callout-in { from { opacity:0; } }
+  /* basic training: the step card at the top, the ticket bar and killstreaks out of the way */
+  #trainbox { top:10px; left:50%; transform:translateX(-50%); display:none; width:min(520px, 72vw); padding:9px 14px 11px; text-align:center;
+    background:var(--panel); border:1px solid var(--line-hi); box-shadow:inset 0 2px 0 var(--accent); pointer-events:auto; }
+  body.training #trainbox { display:block; }
+  body.training #tickets, body.training #supports { display:none !important; }
+  body.training #objhud { top:104px; }
+  .tb-top { display:flex; align-items:center; justify-content:space-between; gap:12px; font-family:var(--mono); font-weight:700; font-size:10px;
+    letter-spacing:.26em; text-transform:uppercase; color:var(--accent); }
+  #tbSkip { padding:3px 9px; font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--label);
+    background:transparent; border:1px solid var(--line-hi); border-radius:0; }
+  #tbSkip:hover { color:var(--accent); border-color:var(--accent); }
+  .tb-title { margin-top:5px; font-family:var(--display); font-stretch:125%; font-weight:800; font-size:clamp(15px, 1.9vw, 21px); line-height:1.05;
+    text-transform:uppercase; color:var(--ink); }
+  .tb-hint { margin-top:4px; font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--label); }
+  .tb-dots { display:flex; justify-content:center; gap:5px; margin-top:7px; }
+  .tb-dots i { width:16px; height:3px; background:#2a3342; } .tb-dots i.done { background:var(--friend); } .tb-dots i.now { background:var(--accent); }
+  #trainbox.ok { box-shadow:inset 0 2px 0 var(--ok); } #trainbox.ok .tb-title { color:var(--ok); }
   #objtags i { position:absolute; left:0; top:0; display:none; place-items:center; width:20px; height:20px; margin:-10px 0 0 -10px; font-style:normal;
     font-family:var(--mono); font-weight:800; font-size:11px; color:#fff; background:rgba(9,13,21,.66); border:1.5px solid var(--c, #c9d1dc); }
   #bossname { margin-bottom:5px; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--foe); }
@@ -737,6 +764,7 @@
   .br-theater { display:flex; align-items:baseline; gap:12px; min-width:0; font-family:var(--mono); font-weight:700; text-transform:uppercase; white-space:nowrap; }
   .br-tag { font-size:11px; letter-spacing:.3em; color:var(--accent); }
   .br-held { font-size:11px; letter-spacing:.1em; color:var(--label); font-variant-numeric:tabular-nums; }
+  .br-tools { display:flex; gap:6px; }
   .br-cog { display:grid; place-items:center; width:34px; height:34px; padding:0; color:var(--label); background:transparent; border:1px solid var(--line-hi); border-radius:0; }
   .br-cog:hover { color:var(--accent); border-color:var(--accent); }
   .br-cog svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:square; }
@@ -896,6 +924,8 @@
     #tomap, #tocfg { height:30px; padding:0 10px; font-size:10px; } #tocfg { width:30px; padding:0; font-size:13px; }
     #bossbar { top:74px; width:min(280px, 46vw); } #bossname { margin-bottom:3px; font-size:9px; }
     #objhud { top:40px; gap:4px; } .obj { width:24px; height:20px; font-size:11px; } #objmsg { top:24px; font-size:8.5px; }
+    #trainbox { top:6px; width:min(420px, 56vw); padding:6px 10px 8px; } .tb-top, #tbSkip { font-size:8.5px; } .tb-title { font-size:14px; } .tb-hint { font-size:9px; }
+    .tb-dots { margin-top:5px; } body.training #objhud { top:84px; }
     #feed { top:auto; bottom:64px; right:6px; width:220px; font-size:10px; }
     #ammo { right:6px; bottom:6px; min-width:0; padding:6px 10px 8px; }
     #amname { margin-bottom:3px; font-size:8px; letter-spacing:.2em; } #ammag { font-size:22px; } #amres { font-size:11px; }
@@ -990,6 +1020,7 @@
   </div>
   <div class="hud" id="objhud"><div class="obj" id="obj0"><b>A</b><i></i></div><div class="obj" id="obj1"><b>B</b><i></i></div><div class="obj" id="obj2"><b>C</b><i></i></div><div id="objmsg"></div></div>
   <div class="hud" id="callout"></div>
+  <div class="hud" id="trainbox"><div class="tb-top"><span id="tbStep">Basic training · 1 / 8</span><button id="tbSkip">Skip</button></div><div class="tb-title" id="tbTitle"></div><div class="tb-hint" id="tbHint"></div><div class="tb-dots" id="tbDots"></div></div>
   <div class="hud" id="objtags"><i id="otag0">A</i><i id="otag1">B</i><i id="otag2">C</i></div>
   <div class="hud" id="bossbar"><div id="bossname">WARLORD</div><div id="bosshp"><i id="bosshpfill"></i></div></div>
   <canvas class="hud" id="minimap" width="150" height="120"></canvas>
@@ -1022,7 +1053,8 @@
     <aside class="brief">
       <header class="br-head">
         <div class="br-theater"><span class="br-tag" id="brTheater">Theater I</span><span class="br-held" id="brHeld">1 / 13 held</span></div>
-        <button class="br-cog" id="tosettings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 2.8v3.1M12 18.1v3.1M2.8 12h3.1M18.1 12h3.1M5.5 5.5l2.2 2.2M16.3 16.3l2.2 2.2M5.5 18.5l2.2-2.2M16.3 7.7l2.2-2.2"/></svg></button>
+        <div class="br-tools"><button class="br-cog" id="torange" aria-label="Firing range" title="Firing range"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 1.8v4M12 18.2v4M1.8 12h4M18.2 12h4"/></svg></button>
+        <button class="br-cog" id="tosettings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 2.8v3.1M12 18.1v3.1M2.8 12h3.1M18.1 12h3.1M5.5 5.5l2.2 2.2M16.3 16.3l2.2 2.2M5.5 18.5l2.2-2.2M16.3 7.7l2.2-2.2"/></svg></button></div>
         <div class="br-segs" id="brSegs" aria-hidden="true"></div>
       </header>
       <section class="br-sector" aria-live="polite">
@@ -1194,6 +1226,7 @@ function freshMeta() {
     attach: freshAttach(),
     opts: freshOpts(),
     story: { wren: 'none', wrenPending: false, seen: {}, seenTheater: -1 },
+    trained: false,
     squad,
     terr: TERRITORIES.map(t => ({ owner: t.tier === 0 ? 'p' : 'e', progress: 0 })),
     activeTid: 1,
@@ -1247,7 +1280,7 @@ const state = {   // per-battle / session
   bossSpawned: false, bossRef: null, spotterSeen: false,
   streakN: 0, streakT: 0,
   crossTarget: null, flyby: null,
-  objs: [], squadObj: null, objMsg: null, callout: null, objDrainT: 0, squadDrainT: 0, noDrain: false,
+  objs: [], squadObj: null, objMsg: null, callout: null, training: null, objDrainT: 0, squadDrainT: 0, noDrain: false,
   tod: 1, weather: 'clear',
 };
 let screen = 'map'; // map | team | battle
@@ -2503,6 +2536,7 @@ function crosshairTarget(s, cone) {   // the enemy nearest the middle of the scr
   const fx = Math.sin(aim.yaw), fy = -Math.cos(aim.yaw);
   let best = null, bs = cone;
   for (const e of enemies) {
+    if (e.down) continue;
     const dx = e.x - s.x, dy = e.y - s.y, d = Math.hypot(dx, dy) || 1;
     if (d > 950) continue;
     const score = Math.acos(clamp((dx * fx + dy * fy) / d, -1, 1)) + d / 950 * 0.04;
@@ -2772,6 +2806,7 @@ function pickType() {
   return 'grunt';
 }
 function updateWaves(dt) {   // four a side: whenever the enemy is short-handed and has tickets left, someone walks on
+  if (state.training) return;   // the firing range has no enemy
   state.wave = 1 + Math.floor(state.progress / 12);   // the enemy's mix toughens as its tickets run down
   const onField = enemies.reduce((n, e) => n + (e.boss ? 0 : 1), 0);
   const unspent = state.enemyTotal - state.enemyDown - onField - (state.bossRef ? 1 : 0);   // the Warlord's ticket is its own, not a spare
@@ -2824,6 +2859,7 @@ function coverTop(ob) {   // px: how high this piece of cover stands right now
   return h * PX * (ob.maxHp > 0 && ob.hp / ob.maxHp <= 0.5 ? (COVER_HURT[ob.kind] || 1) : 1);
 }
 function bodyTop(e) {   // px: the top of an enemy's head right now — riflemen kneel while they hold still
+  if (e.target) return (e.down ? 0.1 : 1.3) * PX;   // a range target: a plate on a post, flat once it folds
   const look = ENEMY_LOOK[e.type] || ENEMY_LOOK.grunt;
   return ((e.ranged && e.stillT > 0.3 ? 1.3 : 1.8) + (e.horse ? 0.35 : 0)) * look[1] * PX;
 }
@@ -2993,6 +3029,7 @@ function killEnemy(idx, credit) {
 function hurtEnemy(idx, dmg, credit, dir) {
   const e = enemies[idx];
   if (e.hp <= 0) return false;                                    // already dead this frame
+  if (e.target) { targetHit(e, credit); return false; }           // a range target folds; it never dies
   if (e.type === 'brute' && dir && e.aim != null && Math.cos(e.aim) * dir.x + Math.sin(e.aim) * dir.y < -0.35) {   // riot shield soaks frontal fire
     dmg *= 0.3;
     particles.push({ x: e.x, y: e.y, z: 16, vx: rand(-50, 50), vy: rand(-50, 50), vz: rand(40, 90), life: 0.15, max: 0.15, col: '#fff4c0', r: 1.4 });
@@ -3311,7 +3348,7 @@ const OBJ = { r: 7 * PX, flip: [0, 12, 9, 7], capSpend: 2, drainHold: 4, drainAl
 const objectiveSites = tid => (SECTOR_OBJ[tid] || SECTOR_OBJ[1]).map(i => OBJ_SITES[i]).sort((a, b) => a.y - b.y || a.x - b.x);
 function setupObjectives(sites, opts = {}) {   // every objective starts in enemy hands (a training flag can start neutral)
   state.objs = sites.map((o, i) => ({ letter: String.fromCharCode(65 + i), name: o.name, x: o.x * PX, y: o.y * PX, r: (o.r || 7) * PX,
-    cap: opts.neutral ? 0 : -1, owner: opts.neutral ? null : 'e', inP: 0, inE: 0, contested: false, flashT: 0 }));
+    cap: opts.neutral ? 0 : -1, owner: opts.neutral ? null : 'e', inP: 0, inE: 0, contested: false, flashT: 0, speed: opts.speed || 1 }));
   state.objDrainT = OBJ.drainHold; state.squadDrainT = OBJ.squadDrain; state.objMsg = null;
   state.noDrain = !!opts.noDrain;
 }
@@ -3327,7 +3364,7 @@ function updateObjectives(dt) {
     o.flashT = Math.max(0, o.flashT - dt);
     if (state.objMsg && (state.objMsg.t -= dt / state.objs.length) <= 0) state.objMsg = null;
     if (o.contested || (!p && !e)) continue;
-    const rate = 2 / OBJ.flip[Math.min(3, p || e)], was = o.owner;
+    const rate = 2 / OBJ.flip[Math.min(3, p || e)] * o.speed, was = o.owner;
     o.cap = clamp(o.cap + (p ? rate : -rate) * dt, -1, 1);
     if (o.cap >= 1) o.owner = 'p';
     else if (o.cap <= -1) o.owner = 'e';
@@ -3392,6 +3429,7 @@ function enterBattle(tid) {
     return;
   }
   state.tid = tid;
+  if (state.training) { state.training = null; document.body.classList.remove('training'); }
   const t = TERRITORIES[tid];
   state.tier = effTier(t);
   state.progress = meta.terr[tid].progress;
@@ -3504,10 +3542,145 @@ function showFailModal() {
   $('mretreat').onclick = () => { meta.terr[state.tid].progress = 0; hideModal(); exitBattle(); };
 }
 
+// ============================================================ BASIC TRAINING
+// The firing range, run up Main Street from the FOB gate: move to a marker, look at three signs, knock down three
+// pop-up steel targets at 10 m, two at 22 m down the sights, reload, sprint to the square, frag a cluster of three, and
+// take a training flag. Every prompt speaks the input you last used (keyboard and mouse, touch, or controller). No
+// enemy waves, no reserves, no Warlord, and nothing can hurt you; nothing is saved to a sector. A new campaign is
+// offered it on first launch, and the start menu's range button opens it any time.
+const TRAIN_STEPS = [
+  { id: 'move', title: 'Move to the marker', hint: { kbm: 'W A S D to move', touch: 'Drag your left thumb to move', pad: 'Left stick to move' } },
+  { id: 'look', title: 'Look at the three signs', hint: { kbm: 'Move the mouse to look — click once to capture it', touch: 'Drag your right thumb to look', pad: 'Right stick to look' } },
+  { id: 'shoot', title: 'Knock down the three targets', hint: { kbm: 'Left click fires', touch: 'Press a fire button', pad: 'RT fires' } },
+  { id: 'ads', title: 'Down the sights: the two far targets', hint: { kbm: 'Hold right click to aim, then fire', touch: 'Tap ADS, then fire', pad: 'Hold LT to aim, RT to fire' } },
+  { id: 'reload', title: 'Reload', hint: { kbm: 'Press R', touch: 'Tap reload, or the ammo count', pad: 'Press X' } },
+  { id: 'sprint', title: 'Sprint to the marker in the square', hint: { kbm: 'Hold Shift while moving forward', touch: 'Push the stick all the way forward', pad: 'Click the left stick while moving' } },
+  { id: 'grenade', title: 'Frag the three targets', hint: { kbm: 'Press G to throw', touch: 'Tap the grenade button', pad: 'Press RB to throw' } },
+  { id: 'capture', title: 'Take the flag', hint: { kbm: 'Stand in its ring until it turns blue', touch: 'Stand in its ring until it turns blue', pad: 'Stand in its ring until it turns blue' } },
+];
+const RANGE = {   // metres
+  start: [48, 58.5], move: [48, 51], signs: [[42.5, 46], [48, 43.5], [53.5, 46]],
+  shoot: [[45.5, 41], [48, 41], [50.5, 41]], far: [[44.2, 28.6], [51.2, 28.6]], sprint: [48, 33],
+  frag: [[50.8, 21.4], [51.8, 20.6], [52.6, 21.4]], flag: [48, 38.5],
+};
+const inputKind = () => GPAD.lastInput === 'pad' ? 'pad' : isTouch ? 'touch' : 'kbm';
+function enterTraining() {
+  if (!VIEW.ready) { enterBattle(1); return; }   // enterBattle shows the loading card; the range opens from the menu again after
+  const keep = FORECAST[1];
+  enterBattle(1);
+  if (keep) FORECAST[1] = keep; else delete FORECAST[1];   // the range must not use up Miller Fields' forecast
+  state.training = { step: 0, t: 0, wait: 0, seen: [false, false, false], sprintT: 0, done: false };
+  state.tod = 1; state.weather = 'clear';
+  enemies.length = 0; state.spawnT = 1e9; state.enemyTotal = 1; state.enemyDown = 0; state.progress = 0;
+  mines = [];
+  obstacles = obstacles.filter(o => STATIC_COVER.has(o.kind) || !(o.x > 40 * PX && o.x < 56 * PX && o.y > 15 * PX && o.y < 62 * PX));   // nothing rolled onto the course
+  NAV.dirty = true; propsDirty = true;
+  setupObjectives([]);
+  soldiers = [soldiers[state.controlled]];
+  soldiers[0].slot = 0; state.controlled = 0;
+  const h = soldiers[0];
+  h.x = RANGE.start[0] * PX; h.y = RANGE.start[1] * PX; h.invuln = 1e9;
+  aim.yaw = 0; aim.pitch = 0; cam.yaw = 0; cam.snap = true;
+  document.body.classList.add('training');
+  supportsDirty = true;
+  if (VIEW.ready) { buildProps(); viewEnterBattle(); }
+  trainingStepBegin();
+}
+function exitTraining(toMap = true) {
+  if (!state.training) return;
+  state.training = null;
+  document.body.classList.remove('training');
+  hideModal();
+  if (toMap) showScreen('map');
+}
+function spawnTarget(xm, ym) {
+  enemies.push({ type: 'target', target: true, r: 12, col: '#8a8d86', dmg: 0, horse: false, ranged: 0, spotter: false, spotCd: 0, fireT: 0,
+    hp: 1, maxHp: 1, sp: 0, x: xm * PX, y: ym * PX, cd: 0, flash: 0, wob: 0, walk: 0, atk: 0, face: 1, aim: Math.PI / 2, down: 0, fold: 0, tac: 'hold', tacT: 1e9 });
+  return enemies[enemies.length - 1];
+}
+function trainingStepBegin() {
+  const T = state.training, step = TRAIN_STEPS[T.step], h = soldiers[0];
+  T.t = 0; T.sprintT = 0; T.fragDowns = 0; T.adsDowns = 0;
+  enemies.length = 0; grenades.length = 0;
+  if (step.id === 'shoot') RANGE.shoot.forEach(p => spawnTarget(p[0], p[1]));
+  if (step.id === 'ads') RANGE.far.forEach(p => spawnTarget(p[0], p[1]));
+  if (step.id === 'reload') { h.mag = Math.floor(magCap(h) / 2); h.reserve = Math.max(h.reserve, magCap(h) * 2); h.pistol = false; }
+  if (step.id === 'grenade') { RANGE.frag.forEach(p => spawnTarget(p[0], p[1])); h.frags = CFG.frags; }
+  if (step.id === 'capture') setupObjectives([{ name: 'Training flag', x: RANGE.flag[0], y: RANGE.flag[1], r: 4 }], { neutral: true, noDrain: true, speed: 1.5 });
+  else setupObjectives([]);
+  T.dirty = true;
+}
+function trainingMarker() {   // where this step wants you, if anywhere (sim px and radius)
+  const T = state.training, id = TRAIN_STEPS[T.step] && TRAIN_STEPS[T.step].id;
+  if (id === 'move') return { x: RANGE.move[0] * PX, y: RANGE.move[1] * PX, r: 1.6 * PX };
+  if (id === 'sprint') return { x: RANGE.sprint[0] * PX, y: RANGE.sprint[1] * PX, r: 1.8 * PX };
+  return null;
+}
+function updateTraining(dt) {
+  const T = state.training, h = soldiers[0];
+  if (!T || T.done || !h) return;
+  h.invuln = 1e9; h.hp = h.maxHp;
+  T.t += dt;
+  for (const e of enemies) if (e.target) e.fold = approach(e.fold, e.down ? 1 : 0, 5, dt);
+  if (T.wait > 0) { T.wait -= dt; if (T.wait <= 0) { T.step++; if (T.step >= TRAIN_STEPS.length) trainingComplete(); else trainingStepBegin(); } return; }
+  const id = TRAIN_STEPS[T.step].id;
+  let ok = false;
+  if (id === 'move' || id === 'sprint') {
+    const m = trainingMarker();
+    if (id === 'sprint' && h.sprinting) T.sprintT += dt;
+    ok = dist2(h.x, h.y, m.x, m.y) < m.r * m.r && (id === 'move' || T.sprintT >= 0.6);
+  } else if (id === 'look') {
+    RANGE.signs.forEach((p, i) => { const a = Math.atan2(p[0] * PX - h.x, -(p[1] * PX - h.y)); if (Math.abs(angWrap(a - aim.yaw)) < 0.1) { if (!T.seen[i]) { T.seen[i] = true; T.dirty = true; beep(1500, 0.05, 'square', 0.03); } } });
+    ok = T.seen.every(Boolean);
+  } else if (id === 'shoot') ok = enemies.length > 0 && enemies.every(e => e.down);
+  else if (id === 'ads') ok = T.adsDowns >= RANGE.far.length;
+  else if (id === 'reload') ok = h.reloadT > 0 || (T.t > 0.1 && h.mag >= magCap(h));
+  else if (id === 'grenade') {
+    ok = T.fragDowns >= 2;
+    if (!ok && h.frags <= 0 && !grenades.length) { T.refillT = (T.refillT || 0) + dt; if (T.refillT > 1) { h.frags = CFG.frags; T.refillT = 0; for (const e of enemies) e.down = 0; T.fragDowns = 0; } }
+  } else if (id === 'capture') ok = state.objs[0] && state.objs[0].owner === 'p';
+  if (ok) { T.wait = 0.8; T.dirty = true; beep(880, 0.08, 'square', 0.05); beep(1320, 0.14, 'square', 0.05, 0, 0.08); }
+}
+function targetHit(e, credit) {   // a steel target rings and folds; it does not die
+  if (e.down) return;
+  e.down = 1;
+  HITFX.hit = 0.14; HITFX.kill = 0.12;
+  beep(2400, 0.09, 'triangle', 0.05, -200); beep(3100, 0.07, 'sine', 0.03, 0, 0.02);
+  const T = state.training;
+  if (T) {
+    if (credit.wkey === 'frag') T.fragDowns = (T.fragDowns || 0) + 1;
+    else if (aim.ads) T.adsDowns = (T.adsDowns || 0) + 1;
+    T.dirty = true;
+  }
+}
+function trainingComplete() {
+  const T = state.training;
+  T.done = true;
+  meta.trained = true; saveMeta();
+  showModal(`
+    <div class="eyebrow">Basic training</div>
+    <h2>Ready</h2>
+    <p class="lede">You can move, look, shoot, aim, reload, sprint, throw a frag and take an objective. The Ninth Company is waiting.</p>
+    <button class="cta" id="mbtn">Deploy</button>
+    <button class="btn" id="mback">Back to the map</button>`);
+  $('mbtn').onclick = () => { exitTraining(); deploySelected(); };
+  $('mback').onclick = () => exitTraining();
+}
+function offerTraining() {   // a new campaign's first look at the map
+  if (meta.trained || state.training || screen !== 'map' || el.modal.style.display === 'flex') return;
+  showModal(`
+    <div class="eyebrow">Basic training</div>
+    <h2>First time?</h2>
+    <p class="lede">Two minutes at the firing range: moving, looking, shooting, sights, reloading, sprinting, grenades and objectives.</p>
+    <button class="cta" id="mbtn">Start training</button>
+    <button class="btn" id="mskip">Skip</button>`);
+  $('mbtn').onclick = () => { hideModal(); enterTraining(); };
+  $('mskip').onclick = () => { meta.trained = true; saveMeta(); hideModal(); };
+}
 // ============================================================ SAVE / LOAD
 function saveMeta() {
   try {
-    if (screen === 'battle') meta.terr[state.tid].progress = state.mode === 'cleared' ? meta.terr[state.tid].progress
+    if (screen === 'battle' && !state.training) meta.terr[state.tid].progress = state.mode === 'cleared' ? meta.terr[state.tid].progress
       : state.mode === 'failed' || state.mode === 'spectate' ? 0   // a lost front starts again from nothing, even if the page closes on the defeat screen
       : state.progress;
     localStorage.setItem(CFG.saveKey, JSON.stringify(meta));
@@ -3529,7 +3702,8 @@ function loadMeta() {
     const optsV = save.opts && save.opts.v;   // read the SAVED version: Object.assign fills v from the defaults
     meta.opts = Object.assign(freshOpts(), save.opts || {});
     if (!optsV) { meta.opts.v = 2; meta.opts.fpv = true; }   // first person is the default now
-    delete meta.opts.scheme;   // auto-fire is gone: a save that used it aims by hand now, in the view it had
+    delete meta.opts.scheme;
+    if (save.trained == null) meta.trained = true;   // a campaign from before the firing range existed: no first-run offer   // auto-fire is gone: a save that used it aims by hand now, in the view it had
     meta.attach = freshAttach();   // per-gun, so a save from before attachments (or with a gun missing) still gets every default
     for (const k in meta.attach) Object.assign(meta.attach[k], (save.attach || {})[k] || {});
     return;
@@ -3865,6 +4039,7 @@ function updateEnemies(dt) {
   tallyClaims();
   for (const e of enemies) {
     e.flash = Math.max(0, e.flash - dt);
+    if (e.target) continue;   // a range target stands where it was put
     e.cd -= dt; e.wob += dt * 6; e.atk = Math.max(0, e.atk - dt);
     e.supp = Math.max(0, (e.supp || 0) - dt * 0.6);
     if (e.relT > 0) e.relT -= dt;
@@ -4096,6 +4271,7 @@ function battleUpdate(dt) {
       }
     updateEnemies(wdt);
     updateObjectives(wdt);
+    if (state.training) updateTraining(wdt);
     updateBullets(wdt);
     updateShells(wdt);
     updateGrenades(wdt);
@@ -5500,7 +5676,23 @@ function gunLife(r, J, kind, rt, fired, own, wdt) {   // muzzle bloom, brass and
   r.lastRt = rt;
 }
 const ENEMY_MUZ = { ak: { y: 0.04, z: -0.63 }, pkm: { y: 0.03, z: -0.67 } };
+function drawTarget(e, set) {   // a steel plate on a stand, hinged at its foot, folding back when it rings
+  const X = e.x * XS, Z = e.y * XS, cp = VIEW.camera.position, yaw = Math.atan2(cp.x - X, cp.z - Z);
+  TMP.q.setFromEuler(TMP.e.set(0, yaw, 0, 'YXZ'));
+  TMP.m.compose(TMP.v.set(X, 0.14, Z), TMP.q, TMP.s.set(0.7, 0.28, 0.4)); set.metal.push(TMP.m, colorOf('#3f423e'));
+  TMP.q.setFromEuler(TMP.e.set(-e.fold * 1.4, yaw, 0, 'YXZ'));
+  const plate = e.down ? colorOf('#5e615b') : colorOf('#eef0e8');
+  TMP.v2.set(0, 0.5, 0).applyQuaternion(TMP.q);
+  TMP.m.compose(TMP.v.set(X + TMP.v2.x, 0.28 + TMP.v2.y, Z + TMP.v2.z), TMP.q, TMP.s.set(0.6, 0.86, 0.05)); VIEW.fx.flag.push(TMP.m, plate);
+  TMP.v2.set(0, 1.1, 0).applyQuaternion(TMP.q);
+  TMP.m.compose(TMP.v.set(X + TMP.v2.x, 0.28 + TMP.v2.y, Z + TMP.v2.z), TMP.q, TMP.s.set(0.32, 0.3, 0.05)); VIEW.fx.flag.push(TMP.m, plate);
+  TMP.v2.set(0, 0.56, 0.035).applyQuaternion(TMP.q);
+  TMP.m.compose(TMP.v.set(X + TMP.v2.x, 0.28 + TMP.v2.y, Z + TMP.v2.z), TMP.q, TMP.s.set(0.24, 0.24, 0.02)); VIEW.fx.flag.push(TMP.m, e.down ? colorOf('#7a4a30') : colorOf('#ff6b2c'));
+  TMP.q.identity();
+  decal(VIEW.fx.shadow, X, Z, 0.8, 0, WHITE, 0.02);
+}
 function drawEnemy(e, wdt, set) {
+  if (e.target) { drawTarget(e, set); return; }
   const r = recFor(e), J = r.J;
   if (!r.pal) r.pal = enemyPalette(e.col, !!e.boss);
   const look = ENEMY_LOOK[e.type] || ENEMY_LOOK.grunt, now = performance.now();
@@ -5695,7 +5887,7 @@ function buildFxBatches() {
     bloom: new Batch(plane, new THREE.MeshBasicMaterial({ map: T.bloom, transparent: true, opacity: 0.62, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }), 96, 6),
     brass: new Batch(VIEW.kit.cyl, VIEW.mats.shaded, 200),
     objRing: new Batch(plane, decalMat(null, { opacity: 0.55 }), 160, 1),
-    flag: new Batch(box, new THREE.MeshLambertMaterial(), 12),
+    flag: new Batch(box, new THREE.MeshLambertMaterial(), 40),
   };
 }
 const FX_FRAME = ['shadow', 'crater', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass', 'objRing', 'flag'];
@@ -5821,6 +6013,24 @@ function drawFx() {
       TMP.qd.setFromEuler(TMP.e);
       TMP.md.compose(TMP.vd.set(X + Math.cos(a) * R, 0.04, Z + Math.sin(a) * R), TMP.qd, TMP.sd.set(TAU * R / segs * 0.9, 0.16, 1));
       F.objRing.push(TMP.md, col);
+    }
+  }
+  if (state.training) {   // the range: the marker this step wants you at, and the three signs to look at
+    const m = trainingMarker(), now2 = now / 1000;
+    if (m) {
+      const X = m.x * XS, Z = m.y * XS, R = m.r * XS;
+      for (let k = 0; k < 24; k += 2) {
+        const a = (k + 0.5) / 24 * TAU + now2 * 0.6;
+        TMP.e.set(-Math.PI / 2, -a - Math.PI / 2, 0, 'YXZ'); TMP.qd.setFromEuler(TMP.e);
+        TMP.md.compose(TMP.vd.set(X + Math.cos(a) * R, 0.05, Z + Math.sin(a) * R), TMP.qd, TMP.sd.set(TAU * R / 24 * 0.9, 0.14, 1));
+        F.objRing.push(TMP.md, colorOf('#ff6b2c'));
+      }
+      TMP.m.compose(TMP.v.set(X, 1.6 + Math.sin(now2 * 3) * 0.12, Z), TMP.q, TMP.s.set(0.22, 0.22, 0.22)); F.spark.push(TMP.m, colorOf('#ff6b2c'));
+    }
+    for (const [sx, sy] of RANGE.signs) {
+      const X = sx * PX * XS, Z = sy * PX * XS;
+      TMP.m.compose(TMP.v.set(X, 0.9, Z), TMP.q, TMP.s.set(0.08, 1.8, 0.08)); D.metal.push(TMP.m, colorOf('#5a5c58'));
+      TMP.m.compose(TMP.v.set(X, 1.95, Z), TMP.q, TMP.s.set(0.9, 0.6, 0.06)); F.flag.push(TMP.m, colorOf('#e8e2cf'));
     }
   }
   for (const mk of markers) {   // battlefield cross where soldiers fell: rifle planted muzzle-down, helmet on the stock, boots in front
@@ -7007,11 +7217,13 @@ function updateOverlays(dt) {
     if (sp !== OV.joySprint) { OV.joySprint = sp; jb.classList.toggle('sprint', sp); }
   } else hideEl(jb);
   {   // objective letters over each flag, through fog and walls
-    const objs = state.objs || [];
+    const T = state.training, signs = T && TRAIN_STEPS[T.step] && TRAIN_STEPS[T.step].id === 'look';
+    const objs = signs ? RANGE.signs.map((p, i) => ({ x: p[0] * PX, y: p[1] * PX, letter: String(i + 1), owner: T.seen[i] ? 'p' : null })) : (state.objs || []);
     for (let i = 0; i < 3; i++) {
       const tag = (OV.otag || (OV.otag = []))[i] || (OV.otag[i] = document.getElementById('otag' + i)), o = objs[i];
-      if (o && state.mode !== 'failed' && toScreen(o.x, o.y, 4.3 / ZS) && SCR.x > -20 && SCR.x < innerWidth + 20 && SCR.y > -20 && SCR.y < innerHeight + 20) {
+      if (o && state.mode !== 'failed' && toScreen(o.x, o.y, (signs ? 2.7 : 4.3) / ZS) && SCR.x > -20 && SCR.x < innerWidth + 20 && SCR.y > -20 && SCR.y < innerHeight + 20) {
         if (tag.style.display !== 'grid') tag.style.display = 'grid';
+        if (tag.textContent !== o.letter) tag.textContent = o.letter;
         tag.style.transform = `translate3d(${SCR.x.toFixed(1)}px,${SCR.y.toFixed(1)}px,0)`;
         const c = o.owner === 'p' ? 'var(--friend)' : o.owner === 'e' ? 'var(--foe)' : '#c9d1dc';
         if (tag.dataset.c !== c) { tag.dataset.c = c; tag.style.setProperty('--c', c); }
@@ -7325,6 +7537,16 @@ function updateBattleHud() {
     const co = $('callout'), cl = state.callout;
     const ccls = 'hud' + (cl ? ' on ' + cl.side : '');   // keep .hud: it is what pins the tag to the screen
     if (co.className !== ccls) { co.className = ccls; if (cl) co.textContent = (cl.side === 'behind' ? 'Behind' : 'Flank · ' + cl.side) + ' · ' + cl.dist + ' m'; }
+    const T = state.training, tb = $('trainbox');
+    if (T && (T.dirty || OV.trainKind !== inputKind())) {
+      T.dirty = false; OV.trainKind = inputKind();
+      const st = TRAIN_STEPS[Math.min(T.step, TRAIN_STEPS.length - 1)];
+      $('tbStep').textContent = `Basic training · ${Math.min(T.step + 1, TRAIN_STEPS.length)} / ${TRAIN_STEPS.length}`;
+      $('tbTitle').textContent = st.title + (st.id === 'look' ? ` (${T.seen.filter(Boolean).length}/3)` : '');
+      $('tbHint').textContent = st.hint[OV.trainKind];
+      $('tbDots').innerHTML = TRAIN_STEPS.map((_, i) => `<i class="${i < T.step || (i === T.step && T.wait > 0) ? 'done' : i === T.step ? 'now' : ''}"></i>`).join('');
+      tb.classList.toggle('ok', T.wait > 0);
+    }
     const fr = c.frags || 0;
     if (fr !== OV.frags) { OV.frags = fr; $('nadecnt').textContent = fr; $('amfragn').textContent = fr; $('nadebtn').classList.toggle('empty', !fr); $('amfrag').classList.toggle('empty', !fr); }
     if (c.reloadT > 0) $('ambar').firstChild.style.width = (1 - c.reloadT / c.reloadDur) * 100 + '%';
@@ -7373,6 +7595,7 @@ function drawMinimap() {
     g.fillStyle = col; g.fillText(o.letter, X(o.x), Y(o.y) + 0.5);
   }
   for (const e of enemies) {   // only what you could plausibly know about: close, or shooting
+    if (e.target) continue;
     const d = Math.hypot(e.x - s.x, e.y - s.y);
     if (d > 950 && !(e.fireT < 0.5 && d < 1600)) continue;
     g.fillStyle = e.boss ? '#ff8a3d' : '#ff4d3d';
@@ -7937,7 +8160,9 @@ $('adsbtn').addEventListener('pointerdown', e => { e.preventDefault(); aim.ads =
 $('reloadbtn').addEventListener('pointerdown', e => { e.preventDefault(); heroReload(); });
 $('tosettings').onclick = showSettings;
 $('tocfg').onclick = showSettings;
-$('tomap').onclick = () => { if (state.mode === 'play' || state.mode === 'failed') { hideModal(); exitBattle(); } };
+$('tomap').onclick = () => { if (state.training) { exitTraining(); return; } if (state.mode === 'play' || state.mode === 'failed') { hideModal(); exitBattle(); } };
+$('torange').onclick = () => enterTraining();
+$('tbSkip').onclick = () => { meta.trained = true; saveMeta(); exitTraining(); };
 
 // ============================================================ MAIN LOOP
 function tick(dt) {
@@ -7998,6 +8223,7 @@ loadThree().then(() => { const g = document.getElementById('bootgl'); if (g) g.i
     clearInterval(iv);
     bootEl.classList.add('off');
     setTimeout(() => bootEl.remove(), 600);
+    if (!loadedFromSave) setTimeout(offerTraining, 700);   // a new campaign: offer the firing range first
   }
   bootEl.addEventListener('click', finish);
   window.addEventListener('keydown', finish, { once: true });

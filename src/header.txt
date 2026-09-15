@@ -27,6 +27,16 @@
   Rumble follows the Vibration setting. The HUD hint shows controller buttons whenever the controller was the last
   thing touched, and a key hands the prompts back. Aim assist stays third person only.
 
+  BASIC TRAINING — the firing range, run up Main Street from the FOB gate (RANGE, TRAIN_STEPS): move to a marker,
+  look at three signs, knock down three pop-up steel targets at 10 m, two at 22 m down the sights, reload, sprint to
+  the square, frag a cluster of three, and take a training flag (a 4 m ring, neutral, quicker to take). Each step's
+  card says what to do in the words of the input you last used — keyboard and mouse, touch, or controller — with
+  progress dots, a check when it is done, and SKIP. Targets ring and fold when hit and never die (no kills, no
+  killstreaks); there are no enemy waves, no reserves, no Warlord, nothing can hurt you, and nothing is saved to a
+  sector. A new campaign is offered it on first launch (Skip remembers the answer; a save from before the range
+  never asks), and the range button beside the start menu's settings opens it any time. The finish card deploys to
+  the selected sector or goes back to the map; ◂ MAP leaves it at any point.
+
   ORIENTATION — on a phone or tablet the game plays in landscape only: held upright it shows a rotate
   prompt and the simulation stops dead until you turn it, so nothing happens while you cannot see it.
 
@@ -266,7 +276,7 @@
   pulse for attackable, a dim red diamond for out of reach, a double diamond for the capital, and a progress ring
   for a sector partly taken. Routes: blue supply lines behind the front, orange arrows along each axis of advance.
   A reticle locks onto the selection; a tap anywhere in a region selects it; ←/→ cycle the attackable sectors and
-  Enter deploys. The briefing: theater progress in 13 segments, the sector's status chip, number and grid
+  Enter deploys. The briefing: theater progress in 13 segments with the firing range and settings buttons, the sector's status chip, number and grid
   reference, its name, THREAT (tier and pips), RESERVES (what is left of the enemy pool), FORECAST, a progress bar
   when partly taken, one line of orders naming the sector's objectives (or which sectors to take first), DEPLOY (RESUME when partly taken) naming
   the sector, your kit, and the squad of four with roles. Opening the map plays its entrance (land, sectors, the

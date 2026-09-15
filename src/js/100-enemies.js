@@ -86,6 +86,7 @@ function pickType() {
   return 'grunt';
 }
 function updateWaves(dt) {   // four a side: whenever the enemy is short-handed and has tickets left, someone walks on
+  if (state.training) return;   // the firing range has no enemy
   state.wave = 1 + Math.floor(state.progress / 12);   // the enemy's mix toughens as its tickets run down
   const onField = enemies.reduce((n, e) => n + (e.boss ? 0 : 1), 0);
   const unspent = state.enemyTotal - state.enemyDown - onField - (state.bossRef ? 1 : 0);   // the Warlord's ticket is its own, not a spare

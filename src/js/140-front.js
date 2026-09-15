@@ -11,6 +11,7 @@ function enterBattle(tid) {
     return;
   }
   state.tid = tid;
+  if (state.training) { state.training = null; document.body.classList.remove('training'); }
   const t = TERRITORIES[tid];
   state.tier = effTier(t);
   state.progress = meta.terr[tid].progress;

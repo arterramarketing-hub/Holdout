@@ -22,6 +22,7 @@
   </div>
   <div class="hud" id="objhud"><div class="obj" id="obj0"><b>A</b><i></i></div><div class="obj" id="obj1"><b>B</b><i></i></div><div class="obj" id="obj2"><b>C</b><i></i></div><div id="objmsg"></div></div>
   <div class="hud" id="callout"></div>
+  <div class="hud" id="trainbox"><div class="tb-top"><span id="tbStep">Basic training · 1 / 8</span><button id="tbSkip">Skip</button></div><div class="tb-title" id="tbTitle"></div><div class="tb-hint" id="tbHint"></div><div class="tb-dots" id="tbDots"></div></div>
   <div class="hud" id="objtags"><i id="otag0">A</i><i id="otag1">B</i><i id="otag2">C</i></div>
   <div class="hud" id="bossbar"><div id="bossname">WARLORD</div><div id="bosshp"><i id="bosshpfill"></i></div></div>
   <canvas class="hud" id="minimap" width="150" height="120"></canvas>
@@ -54,7 +55,8 @@
     <aside class="brief">
       <header class="br-head">
         <div class="br-theater"><span class="br-tag" id="brTheater">Theater I</span><span class="br-held" id="brHeld">1 / 13 held</span></div>
-        <button class="br-cog" id="tosettings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 2.8v3.1M12 18.1v3.1M2.8 12h3.1M18.1 12h3.1M5.5 5.5l2.2 2.2M16.3 16.3l2.2 2.2M5.5 18.5l2.2-2.2M16.3 7.7l2.2-2.2"/></svg></button>
+        <div class="br-tools"><button class="br-cog" id="torange" aria-label="Firing range" title="Firing range"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 1.8v4M12 18.2v4M1.8 12h4M18.2 12h4"/></svg></button>
+        <button class="br-cog" id="tosettings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 2.8v3.1M12 18.1v3.1M2.8 12h3.1M18.1 12h3.1M5.5 5.5l2.2 2.2M16.3 16.3l2.2 2.2M5.5 18.5l2.2-2.2M16.3 7.7l2.2-2.2"/></svg></button></div>
         <div class="br-segs" id="brSegs" aria-hidden="true"></div>
       </header>
       <section class="br-sector" aria-live="polite">
