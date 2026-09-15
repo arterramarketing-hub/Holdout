@@ -1,63 +1,68 @@
 <!DOCTYPE html>
 <!--
-  HOLDOUT — single-file browser game (v2)
+  HOLDOUT — single-file browser game
 
-  ASSUMPTIONS / TUNING VALUES (all numbers live in CFG / WEAPONS / SUPPORTS / INVESTMENTS / TERRITORIES below):
+  TUNING VALUES — every number lives in a table below: CFG, WEAPONS, SIGHTS, FALLOFF, ETYPES, COVER_KINDS, TOWN,
+  SPAWN_ZONES, TERRITORIES, KILLSTREAKS, MOODS.
 
-  CAMERA — real 3D (three.js r186) intimate chase cam: 4.2 m behind and 2.0 m above the controlled
-  soldier's right shoulder, looking 5 m ahead; portrait phones pull back to 5.6 m / 2.6 m / FOV 72.
-  Yaw faces the enemy front and leans 35% toward the nearest threat within ±60°. Movement is
-  camera-relative. Auto-fire (controlled soldier) picks the nearest enemy within ±70° of the camera,
-  else anything within 45% of weapon range in any direction. Death handoff = 0.8 s letterboxed cut:
-  low orbit around the fallen body, then a sweep to the next soldier. Red arrows mark close enemies
-  beside or behind you. The chase camera pulls in front of house walls rather than clipping through.
+  CAMERA — real 3D (three.js r186). First person is the default (see CONTROLS). The third-person chase cam sits
+  4.2 m behind and 2.0 m above the controlled soldier's right shoulder, looking 5 m ahead; a desktop window taller
+  than it is wide pulls back to 5.6 m / 2.6 m / FOV 72. With manual aim you steer it yourself. With auto-fire it
+  faces north and leans 35% toward the nearest threat within ±60°, Q/E nudge it ±25° for 2 s, and a lock-on
+  swings it to the target. Movement is camera-relative. Auto-fire (controlled soldier) picks the nearest enemy
+  within ±70° of the camera, else anything within 45% of weapon range in any direction. Red arrows mark close
+  enemies beside or behind you. The chase camera pulls in front of house walls rather than clipping through.
 
   ORIENTATION — on a phone or tablet the game plays in landscape only: held upright it shows a rotate
   prompt and the simulation stops dead until you turn it, so nothing happens while you cannot see it.
 
-  CONTROLS — first person with manual fire is the DEFAULT (existing saves are migrated to it once).
-  Aim assist does not apply in first person and the setting is not offered there — the view is yours to
-  aim. Two schemes, switchable any time in SETTINGS (map screen, the cog in battle, or O): AUTO-FIRE
-  keeps the soldier picking targets and shooting for you (Tab / right-click / tap to lock on), or MANUAL
-  hands you the crosshair — the mouse aims (click to capture the pointer, Esc frees it), left mouse fires,
-  right mouse aims down sights; on a phone the right side of the screen looks, a FIRE button shoots (drag
-  off it and you keep aiming) and ADS toggles sights. Aim assist (on by default, manual only) pulls the
-  crosshair toward a target already under it and slows the look 35% while it is there; it never fires for
-  you. ADS halves your spread, narrows the FOV to 72% and slows you to 70% speed. V switches between third
-  and first person: first person puts the camera at the soldier's eyes with a weapon viewmodel (bob, sway,
-  recoil kick, the full reload, muzzle flash, the weapon pulled in against walls) and drops the view when
-  you crouch in cover; the death and handoff cameras still play in third person.
+  CONTROLS — first person with manual fire is the DEFAULT (existing saves are migrated to it once). Two schemes,
+  switchable any time in SETTINGS (map screen, the cog in battle, or O): AUTO-FIRE keeps the soldier picking
+  targets and shooting for you (Tab / right-click / tap to lock on), or MANUAL hands you the crosshair — the mouse
+  aims (click to capture the pointer, Esc frees it), left mouse fires, right mouse aims down sights; on a phone
+  the right side of the screen looks, a FIRE button shoots (drag off it and you keep aiming) and ADS toggles
+  sights. First person is always manual. Aim assist (on by default; manual aim in third person only — first
+  person is yours to aim) pulls the crosshair toward a target already under it and slows the look 35% while it
+  is there; it never fires for you. Down the sights your cone shrinks to a quarter of the hip cone (a fifth or
+  less through the ACOG or scope), the view zooms by the sight's magnification, and you move at 70% speed.
+  V switches between third and first person: first person puts the camera at the soldier's eyes with a weapon
+  viewmodel (bob, sway, recoil kick, the full reload, muzzle bloom, the weapon pulled in against walls); the
+  death camera still plays in third person. Switching apps, a notification or a lost touch releases every held
+  input, so the view never keeps turning on its own.
 
   HUD EXTRAS — a minimap (top-left) draws the town, your squad, pickups and any enemy within 24 m or
   firing within 40 m, with your facing as an arrow; damage-direction arcs point back at whatever hit you;
   a kill feed lists kills and losses; short vibrations on hits, kills and your own death where the browser
   supports them. All of those, plus look sensitivity, field of view (-10 to +18) and sound, are settings.
 
-  DEATH — when your soldier falls you watch it happen: a 1.9 s death camera at 30% world speed easing
-  around and down to the body, the mix going muffled behind a pulse, then the 0.8 s handoff sweep to the
-  next soldier. Bodies take 1.6 s to drop (enemies 1.1 s) in three beats — hit jolt, knees, gravity —
-  falling backward when shot from the front and forward when shot in the back, and the weapon lands on
-  the ground beside them and stays there.
+  DEATH — when your soldier falls you watch it happen: a 1.9 s letterboxed death camera, the world slowed to 30%
+  for most of it, easing around and down to the body with the mix muffled behind a pulse; then a reinforcement
+  puts you back on the line. Bodies take 1.6 s to drop (enemies 1.1 s) in three beats — hit jolt, knees,
+  gravity — falling backward when shot from the front and forward when shot in the back, and the weapon lands
+  on the ground beside them and stays there.
 
-  REINFORCEMENTS — you are one soldier and you stay that soldier. Die and you watch it happen, then a
-  reinforcement puts you back on the line (CFG.respawn 3s); the squad shares one pool of CFG.tickets (20)
-  and every death on your side spends one, yours and theirs alike. AI squadmates walk back on by
-  themselves. When the pool is empty the next death is final and the front fails. No body-swapping.
+  REINFORCEMENTS — you are one soldier and you stay that soldier. Die and you watch it happen, then you come back
+  at a reinforcement spawn as the death camera ends; squadmates walk back on by themselves after CFG.respawn
+  (3 s). The squad shares one pool of CFG.tickets (20) and every death on your side spends one, yours and theirs
+  alike. Once the pool is empty, squadmates who fall stay down and your own next death loses the front (so does
+  losing all four). No body-swapping.
 
   KILLSTREAKS — supports are earned, not bought: 4 kills without dying gives INCENDIARY, 7 ARTILLERY,
   10 SUPPLY DROP (KILLSTREAKS table). Dying resets the count. Nothing is purchased anywhere in the game:
   there is no currency, no armory, no investments, no commendations, and nothing progresses while you are
-  away — the map is a level select and the only thing it tracks is which territories you hold.
+  away — the map is a level select and the only thing it tracks is which territories you hold. Holding one
+  grants nothing but the ground: there are no passive bonuses.
 
-  FOUR AGAINST EIGHT — you and three squadmates against eight enemies on the field at once. The enemy has its
-  own ticket pool (CFG.enemyTickets 44 + 8 per tier): every enemy death spends one, a new enemy walks on 1-2 s
-  after one falls while tickets remain, and the front is won when the pool is spent (the progress bar is
-  exactly that). The Warlord still arrives at 90%, and killing it breaks what is left of them.
+  FOUR AGAINST EIGHT — you and three squadmates against up to eight enemies on the field at once. The enemy has its
+  own ticket pool (CFG.enemyTickets 44 + 8 per tier): every enemy death spends one, a new enemy walks on 1-2 s after
+  one falls while tickets remain, and the front is won when the pool is spent (the progress bar is exactly that).
+  The Warlord arrives at 90%, and killing it breaks what is left of them. A front you walk away from resumes where
+  you left it; a lost front starts again from 0%.
 
-  SPAWN ZONES — no front line. Twelve dedicated zones sit in the open ground of the streets and alleys
-  (SPAWN_ZONES). An enemy walks on at the zone furthest from your squad and out of its sight, never within
-  ~16 m of it and never the zone used a moment ago; your reinforcements come back far from the enemy and
-  near a teammate, and the FOB is yours alone. Only the opening is a standoff: you start at the FOB.
+  SPAWN ZONES — no front line. Fifteen zones sit in the open ground of the streets and yards (SPAWN_ZONES), and
+  the FOB is your squad's alone. An enemy walks on at a zone far from your squad and preferably out of its sight,
+  never within ~16 m of it and rarely the zone used a moment ago; your reinforcements come back far from the
+  enemy and near a teammate, favouring the FOB. Only the opening is a standoff: you start at the FOB.
 
   SQUAD ROLES — your three do not trail you. Each fights its own nearest enemy in a fixed role: POINT closes
   to 60% of its range, FLANK swings wide to one side, OVERWATCH holds at the edge of its range. Spots are
@@ -78,10 +83,9 @@
   crosshair steps aside. Magnified optics add a DOM window (#sight) whose radius is computed from the
   eyepiece ring's real size at that relief, with the chevron or crosshair drawn on top; the red dot is a
   DOM dot glowing inside its 3D housing. The muzzle flash and tracers start at the model's own barrel
-  tip (GUN_MUZ). The only things
-  that move squad damage are LIVE-FIRE TRAINING (+8%/level) and the Korvan Ridge perk (+8%). Sniper
-  pierces up to 2 targets. Rockets explode (r70, no friendly fire from your own rockets). AI squadmates
-  fire 2.6x slower than the controlled soldier.
+  tip (GUN_MUZ). Nothing changes squad damage: no upgrades, no perks. Sniper pierces up to 2 targets.
+  Rockets explode (r70, no friendly fire from your own rockets). AI squadmates fire 2.6x slower than the
+  controlled soldier.
 
   DAMAGE — riflemen and gunners 3 HP, runners 2, raiders 4, breachers 9; M4A1 1.05, UMP45 0.85, SAW 1.0,
   Intervention 4, rocket 3 (blast). So a rifleman takes 3 M4 rounds, 4 from the UMP45 up close and 5 at
@@ -101,17 +105,13 @@
   round strikes (the top fifth of the body, near its middle). Squadmates and enemies keep level fire and the
   probabilistic cover rule below.
 
-  HEADSHOTS (squad fire) — the fight is simulated top-down, so a target is a circle and its head is the narrow
-  column at the middle of it: a round whose line passes within ~0.1 m of the target's centre (0.15 m
-  on a breacher, 0.22 m on the Warlord) can take the head for CFG.headshotMul (2x) damage — one shot
-  for a rifleman. Measured perpendicular to the shot, so it tracks where you actually aimed rather
-  than where the round happened to be sampled. Being in that column is necessary but not sufficient:
-  nothing in the simulation tracks how high up the body a round struck, so that is rolled at
-  CFG.headshotChance (35%) — your aim decides whether a headshot is possible, the roll decides
-  whether it happened. Aiming down the sights halves your spread, so far more of your rounds are in
-  the column: roughly 35% of ADS rounds land a headshot up close against 18% from the hip. Squad fire only; explosions never headshot, and enemy rounds have no
-  headshot, so nothing can one-shot your soldiers out of nowhere. A headshot gives a sharper
-  hitmarker (gold), a harder buzz, a higher spray and an HS tag in the kill feed.
+  HEADSHOTS (squadmates, and your rounds on auto-fire) — these rounds fly level, so a target is a circle and its
+  head is the narrow column at the middle of it: a round whose line passes within ~0.1 m of the target's centre
+  (0.15 m on a breacher, 0.22 m on the Warlord) can take the head for CFG.headshotMul (2x) damage. Measured
+  perpendicular to the shot, so it tracks where the round was aimed. Being in that column is necessary but not
+  sufficient: a level round has no height, so the rest is rolled at CFG.headshotChance (35%). Explosions never
+  headshot, and enemy rounds have no headshot, so nothing can one-shot your soldiers out of nowhere. A headshot
+  gives a sharper hitmarker (gold), a harder buzz, a higher spray and an HS tag in the kill feed.
 
   AMMO — magazines are finite: UMP45 32, M4A1 30, SAW 100, Intervention 5, Rocket 1 (extended mags
   48 / 45 / 200 / 8), with 2-6 spare mags each.
@@ -125,52 +125,40 @@
   (3 enemy / 1.5 soldier dmg). There is no enemy bombardment: no mortars, no spotters calling them in, and
   no distant artillery in the ambience.
 
-  ENEMIES — rifleman 2HP (330 range, 2–3 round bursts of 0.5 dmg), runner 1HP, breacher 6HP/2dmg (wave 3+),
-  ATV raider 3HP/2dmg (tier 2+/wave 5+),
-  PKM gunner 2HP (tier 2+/wave 2+: 380 range, 4–7 round bursts). Tier scaling: +20% HP, +4% speed per
-  tier. (The radio spotter still has a model but is no longer spawned: all it did was call mortars.)
+  ENEMIES (ETYPES) — rifleman 3 HP (330 range, 2–3 round bursts of 0.5 dmg), runner 2 HP / 1 dmg melee (wave 2+),
+  breacher 9 HP / 2 dmg behind a riot shield that soaks 70% of frontal fire (wave 3+), ATV raider 4 HP / 2 dmg
+  (tier 2+ or wave 5+), PKM gunner 3 HP / 1 dmg (tier 2+ or wave 2+: 380 range, 4–7 round bursts). Each tier adds
+  12% damage and 4% speed; health never scales. The radio spotter still has a model but is not spawned.
 
-  BOSS — at 90% front progress a WARLORD spawns (60 HP +35%/tier, HUD health bar) and gates progress
-  at 99% until killed. Phases by HP: >66% melee brute; 66-33% summons 3 grunts every 8s; <33% enrages
-  (+45% speed, 10-bullet radial burst every 5s). Killing it completes the front (+50*tier REQ).
-  Offline AFK conquest skips the boss on purpose (idle stays generous).
+  BOSS — at 90% front progress a WARLORD spawns (60 HP +35%/tier, HUD health bar) and holds progress at 99% until
+  killed. Phases by HP: above 66% it fights in melee; from 66% to 33% it also summons up to 3 riflemen every 8 s,
+  never taking the field past eight besides itself; under 33% it enrages (+45% speed, a 10-round radial burst
+  every 5 s). Killing it wins the front.
 
   TOWN & COVER — Valmont, a fixed 96 x 72 m mountain town built out of places (TOWN): the RAIL YARD (station,
   platform, freight wagons on two tracks, water tower), the MILL YARD (warehouse, shipping containers, log
   piles), the CHURCH SQUARE (church and 19 m bell tower, fountain, war memorial, café tables), the MARKET
   (stalls, a produce van), the GAS STATION (four pumps that explode, a shop, a fuel tanker that makes a very
   big bang), the CEMETERY (chapel, gravestones, hedges, trees), the BUILDING SITE (a bare frame on twelve
-  columns under a crane, gravel mounds, a mixer, a site fence), the FOB (HESCO with gates, a sandbag ring,
-  tents) and the MOTOR POOL (trucks), strung along Main Street (a burnt-out bus in it), a cross street and a
-  south road. Buildings, wagons and containers are solid with real heights; fixed cover is always there, and
-  about fifty slots roll fresh cover each battle. A wall down each side, a fence and closed gate across the
+  columns under a crane, gravel mounds, a mixer, a site fence), the FOB (HESCO with gates, a sandbag emplacement
+  open at its corners, tents) and the MOTOR POOL (trucks), strung along Main Street (a burnt-out bus in it), a
+  cross street and a south road. Buildings, wagons and containers are solid with real heights; fixed cover is
+  always there, and 55 slots roll fresh cover each battle. A wall down each side, a fence and closed gate across the
   pass road, and HESCO to the south stand exactly on the edge of play, so you can walk up to them.
-  Cover stops 35-95% of rounds (per kind) and takes their damage; blasts damage all cover in range. A unit hugging cover or a wall
-  (within 18 of its edge) takes 50% (soldiers) / 35% (enemies) less ranged damage and fires over its
-  own cover. Melee ignores cover. The HUD shows "IN COVER" on your soldier panel.
+  Cover stops 35-95% of level rounds (per kind) and takes their damage; blasts damage all cover in range. A unit
+  hugging cover or a wall (within 18 px of its edge) takes 50% (soldiers) / 35% (enemies) less damage from level
+  rounds and fires over its own cover; your manually aimed rounds meet cover as geometry instead of a discount.
+  Melee ignores cover.
 
-  TACTICS — everyone paths around buildings on a 1 m A* grid. Riflemen and PKM gunners bound to the free
-  cover nearest a point at 70% / 85% of their range (offset toward a flank), hold 2.6–5 s firing bursts,
-  get pinned when rounds crack within 1.5 m (suppression slows them and spoils their aim), and fall back
-  when under 45% HP. Runners flank 13 m wide down side streets, breachers' riot shields cut frontal
-  damage to 30%, spotters hide ~15 m back. The squad pushes past you toward the nearest enemy, fanned
-  ±7.5 m, cover to cover. Your soldier latches onto cover or walls it walks into, slides to the nearest
-  cover facing the threat after 0.2 s standing still, and crouches there, popping up to shoot. SPACE /
-  A dives up to 9.5 m to the best cover in your movement direction (70% less damage mid-dive, 0.8 s
-  cooldown), or rolls 4 m when there is none.
+  TACTICS — everyone paths around buildings and cover on a 1 m A* grid. Riflemen and PKM gunners bound to the free
+  cover nearest a point at 70% / 85% of their range (offset toward a flank), hold 2.6–5 s firing bursts, get
+  pinned when rounds crack within 1.5 m (suppression slows them and spoils their aim), and fall back when under
+  45% HP. Runners flank 13 m wide down side streets, and breachers come straight in behind their shields. Your
+  own soldier goes exactly where you move it: nothing latches onto cover or crouches for you.
 
-  TERRITORY PERKS — every non-HQ territory grants a squad passive while held (see PERKS map): income,
-  prices, regen, damage, mortar delay, speed, range, support power, +1 HP, fire rate, AFK rate, REQ.
-
-  COUNTERATTACKS — while away, if you hold 3+ territories, a frontier territory (owned, touching enemy
-  land) can fall: chance = min(30%, 5%/hr). It flips back to enemy at 60% progress (cheap to retake).
-  At most one per absence; HQ never falls.
-
-  RANKS & MEMORIAL — soldiers track kills (PVT/CPL 25/SGT 75/LT 150/CPT 300/MAJ 500); every death is
-  recorded on the Memorial screen (name, rank, kills, front, theater; last 300 kept).
-
-  NO DIALOGUE — there is no radio chatter, no comm box, no personalities and no campaign story text.
-  Soldiers keep names (the kill feed uses them on desktop) and nothing else talks.
+  NO DIALOGUE — there is no radio chatter, no comm box and no personalities. Soldiers keep names (the kill feed
+  uses them on desktop) and nothing else talks. The one story beat left is CPL Dana Wren joining the squad when
+  you take territory 7 in the first theater.
 
   TOUCH CONTROLS — Call of Duty Mobile's layout and proportions (both triggers marked with a round, sights
   marked ADS): left thumb moves, right thumb looks, and
@@ -180,10 +168,9 @@
   corner under the right thumb, ADS above-right of it, reload to its left, the left trigger above the
   left thumb, and the corner is left clear for the ammo count. Reload outlines red under a quarter mag.
 
-  MAP — 13 hand-authored territories in a Risk-style adjacency graph; attack any enemy territory adjacent
-  to an owned one. Conquering flips it and adds its income. Conquering everything starts a new "theater":
-  map resets (HQ kept), enemy tiers +2, income x1.5 per theater. Front Failed = reinforcements (3s fake ad,
-  3 fresh recruits) and the front restarts at 0%.
+  MAP — 13 hand-authored territories in a Risk-style adjacency graph; attack any enemy territory next to one you
+  hold. Taking one flips it to you, and that is all it does. Taking them all starts a new theater: the map resets
+  (HQ kept) and every enemy tier rises by 2.
 
   N64 LOOK — three.js loads from jsdelivr at boot (the map works before it arrives; DEPLOY waits).
   Output is N64-faithful: the scene renders at 480+ lines (the N64 hi-res mode) on the short side into a
@@ -196,10 +183,8 @@
   SMGs, belt-fed LMGs, anti-materiel sniper rifles and RPGs, against a paramilitary force in
   balaclavas, goggles and chest rigs carrying AKs and PKMs. All textures are hand-painted on canvases
   at 4x and shrunk to 64 px cells; every piece carries baked vertex shading. The battlefield is
-  a mountain town (see TOWN & COVER): limewashed houses with shuttered windows and slate roofs over
-  cobbled streets and a paved square, a church and chalets on the slopes, a HESCO checkpoint and FOB
-  behind the squad, burnt-out cars on the road down from the pass, snow-capped ranges, painted clouds. Every character and settled corpse draws through shared instance
-  batches. ?fps=1 shows fps / draw calls.
+  Valmont (see TOWN & COVER) under snow-capped ranges and painted clouds. Every character and settled
+  corpse draws through shared instance batches. ?fps=1 shows fps / draw calls.
 
   Z-TARGETING — Tab or right-click (desktop), a quick tap on an enemy or the ◎ LOCK button (touch; hold
   to release), Esc to release. Pressing again cycles targets (ahead-of-camera and close first; the
@@ -210,21 +195,20 @@
   white for a hit, red for a kill, longer for a headshot.
   Q/E nudge the camera ±25° for 2 s.
 
-  PHASE 2 VIEW — every enemy type has its own model (knit-cap knife runner, breacher with riot shield
-  and sledgehammer, kneeling PKM gunner, radio spotter with binoculars, machete raider on a quad bike,
-  and the Warlord as a bomb-suit juggernaut with a minigun whose armour and visor heat up in later
-  phases). Warlord arrival: 1.9 s letterboxed hero shot + OoT-style title card with an epithet, world
-  at 30%. Cover pieces look battered below half health and
-  leave rubble when destroyed. Shells visibly fall for their last 0.35 s, the incendiary strike brings a
-  jet pass, care packages parachute in. Fallen soldiers get a battlefield cross (rifle, helmet, boots).
-  Damaged squadmates and 3+ HP enemies show floating health bars.
+  ENEMY MODELS & SET PIECES — every enemy type has its own model (knit-cap knife runner, breacher with riot shield
+  and sledgehammer, kneeling PKM gunner, radio spotter with binoculars, machete raider on a quad bike, and the
+  Warlord as a bomb-suit juggernaut with a minigun whose armour and visor heat up in later phases). Warlord
+  arrival: 1.9 s letterboxed hero shot + OoT-style title card with an epithet, world at 30%. Cover pieces look
+  battered below half health and leave rubble when destroyed. Shells visibly fall for their last 0.35 s, the
+  incendiary strike brings a jet pass, care packages parachute in. Fallen soldiers get a battlefield cross (rifle,
+  helmet, boots). Damaged squadmates and 3+ HP enemies show floating health bars.
 
   DAY/NIGHT & WEATHER — each battle rolls a time of day (dawn 15%, day 40%, dusk 25%, night 20%; the
   campaign's very first battle is always dawn) that drifts forward one step every 150 s, and weather
   (clear / overcast / fog / rain; rain and fog get 4% likelier per tier, capped at +20%). Sight =
   time-of-day visibility (dawn 90%, day 100%, dusk 88%, night 78%) × weather (overcast 95%, fog 80%,
   rain 85%), floored at 70%. Sight scales squad weapon range, AI engage radius, lock-on range and enemy
-  gunner range equally; the HUD shows it under the wave counter. Rain adds streaks, a hiss layer, and
+  gunner range equally. Rain adds streaks, a hiss layer, and
   lightning with thunder.
 
   MENUS — laid out for a landscape screen with nothing to scroll. The start menu is the operations map on the
@@ -263,9 +247,9 @@
   reflections at 70–620 ms, a rolling outdoor tail, the action cycling), 1–3 variants per weapon plus
   a distant variant, rendered in 10 ms slices. Playback adds ±3% pitch, distance low-pass and stereo
   placement around the camera. Squad carbines/SMGs/LMGs/.50 sniper/RPG, enemy AKs and PKMs, supersonic
-  near-miss snaps (within 1.75 m), ricochets, brass casings, shell whistles, layered explosions with
+  near-miss snaps (within 1.75 m), ricochets, brass casings, layered explosions with
   debris, body falls, a strike-jet flyby and outgoing artillery. Ambience: wind, a low front rumble
-  that swells with enemy count, far artillery, distant firefights, radio squelch, rain. AI squad fire
+  that swells with enemy count, distant firefights, radio squelch, rain. AI squad fire
   is thinned 45%. 'M' mutes everything via the master bus.
 
   BULLETS — squad rounds fly 4200–8400 px/s (105–210 m/s; rockets 900, enemy rifles 1500, Warlord burst
@@ -301,15 +285,16 @@
 
   JUICE — muzzle smoke, blood spurts biased along the hit
   direction, per-weapon-class camera kick (SMG light -> rocket heavy), tracer glow pass, and a 0.5s
-  slow-motion beat (world at 30%, camera zoom punch) when a wave is wiped out (10s cooldown).
+  slow-motion beat (world at 30%, camera zoom punch) when the last enemy on the field falls (from wave 2 on,
+  10 s cooldown).
 
   CARNAGE — corpses are persistent: dead soldiers and enemies stay on the field for the whole front
   (enemy corpses capped at 120, oldest culled; squad corpses never removed), plus blood stains, craters
   and cross markers.
 
-  MISC — soldiers 4 base HP, regen 0.6/s after 3.5s. Cleared fronts heal survivors + fill empty slots with
-  recruits (AR, no ATV). 'M' mutes. ?reset=1 wipes the save (key holdout.v2 — v1 saves are ignored).
-  window.G exposes debug helpers incl. G.step(seconds) fast-forward.
+  MISC — soldiers have 4 HP and regenerate 2 HP/s after 4 s out of fire. 'M' mutes. ?reset=1 wipes the save (key
+  holdout.v2 — v1 saves are ignored). window.G exposes debug helpers, including G.step(seconds) to fast-forward
+  the simulation and G.frame(dt) to render one frame.
 -->
 <html lang="en">
 <head>
@@ -794,7 +779,6 @@
 'use strict';
 // ============================================================ CONFIG
 const CFG = {
-  handoffDur: 0.8,        // seconds for the letterboxed death-handoff camera move
   bossIntro: 1.9,         // seconds of Warlord hero shot + title card (world runs at 30%)
   deathCam: 1.9,          // seconds watching your soldier fall before control moves on
   fallDur: 1.6, enemyFallDur: 1.1,   // how long a body takes to hit the ground
@@ -928,19 +912,9 @@ function freshMeta() {
 const terrOwned = t => meta.terr[t.id].owner === 'p';
 const terrAttackable = t => !terrOwned(t) && t.adj.some(a => meta.terr[a].owner === 'p');
 const effTier = t => Math.max(1, t.tier) + meta.theater * 2;
-const incMul = () => 1 + meta.theater * 0.5;
-// Territory perks — each held region grants a squad-wide passive (id-indexed)
-const PERKS = {
-  1: '+15% territory income',   2: 'Armory prices -10%',      3: 'Squad regen +50%',
-  4: 'Squad damage +8%',        5: 'Enemy mortars 25% slower', 6: 'Squad move speed +10%',
-  7: 'Weapon range +8%',        8: 'Support strikes +25% power', 9: 'Squad +1 HP',
-  10: 'Fire rate +6%',          11: 'AFK progress +25%',      12: 'All REQ gains +25%',
-};
-const hasPerk = id => meta && meta.terr[id] && meta.terr[id].owner === 'p';
-function squadDmg(key) {   // a weapon is what it is
-  return WEAPONS[key].dmg * (hasPerk(4) ? 1.08 : 1);
+function squadDmg(key) {   // a weapon is what it is: holding ground grants nothing but the ground
+  return WEAPONS[key].dmg;
 }
-const rankOf = k => k >= 500 ? 'MAJ' : k >= 300 ? 'CPT' : k >= 150 ? 'LT' : k >= 75 ? 'SGT' : k >= 25 ? 'CPL' : 'PVT';
 function makeWren(s) {
   s.name = 'Wren'; s.arch = 'legacy'; s.wren = true;
   s.weapon = 'ar'; s.horse = false; s.alive = true; s.kills = 0;
@@ -967,7 +941,7 @@ function respawnSoldier(s) {   // a fresh body off the reinforcement line: same 
   s.mag = magCap(s); s.reserve = magCap(s) * w.spare; s.reloadT = 0; s.fireCd = 0;
   const p = pickSpawn('p'); s.x = p.x; s.y = p.y;
   s.aim = -Math.PI / 2; s.invuln = CFG.spawnInvuln; s.respawnT = 0;
-  s.coverRef = null; s.dive = null; s.path = null; s.tgt = null; s.supp = 0; s.recoil = 0;
+  s.coverRef = null; s.path = null; s.tgt = null; s.supp = 0; s.recoil = 0;
 }
 
 // ============================================================ BATTLE STATE
@@ -975,7 +949,7 @@ const state = {   // per-battle / session
   mode: 'play', tid: 1, tier: 1,
   kills: 0, tickets: 0, ks: 0, earned: { napalm: 0, artillery: 0, supply: 0 },
   enemyTotal: 26, enemyDown: 0, shots: 0, hits: 0, heads: 0, longest: 0, lastContact: null,
-  progress: 0, controlled: 0, pending: -1, handoffT: 0, spectateT: 0, dyingT: 0,
+  progress: 0, controlled: 0, spectateT: 0, dyingT: 0,
   wave: 1, waveT: 0, spawnT: 0,
   frontTime: 0, frontDeaths: 0, saveT: 0,
   slow: 0, slowCd: 0,   // wave-clear slow-mo beat
@@ -992,7 +966,7 @@ const AI_SLOTS = [0, -140, 140, 280];   // where each of the four starts inside 
 
 function buildSoldier(i) {
   const m = meta.squad[i];
-  const maxHp = CFG.baseHp + (hasPerk(9) ? 1 : 0);
+  const maxHp = CFG.baseHp;
   const weapon = i === 0 ? (meta.loadout || 'ar') : m.weapon;
   const att = i === 0 ? attFor(weapon) : normAtt(weapon, null);   // only your own rifle carries what you picked in BATTLE PREP
   const cap = att.ext ? WEAPONS[weapon].ext : WEAPONS[weapon].mag;
@@ -1067,7 +1041,7 @@ const TOWN = {
     ['fence', 27, 51.6], ['fence', 30.2, 51.6], ['fence', 36.8, 51.6], ['fence', 39.9, 51.6], ['fence', 40.7, 54.4, 1], ['fence', 40.7, 57.6, 1],
     ['hesco', 42.5, 60.8], ['hesco', 53.5, 60.8], ['hesco', 56.5, 60.8], ['hesco', 59.5, 60.8], ['hesco', 62.5, 60.8], ['hesco', 65.5, 60.8], ['hesco', 68.5, 60.8],
     ['hesco', 41.4, 62.4, 1], ['hesco', 41.4, 68.8, 1], ['hesco', 69.8, 62.4, 1], ['hesco', 69.8, 65.4, 1], ['hesco', 69.8, 68.4, 1],
-    ['sandbags', 60, 64.6], ['sandbags', 60, 68.2], ['sandbags', 57.6, 66.4, 1], ['sandbags', 62.4, 66.4, 1],
+    ['sandbags', 60, 64.6], ['sandbags', 60, 68.2], ['sandbags', 56.8, 66.4, 1], ['sandbags', 63.2, 66.4, 1],   // open corners: walk in, path in
     ['tent', 51, 70.5, 1], ['tent', 64.5, 70.6, 1], ['truck', 78, 66.5], ['truck', 85.5, 66.5],
   ],
   slots: [   // x, y, cover kinds to pick from, turned 90° — rolled fresh each battle
@@ -1342,7 +1316,6 @@ function tallyClaims() {   // each side counts only its own people on a piece of
 // camera in the VIEW LAYER reads these. yaw 0 looks north, toward the enemy front.
 const cam = { yaw: 0, shake: 0, punch: 0, snap: true, nudge: 0, nudgeT: 0 };
 function camTarget() {
-  if (state.mode === 'handoff' && state.pending >= 0) return soldiers[state.pending];
   const c = soldiers[state.controlled];
   return (c && c.alive) ? c : soldiers.find(s => s.alive) || c;
 }
@@ -1608,19 +1581,6 @@ function renderTink(seed) {   // a spent casing bouncing on hard ground
   }
   return normalise([a], 0.9);
 }
-function renderWhistle() {   // a shell falling toward you, Doppler sliding down
-  const sr = SR_SYN, rnd = synRng(77), n = Math.floor(1.4 * sr), a = new Float32Array(n), nz = new Float32Array(n);
-  let ph = 0;
-  for (let i = 0; i < n; i++) {
-    const t = i / sr;
-    ph += TAU * 1500 * Math.pow(0.42, t / 1.4) * (1 + 0.004 * Math.sin(t * 40)) / sr;
-    const env = Math.min(1, t / 0.25) * (0.25 + 0.75 * t / 1.4) * Math.min(1, (1.4 - t) / 0.05);
-    a[i] = Math.sin(ph) * env; nz[i] = rnd() * env;
-  }
-  biquad(nz, 'bp', 1500, 5, sr, 630);
-  for (let i = 0; i < n; i++) a[i] += nz[i] * 1.5;
-  return normalise([a], 0.9);
-}
 function renderFall(seed) {   // a body and its kit hitting the dirt
   const sr = SR_SYN, rnd = synRng(seed), n = Math.floor(0.5 * sr), a = new Float32Array(n);
   for (const [t0, g] of [[0, 1], [0.11 + (rnd() + 1) * 0.015, 0.55]]) {
@@ -1692,7 +1652,7 @@ function sfxJobs() {   // render order = how soon each sound is needed
   for (let i = 0; i < 3; i++) J.push([`tink:${i}`, () => renderTink(40 + i)], [`ric:${i}`, () => renderRicochet(60 + i)]);
   for (const w of ['smg', 'lmg', 'sniper', 'rocket', 'pkm', 'pistol']) for (let i = 0; i < GUN_VARS[w]; i++) gun(w, i);
   for (const w of ['smg', 'lmg', 'sniper', 'rocket', 'pkm', 'pistol']) far(w);
-  J.push(['fall:1', () => renderFall(9)], ['blast:1', () => renderBlast(31, false)], ['whistle', renderWhistle], ['jet', renderJet]);
+  J.push(['fall:1', () => renderFall(9)], ['blast:1', () => renderBlast(31, false)], ['jet', renderJet]);
   return J;
 }
 function pumpSfx() {   // render in ~10 ms slices so the page never hitches
@@ -1751,9 +1711,6 @@ function sfxBossBurst(x, y) {   // the Warlord's machine gun ripping a full circ
 }
 function sfxWhiz(x, y) { MUS.heat = performance.now(); playBuf('snap:' + randi(0, 1), { gain: 0.5, rate: rand(0.9, 1.12), x, y, force: true }); }
 function sfxRicochet(x, y) { playBuf('ric:' + randi(0, 2), { gain: 0.2 * distMul(x, y), rate: rand(0.85, 1.15), x, y }); }
-function sfxIncoming() {
-  if (!playBuf('whistle', { gain: 0.3, rate: rand(0.94, 1.06), force: true })) beep(1500, 1.2, 'sine', 0.04, -900);
-}
 function sfxExplosion(x, y, big) {
   const m = distMul(x, y);
   const ok = playBuf(m > 0.4 ? 'blast:' + randi(0, 1) : 'blastf', { gain: (big ? 0.95 : 0.7) * Math.max(m, 0.25),
@@ -1788,7 +1745,7 @@ function updateAudio(dt) {
   master.gain.value = meta && meta.muted ? 0 : 0.8;
   updateMusic(dt);
   if (!amb.started) return;
-  const inB = screen === 'battle' && (state.mode === 'play' || state.mode === 'dying' || state.mode === 'handoff' || state.mode === 'spectate');
+  const inB = screen === 'battle' && (state.mode === 'play' || state.mode === 'dying' || state.mode === 'spectate');
   if (SFX.muffle) {   // everything goes underwater while you watch yourself die
     const want = state.mode === 'dying' && screen === 'battle' ? 620 : 20000;
     SFX.muffle.frequency.value += (want - SFX.muffle.frequency.value) * Math.min(1, dt * 5);
@@ -1976,7 +1933,7 @@ function updateMusic(dt) {
     MUS.send = AC.createGain(); MUS.send.gain.value = 0.6; MUS.send.connect(verbIn);   // the shared outdoor reverb
   }
   const now = AC.currentTime, level = meta && meta.opts && meta.opts.music != null ? meta.opts.music : 0.6;
-  const fight = screen === 'battle' && (state.mode === 'play' || state.mode === 'dying' || state.mode === 'handoff' || state.mode === 'spectate');
+  const fight = screen === 'battle' && (state.mode === 'play' || state.mode === 'dying' || state.mode === 'spectate');
   const want = level <= 0.001 || (meta && meta.muted) ? null : fight ? 'battle:' + moodNow() : 'menu';   // the battle cue follows the sky
   const g = MUS.bus.gain;
   if (want !== MUS.cue && MUS.phase !== 'out') {   // fade the old cue out, then start the new one on a fresh bar
@@ -2535,7 +2492,7 @@ function killEnemy(idx, credit) {
     state.progress = 100;
   }
   // wave wiped out — a short slow-motion beat to savor it
-  if (!enemies.length && state.slowCd <= 0 && state.wave >= 2 && (state.mode === 'play' || state.mode === 'handoff')) {
+  if (!enemies.length && state.slowCd <= 0 && state.wave >= 2 && state.mode === 'play') {
     state.slow = 0.5; state.slowCd = 10; cam.punch = 0.12;
   }
   if (state.progress >= 100) frontCleared();
@@ -2595,7 +2552,7 @@ function killSoldier(s) {
   burst(s.x, s.y, s.color, 16, 12);
   feedPush(labelOf(s.lastSrc), s.name.toUpperCase(), true);
   sfxKia();
-  s.coverRef = null; s.dive = null; s.path = null; s.tgt = null;
+  s.coverRef = null; s.path = null; s.tgt = null;
   if (state.tickets > 0) { state.tickets--; s.respawnT = CFG.respawn; }   // a reinforcement takes their place
   if (s.slot === state.controlled) {
     state.ks = 0;                                                // your streak dies with you
@@ -2605,7 +2562,7 @@ function killSoldier(s) {
   }
   if (!soldiers.some(a => a.alive || a.respawnT > 0)) beginFail();
 }
-function beginDeathCam() {   // hold on your soldier as they go down, before the Passenger moves on
+function beginDeathCam() {   // hold on your soldier as they go down, before a reinforcement brings you back
   state.mode = 'dying'; state.dyingT = 0;
   state.slow = Math.max(state.slow, CFG.deathCam * 0.75);
   lockRelease();
@@ -2673,8 +2630,8 @@ function updateShells(dt) {
     const sh = shells[i];
     sh.t -= dt;
     if (sh.t > 0) continue;
-    if (sh.kind === 'he') explode(sh.x, sh.y, 60, 3 * (hasPerk(8) ? 1.25 : 1), 1.5, { player: true, wkey: null });
-    else if (sh.kind === 'fire') { fires.push({ x: sh.x, y: sh.y, r: 30, t: 8 * (hasPerk(8) ? 1.25 : 1) }); burst(sh.x, sh.y, '#e8843a', 8, 6); }
+    if (sh.kind === 'he') explode(sh.x, sh.y, 60, 3, 1.5, { player: true, wkey: null });
+    else if (sh.kind === 'fire') { fires.push({ x: sh.x, y: sh.y, r: 30, t: 8 }); burst(sh.x, sh.y, '#e8843a', 8, 6); }
     else if (sh.kind === 'crate') {
       burst(sh.x, sh.y, '#b7d34a', 14, 10); sfxBuy();
       for (const s of soldiers) if (s.alive) { const w = WEAPONS[s.weapon]; s.hp = s.maxHp; s.mag = magCap(s); s.reserve = magCap(s) * w.spare; s.pistol = false; s.reloadT = 0; }
@@ -2747,7 +2704,7 @@ function enterBattle(tid) {
   const t = TERRITORIES[tid];
   state.tier = effTier(t);
   state.progress = meta.terr[tid].progress;
-  state.mode = 'play'; state.pending = -1;
+  state.mode = 'play';
   state.wave = 1; state.waveT = 0; state.spawnT = 1.5;
   state.enemyTotal = CFG.enemyTickets + CFG.enemyTicketsPerTier * state.tier;
   state.enemyDown = Math.min(state.enemyTotal - 1, Math.round(state.progress / 100 * state.enemyTotal));   // a front you left half-won resumes there
@@ -2856,10 +2813,12 @@ function showFailModal() {
   $('mretreat').onclick = () => { meta.terr[state.tid].progress = 0; hideModal(); exitBattle(); };
 }
 
-// ============================================================ SAVE / LOAD / AFK
+// ============================================================ SAVE / LOAD
 function saveMeta() {
   try {
-    if (screen === 'battle') meta.terr[state.tid].progress = state.mode === 'cleared' ? meta.terr[state.tid].progress : state.progress;
+    if (screen === 'battle') meta.terr[state.tid].progress = state.mode === 'cleared' ? meta.terr[state.tid].progress
+      : state.mode === 'failed' || state.mode === 'spectate' ? 0   // a lost front starts again from nothing, even if the page closes on the defeat screen
+      : state.progress;
     localStorage.setItem(CFG.saveKey, JSON.stringify(meta));
   } catch (e) {}
 }
@@ -2881,10 +2840,9 @@ function loadMeta() {
     if (!optsV) { meta.opts.v = 2; meta.opts.fpv = true; meta.opts.scheme = 'manual'; }   // first person is the default now
     meta.attach = freshAttach();   // per-gun, so a save from before attachments (or with a gun missing) still gets every default
     for (const k in meta.attach) Object.assign(meta.attach[k], (save.attach || {})[k] || {});
-    return null;
+    return;
   }
   meta = freshMeta();
-  return null;
 }
 let loadedFromSave = false;
 window.addEventListener('beforeunload', saveMeta);
@@ -2899,12 +2857,12 @@ function collideObstacles(o) {   // push out of buildings and cover
 // ---------- ammunition: magazines, reloads, the sidearm, pickups ----------
 function startReload(s) {
   const w = WEAPONS[s.weapon];
-  if (!s.alive || s.reloadT > 0 || s.dive || s.pistol || s.mag >= magCap(s)) return;
+  if (!s.alive || s.reloadT > 0 || s.pistol || s.mag >= magCap(s)) return;
   if (s.reserve <= 0) {   // nothing left for the rifle: draw the pistol
     if (s.mag <= 0) { s.pistol = true; if (s.slot === state.controlled) showBanner('OUT OF AMMO — SIDEARM'); }
     return;
   }
-  s.reloadT = s.reloadDur = w.reload * (hasPerk(10) ? 0.9 : 1) * (s.ext ? EXT_RELOAD : 1);   // the empty magazine is dropped by the view, from the hand
+  s.reloadT = s.reloadDur = w.reload * (s.ext ? EXT_RELOAD : 1);   // the empty magazine is dropped by the view, from the hand
   sfxReload(s);
 }
 function finishReload(s) {
@@ -2986,7 +2944,7 @@ function nearestVisibleEnemy(x, y, maxD) {
   return best;
 }
 
-// ---------- the hero: cover latch and the dive ----------
+// ---------- the hero ----------
 function heroControl(s, spd, dt) {   // you move yourself: nothing latches, nothing crouches for you
   const mv = moveVector();
   s.coverRef = null;
@@ -3075,19 +3033,18 @@ function updateSoldiers(dt) {
   for (const s of soldiers) {
     if (!s.alive) continue;
     s.invuln = Math.max(0, s.invuln - dt);
-    s.diveCd = Math.max(0, (s.diveCd || 0) - dt);
     s.peekT = Math.max(0, (s.peekT || 0) - dt);
     s.fireCd -= dt; s.recoil = Math.max(0, s.recoil - dt);
     if (s.regenCd > 0) s.regenCd -= dt;
-    else if (s.hp < s.maxHp) s.hp = Math.min(s.maxHp, s.hp + CFG.regenRate * (hasPerk(3) ? 1.5 : 1) * dt);
+    else if (s.hp < s.maxHp) s.hp = Math.min(s.maxHp, s.hp + CFG.regenRate * dt);
     const w = WEAPONS[s.weapon];
-    const wrange = (s.pistol ? SIDEARM.range : w.range) * (hasPerk(7) ? 1.08 : 1) * vis;
+    const wrange = (s.pistol ? SIDEARM.range : w.range) * vis;
     const isCtl = s.slot === state.controlled && state.mode === 'play';
-    const spd = (isCtl ? CFG.playerSpeed : CFG.aiSpeed) * (w.moveMul || 1) * (s.horse ? CFG.horseSpeedMul : 1) * (hasPerk(6) ? 1.10 : 1)
+    const spd = (isCtl ? CFG.playerSpeed : CFG.aiSpeed) * (w.moveMul || 1) * (s.horse ? CFG.horseSpeedMul : 1)
       * (s.reloadT > 0 ? 0.85 : 1) * (isCtl && aim.ads ? 0.7 : 1);
     const x0 = s.x, y0 = s.y;
     if (isCtl) heroControl(s, spd, dt);
-    else { s.dive = null; squadAI(s, spd, dt, lead, front, wrange); }
+    else squadAI(s, spd, dt, lead, front, wrange);
     s.moving = Math.hypot(s.x - x0, s.y - y0) > spd * dt * 0.25;
     if (s.moving) s.walk += dt * (s.horse ? 13 : 10);
     s.x = clamp(s.x, 12, CFG.arenaW - 12); s.y = clamp(s.y, 12, CFG.arenaH - 12);   // the perimeter stands on the edge: walk up to it
@@ -3098,15 +3055,15 @@ function updateSoldiers(dt) {
       s.tgt = isCtl ? (manualAim() ? crosshairTarget(s, 0.2) : pickTarget(s, wrange)) : nearestVisibleEnemy(s.x, s.y, wrange);
     }
     if (s.reloadT > 0) { s.reloadT -= dt; if (s.reloadT <= 0) finishReload(s); }
-    const t = s.dive ? null : s.tgt;
+    const t = s.tgt;
     if (isCtl) state.autoTarget = t;
     if (isCtl && manualAim()) {   // you aim it and you pull the trigger
       aimAssist(s, dt);
       s.aim = aim.yaw - Math.PI / 2;
       s.quietT = aim.fire ? 0 : (s.quietT || 0) + dt;
-      if (aim.fire && s.fireCd <= 0 && s.reloadT <= 0 && !s.dive) {
+      if (aim.fire && s.fireCd <= 0 && s.reloadT <= 0) {
         if (s.pistol || s.mag > 0) {
-          s.fireCd = (s.pistol ? SIDEARM.cd : w.cd) * (hasPerk(10) ? 0.94 : 1);
+          s.fireCd = s.pistol ? SIDEARM.cd : w.cd;
           fire(s, null, true, s.aim);
           s.peekT = 0.5;
         }
@@ -3117,14 +3074,14 @@ function updateSoldiers(dt) {
       s.quietT = 0;
       if (s.fireCd <= 0 && s.reloadT <= 0) {
         if (s.pistol || s.mag > 0) {
-          s.fireCd = (s.pistol ? SIDEARM.cd : w.cd) * (isCtl ? 1 : CFG.aiCdMul) * (hasPerk(10) ? 0.94 : 1);
+          s.fireCd = (s.pistol ? SIDEARM.cd : w.cd) * (isCtl ? 1 : CFG.aiCdMul);
           fire(s, t, isCtl);
           s.peekT = 0.5;   // pop up over cover to shoot
         }
         if (!s.pistol && s.mag <= 0) startReload(s);
       }
     } else {
-      if (s.moving && !s.dive) s.aim = Math.atan2(s.y - y0, s.x - x0);
+      if (s.moving) s.aim = Math.atan2(s.y - y0, s.x - x0);
       s.quietT = (s.quietT || 0) + dt;   // a lull in the shooting: top the magazine off
       if (s.quietT > 1.5 && !s.pistol && s.reloadT <= 0 && s.mag < magCap(s) * 0.5 && s.reserve > 0) startReload(s);
     }
@@ -3132,7 +3089,7 @@ function updateSoldiers(dt) {
   for (let i = 0; i < soldiers.length; i++)
     for (let j = i + 1; j < soldiers.length; j++) {
       const a = soldiers[i], b = soldiers[j];
-      if (!a.alive || !b.alive || a.dive || b.dive) continue;
+      if (!a.alive || !b.alive) continue;
       const dx = b.x - a.x, dy = b.y - a.y, d2 = dx * dx + dy * dy;
       if (d2 < 900 && d2 > 0.01) { const d = Math.sqrt(d2), push = (30 - d) / 2 / d; a.x -= dx * push; a.y -= dy * push; b.x += dx * push; b.y += dy * push; }
     }
@@ -3163,12 +3120,13 @@ function bossLogic(e, t, dt, d, dx, dy) {
     e.summonT -= dt;
     if (e.summonT <= 0) {
       e.summonT = 8;
-      for (let i = 0; i < 3; i++) {
+      const room = Math.min(3, CFG.enemyCap + 1 - enemies.length);   // up to eight on the field besides the Warlord, like everyone else
+      for (let i = 0; i < room; i++) {
         spawnEnemy('grunt');
         const g = enemies[enemies.length - 1];
-        g.x = clamp(e.x + rand(-90, 90), 30, CFG.arenaW - 30); g.y = e.y + rand(-40, 40);
+        g.x = clamp(e.x + rand(-90, 90), 30, CFG.arenaW - 30); g.y = clamp(e.y + rand(-40, 40), 30, CFG.arenaH - 30);
       }
-      floaters.push({ x: e.x, y: e.y, z: 44, txt: 'REINFORCEMENTS', life: 1 });
+      if (room > 0) floaters.push({ x: e.x, y: e.y, z: 44, txt: 'REINFORCEMENTS', life: 1 });
     }
   }
   if (e.phase === 3) {                                            // phase 3: enraged radial bursts
@@ -3388,7 +3346,7 @@ function battleUpdate(dt) {
   state.slow = Math.max(0, state.slow - dt);
   state.slowCd = Math.max(0, state.slowCd - dt);
   const wdt = dt * (state.slow > 0 ? 0.3 : 1);          // slow-mo scales the world, not the camera
-  const worldActive = state.mode === 'play' || state.mode === 'dying' || state.mode === 'handoff' || state.mode === 'spectate';
+  const worldActive = state.mode === 'play' || state.mode === 'dying' || state.mode === 'spectate';
   if (worldActive) {
     state.frontTime += wdt;
     state.tod = (state.tod + wdt * CFG.todSpeed) % 4;
@@ -4258,15 +4216,6 @@ function poseCrouch(J, k = 1) {   // behind cover: down on one knee, shoulders h
   J[HJ.torso].rotation.x += 0.26 * k;
   J[HJ.head].rotation.x -= 0.14 * k;
 }
-function poseDive(J, p, air) {   // launch flat with arms out ahead and legs trailing, then tuck into a crouch on landing
-  J[HJ.uArmL].rotation.set(2.9 * air, 0, 0.3 * air); J[HJ.uArmR].rotation.set(2.9 * air, 0, -0.3 * air);
-  J[HJ.fArmL].rotation.x = 0.2 * air; J[HJ.fArmR].rotation.x = 0.2 * air;
-  J[HJ.thighL].rotation.x = -0.35 * air; J[HJ.thighR].rotation.x = -0.15 * air;
-  J[HJ.shinL].rotation.x = -0.4 * air; J[HJ.shinR].rotation.x = -0.9 * air;
-  J[HJ.head].rotation.x = 0.9 * air;
-  J[HJ.gun].rotation.set(-Math.PI / 2 - 0.2, 0, 0);
-  if (p > 0.6) poseCrouch(J, smooth(0.6, 1, p));
-}
 // ---------- animation helpers ----------
 function smoothJoints(P, J, k) {   // ease every joint (and the pelvis height) toward the pose just written
   for (let i = 1; i < J.length; i++) {
@@ -4754,13 +4703,13 @@ function drawSoldier(s, wdt, set) {
   trackMotion(r, s.x, s.y, wdt, s.horse ? 3.4 : 2.3);
   let rootT = aimYaw;   // legs follow the movement, the upper body follows the aim
   r.dir = 1;
-  if (!s.horse && !s.dive && r.moveW > 0.15 && r.moveYaw != null) {
+  if (!s.horse && r.moveW > 0.15 && r.moveYaw != null) {
     const back = Math.abs(angWrap(r.moveYaw - aimYaw)) > 1.9;
     r.dir = back ? -1 : 1;
     rootT = aimYaw + clamp(angWrap((back ? r.moveYaw + Math.PI : r.moveYaw) - aimYaw), -1.0, 1.0);
   }
-  r.yaw = s.dive || r.yaw == null ? rootT : approachAng(r.yaw, rootT, 10, wdt);
-  const twist = s.horse || s.dive ? 0 : clamp(angWrap(aimYaw - r.yaw), -1.2, 1.2);
+  r.yaw = r.yaw == null ? rootT : approachAng(r.yaw, rootT, 10, wdt);
+  const twist = s.horse ? 0 : clamp(angWrap(aimYaw - r.yaw), -1.2, 1.2);
   const fired = s.recoil > r.lastRecoil + 0.02;
   if (fired) r.kickV += RECOIL_KICK[key] * 22;
   r.lastRecoil = s.recoil;
@@ -4769,28 +4718,21 @@ function drawSoldier(s, wdt, set) {
   springStep(r, 'kick', 'kickV', wdt, 300, 20);
   springStep(r, 'flin', 'flinV', wdt, 180, 16);
   resetPose(J);
-  let pitch = 0, lift = 0;
-  if (s.dive) {
-    const p = clamp(s.dive.t / s.dive.dur, 0, 1), air = smooth(0, 0.18, p) * (1 - smooth(0.55, 0.85, p));
-    poseDive(J, p, air);
-    pitch = -1.35 * air; lift = Math.sin(Math.min(1, p / 0.7) * Math.PI) * 0.45;
-  } else {
-    if (s.horse) poseRide(J); else poseRun(J, r.phase, r.moveW, false);
-    poseIdle(J, performance.now() / 1000 + r.seed, 1 - r.moveW);
-    J[HJ.torso].rotation.x -= 0.04;
-    J[HJ.torso].rotation.y += twist * 0.75;
-    J[HJ.head].rotation.y += twist * 0.25;
-    poseAim(J, Math.sin(r.phase * 2) * 0.05 * r.moveW);
-    const settled = s.slot === state.controlled || !s.path || !s.path.length;
-    if (!s.horse && s.coverRef && settled && s.peekT <= 0 && r.moveW < 0.5) poseCrouch(J);   // pops up only to shoot
-    if (s.reloadT > 0) poseReload(J, 1 - s.reloadT / s.reloadDur);
-  }
-  smoothPose(r, J, wdt, s.dive ? 30 : 22);
+  if (s.horse) poseRide(J); else poseRun(J, r.phase, r.moveW, false);
+  poseIdle(J, performance.now() / 1000 + r.seed, 1 - r.moveW);
+  J[HJ.torso].rotation.x -= 0.04;
+  J[HJ.torso].rotation.y += twist * 0.75;
+  J[HJ.head].rotation.y += twist * 0.25;
+  poseAim(J, Math.sin(r.phase * 2) * 0.05 * r.moveW);
+  const settled = s.slot === state.controlled || !s.path || !s.path.length;
+  if (!s.horse && s.coverRef && settled && s.peekT <= 0 && r.moveW < 0.5) poseCrouch(J);   // pops up only to shoot
+  if (s.reloadT > 0) poseReload(J, 1 - s.reloadT / s.reloadDur);
+  smoothPose(r, J, wdt, 22);
   J[HJ.uArmR].rotation.x += r.kick; J[HJ.uArmL].rotation.x += r.kick * 0.6;
   J[HJ.torso].rotation.x += r.flin * 0.5 - r.kick * 0.25;
   J[HJ.head].rotation.x += r.flin * 0.4;
   if (s.horse) mountRider(r, X, Z, wdt, r.moveW, r.phase);
-  else placeRoot(J, X, Z, r.yaw, pitch, 1, 1, 1, lift);
+  else placeRoot(J, X, Z, r.yaw, 0, 1, 1, 1, 0);
   const blink = s.invuln > 0 && Math.floor(s.invuln * 12) % 2 === 0;
   const rt = s.reloadT > 0 && s.reloadDur > 0 ? 1 - s.reloadT / s.reloadDur : -1, own = s.slot === state.controlled;
   if (!blink) {
@@ -6100,7 +6042,7 @@ function updateSky(dt) {
   TMP.q.identity();
 }
 
-// ---------- camera: intimate chase cam, handoff cinematic, fail orbit ----------
+// ---------- camera: intimate chase cam, death camera, fail orbit ----------
 const CAM3 = {
   land: { dist: 4.2, height: 2.0, side: 0.55, fov: 55, ahead: 5, lookH: 1.1 },
   port: { dist: 5.6, height: 2.6, side: 0, fov: 72, ahead: 5, lookH: 1.1 },
@@ -6148,9 +6090,9 @@ function updateCamera3(dt) {
   }
   if (cam.nudgeT <= 0) cam.nudge = approach(cam.nudge, 0, 3, dt);
   const boss = state.bossRef;
-  if (boss && boss !== C.bossSeen && state.mode === 'play') { C.bossSeen = boss; C.bossT = CFG.bossIntro; showTitleCard(boss); }   // waits out a handoff
-  const ctl = soldiers[state.controlled], to = soldiers[state.pending];
-  if (state.mode === 'dying' && ctl) {   // watch them go down: ease around and low, ending where the handoff orbit starts
+  if (boss && boss !== C.bossSeen && state.mode === 'play') { C.bossSeen = boss; C.bossT = CFG.bossIntro; showTitleCard(boss); }   // waits out a death camera
+  const ctl = soldiers[state.controlled];
+  if (state.mode === 'dying' && ctl) {   // watch them go down: ease around and low over the body
     if (C.bossT > 0) { C.bossT = 0; hideTitleCard(); }
     if (!C.dieFrom) { C.dieFrom = C.eye.clone(); C.dieLook = C.look.clone(); }
     const t = clamp(state.dyingT / CFG.deathCam, 0, 1), bx = ctl.x * XS, bz = ctl.y * XS, oa = C.orbitBase + 0.35;
@@ -6160,21 +6102,6 @@ function updateCamera3(dt) {
     C.eye.y += Math.sin(Math.PI * t) * 0.5;
     C.look.lerpVectors(C.dieLook, C.oLook, smooth(0, 0.45, t));
     camAvoid(ctl, C.eye);   // never watch the death through a wall
-    C.have = true;
-  } else if (state.mode === 'handoff' && ctl && to) {
-    C.dieFrom = null;
-    // low orbit around the fallen body, then a sweep across the field to the next soldier
-    if (C.bossT > 0) { C.bossT = 0; hideTitleCard(); }
-    const t = clamp(state.handoffT / CFG.handoffDur, 0, 1);
-    const oa = C.orbitBase + 0.35 + t * 0.7, bx = ctl.x * XS, bz = ctl.y * XS;
-    C.oEye.set(bx - Math.sin(oa) * 3.2, 0.95, bz + Math.cos(oa) * 3.2);
-    C.oLook.set(bx, 0.45, bz);
-    chasePose(to.x, to.y, 0, pr, C.cEye, C.cLook);
-    const w = smooth(0.18, 0.92, t);
-    C.eye.lerpVectors(C.oEye, C.cEye, w);
-    C.eye.y += Math.sin(Math.PI * w) * 1.8;
-    C.look.lerpVectors(C.oLook, C.cLook, w);
-    cam.yaw = C.orbitBase * (1 - w);
     C.have = true;
   } else if (state.mode === 'spectate' && ctl) {
     C.orbit += dt * 0.45;
@@ -6198,8 +6125,7 @@ function updateCamera3(dt) {
     C.dieFrom = null;
     const s = soldiers[state.controlled];
     cam.yaw = aim.yaw;
-    const crouch = s.coverRef && s.peekT <= 0 && !s.dive ? 0.42 : 0;
-    const want = 1.62 - crouch - (s.dive ? 0.6 : 0);
+    const want = 1.62;   // standing eye height
     FPV.eyeY = FPV.eyeY == null ? want : approach(FPV.eyeY, want, 12, dt);
     const ey = FPV.eyeY + Math.sin(FPV.bobP) * 0.018;
     const fx = Math.sin(aim.yaw), fz = -Math.cos(aim.yaw);
@@ -6233,13 +6159,11 @@ function updateCamera3(dt) {
   if (cam.shake > 0) cam3.position.add(TMP.v.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).multiplyScalar(cam.shake * 0.012));
   cam3.lookAt(C.look);
   if (cam.shake > 0) cam3.rotateZ(rand(-1, 1) * cam.shake * 0.0025);
-  const heroFpv = fpvActive() ? soldiers[state.controlled] : null;
-  if (heroFpv && heroFpv.dive) cam3.rotateZ(Math.sin(clamp(heroFpv.dive.t / heroFpv.dive.dur, 0, 1) * Math.PI) * 0.45);
   const base = (fpvActive() ? 68 : pr.fov) + (meta.opts.fovAdd || 0);
   const adsFov = 2 * Math.atan(Math.tan(base * Math.PI / 360) / heroZoom()) * 180 / Math.PI;   // a 4x shows a quarter of the view
   const fov = lerp(base, adsFov, FPV.adsK) * (1 - cam.punch * 1.5) * (state.mode === 'dying' ? 0.88 : 1);
   if (Math.abs(cam3.fov - fov) > 0.01) { cam3.fov = fov; cam3.updateProjectionMatrix(); }
-  document.body.classList.toggle('cine', state.mode === 'dying' || state.mode === 'handoff' || state.mode === 'spectate' || C.bossT > 0);
+  document.body.classList.toggle('cine', state.mode === 'dying' || state.mode === 'spectate' || C.bossT > 0);
   document.body.classList.toggle('dying', state.mode === 'dying');
 }
 
@@ -6510,7 +6434,7 @@ function viewEnterBattle() {
 }
 function renderView(dt) {
   if (!VIEW.ready) return;
-  const live = state.mode === 'play' || state.mode === 'dying' || state.mode === 'handoff' || state.mode === 'spectate';
+  const live = state.mode === 'play' || state.mode === 'dying' || state.mode === 'spectate';
   const wdt = live ? dt * (state.slow > 0 ? 0.3 : 1) : 0;
   if (propsDirty) buildProps();
   viewGen++;
@@ -6918,7 +6842,7 @@ function frame(now) {
 }
 
 // ============================================================ BOOT
-const afkResult = loadMeta();
+loadMeta();
 el.hint.textContent = isTouch ? 'LEFT THUMB MOVE · TAP AMMO TO RELOAD' : 'WASD MOVE · R RELOAD · V VIEW';
 setTimeout(() => { el.hint.style.opacity = 0; }, 8000);
 showScreen('map');
