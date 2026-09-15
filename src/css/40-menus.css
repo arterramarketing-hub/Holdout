@@ -1,5 +1,5 @@
   /* ---------- menu screens ---------- */
-  .scr { position:fixed; inset:0; z-index:15; display:none; flex-direction:column; overflow:auto; touch-action:pan-y; background:var(--bg);
+  .scr { position:fixed; inset:0; z-index:15; display:none; flex-direction:column; overflow:auto; touch-action:pan-y; background:var(--bg); padding-left:var(--sl); padding-right:var(--sr);
     background-image:linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
     background-size:56px 56px; }
   .scr.on { display:flex; }
@@ -95,6 +95,8 @@
   .br-tools { display:flex; gap:6px; }
   .br-cog { display:grid; place-items:center; width:34px; height:34px; padding:0; color:var(--label); background:transparent; border:1px solid var(--line-hi); border-radius:0; }
   .br-cog:hover { color:var(--accent); border-color:var(--accent); }
+  .br-cog.nudge { position:relative; color:var(--accent); border-color:var(--accent); }
+  .br-cog.nudge::after { content:''; position:absolute; top:-4px; right:-4px; width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent); }
   .br-cog svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:square; }
   .br-segs { grid-column:1 / -1; display:grid; grid-template-columns:repeat(13, minmax(0, 1fr)); gap:3px; }
   .br-segs i { height:5px; background:#1a2231; }

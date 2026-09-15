@@ -9,14 +9,18 @@ stay shared exactly as they were in one file.
   src/css/*.css       the stylesheet, in filename order
   src/markup.html     the body markup
   src/js/*.js         the game script, in filename order
+  src/pwa/            the installed app: manifest.webmanifest and the service worker template sw.js (the build fills in
+                      a version hashed from everything it caches, so every build ships a new worker)
+  icons/              the app icons (tools/icons.py draws them)
 
 usage:
   python3 tools/build.py            write index.html
-  python3 tools/build.py --check    exit 1 if index.html is not what src/ builds (the audit gate)
+  python3 tools/build.py --check    exit 1 if index.html, manifest.webmanifest or sw.js is not what src/ builds (the audit gate)
   python3 tools/build.py --preview  also copy it to the local preview server, when that folder exists
   python3 tools/build.py --site DIR assemble only what GitHub Pages publishes into DIR (CI deploys this)
 """
 import hashlib
+import json
 import os
 import shutil
 import sys
@@ -66,7 +70,20 @@ def build():
     return '\n'.join(out)
 
 
-SITE_FILES = ['index.html']   # everything the published site is made of, relative to the repository root
+ICONS = ['icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png']
+SITE_FILES = ['index.html', 'manifest.webmanifest', 'sw.js'] + ICONS   # everything the published site is made of, relative to the repository root
+
+
+def app_files(html):   # the built manifest and service worker, from src/pwa and the page they serve
+    manifest = open(os.path.join(SRC, 'pwa', 'manifest.webmanifest'), encoding='utf-8', newline='').read()
+    json.loads(manifest)   # a broken manifest fails the build, not an install on someone's phone
+    h = hashlib.sha256(html.encode('utf-8') + manifest.encode('utf-8'))
+    for rel in ICONS:
+        h.update(open(os.path.join(ROOT, rel), 'rb').read())
+    shell = ['./', './index.html', './manifest.webmanifest'] + ['./' + rel for rel in ICONS]
+    sw = open(os.path.join(SRC, 'pwa', 'sw.js'), encoding='utf-8', newline='').read()
+    sw = sw.replace('@@VERSION', h.hexdigest()[:12]).replace('@@PRECACHE', json.dumps(shell))
+    return {'manifest.webmanifest': manifest, 'sw.js': sw}
 
 
 def assemble_site(out, html):
@@ -75,12 +92,13 @@ def assemble_site(out, html):
         sys.exit(f'refusing to assemble the site into {out}')
     shutil.rmtree(out, ignore_errors=True)
     os.makedirs(out)
+    built = dict(app_files(html), **{'index.html': html})
     for rel in SITE_FILES:
         dst = os.path.join(out, rel)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
-        if rel == 'index.html':
+        if rel in built:
             with open(dst, 'w', encoding='utf-8', newline='') as f:
-                f.write(html)
+                f.write(built[rel])
         else:
             shutil.copyfile(os.path.join(ROOT, rel), dst)
     open(os.path.join(out, '.nojekyll'), 'w').close()   # served as plain files, no Jekyll pass
@@ -96,18 +114,24 @@ def main():
         assemble_site(sys.argv[i + 1], html)
         return
     digest = hashlib.sha256(html.encode('utf-8')).hexdigest()[:12]
+    built = dict(app_files(html), **{'index.html': html})
     if '--check' in sys.argv:
-        current = open(OUT, encoding='utf-8', newline='').read() if os.path.exists(OUT) else ''
-        if current != html:
-            print('index.html is STALE: run python3 tools/build.py')
+        stale = [rel for rel, text in built.items()
+                 if not os.path.exists(os.path.join(ROOT, rel)) or open(os.path.join(ROOT, rel), encoding='utf-8', newline='').read() != text]
+        if stale:
+            print(f'{", ".join(stale)} STALE: run python3 tools/build.py')
             sys.exit(1)
-        print(f'index.html is current ({len(html.encode("utf-8"))} bytes, sha256 {digest})')
+        print(f'index.html is current ({len(html.encode("utf-8"))} bytes, sha256 {digest}); manifest.webmanifest and sw.js too')
         return
-    with open(OUT, 'w', encoding='utf-8', newline='') as f:
-        f.write(html)
-    print(f'built index.html ({len(html.encode("utf-8"))} bytes, sha256 {digest})')
+    for rel, text in built.items():
+        with open(os.path.join(ROOT, rel), 'w', encoding='utf-8', newline='') as f:
+            f.write(text)
+    print(f'built index.html ({len(html.encode("utf-8"))} bytes, sha256 {digest}), manifest.webmanifest and sw.js')
     if '--preview' in sys.argv and os.path.isdir(os.path.dirname(PREVIEW)):
-        shutil.copyfile(OUT, PREVIEW)
+        www = os.path.dirname(PREVIEW)
+        for rel in SITE_FILES:
+            os.makedirs(os.path.dirname(os.path.join(www, rel)), exist_ok=True)
+            shutil.copyfile(os.path.join(ROOT, rel), os.path.join(www, rel))
         print('copied to the preview server')
 
 

@@ -340,3 +340,8 @@ GitHub Desktop mid-phase can never pick up half-finished work.
 - **Phase 2 — done.** Frame rate (Max, 60, 30) and Battery saver (Off, On, Auto at 20%) in SETTINGS. The frame gate
   holds 30 on 60 Hz and 60 on 90 and 120 Hz screens. The Saver preset renders 240 lines; the menus run at 30.
   `57-power.test.js` adds 7 tests; 118 tests pass.
+- **Phase 3 — done.** Manifest, icons (`tools/icons.py`, an H in a scope ring), and a built service worker. Checked
+  for real on a served copy of the site: it cached the page, icons and both three.js files, and with the server
+  stopped a reload started the game and loaded three.js from the cache. There is an install button on the start menu
+  and Install app and Full screen rows in SETTINGS, with iPhone steps. The Artifact build drops the app tags. HUD,
+  menus and cards respect notch insets. `96-app.test.js` adds 7 tests; 125 tests pass.

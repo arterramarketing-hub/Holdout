@@ -9,23 +9,23 @@
     #tickets > b { min-width:40px; font-size:14px; }
     .tkbar { width:min(110px, 13vw); padding:0 7px; }
     .tkmid { min-width:50px; padding:0 8px; } .tkmid b { font-size:13px; } .tkmid em { font-size:7px; letter-spacing:.2em; }
-    #minimap { top:6px; left:6px; width:96px; height:76px; }
-    #topbar { top:6px; right:6px; gap:4px; }
+    #minimap { top:6px; left:calc(6px + var(--sl)); width:96px; height:76px; }
+    #topbar { top:6px; right:calc(6px + var(--sr)); gap:4px; }
     #tomap, #tocfg { height:30px; padding:0 10px; font-size:10px; } #tocfg { width:30px; padding:0; font-size:13px; }
     #savermark { height:30px; width:26px; }
     #bossbar { top:74px; width:min(280px, 46vw); } #bossname { margin-bottom:3px; font-size:9px; }
     #objhud { top:40px; gap:4px; } .obj { width:24px; height:20px; font-size:11px; } #objmsg { top:24px; font-size:8.5px; }
     #trainbox { top:6px; width:min(420px, 56vw); padding:6px 10px 8px; } .tb-top, #tbSkip { font-size:8.5px; } .tb-title { font-size:14px; } .tb-hint { font-size:9px; }
     .tb-dots { margin-top:5px; } body.training #objhud { top:84px; }
-    #feed { top:auto; bottom:64px; right:6px; width:220px; font-size:10px; }
-    #ammo { right:6px; bottom:6px; min-width:0; padding:6px 10px 8px; }
+    #feed { top:auto; bottom:64px; right:calc(6px + var(--sr)); width:220px; font-size:10px; }
+    #ammo { right:calc(6px + var(--sr)); bottom:6px; min-width:0; padding:6px 10px 8px; }
     #amname { margin-bottom:3px; font-size:8px; letter-spacing:.2em; } #ammag { font-size:22px; } #amres { font-size:11px; }
-    #supports { right:auto; left:6px; bottom:6px; gap:4px; }
+    #supports { right:auto; left:calc(6px + var(--sl)); bottom:6px; gap:4px; }
     .supbtn { width:98px; gap:4px; padding:5px 8px 6px; }
     .ks-top { font-size:8.5px; } .ks-name { font-size:8.5px; }
-    body.touch #ammo { right:6px; bottom:6px; }
-    body.touch #supports { top:42px; right:6px; left:auto; bottom:auto; }
-    body.touch #feed { top:88px; bottom:auto; left:6px; }
+    body.touch #ammo { right:calc(6px + var(--sr)); bottom:6px; }
+    body.touch #supports { top:42px; right:calc(6px + var(--sr)); left:auto; bottom:auto; }
+    body.touch #feed { top:88px; bottom:auto; left:calc(6px + var(--sl)); }
     #hint { bottom:70px; font-size:10px; }
     #dmgdir i { width:210px; height:180px; margin:-180px 0 0 -105px; }
     .menu { grid-template-columns:minmax(0, 1fr) clamp(220px, 34vw, 300px); }
@@ -60,7 +60,7 @@
     .lstat { gap:3px 8px; } .lstat .k { font-size:8.5px; letter-spacing:.14em; } .lstat .v { font-size:11px; }
     .att { padding:4px 7px; font-size:9px; } .attrow > span { min-width:40px; font-size:8.5px; }
     .lo-note { font-size:9.5px; line-height:1.45; }
-    #modal { padding:14px 26px; }
+    #modal { padding:14px calc(26px + var(--sr)) 14px calc(26px + var(--sl)); }
     #modalbox .eyebrow { margin-bottom:8px; font-size:10px; }
     #modalbox h2 { margin-bottom:10px; font-size:40px; }
     #modalbox .lede { margin-bottom:12px; font-size:13px; }

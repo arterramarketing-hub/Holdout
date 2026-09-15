@@ -61,9 +61,9 @@
   #bossname { margin-bottom:5px; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--foe); }
   #bosshp { height:5px; background:rgba(255,255,255,.08); border:1px solid var(--line); }
   #bosshp i { display:block; height:100%; width:100%; background:var(--foe); }
-  #minimap { top:10px; left:10px; width:160px; height:128px; background:var(--panel); border:1px solid var(--line); }
+  #minimap { top:10px; left:calc(10px + var(--sl)); width:160px; height:128px; background:var(--panel); border:1px solid var(--line); }
   body.nomap #minimap { display:none; }
-  #topbar { top:10px; right:10px; display:flex; gap:6px; pointer-events:auto; }
+  #topbar { top:10px; right:calc(10px + var(--sr)); display:flex; gap:6px; pointer-events:auto; }
   #tomap, #tocfg { height:36px; padding:0 14px; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.2em;
     text-transform:uppercase; color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:0; }
   #tocfg { width:36px; padding:0; font-size:15px; letter-spacing:0; }
@@ -72,7 +72,7 @@
   body.saver #savermark { display:flex; }
   #savermark svg { width:18px; height:11px; fill:none; stroke:currentColor; stroke-width:1.5; }
   #savermark svg .lvl { fill:currentColor; stroke:none; }
-  #feed { top:56px; right:10px; width:260px; display:flex; flex-direction:column; align-items:flex-end; gap:3px; font-family:var(--mono); font-size:11px; }
+  #feed { top:56px; right:calc(10px + var(--sr)); width:260px; display:flex; flex-direction:column; align-items:flex-end; gap:3px; font-family:var(--mono); font-size:11px; }
   body.nofeed #feed { display:none; }
   .frow { padding:4px 9px; background:var(--panel); color:var(--text); box-shadow:inset -2px 0 0 var(--friend); white-space:nowrap; }
   .frow b { color:var(--ink); font-weight:800; } .frow i { font-style:normal; font-weight:800; color:var(--accent); }
@@ -81,7 +81,7 @@
     background:radial-gradient(ellipse at 50% 0%, rgba(255,70,45,.6), rgba(255,70,45,0) 62%);
     clip-path:polygon(18% 0, 82% 0, 63% 44%, 37% 44%); display:none; }
   /* weapon: name above, magazine large, reserve beside it, the reload filling underneath */
-  #ammo { right:14px; bottom:14px; display:grid; grid-template-columns:auto auto; justify-content:end; align-items:baseline; column-gap:7px;
+  #ammo { right:calc(14px + var(--sr)); bottom:14px; display:grid; grid-template-columns:auto auto; justify-content:end; align-items:baseline; column-gap:7px;
     min-width:156px; padding:10px 14px 12px; text-align:right; background:var(--panel); border:1px solid var(--line);
     box-shadow:inset -2px 0 0 var(--accent); pointer-events:auto; cursor:pointer; }
   #amname { grid-column:1 / -1; grid-row:1; justify-self:end; margin-bottom:5px; font-family:var(--mono); font-weight:700; font-size:10px;
@@ -105,7 +105,7 @@
   #nadewarn .nw-arrow { position:absolute; left:16px; top:-10px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent;
     border-bottom:9px solid var(--foe); transform-origin:6px 32px; }
   /* killstreaks: three slots, orange when earned */
-  #supports { right:182px; bottom:14px; display:flex; gap:6px; pointer-events:auto; }
+  #supports { right:calc(182px + var(--sr)); bottom:14px; display:flex; gap:6px; pointer-events:auto; }
   .supbtn { display:flex; flex-direction:column; justify-content:space-between; gap:9px; width:120px; padding:8px 10px 9px; text-align:left;
     background:var(--panel); border:1px solid var(--line); border-radius:0; color:var(--ink); }
   .ks-top { display:flex; justify-content:space-between; align-items:center; gap:6px; font-family:var(--mono); font-weight:800; font-size:10px; letter-spacing:.1em; }

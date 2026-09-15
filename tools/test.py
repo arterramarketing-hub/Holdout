@@ -29,6 +29,7 @@ import glob
 import http.server
 import json
 import os
+import re
 import shutil
 import socketserver
 import subprocess
@@ -72,6 +73,7 @@ def arg(name, default=None):
 
 def build_page():
     html = open(arg('--source', os.path.join(ROOT, 'index.html')), encoding='utf-8').read()
+    html = re.sub(r'^\s*<(link|meta)\b[^>]*\bdata-pwa\b[^>]*>\s*\n', '', html, flags=re.M | re.I)   # like the Artifact form: the app suite adds these back itself
     game = html.rfind('<script>')
     end = html.rfind('</script>')
     if game < 0 or end < game:

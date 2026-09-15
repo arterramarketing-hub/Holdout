@@ -22,6 +22,15 @@
   Stalls over 0.2 s (a throttled or hidden page) are ignored. Under a frame-rate cap the thresholds stretch to the
   cap's frame (slow past 1.35x it, smooth under 1.05x), so a 30 fps cap never reads as a slow device.
 
+  THE INSTALLED APP — on GitHub Pages the page is an installable web app: manifest.webmanifest (full screen, landscape,
+  navy, the H-in-a-scope icons that tools/icons.py draws) and sw.js (built from src/pwa/sw.js with a version hashed
+  from what it caches). After one launch online it starts offline: the page is network first with a 4 s fallback to
+  the saved copy, three.js and the font files cache first, the font stylesheet stale-while-revalidate; a new build
+  takes over at once. The worker registers only on a top-level https or localhost page that carries the manifest link
+  (the data-pwa tags, which the Artifact build strips). The start menu's install button and SETTINGS › Install app use
+  the browser's prompt, or on an iPhone show Share › Add to Home Screen; SETTINGS › Full screen appears where allowed
+  and locks a phone to landscape. The HUD, menus and cards keep clear of a notch through --sl / --sr (safe-area insets).
+
   POWER — SETTINGS › Frame rate: Max (every display frame), 60 or 30; the loop lets display frames pass through an
   accumulator (frameGate), so 60 on a 90 Hz or 120 Hz screen still averages 60. The menus always run at 30: nothing 3D
   draws there. SETTINGS › Battery saver: On caps battle at 30, holds the Saver preset (240 lines, pixel ratio 1,
@@ -403,6 +412,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Holdout</title>
+<link rel="manifest" href="manifest.webmanifest" data-pwa>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" data-pwa>
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" data-pwa>
+<meta name="theme-color" content="#05080f" data-pwa>
+<meta name="apple-mobile-web-app-capable" content="yes" data-pwa>
+<meta name="mobile-web-app-capable" content="yes" data-pwa>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" data-pwa>
+<meta name="apple-mobile-web-app-title" content="Holdout" data-pwa>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;500;700;800&display=swap">
@@ -411,6 +428,7 @@
      Archivo Expanded for the loud words, Archivo for reading, JetBrains Mono for labels and every number.
      Square corners throughout; nothing is bevelled, and only the call to action glows. */
   :root { color-scheme: dark;
+    --sl: env(safe-area-inset-left, 0px); --sr: env(safe-area-inset-right, 0px);   /* a notch or camera cutout beside a landscape screen */
     --bg: #05080f; --panel: rgba(6, 10, 17, .82); --panel-solid: #070b14;
     --line: #262f3d; --line-hi: #3a4454;
     --ink: #f1f3f6; --text: #c9d1dc; --label: #a6b0bf; --muted: #7b879a;
@@ -516,9 +534,9 @@
   #bossname { margin-bottom:5px; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--foe); }
   #bosshp { height:5px; background:rgba(255,255,255,.08); border:1px solid var(--line); }
   #bosshp i { display:block; height:100%; width:100%; background:var(--foe); }
-  #minimap { top:10px; left:10px; width:160px; height:128px; background:var(--panel); border:1px solid var(--line); }
+  #minimap { top:10px; left:calc(10px + var(--sl)); width:160px; height:128px; background:var(--panel); border:1px solid var(--line); }
   body.nomap #minimap { display:none; }
-  #topbar { top:10px; right:10px; display:flex; gap:6px; pointer-events:auto; }
+  #topbar { top:10px; right:calc(10px + var(--sr)); display:flex; gap:6px; pointer-events:auto; }
   #tomap, #tocfg { height:36px; padding:0 14px; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.2em;
     text-transform:uppercase; color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:0; }
   #tocfg { width:36px; padding:0; font-size:15px; letter-spacing:0; }
@@ -527,7 +545,7 @@
   body.saver #savermark { display:flex; }
   #savermark svg { width:18px; height:11px; fill:none; stroke:currentColor; stroke-width:1.5; }
   #savermark svg .lvl { fill:currentColor; stroke:none; }
-  #feed { top:56px; right:10px; width:260px; display:flex; flex-direction:column; align-items:flex-end; gap:3px; font-family:var(--mono); font-size:11px; }
+  #feed { top:56px; right:calc(10px + var(--sr)); width:260px; display:flex; flex-direction:column; align-items:flex-end; gap:3px; font-family:var(--mono); font-size:11px; }
   body.nofeed #feed { display:none; }
   .frow { padding:4px 9px; background:var(--panel); color:var(--text); box-shadow:inset -2px 0 0 var(--friend); white-space:nowrap; }
   .frow b { color:var(--ink); font-weight:800; } .frow i { font-style:normal; font-weight:800; color:var(--accent); }
@@ -536,7 +554,7 @@
     background:radial-gradient(ellipse at 50% 0%, rgba(255,70,45,.6), rgba(255,70,45,0) 62%);
     clip-path:polygon(18% 0, 82% 0, 63% 44%, 37% 44%); display:none; }
   /* weapon: name above, magazine large, reserve beside it, the reload filling underneath */
-  #ammo { right:14px; bottom:14px; display:grid; grid-template-columns:auto auto; justify-content:end; align-items:baseline; column-gap:7px;
+  #ammo { right:calc(14px + var(--sr)); bottom:14px; display:grid; grid-template-columns:auto auto; justify-content:end; align-items:baseline; column-gap:7px;
     min-width:156px; padding:10px 14px 12px; text-align:right; background:var(--panel); border:1px solid var(--line);
     box-shadow:inset -2px 0 0 var(--accent); pointer-events:auto; cursor:pointer; }
   #amname { grid-column:1 / -1; grid-row:1; justify-self:end; margin-bottom:5px; font-family:var(--mono); font-weight:700; font-size:10px;
@@ -560,7 +578,7 @@
   #nadewarn .nw-arrow { position:absolute; left:16px; top:-10px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent;
     border-bottom:9px solid var(--foe); transform-origin:6px 32px; }
   /* killstreaks: three slots, orange when earned */
-  #supports { right:182px; bottom:14px; display:flex; gap:6px; pointer-events:auto; }
+  #supports { right:calc(182px + var(--sr)); bottom:14px; display:flex; gap:6px; pointer-events:auto; }
   .supbtn { display:flex; flex-direction:column; justify-content:space-between; gap:9px; width:120px; padding:8px 10px 9px; text-align:left;
     background:var(--panel); border:1px solid var(--line); border-radius:0; color:var(--ink); }
   .ks-top { display:flex; justify-content:space-between; align-items:center; gap:6px; font-family:var(--mono); font-weight:800; font-size:10px; letter-spacing:.1em; }
@@ -665,14 +683,14 @@
     touch-action:none; line-height:1; font-family:var(--body); font-weight:600; color:rgba(255,255,255,.95);
     background:rgba(9,13,21,.34); border:2px solid rgba(255,255,255,.55); box-shadow:0 0 0 1px rgba(0,0,0,.28); }
   .tbtn:active { background:rgba(255,255,255,.3); border-color:#fff; }
-  #firebtn { width:var(--fb); height:var(--fb); right:calc(var(--fb) * .9); bottom:calc(var(--fb) * .95); }
-  #adsbtn { width:calc(var(--fb) * .68); height:calc(var(--fb) * .68); right:calc(var(--fb) * .12); bottom:calc(var(--fb) * 1.88);
+  #firebtn { width:var(--fb); height:var(--fb); right:calc(var(--fb) * .9 + var(--sr)); bottom:calc(var(--fb) * .95); }
+  #adsbtn { width:calc(var(--fb) * .68); height:calc(var(--fb) * .68); right:calc(var(--fb) * .12 + var(--sr)); bottom:calc(var(--fb) * 1.88);
     font-family:var(--mono); font-weight:800; font-size:calc(var(--fb) * .19); letter-spacing:.04em; }
   #adsbtn.on { background:rgba(255,255,255,.55); border-color:#fff; color:#0a0e16; }
-  #reloadbtn { width:calc(var(--fb) * .6); height:calc(var(--fb) * .6); right:calc(var(--fb) * 2.02); bottom:calc(var(--fb) * 1.5); font-size:calc(var(--fb) * .28); }
+  #reloadbtn { width:calc(var(--fb) * .6); height:calc(var(--fb) * .6); right:calc(var(--fb) * 2.02 + var(--sr)); bottom:calc(var(--fb) * 1.5); font-size:calc(var(--fb) * .28); }
   #reloadbtn.warn { border-color:var(--foe); color:#ffa596; }
-  #firebtn2 { width:calc(var(--fb) * .8); height:calc(var(--fb) * .8); left:calc(var(--fb) * 1.3); bottom:calc(var(--fb) * 1.9); }
-  #nadebtn { width:calc(var(--fb) * .62); height:calc(var(--fb) * .62); right:calc(var(--fb) * 2.04); bottom:calc(var(--fb) * .62); }
+  #firebtn2 { width:calc(var(--fb) * .8); height:calc(var(--fb) * .8); left:calc(var(--fb) * 1.3 + var(--sl)); bottom:calc(var(--fb) * 1.9); }
+  #nadebtn { width:calc(var(--fb) * .62); height:calc(var(--fb) * .62); right:calc(var(--fb) * 2.04 + var(--sr)); bottom:calc(var(--fb) * .62); }
   #nadebtn svg { width:48%; height:48%; fill:rgba(255,255,255,.16); stroke:rgba(255,255,255,.95); stroke-width:1.7; pointer-events:none; }
   #nadebtn .cnt { position:absolute; right:-3px; top:-3px; display:grid; place-items:center; min-width:18px; height:18px; padding:0 4px; box-sizing:border-box;
     border-radius:9px; font-family:var(--mono); font-weight:800; font-size:11px; color:var(--accent-ink); background:var(--accent); pointer-events:none; }
@@ -682,13 +700,13 @@
   .tbtn:active .bullet { fill:#fff; }
   body.touch #firebtn, body.touch #firebtn2, body.touch #adsbtn, body.touch #reloadbtn, body.touch #nadebtn { display:flex; }
   /* with touch buttons on screen the ammo takes the corner, the killstreaks stack under the menu buttons */
-  body.touch #ammo { right:8px; bottom:8px; }
-  body.touch #supports { top:54px; right:10px; bottom:auto; flex-direction:column; }
-  body.touch #feed { top:148px; bottom:auto; left:10px; right:auto; align-items:flex-start; }
+  body.touch #ammo { right:calc(8px + var(--sr)); bottom:8px; }
+  body.touch #supports { top:54px; right:calc(10px + var(--sr)); bottom:auto; flex-direction:column; }
+  body.touch #feed { top:148px; bottom:auto; left:calc(10px + var(--sl)); right:auto; align-items:flex-start; }
   body.touch .frow { box-shadow:inset 2px 0 0 var(--friend); } body.touch .frow.bad { box-shadow:inset 2px 0 0 var(--foe); }
 
   /* ---------- menu screens ---------- */
-  .scr { position:fixed; inset:0; z-index:15; display:none; flex-direction:column; overflow:auto; touch-action:pan-y; background:var(--bg);
+  .scr { position:fixed; inset:0; z-index:15; display:none; flex-direction:column; overflow:auto; touch-action:pan-y; background:var(--bg); padding-left:var(--sl); padding-right:var(--sr);
     background-image:linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
     background-size:56px 56px; }
   .scr.on { display:flex; }
@@ -784,6 +802,8 @@
   .br-tools { display:flex; gap:6px; }
   .br-cog { display:grid; place-items:center; width:34px; height:34px; padding:0; color:var(--label); background:transparent; border:1px solid var(--line-hi); border-radius:0; }
   .br-cog:hover { color:var(--accent); border-color:var(--accent); }
+  .br-cog.nudge { position:relative; color:var(--accent); border-color:var(--accent); }
+  .br-cog.nudge::after { content:''; position:absolute; top:-4px; right:-4px; width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent); }
   .br-cog svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:square; }
   .br-segs { grid-column:1 / -1; display:grid; grid-template-columns:repeat(13, minmax(0, 1fr)); gap:3px; }
   .br-segs i { height:5px; background:#1a2231; }
@@ -890,7 +910,7 @@
   .att.on { border-color:var(--accent); color:var(--accent); background:rgba(255,107,44,.08); }
 
   /* ---------- modal: the after-action layout from the brand sheet, over the blurred fight ---------- */
-  #modal { position:fixed; inset:0; z-index:30; display:none; align-items:center; justify-content:center; overflow:auto; padding:32px;
+  #modal { position:fixed; inset:0; z-index:30; display:none; align-items:center; justify-content:center; overflow:auto; padding:32px calc(32px + var(--sr)) 32px calc(32px + var(--sl));
     background:rgba(3,5,10,.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
   #modalbox { width:min(760px, 100%); margin:auto; text-align:left; color:var(--text); }
   #modalbox .eyebrow { margin-bottom:14px; }
@@ -907,6 +927,10 @@
   .setrow label { margin-left:14px; white-space:nowrap; font-weight:500; letter-spacing:.04em; text-transform:none; color:var(--text); }
   .setrow input[type=range] { width:150px; accent-color:var(--accent); }
   .setrow input[type=checkbox], .setrow input[type=radio] { accent-color:var(--accent); }
+  #modalbox .setrow .setbtn { display:inline-block; width:auto; margin:0; padding:7px 14px; font-size:10.5px; }
+  #modalbox .steps { margin:16px 0 4px; padding-left:22px; line-height:1.7; color:var(--text); }
+  #modalbox .steps li { margin:6px 0; }
+  #modalbox .steps .ico { width:15px; height:15px; margin:0 2px -2px; fill:none; stroke:var(--accent); stroke-width:1.6; }
 
   /* ---------- rotate prompt and title screen ---------- */
   #rotate { position:fixed; inset:0; z-index:60; display:none; flex-direction:column; justify-content:center; gap:14px; padding:34px; background:var(--bg); }
@@ -936,23 +960,23 @@
     #tickets > b { min-width:40px; font-size:14px; }
     .tkbar { width:min(110px, 13vw); padding:0 7px; }
     .tkmid { min-width:50px; padding:0 8px; } .tkmid b { font-size:13px; } .tkmid em { font-size:7px; letter-spacing:.2em; }
-    #minimap { top:6px; left:6px; width:96px; height:76px; }
-    #topbar { top:6px; right:6px; gap:4px; }
+    #minimap { top:6px; left:calc(6px + var(--sl)); width:96px; height:76px; }
+    #topbar { top:6px; right:calc(6px + var(--sr)); gap:4px; }
     #tomap, #tocfg { height:30px; padding:0 10px; font-size:10px; } #tocfg { width:30px; padding:0; font-size:13px; }
     #savermark { height:30px; width:26px; }
     #bossbar { top:74px; width:min(280px, 46vw); } #bossname { margin-bottom:3px; font-size:9px; }
     #objhud { top:40px; gap:4px; } .obj { width:24px; height:20px; font-size:11px; } #objmsg { top:24px; font-size:8.5px; }
     #trainbox { top:6px; width:min(420px, 56vw); padding:6px 10px 8px; } .tb-top, #tbSkip { font-size:8.5px; } .tb-title { font-size:14px; } .tb-hint { font-size:9px; }
     .tb-dots { margin-top:5px; } body.training #objhud { top:84px; }
-    #feed { top:auto; bottom:64px; right:6px; width:220px; font-size:10px; }
-    #ammo { right:6px; bottom:6px; min-width:0; padding:6px 10px 8px; }
+    #feed { top:auto; bottom:64px; right:calc(6px + var(--sr)); width:220px; font-size:10px; }
+    #ammo { right:calc(6px + var(--sr)); bottom:6px; min-width:0; padding:6px 10px 8px; }
     #amname { margin-bottom:3px; font-size:8px; letter-spacing:.2em; } #ammag { font-size:22px; } #amres { font-size:11px; }
-    #supports { right:auto; left:6px; bottom:6px; gap:4px; }
+    #supports { right:auto; left:calc(6px + var(--sl)); bottom:6px; gap:4px; }
     .supbtn { width:98px; gap:4px; padding:5px 8px 6px; }
     .ks-top { font-size:8.5px; } .ks-name { font-size:8.5px; }
-    body.touch #ammo { right:6px; bottom:6px; }
-    body.touch #supports { top:42px; right:6px; left:auto; bottom:auto; }
-    body.touch #feed { top:88px; bottom:auto; left:6px; }
+    body.touch #ammo { right:calc(6px + var(--sr)); bottom:6px; }
+    body.touch #supports { top:42px; right:calc(6px + var(--sr)); left:auto; bottom:auto; }
+    body.touch #feed { top:88px; bottom:auto; left:calc(6px + var(--sl)); }
     #hint { bottom:70px; font-size:10px; }
     #dmgdir i { width:210px; height:180px; margin:-180px 0 0 -105px; }
     .menu { grid-template-columns:minmax(0, 1fr) clamp(220px, 34vw, 300px); }
@@ -987,7 +1011,7 @@
     .lstat { gap:3px 8px; } .lstat .k { font-size:8.5px; letter-spacing:.14em; } .lstat .v { font-size:11px; }
     .att { padding:4px 7px; font-size:9px; } .attrow > span { min-width:40px; font-size:8.5px; }
     .lo-note { font-size:9.5px; line-height:1.45; }
-    #modal { padding:14px 26px; }
+    #modal { padding:14px calc(26px + var(--sr)) 14px calc(26px + var(--sl)); }
     #modalbox .eyebrow { margin-bottom:8px; font-size:10px; }
     #modalbox h2 { margin-bottom:10px; font-size:40px; }
     #modalbox .lede { margin-bottom:12px; font-size:13px; }
@@ -1072,6 +1096,7 @@
       <header class="br-head">
         <div class="br-theater"><span class="br-tag" id="brTheater">Theater I</span><span class="br-held" id="brHeld">1 / 13 held</span></div>
         <div class="br-tools"><button class="br-cog" id="torange" aria-label="Firing range" title="Firing range"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 1.8v4M12 18.2v4M1.8 12h4M18.2 12h4"/></svg></button>
+        <button class="br-cog" id="toinstall" hidden aria-label="Install Holdout" title="Install Holdout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M4.5 15.5v5h15v-5"/></svg></button>
         <button class="br-cog" id="tosettings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 2.8v3.1M12 18.1v3.1M2.8 12h3.1M18.1 12h3.1M5.5 5.5l2.2 2.2M16.3 16.3l2.2 2.2M5.5 18.5l2.2-2.2M16.3 7.7l2.2-2.2"/></svg></button></div>
         <div class="br-segs" id="brSegs" aria-hidden="true"></div>
       </header>
@@ -7744,6 +7769,8 @@ function showSettings() {
     <div class="setrow"><span>Graphics</span><select id="o_q">${['auto', 'low', 'medium', 'high'].map(v => `<option value="${v}"${(o.quality || 'auto') === v ? ' selected' : ''}>${v === 'auto' ? 'Auto (' + Q.level + ')' : v[0].toUpperCase() + v.slice(1)}</option>`).join('')}</select></div>
     <div class="setrow"><span>Frame rate</span><select id="o_fps">${[['max', 'Max'], ['60', '60 fps'], ['30', '30 fps']].map(([v, n]) => `<option value="${v}"${(o.fps || 'max') === v ? ' selected' : ''}>${n}</option>`).join('')}</select></div>
     <div class="setrow"><span>Battery saver</span><select id="o_saver">${[['off', 'Off'], ...(navigator.getBattery ? [['auto', 'Auto (20% battery)']] : []), ['on', 'On']].map(([v, n]) => `<option value="${v}"${(o.saver || 'off') === v ? ' selected' : ''}>${n}${v !== 'off' && (o.saver || 'off') === v && POWER.saver ? ' · on now' : ''}</option>`).join('')}</select></div>
+    ${fullscreenAllowed() ? `<div class="setrow"><span>Full screen</span><input type="checkbox" id="o_fs"${on(!!document.fullscreenElement)}></div>` : ''}
+    ${appInstallable() ? `<div class="setrow"><span>Install app</span><button class="btn setbtn" id="o_inst">${APP.prompt ? 'Install' : 'How'}</button></div>` : ''}
     ${GPAD.seen ? `<div class="setrow"><span>Controller look</span><input type="range" id="o_pad" min="0.4" max="2" step="0.05" value="${o.padSens || 1}"></div>` : ''}
     </div>
     <button class="cta" id="mbtn">Done</button>
@@ -7767,6 +7794,10 @@ function showSettings() {
   if (fs) fs.onchange = () => { meta.opts.fps = fs.value; applyOpts(); saveMeta(); };
   const sv = $('o_saver');
   if (sv) sv.onchange = () => { meta.opts.saver = sv.value; applyOpts(); saveMeta(); };
+  const fsBox = $('o_fs');
+  if (fsBox) fsBox.onchange = () => toggleFullscreen(fsBox.checked);
+  const inst = $('o_inst');
+  if (inst) inst.onclick = () => { if (appInstall() !== 'ios') showSettings(); };
   const snd = $('o_snd');
   if (snd) snd.onchange = () => { meta.muted = !snd.checked; saveMeta(); };
   $('mbtn').onclick = hideModal;
@@ -8336,6 +8367,74 @@ window.G = { state, meta, cam, CFG, WEAPONS, TERRITORIES,
   get buildings() { return buildings; }, get rubble() { return rubble; },
   step(sec) { for (let t = 0; t < sec; t += 1 / 60) tick(1 / 60); } }; // debug fast-forward
 requestAnimationFrame(frame);
+// ============================================================ THE INSTALLED APP (GitHub Pages)
+// The page registers its service worker (sw.js: the game starts offline after one launch online) only when it carries
+// a manifest link — the Artifact form has none — and runs top-level on https or localhost. Installing: the start
+// menu's install button (orange until pressed once on a phone) and SETTINGS › Install app use the browser's own prompt
+// (Android and desktop Chrome, Edge); an iPhone has no prompt, so both show the Share › Add to Home Screen steps
+// instead. Installed, the manifest opens the game full screen and, on Android, locked to landscape; nothing is offered
+// once it runs that way. SETTINGS › Full screen appears where the page may take the whole screen, and on a phone it
+// also locks landscape.
+const APP = { prompt: null, installed: false, reg: null };
+const appStandalone = () => navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches);
+const appIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function appHosted() {   // our own top-level page, able to install: not the Artifact frame, not a file on disk
+  let top = false;
+  try { top = window.top === window; } catch (e) {}
+  return top && !!document.querySelector('link[rel="manifest"]') && (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname));
+}
+function appRegister() {
+  if (!appHosted() || !('serviceWorker' in navigator)) return false;
+  navigator.serviceWorker.register('sw.js').then(r => { APP.reg = r; }).catch(() => {});
+  return true;
+}
+const appInstallable = () => !APP.installed && !appStandalone() && (!!APP.prompt || (appIOS() && appHosted()));
+function appInstall() {   // the browser's own dialog, or on an iPhone the steps
+  if (meta && !meta.appNudged) { meta.appNudged = true; saveMeta(); }
+  if (APP.prompt) {
+    const p = APP.prompt;
+    APP.prompt = null;
+    try { const r = p.prompt(); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+    renderAppButton();
+    return 'prompt';
+  }
+  if (appIOS() && appHosted() && !appStandalone()) {
+    showModal(`
+      <div class="eyebrow">Install</div>
+      <h2>Holdout on your home screen</h2>
+      <ol class="steps">
+        <li>Tap <b>Share</b> <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5v8.5M5 4.5l3-3 3 3M3.5 7.5v7h9v-7"/></svg> in Safari's toolbar.</li>
+        <li>Choose <b>Add to Home Screen</b>, then <b>Add</b>.</li>
+        <li>Open Holdout from its icon: full screen, and it starts without a connection after the first launch.</li>
+      </ol>
+      <button class="cta" id="mbtn">Done</button>
+      <p class="note">A game started from the icon keeps its own save, apart from Safari's.</p>`);
+    $('mbtn').onclick = hideModal;
+    renderAppButton();
+    return 'ios';
+  }
+  return null;
+}
+function renderAppButton() {   // the start menu's install button: only while there is something to install
+  const b = $('toinstall');
+  if (!b) return;
+  const show = appInstallable();
+  b.hidden = !show;
+  b.classList.toggle('nudge', show && isTouch && !(meta && meta.appNudged));
+}
+const fullscreenAllowed = () => !appStandalone() && !!(document.fullscreenEnabled && document.documentElement.requestFullscreen);
+function toggleFullscreen(on) {
+  if (!on) { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); return; }
+  document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(() => {
+    const o = window.screen && window.screen.orientation;   // `screen` alone is the game's current screen name
+    if (isTouch && o && o.lock) o.lock('landscape').catch(() => {});
+  }).catch(() => {});
+}
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); APP.prompt = e; renderAppButton(); });
+addEventListener('appinstalled', () => { APP.installed = true; APP.prompt = null; renderAppButton(); });
+$('toinstall').onclick = appInstall;
+appRegister();
+renderAppButton();
 </script>
 </body>
 </html>

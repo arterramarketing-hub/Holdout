@@ -188,6 +188,8 @@ function showSettings() {
     <div class="setrow"><span>Graphics</span><select id="o_q">${['auto', 'low', 'medium', 'high'].map(v => `<option value="${v}"${(o.quality || 'auto') === v ? ' selected' : ''}>${v === 'auto' ? 'Auto (' + Q.level + ')' : v[0].toUpperCase() + v.slice(1)}</option>`).join('')}</select></div>
     <div class="setrow"><span>Frame rate</span><select id="o_fps">${[['max', 'Max'], ['60', '60 fps'], ['30', '30 fps']].map(([v, n]) => `<option value="${v}"${(o.fps || 'max') === v ? ' selected' : ''}>${n}</option>`).join('')}</select></div>
     <div class="setrow"><span>Battery saver</span><select id="o_saver">${[['off', 'Off'], ...(navigator.getBattery ? [['auto', 'Auto (20% battery)']] : []), ['on', 'On']].map(([v, n]) => `<option value="${v}"${(o.saver || 'off') === v ? ' selected' : ''}>${n}${v !== 'off' && (o.saver || 'off') === v && POWER.saver ? ' · on now' : ''}</option>`).join('')}</select></div>
+    ${fullscreenAllowed() ? `<div class="setrow"><span>Full screen</span><input type="checkbox" id="o_fs"${on(!!document.fullscreenElement)}></div>` : ''}
+    ${appInstallable() ? `<div class="setrow"><span>Install app</span><button class="btn setbtn" id="o_inst">${APP.prompt ? 'Install' : 'How'}</button></div>` : ''}
     ${GPAD.seen ? `<div class="setrow"><span>Controller look</span><input type="range" id="o_pad" min="0.4" max="2" step="0.05" value="${o.padSens || 1}"></div>` : ''}
     </div>
     <button class="cta" id="mbtn">Done</button>
@@ -211,6 +213,10 @@ function showSettings() {
   if (fs) fs.onchange = () => { meta.opts.fps = fs.value; applyOpts(); saveMeta(); };
   const sv = $('o_saver');
   if (sv) sv.onchange = () => { meta.opts.saver = sv.value; applyOpts(); saveMeta(); };
+  const fsBox = $('o_fs');
+  if (fsBox) fsBox.onchange = () => toggleFullscreen(fsBox.checked);
+  const inst = $('o_inst');
+  if (inst) inst.onclick = () => { if (appInstall() !== 'ios') showSettings(); };
   const snd = $('o_snd');
   if (snd) snd.onchange = () => { meta.muted = !snd.checked; saveMeta(); };
   $('mbtn').onclick = hideModal;

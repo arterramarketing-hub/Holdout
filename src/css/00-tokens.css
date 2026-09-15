@@ -2,6 +2,7 @@
      Archivo Expanded for the loud words, Archivo for reading, JetBrains Mono for labels and every number.
      Square corners throughout; nothing is bevelled, and only the call to action glows. */
   :root { color-scheme: dark;
+    --sl: env(safe-area-inset-left, 0px); --sr: env(safe-area-inset-right, 0px);   /* a notch or camera cutout beside a landscape screen */
     --bg: #05080f; --panel: rgba(6, 10, 17, .82); --panel-solid: #070b14;
     --line: #262f3d; --line-hi: #3a4454;
     --ink: #f1f3f6; --text: #c9d1dc; --label: #a6b0bf; --muted: #7b879a;

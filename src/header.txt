@@ -21,6 +21,15 @@
   Stalls over 0.2 s (a throttled or hidden page) are ignored. Under a frame-rate cap the thresholds stretch to the
   cap's frame (slow past 1.35x it, smooth under 1.05x), so a 30 fps cap never reads as a slow device.
 
+  THE INSTALLED APP — on GitHub Pages the page is an installable web app: manifest.webmanifest (full screen, landscape,
+  navy, the H-in-a-scope icons that tools/icons.py draws) and sw.js (built from src/pwa/sw.js with a version hashed
+  from what it caches). After one launch online it starts offline: the page is network first with a 4 s fallback to
+  the saved copy, three.js and the font files cache first, the font stylesheet stale-while-revalidate; a new build
+  takes over at once. The worker registers only on a top-level https or localhost page that carries the manifest link
+  (the data-pwa tags, which the Artifact build strips). The start menu's install button and SETTINGS › Install app use
+  the browser's prompt, or on an iPhone show Share › Add to Home Screen; SETTINGS › Full screen appears where allowed
+  and locks a phone to landscape. The HUD, menus and cards keep clear of a notch through --sl / --sr (safe-area insets).
+
   POWER — SETTINGS › Frame rate: Max (every display frame), 60 or 30; the loop lets display frames pass through an
   accumulator (frameGate), so 60 on a 90 Hz or 120 Hz screen still averages 60. The menus always run at 30: nothing 3D
   draws there. SETTINGS › Battery saver: On caps battle at 30, holds the Saver preset (240 lines, pixel ratio 1,

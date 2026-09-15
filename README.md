@@ -7,7 +7,9 @@ mountain town, for thirteen sectors of a theater map. Models, textures, animatio
 in code; there are no asset files.
 
 Play: open `index.html` in a browser (three.js loads from a CDN, so it needs a connection), or serve the folder over
-http. It is also published on GitHub Pages from this repository.
+http. It is also published on GitHub Pages from this repository, where it installs as an app: the install button on
+the start menu (or SETTINGS › Install app) on Android and desktop Chrome, or Share › Add to Home Screen on an iPhone.
+Installed, it opens full screen in landscape and starts offline after its first launch.
 
 - First person with manual aim by default; V switches to third person.
 - Each sector is fought over three landmark objectives; hold more than the enemy to bleed their reserves, then
@@ -31,6 +33,8 @@ src/header.txt     the design notes (the comment at the top of index.html)
 src/css/*.css      the stylesheet, joined in filename order
 src/markup.html    the body markup
 src/js/*.js        the game script, joined in filename order (one classic script: top-level names are shared)
+src/pwa/           the web app manifest and the service worker template (the build writes manifest.webmanifest and sw.js)
+icons/             the app icons, drawn by python3 tools/icons.py
 ```
 
 ```
