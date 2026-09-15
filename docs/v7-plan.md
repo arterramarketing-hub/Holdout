@@ -337,3 +337,6 @@ GitHub Desktop mid-phase can never pick up half-finished work.
   `--no-sandbox` on Linux, and in CI writes annotations and a summary table. `build.py --site` and
   `.github/workflows/ci.yml` are in. The whole suite passes locally (111 tests). The first GitHub run happens on your
   next push.
+- **Phase 2 — done.** Frame rate (Max, 60, 30) and Battery saver (Off, On, Auto at 20%) in SETTINGS. The frame gate
+  holds 30 on 60 Hz and 60 on 90 and 120 Hz screens. The Saver preset renders 240 lines; the menus run at 30.
+  `57-power.test.js` adds 7 tests; 118 tests pass.

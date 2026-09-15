@@ -151,6 +151,7 @@ function updateFeed() {
 function applyOpts() {   // the options that change how the game looks and reads
   const o = meta.opts;
   if ((o.quality || 'auto') !== Q.opt) { Q.opt = o.quality || 'auto'; setQualityOption(Q.opt); }
+  applyPower();
   document.body.classList.toggle('fpv', !!o.fpv);
   document.body.classList.toggle('nomap', !o.minimap);
   document.body.classList.toggle('nofeed', !o.killfeed);
@@ -185,6 +186,8 @@ function showSettings() {
     <div class="setrow"><span>Sound</span><input type="checkbox" id="o_snd"${on(!meta.muted)}></div>
     <div class="setrow"><span>Music</span><input type="range" id="o_mus" min="0" max="1" step="0.05" value="${o.music == null ? 0.6 : o.music}"></div>
     <div class="setrow"><span>Graphics</span><select id="o_q">${['auto', 'low', 'medium', 'high'].map(v => `<option value="${v}"${(o.quality || 'auto') === v ? ' selected' : ''}>${v === 'auto' ? 'Auto (' + Q.level + ')' : v[0].toUpperCase() + v.slice(1)}</option>`).join('')}</select></div>
+    <div class="setrow"><span>Frame rate</span><select id="o_fps">${[['max', 'Max'], ['60', '60 fps'], ['30', '30 fps']].map(([v, n]) => `<option value="${v}"${(o.fps || 'max') === v ? ' selected' : ''}>${n}</option>`).join('')}</select></div>
+    <div class="setrow"><span>Battery saver</span><select id="o_saver">${[['off', 'Off'], ...(navigator.getBattery ? [['auto', 'Auto (20% battery)']] : []), ['on', 'On']].map(([v, n]) => `<option value="${v}"${(o.saver || 'off') === v ? ' selected' : ''}>${n}${v !== 'off' && (o.saver || 'off') === v && POWER.saver ? ' · on now' : ''}</option>`).join('')}</select></div>
     ${GPAD.seen ? `<div class="setrow"><span>Controller look</span><input type="range" id="o_pad" min="0.4" max="2" step="0.05" value="${o.padSens || 1}"></div>` : ''}
     </div>
     <button class="cta" id="mbtn">Done</button>
@@ -204,6 +207,10 @@ function showSettings() {
   bind('o_pad', 'padSens', e => +e.value);
   const qs = $('o_q');
   if (qs) qs.onchange = () => { meta.opts.quality = qs.value; applyOpts(); saveMeta(); };
+  const fs = $('o_fps');
+  if (fs) fs.onchange = () => { meta.opts.fps = fs.value; applyOpts(); saveMeta(); };
+  const sv = $('o_saver');
+  if (sv) sv.onchange = () => { meta.opts.saver = sv.value; applyOpts(); saveMeta(); };
   const snd = $('o_snd');
   if (snd) snd.onchange = () => { meta.muted = !snd.checked; saveMeta(); };
   $('mbtn').onclick = hideModal;

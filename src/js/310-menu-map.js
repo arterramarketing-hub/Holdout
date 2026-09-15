@@ -390,6 +390,7 @@ function renderBrief() {
 function playMapEntrance() {   // the map lays itself out: land, sectors, the front line, markers, then the briefing
   const scr = el.mapscr;
   scr.classList.remove('enter');
+  if (POWER.saver) return;   // the battery saver skips the show
   void scr.offsetWidth;
   scr.classList.add('enter');
   clearTimeout(MAPV.enterT);

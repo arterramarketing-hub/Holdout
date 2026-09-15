@@ -17,8 +17,9 @@ http. It is also published on GitHub Pages from this repository.
 - Phone (landscape): left thumb moves (push to the rim to sprint), right thumb looks; fire, ADS, reload and
   grenade buttons on the right.
 - Controller: sticks move and look, RT fire, LT sights, RB grenade, X reload, Y view, L3 sprint, D-pad killstreaks.
-- Settings include graphics quality (Auto, Low, Medium, High) and squad callouts; the firing range next to settings
-  on the start menu teaches the controls.
+- Settings include graphics quality (Auto, Low, Medium, High), a frame-rate cap (Max, 60, 30), a battery saver (Off,
+  On, or Auto at 20% battery where the browser reports it) and squad callouts; the firing range next to settings on
+  the start menu teaches the controls.
 
 ## Working on it
 

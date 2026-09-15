@@ -18,7 +18,15 @@
   every device (the look phones already ran), steps down after 3 s of frames averaging over 24 ms (and again if it
   stays slow), and climbs back after 10 s under 17.5 ms, never within 30 s of a drop and never to a level that has
   already run slow twice, so a phone that cannot hold High settles instead of flipping resolution every half minute.
-  Stalls over 0.2 s (a throttled or hidden page) are ignored.
+  Stalls over 0.2 s (a throttled or hidden page) are ignored. Under a frame-rate cap the thresholds stretch to the
+  cap's frame (slow past 1.35x it, smooth under 1.05x), so a 30 fps cap never reads as a slow device.
+
+  POWER — SETTINGS › Frame rate: Max (every display frame), 60 or 30; the loop lets display frames pass through an
+  accumulator (frameGate), so 60 on a 90 Hz or 120 Hz screen still averages 60. The menus always run at 30: nothing 3D
+  draws there. SETTINGS › Battery saver: On caps battle at 30, holds the Saver preset (240 lines, pixel ratio 1,
+  particles 160, brass 24, corpses 40, rain 25%, no glow; Auto graphics paused), skips the start menu's entrance
+  animation and shows a battery mark by the settings button. Auto (offered only where navigator.getBattery exists,
+  so not on an iPhone) does the same from 20% battery unplugged, with a banner, and lets go on the charger or past 30%.
 
   CONTROLLER — the standard Gamepad mapping. Battle: left stick moves (radial deadzone 0.15), right stick looks
   (deadzone 0.12, response curve ^1.8, SETTINGS › Controller look), RT fires, LT aims down the sights, RB throws a
