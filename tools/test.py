@@ -16,6 +16,7 @@ usage:
   python3 tools/test.py --only ballistics  just the tests whose "suite › name" contains the text
   python3 tools/test.py --pass touch       one pass
   python3 tools/test.py --baseline         run the baseline pass and write tests/baseline.json
+  python3 tools/test.py --soak             several whole fronts back to back with everything switched on (slow)
   python3 tools/test.py --headed           watch it in a visible window
   python3 tools/test.py --source old.html --suites 'tests/scratch/*.js'   another build, other suites (comparisons)
 """
@@ -37,7 +38,7 @@ TESTS = os.path.join(ROOT, 'tests')
 CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 # headless windows lose 87 px of height to browser UI, so these give inner sizes of 1280x720, 844x390, 740x360, 1920x1080 and 900x1200
 PASSES = {'desktop': ('1280,807', ''), 'touch': ('844,477', '&touch=1'), 'small': ('740,447', '&touch=1'), 'wide': ('1920,1167', ''),
-          'tall': ('900,1287', ''), 'baseline': ('1280,807', '')}
+          'tall': ('900,1287', ''), 'baseline': ('1280,807', ''), 'soak': ('1280,807', '')}
 DEFAULT_PASSES = ['desktop', 'touch', 'small', 'wide', 'tall']
 
 
@@ -146,11 +147,11 @@ def main():
         sys.exit('Google Chrome was not found; open tests/run.html?pass=desktop from a local server instead')
     n = build_page()
     only, headed = arg('--only'), '--headed' in sys.argv
-    passes = ['baseline'] if '--baseline' in sys.argv else [arg('--pass')] if arg('--pass') else DEFAULT_PASSES
+    passes = ['baseline'] if '--baseline' in sys.argv else ['soak'] if '--soak' in sys.argv else [arg('--pass')] if arg('--pass') else DEFAULT_PASSES
     print(f'{n} suite files · passes: {", ".join(passes)}')
     all_ok = True
     for p in passes:
-        data, wall = run_pass(p, 0, only, headed, timeout=1500 if p == 'baseline' else 900)
+        data, wall = run_pass(p, 0, only, headed, timeout=1500 if p in ('baseline', 'soak') else 900)
         all_ok = report(data, wall) and all_ok
         if p == 'baseline' and data.get('baseline'):
             path = os.path.join(TESTS, 'baseline.json')

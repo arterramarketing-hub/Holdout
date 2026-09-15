@@ -15,10 +15,10 @@
   render's height (High 480, Medium 360, Low 270; the whole-number blow-up never goes much past it, so 720p renders
   360 and 1080p 540 on High); DPR caps the output pixel ratio (1 / 1.5 / 2); caps thin out what is drawn and kept
   (particles 220 / 500 / 900, loose brass 40 / 100 / 160, enemy corpses 50 / 90 / 120, rain 35 / 70 / 100%); Low
-  also drops the tracer glow and other soldiers' muzzle blooms (your own flash always blooms). Auto starts at Medium
-  on a phone and High on a desktop, steps down after 3 s of frames averaging over 24 ms (and again if it stays slow),
-  and climbs back after 10 s under 17.5 ms, never within 30 s of a drop and never above where it started. Stalls over
-  0.2 s (a throttled or hidden page) are ignored.
+  also drops the tracer glow and other soldiers' muzzle blooms (your own flash always blooms). Auto starts at High on
+  every device (the look phones already ran), steps down after 3 s of frames averaging over 24 ms (and again if it
+  stays slow), and climbs back after 10 s under 17.5 ms, never within 30 s of a drop. Stalls over 0.2 s (a throttled
+  or hidden page) are ignored.
 
   CONTROLLER — the standard Gamepad mapping. Battle: left stick moves (radial deadzone 0.15), right stick looks
   (deadzone 0.12, response curve ^1.8, SETTINGS › Controller look), RT fires, LT aims down the sights, RB throws a
@@ -1302,7 +1302,7 @@ function buildSoldier(i) {
     weapon, horse: false, sight: att.sight, ext: att.ext,
     x: CFG.arenaW / 2 + AI_SLOTS[i] + rand(-20, 20), y: CFG.lineY + rand(-30, 50),
     hp: maxHp, maxHp, alive: true, respawnT: 0,
-    fireCd: rand(0, 0.4), regenCd: 0, invuln: 0, aim: -Math.PI / 2, r: 13,
+    fireCd: rand(0, 0.4) * (i ? 1 : 0), regenCd: 0,   // the squad's first shots are staggered; your own trigger is live the moment you deploy (the roll stays, so a seed replays the same front) invuln: 0, aim: -Math.PI / 2, r: 13,
     walk: rand(0, TAU), moving: false, recoil: 0,
     mag: cap, reserve: cap * WEAPONS[weapon].spare, reloadT: 0, reloadDur: 1, pistol: false,
     frags: CFG.frags, throwT: 0, sprinting: false, sprintOutT: 0,
@@ -2616,7 +2616,8 @@ function bindHoldButton(id, down, up) {
 const GPAD = { seen: false, active: false, lastInput: 'kbm', prev: [], lx: 0, ly: 0, fire: false, ads: false, navT: 0, rumbleIdx: -1 };
 const GPB = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, VIEW: 8, START: 9, L3: 10, R3: 11, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
 function currentPad() {
-  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  let pads = [];
+  try { pads = navigator.getGamepads ? navigator.getGamepads() : []; } catch (e) { return null; }   // a host frame can refuse the Gamepad API: a throw here would stop the game loop
   for (const p of pads || []) if (p && p.connected !== false && p.buttons && p.buttons.length >= 16) return p;
   return null;
 }
@@ -2707,6 +2708,12 @@ function padMenu(p, hit, lx, ly, dt, root, verticalOnly) {   // spatial focus: t
     }
     if (best) best.focus();
   }
+  if (hit(GPB.A) && !focus && root !== document.querySelector('.brief')) {   // nothing focused yet: A takes a card's main action, and wakes the focus ring elsewhere
+    const main = root.id === 'modalbox' ? root.querySelector('.cta:not([disabled])') : null;
+    if (main) main.click();
+    else { const first = root.querySelector('.wrow.on, button, input, select, [tabindex]'); if (first) first.focus(); }
+    return;
+  }
   if (hit(GPB.A) && focus && root !== document.querySelector('.brief')) {
     if (focus.type === 'checkbox' || focus.type === 'radio') { focus.checked = focus.type === 'radio' ? true : !focus.checked; focus.dispatchEvent(new Event('change', { bubbles: true })); focus.dispatchEvent(new Event('input', { bubbles: true })); }
     else if (focus.tagName === 'SELECT') { focus.selectedIndex = (focus.selectedIndex + 1) % focus.options.length; focus.dispatchEvent(new Event('change', { bubbles: true })); }
@@ -2717,7 +2724,10 @@ function padMenu(p, hit, lx, ly, dt, root, verticalOnly) {   // spatial focus: t
 function padRumble(ms, strong) {
   const p = currentPad();
   if (!p || !meta || !meta.opts.vibe || !p.vibrationActuator || !p.vibrationActuator.playEffect) return;
-  try { p.vibrationActuator.playEffect('dual-rumble', { duration: ms, strongMagnitude: strong ? 0.8 : 0.35, weakMagnitude: strong ? 0.5 : 0.6 }); } catch (e) {}
+  try {
+    const r = p.vibrationActuator.playEffect('dual-rumble', { duration: ms, strongMagnitude: strong ? 0.8 : 0.35, weakMagnitude: strong ? 0.5 : 0.6 });
+    if (r && r.catch) r.catch(() => {});   // a refused rumble is not an error worth logging
+  } catch (e) {}
 }
 // ============================================================ ENEMIES / WAVES
 const ETYPES = {
@@ -2999,7 +3009,7 @@ function killEnemy(idx, credit) {
   sfxKill(e.x, e.y);
   if (!e.boss && Math.random() < 0.35) pickups.push({ x: e.x + rand(-10, 10), y: e.y + rand(-10, 10), t: 30 });
   if (e.boss) state.enemyDown = state.enemyTotal;   // the Warlord falls and the rest of them break
-  else state.enemyDown = Math.min(state.enemyTotal - (state.bossRef ? 1 : 0), state.enemyDown + 1);   // while the Warlord stands, its ticket stays on the board
+  else state.enemyDown = Math.min(state.enemyTotal - (state.bossRef || !state.bossSpawned ? 1 : 0), state.enemyDown + 1);   // the Warlord's ticket stays on the board until it has come and fallen: a multi-kill at 89% cannot skip it
   const cap = (state.bossSpawned && state.bossRef && !e.boss) ? 99 : 100;  // boss gates the last 1%
   state.progress = Math.min(cap, state.enemyDown / state.enemyTotal * 100);
   const pct = +(100 / state.enemyTotal).toFixed(1);
@@ -3209,6 +3219,7 @@ function throwGrenade(s) {
   let ox = s.x, oy = s.y, oz = 1.5 * PX, yaw = aim.yaw, el = Math.atan(aim.pitch);
   if (fpvActive() || !VIEW.ready || !VIEW.camera) { const R = crosshairRay(s); ox = R.ox + R.dx * 20; oy = R.oy + R.dy * 20; oz = R.oz - 0.12 * PX; }
   else { const R = crosshairRay(s); yaw = Math.atan2(R.dx, -R.dy); el = Math.asin(clamp(R.dz, -1, 1)); }
+  if (buildings.some(b => insideShape(b, ox, oy))) { ox = s.x; oy = s.y; }   // pressed against a wall: the frag leaves from your own spot, not from inside the house
   el += CFG.fragLoft;
   const h = Math.cos(el) * CFG.fragSpeed;
   const g = { x: ox, y: oy, z: oz, vx: Math.sin(yaw) * h, vy: -Math.cos(yaw) * h, vz: Math.sin(el) * CFG.fragSpeed,
@@ -3566,7 +3577,12 @@ const RANGE = {   // metres
 };
 const inputKind = () => GPAD.lastInput === 'pad' ? 'pad' : isTouch ? 'touch' : 'kbm';
 function enterTraining() {
-  if (!VIEW.ready) { enterBattle(1); return; }   // enterBattle shows the loading card; the range opens from the menu again after
+  if (!VIEW.ready) {   // the 3D engine is still arriving: wait for it, then open the range (not a real front)
+    if (VIEW.failed) { enterBattle(1); return; }   // shows the engine-offline card
+    showModal(`<div class="eyebrow">Stand by</div><h2>Loading</h2><p class="note">Opening the firing range as soon as the battlefield is ready.</p>`);
+    threeReady.then(() => { hideModal(); if (screen !== 'battle') enterTraining(); });
+    return;
+  }
   const keep = FORECAST[1];
   enterBattle(1);
   if (keep) FORECAST[1] = keep; else delete FORECAST[1];   // the range must not use up Miller Fields' forecast
@@ -7436,9 +7452,9 @@ function viewStats() {
 // ---------- graphics quality: three presets, and Auto that steps down when frames run long ----------
 // LINES is the height of the N64 render (the look and most of the cost); DPR caps the output canvas's pixel ratio;
 // the caps thin out what is drawn (particles, loose brass, rain) and kept (enemy corpses); GLOW draws the tracer glow
-// and other soldiers' muzzle blooms (your own flash always blooms). Auto starts at Medium on a phone and High on a
-// desktop, drops a step after 3 s of frames averaging over 24 ms, and climbs back after 10 s under 17.5 ms — never above
-// where it started, and not within 30 s of a drop.
+// and other soldiers' muzzle blooms (your own flash always blooms). Auto starts at High everywhere (the game's own look,
+// which phones ran before presets existed), drops a step after 3 s of frames averaging over 24 ms, and climbs back after
+// 10 s under 17.5 ms — never above High, and not within 30 s of a drop.
 const QUALITY = {
   low:    { lines: 270, dpr: 1,   particles: 220, brass: 40,  corpses: 50,  rain: 0.35, glow: false },
   medium: { lines: 360, dpr: 1.5, particles: 500, brass: 100, corpses: 90,  rain: 0.7,  glow: true },
@@ -7457,7 +7473,7 @@ function applyQuality(level) {
 }
 function setQualityOption(opt) {   // 'auto' | 'low' | 'medium' | 'high', from settings or a save
   Q.auto = !QUALITY[opt];
-  Q.start = isTouch ? 'medium' : 'high';
+  Q.start = 'high';
   Q.slowT = Q.fastT = Q.holdT = 0; Q.emaMs = 16.7;
   applyQuality(Q.auto ? Q.start : opt);
 }

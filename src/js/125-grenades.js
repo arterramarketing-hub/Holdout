@@ -12,6 +12,7 @@ function throwGrenade(s) {
   let ox = s.x, oy = s.y, oz = 1.5 * PX, yaw = aim.yaw, el = Math.atan(aim.pitch);
   if (fpvActive() || !VIEW.ready || !VIEW.camera) { const R = crosshairRay(s); ox = R.ox + R.dx * 20; oy = R.oy + R.dy * 20; oz = R.oz - 0.12 * PX; }
   else { const R = crosshairRay(s); yaw = Math.atan2(R.dx, -R.dy); el = Math.asin(clamp(R.dz, -1, 1)); }
+  if (buildings.some(b => insideShape(b, ox, oy))) { ox = s.x; oy = s.y; }   // pressed against a wall: the frag leaves from your own spot, not from inside the house
   el += CFG.fragLoft;
   const h = Math.cos(el) * CFG.fragSpeed;
   const g = { x: ox, y: oy, z: oz, vx: Math.sin(yaw) * h, vy: -Math.cos(yaw) * h, vz: Math.sin(el) * CFG.fragSpeed,

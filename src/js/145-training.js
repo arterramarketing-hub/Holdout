@@ -21,7 +21,12 @@ const RANGE = {   // metres
 };
 const inputKind = () => GPAD.lastInput === 'pad' ? 'pad' : isTouch ? 'touch' : 'kbm';
 function enterTraining() {
-  if (!VIEW.ready) { enterBattle(1); return; }   // enterBattle shows the loading card; the range opens from the menu again after
+  if (!VIEW.ready) {   // the 3D engine is still arriving: wait for it, then open the range (not a real front)
+    if (VIEW.failed) { enterBattle(1); return; }   // shows the engine-offline card
+    showModal(`<div class="eyebrow">Stand by</div><h2>Loading</h2><p class="note">Opening the firing range as soon as the battlefield is ready.</p>`);
+    threeReady.then(() => { hideModal(); if (screen !== 'battle') enterTraining(); });
+    return;
+  }
   const keep = FORECAST[1];
   enterBattle(1);
   if (keep) FORECAST[1] = keep; else delete FORECAST[1];   // the range must not use up Miller Fields' forecast

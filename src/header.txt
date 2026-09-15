@@ -14,10 +14,10 @@
   render's height (High 480, Medium 360, Low 270; the whole-number blow-up never goes much past it, so 720p renders
   360 and 1080p 540 on High); DPR caps the output pixel ratio (1 / 1.5 / 2); caps thin out what is drawn and kept
   (particles 220 / 500 / 900, loose brass 40 / 100 / 160, enemy corpses 50 / 90 / 120, rain 35 / 70 / 100%); Low
-  also drops the tracer glow and other soldiers' muzzle blooms (your own flash always blooms). Auto starts at Medium
-  on a phone and High on a desktop, steps down after 3 s of frames averaging over 24 ms (and again if it stays slow),
-  and climbs back after 10 s under 17.5 ms, never within 30 s of a drop and never above where it started. Stalls over
-  0.2 s (a throttled or hidden page) are ignored.
+  also drops the tracer glow and other soldiers' muzzle blooms (your own flash always blooms). Auto starts at High on
+  every device (the look phones already ran), steps down after 3 s of frames averaging over 24 ms (and again if it
+  stays slow), and climbs back after 10 s under 17.5 ms, never within 30 s of a drop. Stalls over 0.2 s (a throttled
+  or hidden page) are ignored.
 
   CONTROLLER — the standard Gamepad mapping. Battle: left stick moves (radial deadzone 0.15), right stick looks
   (deadzone 0.12, response curve ^1.8, SETTINGS › Controller look), RT fires, LT aims down the sights, RB throws a

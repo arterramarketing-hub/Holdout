@@ -7,7 +7,8 @@
 const GPAD = { seen: false, active: false, lastInput: 'kbm', prev: [], lx: 0, ly: 0, fire: false, ads: false, navT: 0, rumbleIdx: -1 };
 const GPB = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, VIEW: 8, START: 9, L3: 10, R3: 11, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
 function currentPad() {
-  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  let pads = [];
+  try { pads = navigator.getGamepads ? navigator.getGamepads() : []; } catch (e) { return null; }   // a host frame can refuse the Gamepad API: a throw here would stop the game loop
   for (const p of pads || []) if (p && p.connected !== false && p.buttons && p.buttons.length >= 16) return p;
   return null;
 }
@@ -98,6 +99,12 @@ function padMenu(p, hit, lx, ly, dt, root, verticalOnly) {   // spatial focus: t
     }
     if (best) best.focus();
   }
+  if (hit(GPB.A) && !focus && root !== document.querySelector('.brief')) {   // nothing focused yet: A takes a card's main action, and wakes the focus ring elsewhere
+    const main = root.id === 'modalbox' ? root.querySelector('.cta:not([disabled])') : null;
+    if (main) main.click();
+    else { const first = root.querySelector('.wrow.on, button, input, select, [tabindex]'); if (first) first.focus(); }
+    return;
+  }
   if (hit(GPB.A) && focus && root !== document.querySelector('.brief')) {
     if (focus.type === 'checkbox' || focus.type === 'radio') { focus.checked = focus.type === 'radio' ? true : !focus.checked; focus.dispatchEvent(new Event('change', { bubbles: true })); focus.dispatchEvent(new Event('input', { bubbles: true })); }
     else if (focus.tagName === 'SELECT') { focus.selectedIndex = (focus.selectedIndex + 1) % focus.options.length; focus.dispatchEvent(new Event('change', { bubbles: true })); }
@@ -108,5 +115,8 @@ function padMenu(p, hit, lx, ly, dt, root, verticalOnly) {   // spatial focus: t
 function padRumble(ms, strong) {
   const p = currentPad();
   if (!p || !meta || !meta.opts.vibe || !p.vibrationActuator || !p.vibrationActuator.playEffect) return;
-  try { p.vibrationActuator.playEffect('dual-rumble', { duration: ms, strongMagnitude: strong ? 0.8 : 0.35, weakMagnitude: strong ? 0.5 : 0.6 }); } catch (e) {}
+  try {
+    const r = p.vibrationActuator.playEffect('dual-rumble', { duration: ms, strongMagnitude: strong ? 0.8 : 0.35, weakMagnitude: strong ? 0.5 : 0.6 });
+    if (r && r.catch) r.catch(() => {});   // a refused rumble is not an error worth logging
+  } catch (e) {}
 }

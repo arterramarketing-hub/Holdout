@@ -180,7 +180,7 @@ function killEnemy(idx, credit) {
   sfxKill(e.x, e.y);
   if (!e.boss && Math.random() < 0.35) pickups.push({ x: e.x + rand(-10, 10), y: e.y + rand(-10, 10), t: 30 });
   if (e.boss) state.enemyDown = state.enemyTotal;   // the Warlord falls and the rest of them break
-  else state.enemyDown = Math.min(state.enemyTotal - (state.bossRef ? 1 : 0), state.enemyDown + 1);   // while the Warlord stands, its ticket stays on the board
+  else state.enemyDown = Math.min(state.enemyTotal - (state.bossRef || !state.bossSpawned ? 1 : 0), state.enemyDown + 1);   // the Warlord's ticket stays on the board until it has come and fallen: a multi-kill at 89% cannot skip it
   const cap = (state.bossSpawned && state.bossRef && !e.boss) ? 99 : 100;  // boss gates the last 1%
   state.progress = Math.min(cap, state.enemyDown / state.enemyTotal * 100);
   const pct = +(100 / state.enemyTotal).toFixed(1);
