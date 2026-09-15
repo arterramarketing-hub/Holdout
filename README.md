@@ -1,5 +1,7 @@
 # Holdout
 
+[![Tests](https://github.com/arterramarketing-hub/Holdout/actions/workflows/ci.yml/badge.svg)](https://github.com/arterramarketing-hub/Holdout/actions/workflows/ci.yml)
+
 A browser squad shooter in an N64 style: you and three squadmates against eight at a time, fought through Valmont, a
 mountain town, for thirteen sectors of a theater map. Models, textures, animation, sound and music are all generated
 in code; there are no asset files.
@@ -39,4 +41,15 @@ python3 tools/test.py --baseline  # re-record tests/baseline.json
 ```
 
 Tests live in `tests/suites/*.test.js` and drive the game directly (`tick`, `G.frame`, a first-person bot) against an
-in-memory save, so a run never touches a real campaign. The runner needs Google Chrome installed.
+in-memory save, so a run never touches a real campaign. The runner needs Google Chrome installed (or `CHROME` set to
+its path).
+
+## Tests on GitHub, and the published site
+
+`.github/workflows/ci.yml` runs every suite on each push and pull request, in headless Chrome on Ubuntu. When a push
+to `main` passes, the workflow assembles the site (`python3 tools/build.py --site _site`: only what is published)
+and pushes it as a single commit to the `gh-pages` branch. A failing run publishes nothing, so the live game stays on
+the last build that passed.
+
+GitHub Pages serves whichever branch **Settings › Pages › Build and deployment › Branch** names. Set it to
+`gh-pages` and `/ (root)` once the first run is green; while it still says `main`, every push goes live untested.

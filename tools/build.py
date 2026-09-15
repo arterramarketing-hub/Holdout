@@ -14,6 +14,7 @@ usage:
   python3 tools/build.py            write index.html
   python3 tools/build.py --check    exit 1 if index.html is not what src/ builds (the audit gate)
   python3 tools/build.py --preview  also copy it to the local preview server, when that folder exists
+  python3 tools/build.py --site DIR assemble only what GitHub Pages publishes into DIR (CI deploys this)
 """
 import hashlib
 import os
@@ -65,8 +66,35 @@ def build():
     return '\n'.join(out)
 
 
+SITE_FILES = ['index.html']   # everything the published site is made of, relative to the repository root
+
+
+def assemble_site(out, html):
+    out = os.path.abspath(out)
+    if out in (ROOT, SRC) or ROOT.startswith(out + os.sep) or os.path.exists(os.path.join(out, '.git')):
+        sys.exit(f'refusing to assemble the site into {out}')
+    shutil.rmtree(out, ignore_errors=True)
+    os.makedirs(out)
+    for rel in SITE_FILES:
+        dst = os.path.join(out, rel)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        if rel == 'index.html':
+            with open(dst, 'w', encoding='utf-8', newline='') as f:
+                f.write(html)
+        else:
+            shutil.copyfile(os.path.join(ROOT, rel), dst)
+    open(os.path.join(out, '.nojekyll'), 'w').close()   # served as plain files, no Jekyll pass
+    print(f'site assembled in {out}: {", ".join(sorted(SITE_FILES))}')
+
+
 def main():
     html = build()
+    if '--site' in sys.argv:
+        i = sys.argv.index('--site')
+        if i + 1 >= len(sys.argv):
+            sys.exit('--site needs a folder')
+        assemble_site(sys.argv[i + 1], html)
+        return
     digest = hashlib.sha256(html.encode('utf-8')).hexdigest()[:12]
     if '--check' in sys.argv:
         current = open(OUT, encoding='utf-8', newline='').read() if os.path.exists(OUT) else ''

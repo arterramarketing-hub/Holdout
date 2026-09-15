@@ -1,0 +1,60 @@
+# Every push and pull request runs Holdout's test suites in headless Chrome. A push to main that passes publishes
+# the site to the gh-pages branch, which GitHub Pages serves once Settings › Pages › Branch is set to gh-pages.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: index.html matches src/
+        run: python3 tools/build.py --check
+
+      - name: Chrome
+        run: google-chrome --version
+
+      - name: Five window sizes in headless Chrome
+        run: python3 tools/test.py
+
+  deploy:
+    name: Publish the site
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Assemble the site
+        run: python3 tools/build.py --site _site
+
+      - name: Push it to gh-pages
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd _site
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Site built from ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+          echo "Published ${GITHUB_SHA::7} to gh-pages" >> "$GITHUB_STEP_SUMMARY"

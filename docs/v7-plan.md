@@ -333,4 +333,7 @@ GitHub Desktop mid-phase can never pick up half-finished work.
 
 ## Status
 
-In progress.
+- **Phase 1 — done.** `tools/test.py` finds Chrome anywhere, measures the window frame (+0×+87 px on macOS), adds
+  `--no-sandbox` on Linux, and in CI writes annotations and a summary table. `build.py --site` and
+  `.github/workflows/ci.yml` are in. The whole suite passes locally (111 tests). The first GitHub run happens on your
+  next push.
