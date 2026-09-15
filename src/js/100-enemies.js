@@ -35,6 +35,7 @@ function pickSpawn(side) {   // 'e' for the enemy, 'p' for your squad
     let score = Math.min(near, 1800) - (seen ? 900 : 0) + rand(0, 240);
     if (near < 650) score -= 2000;                                        // never on top of the other side
     if (state.frontTime - z.used < 6) score -= 700;                       // spread arrivals across zones
+    if (side === 'e' && state.counter && state.counter.phase === 'gather') score += 1400 - Math.min(1400, Math.hypot(state.counter.obj.x - z.cx, state.counter.obj.y - z.cy));   // a counterattack gathers close to its objective
     if (side === 'e') for (const o of state.objs || []) {   // they reinforce near objectives they hold, never into one being taken
       const od = Math.hypot(o.x - z.cx, o.y - z.cy);
       if (o.owner === 'e' && od < 1000) score += 300;
@@ -62,6 +63,7 @@ function spawnEnemy(type) {
     cd: rand(0, 0.5), flash: 0, wob: rand(0, TAU), walk: rand(0, TAU), atk: 0, face: 1,
     tac: 'hold', tacT: rand(0.2, 1.2), burst: 0, supp: 0, flankSide: Math.random() < 0.5 ? -1 : 1, path: null, pathT: 0, coverRef: null });
   if (type === 'sniper' && !perchSniper(enemies[enemies.length - 1])) { enemies.pop(); spawnEnemy('grunt'); return; }   // no free perch: a rifleman instead
+  if (state.counter) joinCounterattack(enemies[enemies.length - 1]);   // arriving while a counterattack gathers: part of it
   if (t.spotter && !state.spotterSeen) {
     state.spotterSeen = true;
     showBanner('ENEMY SPOTTER — PRIORITY TARGET');

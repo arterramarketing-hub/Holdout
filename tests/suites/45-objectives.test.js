@@ -91,9 +91,9 @@ suite('objectives', t => {
     const h = field(1);
     h.x = 60 * PX; h.y = 69 * PX;
     state.spawnT = 0;   // let the waves walk on
-    let inRing = 0;
-    until(() => false, 60, () => { h.invuln = 1e9; for (const o of state.objs) inRing = Math.max(inRing, o.inE); });
-    assert.ok(enemies.some(e => e.objRole), 'some enemies have the job');
+    let inRing = 0, hadRole = false;
+    until(() => false, 60, () => { h.invuln = 1e9; hadRole = hadRole || enemies.some(e => e.objRole); for (const o of state.objs) inRing = Math.max(inRing, o.inE); });
+    assert.ok(hadRole, 'some enemies had the job');   // over the minute, not only whoever is left at the end
     assert.ok(inRing >= 1, 'an enemy stood in an objective ring');
     return { mostInARing: inRing };
   }, { timeout: 120000 });

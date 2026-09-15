@@ -5,6 +5,14 @@
 // costs the enemy two reserves at once. Holding more objectives than they do drains a reserve every 4 s (every 2 s
 // with all three); they never lose reserves still standing on the field that way, and the Warlord still has to be
 // killed. Holding more than you do costs your squad a reinforcement every 20 s, after the first 45 s of the front.
+// COUNTERATTACKS: once you have held an objective for COUNTER.held s, the enemy can come back for it (checked every
+// COUNTER.check s at COUNTER.chance), on the one you hold with the fewest of your squad near it. A banner and the radio
+// say so and its chip pulses red. Up to four attackers — the nearest on the field, then whoever walks on while they
+// gather, at spawn zones near it — gather for up to COUNTER.gather s, then push into the ring: riflemen cover to cover
+// on short holds, runners and breachers straight at it, a frag for anyone dug in. It ends when they take it (neutral
+// counts), when every attacker is down (COUNTERATTACK REPELLED: two more reserves gone), or after COUNTER.max s. One
+// at a time, COUNTER.gap s apart; none in a front's first COUNTER.first s, while the Warlord is up, or with fewer than
+// COUNTER.reserves reserves left.
 const OBJ_SITES = [   // open ground at each landmark, metres
   { name: 'Rail yard', x: 36.5, y: 12.5 },
   { name: 'Market', x: 16, y: 41.5 },
@@ -15,11 +23,13 @@ const OBJ_SITES = [   // open ground at each landmark, metres
 ];
 const SECTOR_OBJ = [null, [0, 2, 5], [1, 2, 3], [0, 3, 4], [1, 3, 5], [0, 1, 4], [2, 3, 5], [0, 2, 4], [1, 2, 4], [0, 3, 5], [2, 3, 4], [0, 1, 3], [1, 2, 5]];
 const OBJ = { r: 7 * PX, flip: [0, 12, 9, 7], capSpend: 2, drainHold: 4, drainAll: 2, squadDrain: 20, grace: 45 };
+const COUNTER = { held: 40, check: 5, chance: 0.35, first: 60, reserves: 4, attackers: 4, gather: 6, max: 60, gap: 60, reward: 2 };
 const objectiveSites = tid => (SECTOR_OBJ[tid] || SECTOR_OBJ[1]).map(i => OBJ_SITES[i]).sort((a, b) => a.y - b.y || a.x - b.x);
 function setupObjectives(sites, opts = {}) {   // every objective starts in enemy hands (a training flag can start neutral)
   state.objs = sites.map((o, i) => ({ letter: String.fromCharCode(65 + i), name: o.name, x: o.x * PX, y: o.y * PX, r: (o.r || 7) * PX,
-    cap: opts.neutral ? 0 : -1, owner: opts.neutral ? null : 'e', inP: 0, inE: 0, contested: false, flashT: 0, speed: opts.speed || 1 }));
+    cap: opts.neutral ? 0 : -1, owner: opts.neutral ? null : 'e', inP: 0, inE: 0, contested: false, flashT: 0, speed: opts.speed || 1, heldSince: null }));
   state.objDrainT = OBJ.drainHold; state.squadDrainT = OBJ.squadDrain; state.objMsg = null;
+  state.counter = null; state.counterNext = COUNTER.first; state.counterCheckT = COUNTER.check;
   state.noDrain = !!opts.noDrain;
 }
 const objHeld = side => state.objs.reduce((n, o) => n + (o.owner === side ? 1 : 0), 0);
@@ -42,6 +52,7 @@ function updateObjectives(dt) {
     if (o.owner !== was) objectiveChanged(o);
   }
   if (state.noDrain) return;
+  updateCounterattack(dt);
   const mine = objHeld('p'), theirs = objHeld('e');
   if (mine > theirs) {
     state.objDrainT -= dt;
@@ -54,11 +65,63 @@ function updateObjectives(dt) {
 }
 function objectiveChanged(o) {
   o.flashT = 1.4;
+  o.heldSince = o.owner === 'p' ? state.frontTime : null;
   const text = o.owner === 'p' ? `Objective ${o.letter} taken` : o.owner === 'e' ? `Objective ${o.letter} lost` : `Objective ${o.letter} neutral`;
   state.objMsg = { text, good: o.owner === 'p', bad: o.owner === 'e', t: 2.4 };
   if (o.owner === 'p') { drainEnemy(OBJ.capSpend); beep(660, 0.12, 'square', 0.05); beep(990, 0.22, 'square', 0.05, 0, 0.12); buzz(30); }
   else if (o.owner === 'e') { beep(520, 0.14, 'square', 0.05); beep(330, 0.3, 'square', 0.05, 0, 0.14); }
   else beep(760, 0.08, 'square', 0.03);
+}
+function enemyReservesLeft() { return state.enemyTotal - state.enemyDown - enemies.reduce((k, e) => k + (e.boss ? 0 : 1), 0) - (state.bossRef ? 1 : 0); }
+function updateCounterattack(dt) {
+  const C = state.counter;
+  if (C) {
+    C.t += dt;
+    C.attackers = C.attackers.filter(e => enemies.includes(e));
+    if (C.phase === 'gather' && (C.t >= COUNTER.gather || (C.attackers.length >= 3 && C.attackers.every(e => dist2(e.x, e.y, C.obj.x, C.obj.y) < 1000 * 1000)))) {
+      C.phase = 'push';
+      for (const e of C.attackers) { e.tacT = Math.min(e.tacT || 0, 0.2); e.pathT = 0; }
+    }
+    if (C.obj.owner !== 'p') endCounterattack('taken');
+    else if (state.bossRef) endCounterattack('warlord');
+    else if (C.phase === 'push' && !C.attackers.length) endCounterattack(C.joined ? 'repelled' : 'none');
+    else if (C.t >= COUNTER.max) endCounterattack('timeout');
+    return;
+  }
+  state.counterCheckT -= dt;
+  if (state.counterCheckT > 0) return;
+  state.counterCheckT = COUNTER.check;
+  if (state.training || state.frontTime < Math.max(COUNTER.first, state.counterNext) || state.bossRef || enemyReservesLeft() < COUNTER.reserves) return;
+  const held = state.objs.filter(o => o.owner === 'p' && o.heldSince != null && state.frontTime - o.heldSince >= COUNTER.held);
+  if (!held.length || Math.random() >= COUNTER.chance) return;
+  const guard = o => soldiers.reduce((k, s) => k + (s.alive && dist2(s.x, s.y, o.x, o.y) < 600 * 600 ? 1 : 0), 0);
+  held.sort((a, b) => guard(a) - guard(b) || a.heldSince - b.heldSince);
+  startCounterattack(held[0]);
+}
+function startCounterattack(o) {
+  state.counter = { obj: o, t: 0, phase: 'gather', attackers: [], joined: 0 };
+  const near = enemies.filter(e => !e.boss && !e.perch && !e.target).sort((a, b) => dist2(a.x, a.y, o.x, o.y) - dist2(b.x, b.y, o.x, o.y));
+  for (const e of near.slice(0, COUNTER.attackers)) joinCounterattack(e);
+  showBanner('COUNTERATTACK · ' + o.letter);
+  playBuf('radio', { gain: 0.3, force: true });
+}
+function joinCounterattack(e) {   // this enemy goes for the objective under counterattack
+  const C = state.counter;
+  if (!C || C.phase !== 'gather' || C.attackers.length >= COUNTER.attackers || e.boss || e.perch || e.target) return false;
+  C.attackers.push(e); C.joined++;
+  e.counterObj = C.obj; e.tacT = Math.min(e.tacT || 0, 0.3); e.pathT = 0;
+  return true;
+}
+function endCounterattack(how) {
+  const C = state.counter;
+  for (const e of C.attackers) e.counterObj = null;
+  state.counter = null; state.counterNext = state.frontTime + COUNTER.gap;
+  if (how === 'repelled') {
+    drainEnemy(COUNTER.reward);
+    showBanner('COUNTERATTACK REPELLED');
+    beep(660, 0.12, 'square', 0.05); beep(990, 0.22, 'square', 0.05, 0, 0.12);
+  }
+  state.counterLast = how;
 }
 function drainEnemy(n) {   // reserves spent without a kill: never the ones standing on the field, never the Warlord's own ticket
   const onField = enemies.reduce((k, e) => k + (e.boss ? 0 : 1), 0);

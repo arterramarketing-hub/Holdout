@@ -63,6 +63,15 @@
   the rig, the hit tests, the crosshair ray and the corpse; flat squad rounds never reach a roof, so squadmates fire
   a real line up at one. The squad calls it by name the first time it glints ("Sniper · Bell tower").
 
+  COUNTERATTACKS — once you have held an objective 40 s, every 5 s there is a 35% chance the enemy comes back for the
+  one you hold with the fewest of your squad within 15 m (COUNTER). A COUNTERATTACK · B banner and the radio say so,
+  and B's chip pulses red. Up to four attackers: the nearest enemies on the field, then whoever walks on during the
+  6 s gather (spawn zones near B score higher). Then they push: riflemen move cover to cover into the ring on 1-2 s
+  holds, runners and breachers head straight for it unless someone is within 7.5 m, and a rifleman's frag still goes
+  in at anyone dug in. It ends when B is taken (neutral counts), when every attacker is down (COUNTERATTACK REPELLED:
+  drainEnemy(2), so the Warlord's ticket stays safe), or after 60 s. One at a time and 60 s apart; none in a front's
+  first 60 s, while the Warlord is up, or with fewer than 4 reserves left.
+
   THE INSTALLED APP — on GitHub Pages the page is an installable web app: manifest.webmanifest (full screen, landscape,
   navy, the H-in-a-scope icons that tools/icons.py draws) and sw.js (built from src/pwa/sw.js with a version hashed
   from what it caches). After one launch online it starts offline: the page is network first with a 4 s fallback to
@@ -540,6 +549,8 @@
   .obj.contest { animation:obj-contest .5s ease-in-out infinite alternate; }
   .obj.flash { box-shadow:0 0 0 2px #fff; }
   @keyframes obj-contest { to { border-color:#fff; } }
+  .obj.counter { animation:obj-counter .45s ease-in-out infinite alternate; }   /* under counterattack: a red pulse round a chip you hold */
+  @keyframes obj-counter { from { box-shadow:0 0 0 1px var(--foe); } to { box-shadow:0 0 0 3px var(--foe), 0 0 10px rgba(255,77,61,.7); } }
   #objmsg { position:absolute; top:32px; left:50%; transform:translateX(-50%); white-space:nowrap; font-family:var(--mono); font-weight:800; font-size:10px;
     letter-spacing:.2em; text-transform:uppercase; color:var(--ink); text-shadow:0 1px 3px rgba(0,0,0,.9); opacity:0; transition:opacity .2s; }
   #objmsg.on { opacity:1; } #objmsg.good { color:var(--friend); } #objmsg.bad { color:#ff8b7f; }
@@ -2905,6 +2916,7 @@ function pickSpawn(side) {   // 'e' for the enemy, 'p' for your squad
     let score = Math.min(near, 1800) - (seen ? 900 : 0) + rand(0, 240);
     if (near < 650) score -= 2000;                                        // never on top of the other side
     if (state.frontTime - z.used < 6) score -= 700;                       // spread arrivals across zones
+    if (side === 'e' && state.counter && state.counter.phase === 'gather') score += 1400 - Math.min(1400, Math.hypot(state.counter.obj.x - z.cx, state.counter.obj.y - z.cy));   // a counterattack gathers close to its objective
     if (side === 'e') for (const o of state.objs || []) {   // they reinforce near objectives they hold, never into one being taken
       const od = Math.hypot(o.x - z.cx, o.y - z.cy);
       if (o.owner === 'e' && od < 1000) score += 300;
@@ -2932,6 +2944,7 @@ function spawnEnemy(type) {
     cd: rand(0, 0.5), flash: 0, wob: rand(0, TAU), walk: rand(0, TAU), atk: 0, face: 1,
     tac: 'hold', tacT: rand(0.2, 1.2), burst: 0, supp: 0, flankSide: Math.random() < 0.5 ? -1 : 1, path: null, pathT: 0, coverRef: null });
   if (type === 'sniper' && !perchSniper(enemies[enemies.length - 1])) { enemies.pop(); spawnEnemy('grunt'); return; }   // no free perch: a rifleman instead
+  if (state.counter) joinCounterattack(enemies[enemies.length - 1]);   // arriving while a counterattack gathers: part of it
   if (t.spotter && !state.spotterSeen) {
     state.spotterSeen = true;
     showBanner('ENEMY SPOTTER — PRIORITY TARGET');
@@ -3660,6 +3673,14 @@ function rollSky(tid) {
 // costs the enemy two reserves at once. Holding more objectives than they do drains a reserve every 4 s (every 2 s
 // with all three); they never lose reserves still standing on the field that way, and the Warlord still has to be
 // killed. Holding more than you do costs your squad a reinforcement every 20 s, after the first 45 s of the front.
+// COUNTERATTACKS: once you have held an objective for COUNTER.held s, the enemy can come back for it (checked every
+// COUNTER.check s at COUNTER.chance), on the one you hold with the fewest of your squad near it. A banner and the radio
+// say so and its chip pulses red. Up to four attackers — the nearest on the field, then whoever walks on while they
+// gather, at spawn zones near it — gather for up to COUNTER.gather s, then push into the ring: riflemen cover to cover
+// on short holds, runners and breachers straight at it, a frag for anyone dug in. It ends when they take it (neutral
+// counts), when every attacker is down (COUNTERATTACK REPELLED: two more reserves gone), or after COUNTER.max s. One
+// at a time, COUNTER.gap s apart; none in a front's first COUNTER.first s, while the Warlord is up, or with fewer than
+// COUNTER.reserves reserves left.
 const OBJ_SITES = [   // open ground at each landmark, metres
   { name: 'Rail yard', x: 36.5, y: 12.5 },
   { name: 'Market', x: 16, y: 41.5 },
@@ -3670,11 +3691,13 @@ const OBJ_SITES = [   // open ground at each landmark, metres
 ];
 const SECTOR_OBJ = [null, [0, 2, 5], [1, 2, 3], [0, 3, 4], [1, 3, 5], [0, 1, 4], [2, 3, 5], [0, 2, 4], [1, 2, 4], [0, 3, 5], [2, 3, 4], [0, 1, 3], [1, 2, 5]];
 const OBJ = { r: 7 * PX, flip: [0, 12, 9, 7], capSpend: 2, drainHold: 4, drainAll: 2, squadDrain: 20, grace: 45 };
+const COUNTER = { held: 40, check: 5, chance: 0.35, first: 60, reserves: 4, attackers: 4, gather: 6, max: 60, gap: 60, reward: 2 };
 const objectiveSites = tid => (SECTOR_OBJ[tid] || SECTOR_OBJ[1]).map(i => OBJ_SITES[i]).sort((a, b) => a.y - b.y || a.x - b.x);
 function setupObjectives(sites, opts = {}) {   // every objective starts in enemy hands (a training flag can start neutral)
   state.objs = sites.map((o, i) => ({ letter: String.fromCharCode(65 + i), name: o.name, x: o.x * PX, y: o.y * PX, r: (o.r || 7) * PX,
-    cap: opts.neutral ? 0 : -1, owner: opts.neutral ? null : 'e', inP: 0, inE: 0, contested: false, flashT: 0, speed: opts.speed || 1 }));
+    cap: opts.neutral ? 0 : -1, owner: opts.neutral ? null : 'e', inP: 0, inE: 0, contested: false, flashT: 0, speed: opts.speed || 1, heldSince: null }));
   state.objDrainT = OBJ.drainHold; state.squadDrainT = OBJ.squadDrain; state.objMsg = null;
+  state.counter = null; state.counterNext = COUNTER.first; state.counterCheckT = COUNTER.check;
   state.noDrain = !!opts.noDrain;
 }
 const objHeld = side => state.objs.reduce((n, o) => n + (o.owner === side ? 1 : 0), 0);
@@ -3697,6 +3720,7 @@ function updateObjectives(dt) {
     if (o.owner !== was) objectiveChanged(o);
   }
   if (state.noDrain) return;
+  updateCounterattack(dt);
   const mine = objHeld('p'), theirs = objHeld('e');
   if (mine > theirs) {
     state.objDrainT -= dt;
@@ -3709,11 +3733,63 @@ function updateObjectives(dt) {
 }
 function objectiveChanged(o) {
   o.flashT = 1.4;
+  o.heldSince = o.owner === 'p' ? state.frontTime : null;
   const text = o.owner === 'p' ? `Objective ${o.letter} taken` : o.owner === 'e' ? `Objective ${o.letter} lost` : `Objective ${o.letter} neutral`;
   state.objMsg = { text, good: o.owner === 'p', bad: o.owner === 'e', t: 2.4 };
   if (o.owner === 'p') { drainEnemy(OBJ.capSpend); beep(660, 0.12, 'square', 0.05); beep(990, 0.22, 'square', 0.05, 0, 0.12); buzz(30); }
   else if (o.owner === 'e') { beep(520, 0.14, 'square', 0.05); beep(330, 0.3, 'square', 0.05, 0, 0.14); }
   else beep(760, 0.08, 'square', 0.03);
+}
+function enemyReservesLeft() { return state.enemyTotal - state.enemyDown - enemies.reduce((k, e) => k + (e.boss ? 0 : 1), 0) - (state.bossRef ? 1 : 0); }
+function updateCounterattack(dt) {
+  const C = state.counter;
+  if (C) {
+    C.t += dt;
+    C.attackers = C.attackers.filter(e => enemies.includes(e));
+    if (C.phase === 'gather' && (C.t >= COUNTER.gather || (C.attackers.length >= 3 && C.attackers.every(e => dist2(e.x, e.y, C.obj.x, C.obj.y) < 1000 * 1000)))) {
+      C.phase = 'push';
+      for (const e of C.attackers) { e.tacT = Math.min(e.tacT || 0, 0.2); e.pathT = 0; }
+    }
+    if (C.obj.owner !== 'p') endCounterattack('taken');
+    else if (state.bossRef) endCounterattack('warlord');
+    else if (C.phase === 'push' && !C.attackers.length) endCounterattack(C.joined ? 'repelled' : 'none');
+    else if (C.t >= COUNTER.max) endCounterattack('timeout');
+    return;
+  }
+  state.counterCheckT -= dt;
+  if (state.counterCheckT > 0) return;
+  state.counterCheckT = COUNTER.check;
+  if (state.training || state.frontTime < Math.max(COUNTER.first, state.counterNext) || state.bossRef || enemyReservesLeft() < COUNTER.reserves) return;
+  const held = state.objs.filter(o => o.owner === 'p' && o.heldSince != null && state.frontTime - o.heldSince >= COUNTER.held);
+  if (!held.length || Math.random() >= COUNTER.chance) return;
+  const guard = o => soldiers.reduce((k, s) => k + (s.alive && dist2(s.x, s.y, o.x, o.y) < 600 * 600 ? 1 : 0), 0);
+  held.sort((a, b) => guard(a) - guard(b) || a.heldSince - b.heldSince);
+  startCounterattack(held[0]);
+}
+function startCounterattack(o) {
+  state.counter = { obj: o, t: 0, phase: 'gather', attackers: [], joined: 0 };
+  const near = enemies.filter(e => !e.boss && !e.perch && !e.target).sort((a, b) => dist2(a.x, a.y, o.x, o.y) - dist2(b.x, b.y, o.x, o.y));
+  for (const e of near.slice(0, COUNTER.attackers)) joinCounterattack(e);
+  showBanner('COUNTERATTACK · ' + o.letter);
+  playBuf('radio', { gain: 0.3, force: true });
+}
+function joinCounterattack(e) {   // this enemy goes for the objective under counterattack
+  const C = state.counter;
+  if (!C || C.phase !== 'gather' || C.attackers.length >= COUNTER.attackers || e.boss || e.perch || e.target) return false;
+  C.attackers.push(e); C.joined++;
+  e.counterObj = C.obj; e.tacT = Math.min(e.tacT || 0, 0.3); e.pathT = 0;
+  return true;
+}
+function endCounterattack(how) {
+  const C = state.counter;
+  for (const e of C.attackers) e.counterObj = null;
+  state.counter = null; state.counterNext = state.frontTime + COUNTER.gap;
+  if (how === 'repelled') {
+    drainEnemy(COUNTER.reward);
+    showBanner('COUNTERATTACK REPELLED');
+    beep(660, 0.12, 'square', 0.05); beep(990, 0.22, 'square', 0.05, 0, 0.12);
+  }
+  state.counterLast = how;
 }
 function drainEnemy(n) {   // reserves spent without a kill: never the ones standing on the field, never the Warlord's own ticket
   const onField = enemies.reduce((k, e) => k + (e.boss ? 0 : 1), 0);
@@ -4445,6 +4521,15 @@ function riflemanAI(e, t, dt, d, vis) {   // bound to cover, hold and fire in bu
   if (sees) fireLogic(e, t, dt, false);
   if (e.tacT > 0) return;
   if (e.supp > 1.6 && e.coverRef) { e.tacT = rand(1, 1.8); return; }   // pinned down
+  if (e.counterObj && (!state.counter || state.counter.phase === 'push') && !(sees && d < range * 0.3)) {   // a counterattack: into the ring, cover to cover, on short holds
+    const o = e.counterObj;
+    if (dist2(e.x, e.y, o.x, o.y) > (o.r * 0.6) ** 2) {
+      const ob = pickCover(e, t, o.x, o.y, o.r * 0.6, range * 0.5);
+      if (ob) { e.coverRef = ob; goTo(e, SPOT.x, SPOT.y); } else { e.coverRef = null; goTo(e, o.x + rand(-0.3, 0.3) * o.r, o.y + rand(-0.3, 0.3) * o.r); }
+      e.tac = 'move'; e.tacT = rand(3, 5);
+    } else { e.tac = 'hold'; e.tacT = rand(1.2, 2.4); }
+    return;
+  }
   if (e.objRole && !(sees && d < range * 0.55)) {   // this one works an objective: take it, or hold it, from cover
     const o = enemyObjective(e);
     if (o) {
@@ -4485,6 +4570,12 @@ function meleeAI(e, t, dt, d) {   // runners flank down side streets, breachers 
     return;
   }
   e.pathT = (e.pathT || 0) - dt;
+  const co = e.counterObj && state.counter && state.counter.phase === 'push' && d > 300 ? e.counterObj : null;   // a counterattack: straight at the ring unless someone is close
+  if (co) {
+    if (e.pathT <= 0 || !e.path || !e.path.length) { e.pathT = rand(1, 1.6); goTo(e, co.x + rand(-0.3, 0.3) * co.r, co.y + rand(-0.3, 0.3) * co.r); }
+    followPath(e, e.sp, dt);
+    return;
+  }
   if (d < 260 && clearRun(e.x, e.y, t.x, t.y, e.r * 0.8)) {
     bark(e, 'charge');
     e.path = null;
@@ -8095,7 +8186,7 @@ function updateBattleHud() {
       const o = objs[i], chip = OV.objChip && OV.objChip[i] || ((OV.objChip = OV.objChip || [])[i] = $('obj' + i));
       if (!o) { if (chip.style.display !== 'none') chip.style.display = 'none'; continue; }
       if (chip.style.display === 'none') chip.style.display = '';
-      const cls = 'obj ' + (o.owner === 'p' ? 'p' : o.owner === 'e' ? 'e' : 'n') + (o.contested ? ' contest' : '') + (o.flashT > 0 ? ' flash' : '');
+      const cls = 'obj ' + (o.owner === 'p' ? 'p' : o.owner === 'e' ? 'e' : 'n') + (o.contested ? ' contest' : '') + (o.flashT > 0 ? ' flash' : '') + (state.counter && state.counter.obj === o ? ' counter' : '');
       if (chip.className !== cls) chip.className = cls;
       const pv = Math.abs(o.cap).toFixed(2), cv = o.cap >= 0 ? 'var(--friend)' : 'var(--foe)';
       if (chip.dataset.p !== pv) { chip.dataset.p = pv; chip.style.setProperty('--p', pv); }

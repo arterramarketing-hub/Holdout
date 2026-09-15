@@ -27,6 +27,8 @@ Installed, it opens full screen in landscape and starts offline after its first 
 - Riflemen lob grenades at anyone who stays dug in behind cover; a red marker points at a live frag near you.
 - Later in a front a marksman can take a rooftop: watch for the scope glint, break its line of sight, and shoot it
   from far enough away to see it.
+- Hold an objective long enough and the enemy counterattacks it: beat back all four attackers to cost them two more
+  reserves.
 - Settings include graphics quality (Auto, Low, Medium, High), a frame-rate cap (Max, 60, 30), a battery saver (Off,
   On, or Auto at 20% battery where the browser reports it) and squad callouts; the firing range next to settings on
   the start menu teaches the controls.

@@ -26,6 +26,8 @@
   .obj.contest { animation:obj-contest .5s ease-in-out infinite alternate; }
   .obj.flash { box-shadow:0 0 0 2px #fff; }
   @keyframes obj-contest { to { border-color:#fff; } }
+  .obj.counter { animation:obj-counter .45s ease-in-out infinite alternate; }   /* under counterattack: a red pulse round a chip you hold */
+  @keyframes obj-counter { from { box-shadow:0 0 0 1px var(--foe); } to { box-shadow:0 0 0 3px var(--foe), 0 0 10px rgba(255,77,61,.7); } }
   #objmsg { position:absolute; top:32px; left:50%; transform:translateX(-50%); white-space:nowrap; font-family:var(--mono); font-weight:800; font-size:10px;
     letter-spacing:.2em; text-transform:uppercase; color:var(--ink); text-shadow:0 1px 3px rgba(0,0,0,.9); opacity:0; transition:opacity .2s; }
   #objmsg.on { opacity:1; } #objmsg.good { color:var(--friend); } #objmsg.bad { color:#ff8b7f; }

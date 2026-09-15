@@ -58,7 +58,7 @@ function updateBattleHud() {
       const o = objs[i], chip = OV.objChip && OV.objChip[i] || ((OV.objChip = OV.objChip || [])[i] = $('obj' + i));
       if (!o) { if (chip.style.display !== 'none') chip.style.display = 'none'; continue; }
       if (chip.style.display === 'none') chip.style.display = '';
-      const cls = 'obj ' + (o.owner === 'p' ? 'p' : o.owner === 'e' ? 'e' : 'n') + (o.contested ? ' contest' : '') + (o.flashT > 0 ? ' flash' : '');
+      const cls = 'obj ' + (o.owner === 'p' ? 'p' : o.owner === 'e' ? 'e' : 'n') + (o.contested ? ' contest' : '') + (o.flashT > 0 ? ' flash' : '') + (state.counter && state.counter.obj === o ? ' counter' : '');
       if (chip.className !== cls) chip.className = cls;
       const pv = Math.abs(o.cap).toFixed(2), cv = o.cap >= 0 ? 'var(--friend)' : 'var(--foe)';
       if (chip.dataset.p !== pv) { chip.dataset.p = pv; chip.style.setProperty('--p', pv); }

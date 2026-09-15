@@ -3,7 +3,7 @@
 // copy), so anyone online always gets the newest build; three.js and the font files are cache first, since their
 // URLs are versioned; the font stylesheet comes from the cache while a fresh copy is fetched. A new build takes
 // over at once and deletes the old cache.
-const CACHE = 'holdout-63ad27d09ac7';
+const CACHE = 'holdout-9c94f3f19ce0';
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-32.png"];
 const ENGINE = ['https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js', 'https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.core.js'];
 

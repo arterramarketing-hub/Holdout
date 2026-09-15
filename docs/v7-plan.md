@@ -393,3 +393,15 @@ GitHub Desktop mid-phase can never pick up half-finished work.
   - Checked in the preview: the glint shows at the belfry from the square, and a marksman kneels in a sandbag nest
     on the gas station roof (a tanker between the two broke its line, so no glint there).
   - `54-sniper.test.js` adds 8 tests; 159 tests pass.
+  - Soak passed.
+- **Phase 8 — done.**
+  - The counterattack director: after 40 s held, a 35% check every 5 s on the least-guarded objective, with a banner,
+    radio call and pulsing chip.
+  - Up to four attackers: the nearest on the field, then arrivals during a 6 s gather, weighted toward zones near
+    the objective.
+  - The push: riflemen cover to cover on short holds, melee types straight in.
+  - Endings: taken, repelled (two reserves through `drainEnemy`) or timed out at 60 s, then a 60 s gap.
+  - `46-counterattacks.test.js` adds 5 tests.
+  - The objectives role test now checks the whole minute instead of the last moment. Its result had depended on
+    what the sound tests did to the random sequence.
+  - 164 tests pass; soak passed (462 s).

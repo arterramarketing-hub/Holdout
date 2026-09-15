@@ -62,6 +62,15 @@
   the rig, the hit tests, the crosshair ray and the corpse; flat squad rounds never reach a roof, so squadmates fire
   a real line up at one. The squad calls it by name the first time it glints ("Sniper · Bell tower").
 
+  COUNTERATTACKS — once you have held an objective 40 s, every 5 s there is a 35% chance the enemy comes back for the
+  one you hold with the fewest of your squad within 15 m (COUNTER). A COUNTERATTACK · B banner and the radio say so,
+  and B's chip pulses red. Up to four attackers: the nearest enemies on the field, then whoever walks on during the
+  6 s gather (spawn zones near B score higher). Then they push: riflemen move cover to cover into the ring on 1-2 s
+  holds, runners and breachers head straight for it unless someone is within 7.5 m, and a rifleman's frag still goes
+  in at anyone dug in. It ends when B is taken (neutral counts), when every attacker is down (COUNTERATTACK REPELLED:
+  drainEnemy(2), so the Warlord's ticket stays safe), or after 60 s. One at a time and 60 s apart; none in a front's
+  first 60 s, while the Warlord is up, or with fewer than 4 reserves left.
+
   THE INSTALLED APP — on GitHub Pages the page is an installable web app: manifest.webmanifest (full screen, landscape,
   navy, the H-in-a-scope icons that tools/icons.py draws) and sw.js (built from src/pwa/sw.js with a version hashed
   from what it caches). After one launch online it starts offline: the page is network first with a 4 s fallback to

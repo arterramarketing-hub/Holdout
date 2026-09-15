@@ -271,6 +271,15 @@ function riflemanAI(e, t, dt, d, vis) {   // bound to cover, hold and fire in bu
   if (sees) fireLogic(e, t, dt, false);
   if (e.tacT > 0) return;
   if (e.supp > 1.6 && e.coverRef) { e.tacT = rand(1, 1.8); return; }   // pinned down
+  if (e.counterObj && (!state.counter || state.counter.phase === 'push') && !(sees && d < range * 0.3)) {   // a counterattack: into the ring, cover to cover, on short holds
+    const o = e.counterObj;
+    if (dist2(e.x, e.y, o.x, o.y) > (o.r * 0.6) ** 2) {
+      const ob = pickCover(e, t, o.x, o.y, o.r * 0.6, range * 0.5);
+      if (ob) { e.coverRef = ob; goTo(e, SPOT.x, SPOT.y); } else { e.coverRef = null; goTo(e, o.x + rand(-0.3, 0.3) * o.r, o.y + rand(-0.3, 0.3) * o.r); }
+      e.tac = 'move'; e.tacT = rand(3, 5);
+    } else { e.tac = 'hold'; e.tacT = rand(1.2, 2.4); }
+    return;
+  }
   if (e.objRole && !(sees && d < range * 0.55)) {   // this one works an objective: take it, or hold it, from cover
     const o = enemyObjective(e);
     if (o) {
@@ -311,6 +320,12 @@ function meleeAI(e, t, dt, d) {   // runners flank down side streets, breachers 
     return;
   }
   e.pathT = (e.pathT || 0) - dt;
+  const co = e.counterObj && state.counter && state.counter.phase === 'push' && d > 300 ? e.counterObj : null;   // a counterattack: straight at the ring unless someone is close
+  if (co) {
+    if (e.pathT <= 0 || !e.path || !e.path.length) { e.pathT = rand(1, 1.6); goTo(e, co.x + rand(-0.3, 0.3) * co.r, co.y + rand(-0.3, 0.3) * co.r); }
+    followPath(e, e.sp, dt);
+    return;
+  }
   if (d < 260 && clearRun(e.x, e.y, t.x, t.y, e.r * 0.8)) {
     bark(e, 'charge');
     e.path = null;
