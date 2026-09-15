@@ -31,7 +31,8 @@
   HUD EXTRAS — a minimap (top-left) draws the town, your squad, pickups and any enemy within 24 m or
   firing within 40 m, with your facing as an arrow; damage-direction arcs point back at whatever hit you;
   a kill feed lists kills and losses; short vibrations on hits, kills and your own death where the browser
-  supports them. All of those, plus look sensitivity, field of view (-10 to +18) and sound, are settings.
+  supports them. All of those, plus squad callouts, look sensitivity, field of view (-10 to +18), sound and music,
+  are settings.
 
   DEATH — when your soldier falls you watch it happen: a 1.9 s letterboxed death camera, the world slowed to 30%
   for most of it, easing around and down to the body with the mix muffled behind a pulse; then a reinforcement
@@ -293,6 +294,18 @@
   debris, body falls, a strike-jet flyby and outgoing artillery. Ambience: wind, a low front rumble
   that swells with enemy count, distant firefights, radio squelch, rain. AI squad fire
   is thinned 45%. 'M' mutes everything via the master bus.
+
+  FOOTSTEPS, BARKS & CALLOUTS — everyone who walks leaves a footfall every stride (0.78 m; 1.05 m sprinting, 0.95 m
+  for a runner), rendered from the ground underfoot (surfaceAt over TOWN.ground: hard for asphalt, paving, concrete and
+  cobbles; gravel; soft for dirt and grass; four variants each). Yours are quiet and centred, squadmates' quieter,
+  enemies' are placed in stereo and fade out by 25 m (runners, breachers and the Warlord louder); an enemy footfall
+  at 10 m sits ~30 dB under your own gunshot. At most six footfalls a quarter second. Enemies bark — synthesised
+  shouts through vowel formants, not words — when they spot one of yours, start a flank, change magazines or charge,
+  placed where they stand and pitched per voice, never within 1.2 s of another bark or 6 s of their own last (a bark
+  at 15 m sits ~20 dB under your gunshot). SQUAD CALLOUTS: when an enemy within 25 m is more than 60° off your aim
+  and a squadmate can see it, the squad net chirps and a tag reads FLANK · LEFT, FLANK · RIGHT or BEHIND with the
+  distance, at most one every 4 s and each enemy once in 8 s; the Callouts setting turns them off. None of it is
+  speech: the no-dialogue rule holds.
 
   BULLETS — squad rounds fly 4200–8400 px/s (105–210 m/s; rockets 900, enemy rifles 1500, Warlord burst
   650) and move in ≤10 px sub-steps so they can't tunnel through bodies. Every round is visible: a short

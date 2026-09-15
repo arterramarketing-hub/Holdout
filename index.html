@@ -32,7 +32,8 @@
   HUD EXTRAS — a minimap (top-left) draws the town, your squad, pickups and any enemy within 24 m or
   firing within 40 m, with your facing as an arrow; damage-direction arcs point back at whatever hit you;
   a kill feed lists kills and losses; short vibrations on hits, kills and your own death where the browser
-  supports them. All of those, plus look sensitivity, field of view (-10 to +18) and sound, are settings.
+  supports them. All of those, plus squad callouts, look sensitivity, field of view (-10 to +18), sound and music,
+  are settings.
 
   DEATH — when your soldier falls you watch it happen: a 1.9 s letterboxed death camera, the world slowed to 30%
   for most of it, easing around and down to the body with the mix muffled behind a pulse; then a reinforcement
@@ -295,6 +296,18 @@
   that swells with enemy count, distant firefights, radio squelch, rain. AI squad fire
   is thinned 45%. 'M' mutes everything via the master bus.
 
+  FOOTSTEPS, BARKS & CALLOUTS — everyone who walks leaves a footfall every stride (0.78 m; 1.05 m sprinting, 0.95 m
+  for a runner), rendered from the ground underfoot (surfaceAt over TOWN.ground: hard for asphalt, paving, concrete and
+  cobbles; gravel; soft for dirt and grass; four variants each). Yours are quiet and centred, squadmates' quieter,
+  enemies' are placed in stereo and fade out by 25 m (runners, breachers and the Warlord louder); an enemy footfall
+  at 10 m sits ~30 dB under your own gunshot. At most six footfalls a quarter second. Enemies bark — synthesised
+  shouts through vowel formants, not words — when they spot one of yours, start a flank, change magazines or charge,
+  placed where they stand and pitched per voice, never within 1.2 s of another bark or 6 s of their own last (a bark
+  at 15 m sits ~20 dB under your gunshot). SQUAD CALLOUTS: when an enemy within 25 m is more than 60° off your aim
+  and a squadmate can see it, the squad net chirps and a tag reads FLANK · LEFT, FLANK · RIGHT or BEHIND with the
+  distance, at most one every 4 s and each enemy once in 8 s; the Callouts setting turns them off. None of it is
+  speech: the no-dialogue rule holds.
+
   BULLETS — squad rounds fly 4200–8400 px/s (105–210 m/s; rockets 900, enemy rifles 1500, Warlord burst
   650) and move in ≤10 px sub-steps so they can't tunnel through bodies. Every round is visible: a short
   streak (rifles 1.3–3 m, tied to how far it travels in about a frame and a half, so it reads as a bullet
@@ -431,6 +444,15 @@
     letter-spacing:.2em; text-transform:uppercase; color:var(--ink); text-shadow:0 1px 3px rgba(0,0,0,.9); opacity:0; transition:opacity .2s; }
   #objmsg.on { opacity:1; } #objmsg.good { color:var(--friend); } #objmsg.bad { color:#ff8b7f; }
   #objtags { position:fixed; inset:0; z-index:8; pointer-events:none; overflow:hidden; }
+  /* squad callouts: a tag on the side the enemy is, with the squad net's chirp */
+  #callout { top:27%; display:none; padding:6px 10px 6px 9px; font-family:var(--mono); font-weight:800; font-size:12px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--ink); background:rgba(9,13,21,.72); border:1px solid var(--line-hi); white-space:nowrap; }
+  #callout.on { display:block; animation:callout-in .18s ease-out; }
+  #callout.left { left:22%; box-shadow:inset 3px 0 0 var(--foe); }
+  #callout.right { right:22%; box-shadow:inset -3px 0 0 var(--foe); }
+  #callout.behind { top:auto; bottom:22%; left:50%; transform:translateX(-50%); box-shadow:inset 0 -3px 0 var(--foe); animation:none; }
+  #callout.left::before { content:'◂ '; color:var(--foe); } #callout.right::after { content:' ▸'; color:var(--foe); } #callout.behind::after { content:' ▾'; color:var(--foe); }
+  @keyframes callout-in { from { opacity:0; } }
   #objtags i { position:absolute; left:0; top:0; display:none; place-items:center; width:20px; height:20px; margin:-10px 0 0 -10px; font-style:normal;
     font-family:var(--mono); font-weight:800; font-size:11px; color:#fff; background:rgba(9,13,21,.66); border:1.5px solid var(--c, #c9d1dc); }
   #bossname { margin-bottom:5px; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--foe); }
@@ -949,6 +971,7 @@
     <b class="them" id="enemyn">26</b>
   </div>
   <div class="hud" id="objhud"><div class="obj" id="obj0"><b>A</b><i></i></div><div class="obj" id="obj1"><b>B</b><i></i></div><div class="obj" id="obj2"><b>C</b><i></i></div><div id="objmsg"></div></div>
+  <div class="hud" id="callout"></div>
   <div class="hud" id="objtags"><i id="otag0">A</i><i id="otag1">B</i><i id="otag2">C</i></div>
   <div class="hud" id="bossbar"><div id="bossname">WARLORD</div><div id="bosshp"><i id="bosshpfill"></i></div></div>
   <canvas class="hud" id="minimap" width="150" height="120"></canvas>
@@ -1137,7 +1160,7 @@ const cv = document.getElementById('game');
 // ============================================================ PERSISTENT META
 let meta = null;
 // ---------- player options (saved with the campaign) ----------
-const OPT_DEFAULTS = { v: 2, fpv: true, aimAssist: true, sens: 1, fovAdd: 0, minimap: true, dmgDir: true, killfeed: true, vibe: true, music: 0.6 };
+const OPT_DEFAULTS = { v: 2, fpv: true, aimAssist: true, sens: 1, fovAdd: 0, minimap: true, dmgDir: true, killfeed: true, vibe: true, music: 0.6, callouts: true };
 const freshOpts = () => Object.assign({}, OPT_DEFAULTS);
 function freshMeta() {
   const taken = [];
@@ -1206,7 +1229,7 @@ const state = {   // per-battle / session
   bossSpawned: false, bossRef: null, spotterSeen: false,
   streakN: 0, streakT: 0,
   crossTarget: null, flyby: null,
-  objs: [], squadObj: null, objMsg: null, objDrainT: 0, squadDrainT: 0, noDrain: false,
+  objs: [], squadObj: null, objMsg: null, callout: null, objDrainT: 0, squadDrainT: 0, noDrain: false,
   tod: 1, weather: 'clear',
 };
 let screen = 'map'; // map | team | battle
@@ -1892,6 +1915,54 @@ function renderPickup(seed) {   // grabbing a magazine off the ground
   return normalise([L, R], 0.8);
 }
 const seedOf = s => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+function renderStep(surface, seed) {   // one footfall, heel then the ball of the foot, shaped by what is underfoot
+  const sr = SR_SYN, rnd = synRng(seed), n = Math.floor(0.2 * sr), click = new Float32Array(n), body = new Float32Array(n);
+  const second = 0.05 + (rnd() + 1) * 0.012;
+  for (const [t0, g] of [[0, 1], [second, 0.55]]) {
+    const o = Math.floor(t0 * sr);
+    for (let i = 0; o + i < n; i++) {
+      const t = i / sr;
+      if (surface === 'gravel') click[o + i] += g * rnd() * Math.exp(-t / 0.045) * (rnd() > 0.55 ? 1 : 0.25);   // grit: a crunch of little stones
+      else click[o + i] += g * rnd() * Math.exp(-t / (surface === 'hard' ? 0.005 : 0.012));
+      body[o + i] += g * Math.sin(TAU * (surface === 'hard' ? 150 : 85) * t) * Math.exp(-t / (surface === 'hard' ? 0.018 : 0.03));
+    }
+  }
+  if (surface === 'hard') { biquad(click, 'bp', 2600, 0.8, sr); lp1(body, 400, sr); }
+  else if (surface === 'gravel') { biquad(click, 'bp', 3200, 0.6, sr); lp1(body, 300, sr); }
+  else { lp1(click, 900, sr); lp1(click, 1200, sr); lp1(body, 250, sr); }
+  const out = new Float32Array(n), kc = surface === 'soft' ? 0.5 : 1, kb = surface === 'gravel' ? 0.35 : 0.8;
+  for (let i = 0; i < n; i++) out[i] = click[i] * kc + body[i] * kb;
+  return normalise([out], 0.9);
+}
+const VOWELS = [[730, 1090, 2440], [530, 1840, 2480], [570, 840, 2410], [660, 1700, 2400], [440, 1020, 2240], [600, 1200, 2500]];
+function renderBark(seed, syllables) {   // a shout, not a word: a rough voice through vowel formants, rising and breaking off
+  const sr = SR_SYN, rnd = synRng(seed), dur = 0.24 * syllables + 0.08, n = Math.floor(dur * sr), src = new Float32Array(n);
+  const f0 = 118 + (rnd() + 1) * 14, vowel = VOWELS[seed % VOWELS.length];
+  let ph = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / sr, syl = Math.min(syllables - 1, Math.floor(t / 0.26)), ts = t - syl * 0.26, p = clamp(ts / 0.24, 0, 1);
+    const pitch = f0 * (1 + 0.3 * Math.sin(Math.PI * Math.min(1, p * 1.3)) - 0.12 * syl) * (1 + 0.015 * rnd());
+    ph += pitch / sr; if (ph >= 1) ph -= 1;
+    const glott = (ph < 0.42 ? Math.sin(Math.PI * ph / 0.42) : 0) * 2 - 0.7;
+    const env = ts > 0.24 ? 0 : Math.min(1, ts / 0.018) * Math.pow(1 - p, 0.8);
+    src[i] = (glott + rnd() * 0.3) * env;
+  }
+  const out = new Float32Array(n);
+  vowel.forEach((f, k) => { const b = src.slice(); biquad(b, 'bp', f, 5 + k * 2, sr); biquad(b, 'bp', f, 4, sr); for (let i = 0; i < n; i++) out[i] += b[i] * [1, 0.7, 0.3][k]; });
+  for (let i = 0; i < n; i++) out[i] = Math.tanh(out[i] * 3.2);   // a strained, shouted edge
+  lp1(out, 5200, sr); hp1(out, 110, sr);
+  return normalise([out], 0.85);
+}
+function renderRadio() {   // squad net: a squelch break and a two-tone chirp
+  const sr = SR_SYN, rnd = synRng(91), n = Math.floor(0.26 * sr), a = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / sr;
+    a[i] = rnd() * (t < 0.06 ? Math.exp(-t / 0.03) : 0) * 0.7
+      + (t > 0.07 && t < 0.13 ? Math.sin(TAU * 1250 * t) * 0.5 : 0) + (t > 0.15 && t < 0.22 ? Math.sin(TAU * 1680 * t) * 0.5 : 0);
+  }
+  biquad(a, 'bp', 1500, 0.9, sr);
+  return normalise([a], 0.8);
+}
 function sfxJobs() {   // render order = how soon each sound is needed
   const J = [];
   const gun = (w, i) => { const k = `gun:${w}:${i}`; J.push([k, () => renderShot(GUN_SYN[w], seedOf(k), false)]); };
@@ -1905,6 +1976,9 @@ function sfxJobs() {   // render order = how soon each sound is needed
   for (const w of ['smg', 'lmg', 'sniper', 'rocket', 'pkm', 'pistol']) for (let i = 0; i < GUN_VARS[w]; i++) gun(w, i);
   for (const w of ['smg', 'lmg', 'sniper', 'rocket', 'pkm', 'pistol']) far(w);
   J.push(['fall:1', () => renderFall(9)], ['blast:1', () => renderBlast(31, false)], ['jet', renderJet]);
+  for (const surf of ['hard', 'gravel', 'soft']) for (let i = 0; i < 4; i++) J.push([`step:${surf}:${i}`, () => renderStep(surf, 200 + i * 7 + surf.length)]);
+  for (let i = 0; i < 6; i++) J.push([`bark:${i}`, () => renderBark(i, i < 3 ? 1 : 2)]);
+  J.push(['radio', renderRadio]);
   return J;
 }
 function pumpSfx() {   // render in ~10 ms slices so the page never hitches
@@ -2240,6 +2314,78 @@ function sfxDive() { noise({ freq: 700, type: 'bandpass', q: 0.8, dur: 0.3, gain
 const pickL = a => a[randi(0, a.length - 1)];
 const WARLORD_EPITHETS = ['Carrier of the Other', 'Eater of Lines', 'The Borrowed Crown', 'Breaker of the Ninth', 'Mouth of the Hungry Passenger'];
 
+// ---------- footsteps, enemy barks, squad callouts ----------
+// FOOTSTEPS: everyone who walks leaves a footfall every stride (0.78 m; 1.05 m sprinting, 0.95 m for a runner), and the
+// sound is the ground under them (hard for asphalt, paving, concrete and cobbles; gravel; soft for dirt and grass).
+// Yours are quiet and centred; squadmates quieter; enemies are placed in stereo and fade out by 25 m, runners and
+// breachers louder. No more than six footfalls in any quarter second.
+// BARKS: enemies shout — not words — when they spot one of yours, start a flank, change magazines or charge; placed where
+// they stand, pitched per voice, never within 1.2 s of another bark or 6 s of that enemy's last.
+// CALLOUTS: when an enemy within 25 m is outside your view (more than 60° off your aim) and a squadmate can see it, the
+// squad net chirps and a tag says where: FLANK · LEFT, FLANK · RIGHT or BEHIND. One every 4 s, each enemy called once in
+// 8 s. The Callouts setting turns them off.
+const STEP_SURF = { asphalt: 'hard', paving: 'hard', concrete: 'hard', cobble: 'hard', gravel: 'gravel', dirt: 'soft', grass: 'soft' };
+const STEP_GAIN = { runner: 1.25, brute: 1.5, boss: 1.9 };
+const VOICE = { steps: 0, barkT: -99, callCd: 0, scanT: 0, barks: [] };
+function surfaceAt(x, y) {   // the ground under a sim point: the last rectangle laid over it wins
+  const xm = x / PX, ym = y / PX, G = TOWN.ground;
+  for (let i = G.length - 1; i >= 0; i--) { const g = G[i]; if (xm >= g[0] && xm < g[2] && ym >= g[1] && ym < g[3]) return STEP_SURF[g[4]] || 'soft'; }
+  return 'soft';
+}
+function stepSound(u, moved, who) {
+  if (!moved) return;
+  u.stepD = (u.stepD || 0) + moved;
+  const stride = (u.sprinting ? 1.05 : u.type === 'runner' ? 0.95 : 0.78) * PX;
+  if (u.stepD < stride) return;
+  u.stepD %= stride;
+  u.steps = (u.steps || 0) + 1;
+  if (!AC || VOICE.steps >= 6 || screen !== 'battle') return;
+  const key = `step:${surfaceAt(u.x, u.y)}:${randi(0, 3)}`, rate = rand(0.92, 1.08);
+  if (who === 'hero') { if (playBuf(key, { gain: u.sprinting ? 0.1 : 0.065, rate })) VOICE.steps++; return; }
+  const me = camTarget();
+  if (!me) return;
+  const d = Math.hypot(u.x - me.x, u.y - me.y);
+  if (d > 1000) return;
+  const k = 1 - d / 1000, base = who === 'mate' ? 0.05 : 0.12 * (STEP_GAIN[u.type] || 1);   // an enemy footfall at 10 m sits ~30 dB under your own gunshot
+  if (playBuf(key, { gain: base * k * k, rate: rate * (u.boss ? 0.7 : 1), x: u.x, y: u.y, lp: 1400 + 9000 * k })) VOICE.steps++;
+}
+function bark(e, kind) {   // 'spot' | 'flank' | 'reload' | 'charge'
+  if (!e || screen !== 'battle' || state.mode === 'failed') return false;
+  const now = state.frontTime;
+  if (now - VOICE.barkT < 1.2 || now - (e.barkT == null ? -99 : e.barkT) < 6) return false;
+  const me = camTarget();
+  if (!me || Math.hypot(e.x - me.x, e.y - me.y) > 1400) return false;
+  VOICE.barkT = now; e.barkT = now;
+  if (e.voice == null) e.voice = rand(0.86, 1.14) * (e.type === 'brute' || e.boss ? 0.82 : 1);
+  VOICE.barks.push({ t: now, e, kind });
+  if (VOICE.barks.length > 60) VOICE.barks.shift();
+  const m = distMul(e.x, e.y);
+  playBuf('bark:' + (kind === 'reload' || kind === 'flank' ? randi(3, 5) : randi(0, 2)), { gain: 0.2 * m, rate: e.voice, x: e.x, y: e.y, lp: 1800 + 9000 * m, verb: 0.12 });
+  return true;
+}
+function updateVoices(dt) {
+  VOICE.steps = Math.max(0, VOICE.steps - dt * 24);
+  if (state.callout && (state.callout.t -= dt) <= 0) state.callout = null;
+  VOICE.callCd -= dt; VOICE.scanT -= dt;
+  if (VOICE.scanT > 0) return;
+  VOICE.scanT = 0.25;
+  const h = soldiers[state.controlled];
+  if (!meta.opts.callouts || state.mode !== 'play' || VOICE.callCd > 0 || !h || !h.alive) return;
+  const fx = Math.sin(aim.yaw), fy = -Math.cos(aim.yaw), cone = Math.cos(Math.PI / 3);
+  let best = null, bd = 1000 * 1000;
+  for (const e of enemies) {
+    const dx = e.x - h.x, dy = e.y - h.y, d2 = dx * dx + dy * dy;
+    if (d2 >= bd || state.frontTime - (e.calledT == null ? -99 : e.calledT) < 8) continue;
+    if ((dx * fx + dy * fy) / (Math.sqrt(d2) || 1) > cone) continue;   // you can see this one yourself
+    if (!soldiers.some(s => s.alive && s !== h && dist2(s.x, s.y, e.x, e.y) < 1300 * 1300 && losClear(s.x, s.y, e.x, e.y))) continue;
+    bd = d2; best = e;
+  }
+  if (!best) return;
+  const rel = angWrap(Math.atan2(best.x - h.x, -(best.y - h.y)) - aim.yaw);
+  best.calledT = state.frontTime; VOICE.callCd = 4;
+  state.callout = { side: Math.abs(rel) > 2.36 ? 'behind' : rel < 0 ? 'left' : 'right', dist: Math.round(Math.sqrt(bd) / PX), t: 1.5 };
+  playBuf('radio', { gain: 0.28, force: true });
+}
 // ============================================================ INPUT
 const keys = {};
 window.addEventListener('keydown', e => {
@@ -3130,6 +3276,7 @@ function enterBattle(tid) {
   enemies = []; bullets = []; markers = []; floaters = []; bodies = []; particles = []; pickups = [];
   genTerrain();
   setupObjectives(objectiveSites(tid)); state.squadObj = null;
+  state.callout = null; VOICE.barkT = -99; VOICE.callCd = 0; VOICE.barks.length = 0;
   soldiers = meta.squad.map((m, i) => buildSoldier(i));
   const first = soldiers.findIndex(s => s.alive);
   state.controlled = first < 0 ? 0 : first;
@@ -3475,6 +3622,7 @@ function updateSoldiers(dt) {
     if (isCtl) heroControl(s, spd, dt);
     else squadAI(s, spd, dt, lead, front, wrange);
     s.moving = Math.hypot(s.x - x0, s.y - y0) > spd * dt * 0.25;
+    stepSound(s, Math.hypot(s.x - x0, s.y - y0), isCtl ? 'hero' : 'mate');
     if (s.moving) s.walk += dt * (s.horse ? 13 : 10);
     s.x = clamp(s.x, 12, CFG.arenaW - 12); s.y = clamp(s.y, 12, CFG.arenaH - 12);   // the perimeter stands on the edge: walk up to it
     collideObstacles(s);
@@ -3603,6 +3751,7 @@ function updateEnemies(dt) {
     e.x = clamp(e.x, 16, CFG.arenaW - 16); e.y = clamp(e.y, 16, CFG.arenaH - 16);
     collideObstacles(e);
     e.stillT = Math.hypot(e.x - ex0, e.y - ey0) < sp0 * dt * 0.25 ? (e.stillT || 0) + dt : 0;
+    if (!e.horse) stepSound(e, Math.hypot(e.x - ex0, e.y - ey0), 'enemy');
     e.chkT = (e.chkT || 0) - dt;
     if (e.chkT <= 0) {   // wedged on a corner: plan again
       e.chkT = 0.8;
@@ -3622,6 +3771,8 @@ function updateEnemies(dt) {
 }
 function riflemanAI(e, t, dt, d, vis) {   // bound to cover, hold and fire in bursts, get pinned, fall back when hurt
   const range = e.ranged * vis, sees = d < range && losClear(e.x, e.y, t.x, t.y);
+  if (sees && !e.saw) bark(e, 'spot');
+  e.saw = sees;
   e.tacT -= dt;
   if (e.coverRef && !obstacles.includes(e.coverRef)) { e.coverRef = null; e.tacT = Math.min(e.tacT, 0.3); }
   if (e.tac === 'move') {
@@ -3656,6 +3807,7 @@ function riflemanAI(e, t, dt, d, vis) {   // bound to cover, hold and fire in bu
   if (ob) { e.coverRef = ob; goTo(e, SPOT.x, SPOT.y); }
   else { e.coverRef = null; goTo(e, gx, gy); }
   e.tac = 'move'; e.tacT = 7;
+  if (Math.abs(lat) > 100 && Math.random() < 0.35) bark(e, 'flank');
 }
 function fireLogic(e, t, dt, moving) {
   e.fireT -= dt;
@@ -3666,7 +3818,7 @@ function fireLogic(e, t, dt, moving) {
   enemyFire(e, t, (mg ? 0.1 : 0.13) + (moving ? 0.07 : 0) + Math.min(0.12, e.supp * 0.05));
   e.burst--;
   e.fireT = e.burst > 0 ? (mg ? 0.1 : 0.16) : (mg ? 2.6 : 3.2) * rand(0.8, 1.25) * (1 + e.supp * 0.3);
-  if (e.burst <= 0 && Math.random() < 0.4) e.relT = 1.6;   // swaps a magazine during the pause
+  if (e.burst <= 0 && Math.random() < 0.4) { e.relT = 1.6; bark(e, 'reload'); }   // swaps a magazine during the pause
 }
 function meleeAI(e, t, dt, d) {   // runners flank down side streets, breachers and raiders come straight up the road
   const reach = e.r + t.r + 6;
@@ -3676,6 +3828,7 @@ function meleeAI(e, t, dt, d) {   // runners flank down side streets, breachers 
   }
   e.pathT = (e.pathT || 0) - dt;
   if (d < 260 && clearRun(e.x, e.y, t.x, t.y, e.r * 0.8)) {
+    bark(e, 'charge');
     e.path = null;
     const s = e.sp * dt;
     e.x += (t.x - e.x) / d * s; e.y += (t.y - e.y) / d * s;
@@ -3839,6 +3992,7 @@ function battleUpdate(dt) {
     state.spectateT += dt;
     if (state.spectateT > CFG.deathCam + 0.3) showFailModal();
   }
+  updateVoices(dt);
   updateBanner(dt);
 }
 
@@ -6998,6 +7152,9 @@ function updateBattleHud() {
     const om = $('objmsg'), msg = state.objMsg;
     const mcls = msg ? 'on' + (msg.good ? ' good' : msg.bad ? ' bad' : '') : '';
     if (om.className !== mcls) { om.className = mcls; if (msg) om.textContent = msg.text; }
+    const co = $('callout'), cl = state.callout;
+    const ccls = 'hud' + (cl ? ' on ' + cl.side : '');   // keep .hud: it is what pins the tag to the screen
+    if (co.className !== ccls) { co.className = ccls; if (cl) co.textContent = (cl.side === 'behind' ? 'Behind' : 'Flank · ' + cl.side) + ' · ' + cl.dist + ' m'; }
     const fr = c.frags || 0;
     if (fr !== OV.frags) { OV.frags = fr; $('nadecnt').textContent = fr; $('amfragn').textContent = fr; $('nadebtn').classList.toggle('empty', !fr); $('amfrag').classList.toggle('empty', !fr); }
     if (c.reloadT > 0) $('ambar').firstChild.style.width = (1 - c.reloadT / c.reloadDur) * 100 + '%';
@@ -7099,6 +7256,7 @@ function showSettings() {
     <div class="setrow"><span>Minimap</span><input type="checkbox" id="o_map"${on(o.minimap)}></div>
     <div class="setrow"><span>Damage direction</span><input type="checkbox" id="o_dd"${on(o.dmgDir)}></div>
     <div class="setrow"><span>Kill feed</span><input type="checkbox" id="o_kf"${on(o.killfeed)}></div>
+    <div class="setrow"><span>Callouts</span><input type="checkbox" id="o_co"${on(o.callouts !== false)}></div>
     <div class="setrow"><span>Vibration</span><input type="checkbox" id="o_vb"${on(o.vibe)}${navigator.vibrate ? '' : ' disabled'}></div>
     <div class="setrow"><span>Sound</span><input type="checkbox" id="o_snd"${on(!meta.muted)}></div>
     <div class="setrow"><span>Music</span><input type="range" id="o_mus" min="0" max="1" step="0.05" value="${o.music == null ? 0.6 : o.music}"></div>
@@ -7114,6 +7272,7 @@ function showSettings() {
   bind('o_map', 'minimap', e => e.checked);
   bind('o_dd', 'dmgDir', e => e.checked);
   bind('o_kf', 'killfeed', e => e.checked);
+  bind('o_co', 'callouts', e => e.checked);
   bind('o_vb', 'vibe', e => e.checked);
   bind('o_mus', 'music', e => +e.value);
   const snd = $('o_snd');

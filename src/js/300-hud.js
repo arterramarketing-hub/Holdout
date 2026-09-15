@@ -62,6 +62,9 @@ function updateBattleHud() {
     const om = $('objmsg'), msg = state.objMsg;
     const mcls = msg ? 'on' + (msg.good ? ' good' : msg.bad ? ' bad' : '') : '';
     if (om.className !== mcls) { om.className = mcls; if (msg) om.textContent = msg.text; }
+    const co = $('callout'), cl = state.callout;
+    const ccls = 'hud' + (cl ? ' on ' + cl.side : '');   // keep .hud: it is what pins the tag to the screen
+    if (co.className !== ccls) { co.className = ccls; if (cl) co.textContent = (cl.side === 'behind' ? 'Behind' : 'Flank · ' + cl.side) + ' · ' + cl.dist + ' m'; }
     const fr = c.frags || 0;
     if (fr !== OV.frags) { OV.frags = fr; $('nadecnt').textContent = fr; $('amfragn').textContent = fr; $('nadebtn').classList.toggle('empty', !fr); $('amfrag').classList.toggle('empty', !fr); }
     if (c.reloadT > 0) $('ambar').firstChild.style.width = (1 - c.reloadT / c.reloadDur) * 100 + '%';
@@ -163,6 +166,7 @@ function showSettings() {
     <div class="setrow"><span>Minimap</span><input type="checkbox" id="o_map"${on(o.minimap)}></div>
     <div class="setrow"><span>Damage direction</span><input type="checkbox" id="o_dd"${on(o.dmgDir)}></div>
     <div class="setrow"><span>Kill feed</span><input type="checkbox" id="o_kf"${on(o.killfeed)}></div>
+    <div class="setrow"><span>Callouts</span><input type="checkbox" id="o_co"${on(o.callouts !== false)}></div>
     <div class="setrow"><span>Vibration</span><input type="checkbox" id="o_vb"${on(o.vibe)}${navigator.vibrate ? '' : ' disabled'}></div>
     <div class="setrow"><span>Sound</span><input type="checkbox" id="o_snd"${on(!meta.muted)}></div>
     <div class="setrow"><span>Music</span><input type="range" id="o_mus" min="0" max="1" step="0.05" value="${o.music == null ? 0.6 : o.music}"></div>
@@ -178,6 +182,7 @@ function showSettings() {
   bind('o_map', 'minimap', e => e.checked);
   bind('o_dd', 'dmgDir', e => e.checked);
   bind('o_kf', 'killfeed', e => e.checked);
+  bind('o_co', 'callouts', e => e.checked);
   bind('o_vb', 'vibe', e => e.checked);
   bind('o_mus', 'music', e => +e.value);
   const snd = $('o_snd');

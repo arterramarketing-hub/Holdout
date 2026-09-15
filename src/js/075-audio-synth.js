@@ -234,6 +234,54 @@ function renderPickup(seed) {   // grabbing a magazine off the ground
   return normalise([L, R], 0.8);
 }
 const seedOf = s => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+function renderStep(surface, seed) {   // one footfall, heel then the ball of the foot, shaped by what is underfoot
+  const sr = SR_SYN, rnd = synRng(seed), n = Math.floor(0.2 * sr), click = new Float32Array(n), body = new Float32Array(n);
+  const second = 0.05 + (rnd() + 1) * 0.012;
+  for (const [t0, g] of [[0, 1], [second, 0.55]]) {
+    const o = Math.floor(t0 * sr);
+    for (let i = 0; o + i < n; i++) {
+      const t = i / sr;
+      if (surface === 'gravel') click[o + i] += g * rnd() * Math.exp(-t / 0.045) * (rnd() > 0.55 ? 1 : 0.25);   // grit: a crunch of little stones
+      else click[o + i] += g * rnd() * Math.exp(-t / (surface === 'hard' ? 0.005 : 0.012));
+      body[o + i] += g * Math.sin(TAU * (surface === 'hard' ? 150 : 85) * t) * Math.exp(-t / (surface === 'hard' ? 0.018 : 0.03));
+    }
+  }
+  if (surface === 'hard') { biquad(click, 'bp', 2600, 0.8, sr); lp1(body, 400, sr); }
+  else if (surface === 'gravel') { biquad(click, 'bp', 3200, 0.6, sr); lp1(body, 300, sr); }
+  else { lp1(click, 900, sr); lp1(click, 1200, sr); lp1(body, 250, sr); }
+  const out = new Float32Array(n), kc = surface === 'soft' ? 0.5 : 1, kb = surface === 'gravel' ? 0.35 : 0.8;
+  for (let i = 0; i < n; i++) out[i] = click[i] * kc + body[i] * kb;
+  return normalise([out], 0.9);
+}
+const VOWELS = [[730, 1090, 2440], [530, 1840, 2480], [570, 840, 2410], [660, 1700, 2400], [440, 1020, 2240], [600, 1200, 2500]];
+function renderBark(seed, syllables) {   // a shout, not a word: a rough voice through vowel formants, rising and breaking off
+  const sr = SR_SYN, rnd = synRng(seed), dur = 0.24 * syllables + 0.08, n = Math.floor(dur * sr), src = new Float32Array(n);
+  const f0 = 118 + (rnd() + 1) * 14, vowel = VOWELS[seed % VOWELS.length];
+  let ph = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / sr, syl = Math.min(syllables - 1, Math.floor(t / 0.26)), ts = t - syl * 0.26, p = clamp(ts / 0.24, 0, 1);
+    const pitch = f0 * (1 + 0.3 * Math.sin(Math.PI * Math.min(1, p * 1.3)) - 0.12 * syl) * (1 + 0.015 * rnd());
+    ph += pitch / sr; if (ph >= 1) ph -= 1;
+    const glott = (ph < 0.42 ? Math.sin(Math.PI * ph / 0.42) : 0) * 2 - 0.7;
+    const env = ts > 0.24 ? 0 : Math.min(1, ts / 0.018) * Math.pow(1 - p, 0.8);
+    src[i] = (glott + rnd() * 0.3) * env;
+  }
+  const out = new Float32Array(n);
+  vowel.forEach((f, k) => { const b = src.slice(); biquad(b, 'bp', f, 5 + k * 2, sr); biquad(b, 'bp', f, 4, sr); for (let i = 0; i < n; i++) out[i] += b[i] * [1, 0.7, 0.3][k]; });
+  for (let i = 0; i < n; i++) out[i] = Math.tanh(out[i] * 3.2);   // a strained, shouted edge
+  lp1(out, 5200, sr); hp1(out, 110, sr);
+  return normalise([out], 0.85);
+}
+function renderRadio() {   // squad net: a squelch break and a two-tone chirp
+  const sr = SR_SYN, rnd = synRng(91), n = Math.floor(0.26 * sr), a = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / sr;
+    a[i] = rnd() * (t < 0.06 ? Math.exp(-t / 0.03) : 0) * 0.7
+      + (t > 0.07 && t < 0.13 ? Math.sin(TAU * 1250 * t) * 0.5 : 0) + (t > 0.15 && t < 0.22 ? Math.sin(TAU * 1680 * t) * 0.5 : 0);
+  }
+  biquad(a, 'bp', 1500, 0.9, sr);
+  return normalise([a], 0.8);
+}
 function sfxJobs() {   // render order = how soon each sound is needed
   const J = [];
   const gun = (w, i) => { const k = `gun:${w}:${i}`; J.push([k, () => renderShot(GUN_SYN[w], seedOf(k), false)]); };
@@ -247,6 +295,9 @@ function sfxJobs() {   // render order = how soon each sound is needed
   for (const w of ['smg', 'lmg', 'sniper', 'rocket', 'pkm', 'pistol']) for (let i = 0; i < GUN_VARS[w]; i++) gun(w, i);
   for (const w of ['smg', 'lmg', 'sniper', 'rocket', 'pkm', 'pistol']) far(w);
   J.push(['fall:1', () => renderFall(9)], ['blast:1', () => renderBlast(31, false)], ['jet', renderJet]);
+  for (const surf of ['hard', 'gravel', 'soft']) for (let i = 0; i < 4; i++) J.push([`step:${surf}:${i}`, () => renderStep(surf, 200 + i * 7 + surf.length)]);
+  for (let i = 0; i < 6; i++) J.push([`bark:${i}`, () => renderBark(i, i < 3 ? 1 : 2)]);
+  J.push(['radio', renderRadio]);
   return J;
 }
 function pumpSfx() {   // render in ~10 ms slices so the page never hitches

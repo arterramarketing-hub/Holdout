@@ -27,6 +27,7 @@ function enterBattle(tid) {
   enemies = []; bullets = []; markers = []; floaters = []; bodies = []; particles = []; pickups = [];
   genTerrain();
   setupObjectives(objectiveSites(tid)); state.squadObj = null;
+  state.callout = null; VOICE.barkT = -99; VOICE.callCd = 0; VOICE.barks.length = 0;
   soldiers = meta.squad.map((m, i) => buildSoldier(i));
   const first = soldiers.findIndex(s => s.alive);
   state.controlled = first < 0 ? 0 : first;

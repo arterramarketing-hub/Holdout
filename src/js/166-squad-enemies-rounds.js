@@ -89,6 +89,7 @@ function updateSoldiers(dt) {
     if (isCtl) heroControl(s, spd, dt);
     else squadAI(s, spd, dt, lead, front, wrange);
     s.moving = Math.hypot(s.x - x0, s.y - y0) > spd * dt * 0.25;
+    stepSound(s, Math.hypot(s.x - x0, s.y - y0), isCtl ? 'hero' : 'mate');
     if (s.moving) s.walk += dt * (s.horse ? 13 : 10);
     s.x = clamp(s.x, 12, CFG.arenaW - 12); s.y = clamp(s.y, 12, CFG.arenaH - 12);   // the perimeter stands on the edge: walk up to it
     collideObstacles(s);
@@ -217,6 +218,7 @@ function updateEnemies(dt) {
     e.x = clamp(e.x, 16, CFG.arenaW - 16); e.y = clamp(e.y, 16, CFG.arenaH - 16);
     collideObstacles(e);
     e.stillT = Math.hypot(e.x - ex0, e.y - ey0) < sp0 * dt * 0.25 ? (e.stillT || 0) + dt : 0;
+    if (!e.horse) stepSound(e, Math.hypot(e.x - ex0, e.y - ey0), 'enemy');
     e.chkT = (e.chkT || 0) - dt;
     if (e.chkT <= 0) {   // wedged on a corner: plan again
       e.chkT = 0.8;
@@ -236,6 +238,8 @@ function updateEnemies(dt) {
 }
 function riflemanAI(e, t, dt, d, vis) {   // bound to cover, hold and fire in bursts, get pinned, fall back when hurt
   const range = e.ranged * vis, sees = d < range && losClear(e.x, e.y, t.x, t.y);
+  if (sees && !e.saw) bark(e, 'spot');
+  e.saw = sees;
   e.tacT -= dt;
   if (e.coverRef && !obstacles.includes(e.coverRef)) { e.coverRef = null; e.tacT = Math.min(e.tacT, 0.3); }
   if (e.tac === 'move') {
@@ -270,6 +274,7 @@ function riflemanAI(e, t, dt, d, vis) {   // bound to cover, hold and fire in bu
   if (ob) { e.coverRef = ob; goTo(e, SPOT.x, SPOT.y); }
   else { e.coverRef = null; goTo(e, gx, gy); }
   e.tac = 'move'; e.tacT = 7;
+  if (Math.abs(lat) > 100 && Math.random() < 0.35) bark(e, 'flank');
 }
 function fireLogic(e, t, dt, moving) {
   e.fireT -= dt;
@@ -280,7 +285,7 @@ function fireLogic(e, t, dt, moving) {
   enemyFire(e, t, (mg ? 0.1 : 0.13) + (moving ? 0.07 : 0) + Math.min(0.12, e.supp * 0.05));
   e.burst--;
   e.fireT = e.burst > 0 ? (mg ? 0.1 : 0.16) : (mg ? 2.6 : 3.2) * rand(0.8, 1.25) * (1 + e.supp * 0.3);
-  if (e.burst <= 0 && Math.random() < 0.4) e.relT = 1.6;   // swaps a magazine during the pause
+  if (e.burst <= 0 && Math.random() < 0.4) { e.relT = 1.6; bark(e, 'reload'); }   // swaps a magazine during the pause
 }
 function meleeAI(e, t, dt, d) {   // runners flank down side streets, breachers and raiders come straight up the road
   const reach = e.r + t.r + 6;
@@ -290,6 +295,7 @@ function meleeAI(e, t, dt, d) {   // runners flank down side streets, breachers 
   }
   e.pathT = (e.pathT || 0) - dt;
   if (d < 260 && clearRun(e.x, e.y, t.x, t.y, e.r * 0.8)) {
+    bark(e, 'charge');
     e.path = null;
     const s = e.sp * dt;
     e.x += (t.x - e.x) / d * s; e.y += (t.y - e.y) / d * s;
@@ -453,6 +459,7 @@ function battleUpdate(dt) {
     state.spectateT += dt;
     if (state.spectateT > CFG.deathCam + 0.3) showFailModal();
   }
+  updateVoices(dt);
   updateBanner(dt);
 }
 

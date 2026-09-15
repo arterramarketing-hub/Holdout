@@ -30,6 +30,15 @@
     letter-spacing:.2em; text-transform:uppercase; color:var(--ink); text-shadow:0 1px 3px rgba(0,0,0,.9); opacity:0; transition:opacity .2s; }
   #objmsg.on { opacity:1; } #objmsg.good { color:var(--friend); } #objmsg.bad { color:#ff8b7f; }
   #objtags { position:fixed; inset:0; z-index:8; pointer-events:none; overflow:hidden; }
+  /* squad callouts: a tag on the side the enemy is, with the squad net's chirp */
+  #callout { top:27%; display:none; padding:6px 10px 6px 9px; font-family:var(--mono); font-weight:800; font-size:12px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--ink); background:rgba(9,13,21,.72); border:1px solid var(--line-hi); white-space:nowrap; }
+  #callout.on { display:block; animation:callout-in .18s ease-out; }
+  #callout.left { left:22%; box-shadow:inset 3px 0 0 var(--foe); }
+  #callout.right { right:22%; box-shadow:inset -3px 0 0 var(--foe); }
+  #callout.behind { top:auto; bottom:22%; left:50%; transform:translateX(-50%); box-shadow:inset 0 -3px 0 var(--foe); animation:none; }
+  #callout.left::before { content:'◂ '; color:var(--foe); } #callout.right::after { content:' ▸'; color:var(--foe); } #callout.behind::after { content:' ▾'; color:var(--foe); }
+  @keyframes callout-in { from { opacity:0; } }
   #objtags i { position:absolute; left:0; top:0; display:none; place-items:center; width:20px; height:20px; margin:-10px 0 0 -10px; font-style:normal;
     font-family:var(--mono); font-weight:800; font-size:11px; color:#fff; background:rgba(9,13,21,.66); border:1.5px solid var(--c, #c9d1dc); }
   #bossname { margin-bottom:5px; font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--foe); }
