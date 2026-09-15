@@ -21,7 +21,8 @@ function renderTeam() {   // the rail picks the gun; the panel lays out the one 
   const note = (opts.length ? SIGHTS[att.sight].note + ' ' : '')
     + (f ? `Full damage to ${Math.round(f.near / 40)} m, ${Math.round(f.min * 100)}% by ${Math.round(reach)} m.` : 'No damage drop-off.')
     + (w.pierce ? ` Pierces ${w.pierce} targets.` : '') + (w.aoe ? ` ${(w.aoe / 40).toFixed(1)} m blast.` : '')
-    + (att.ext ? ` The extended magazine reloads ${Math.round((EXT_RELOAD - 1) * 100)}% slower.` : '');
+    + (att.ext ? ` The extended magazine reloads ${Math.round((EXT_RELOAD - 1) * 100)}% slower.` : '')
+    + (att.suppressor ? ` Suppressed: a dull shot with no flash and no tracers, heard only within ${CFG.hearQuiet / 40} m (${CFG.hearLoud / 40} m without); the sights come up ${Math.round((1 - CFG.suppressorAds) * 100)}% slower.` : '');
   const box = $('loadout');
   box.innerHTML = `
     <div class="lo-head"><div><div class="lo-cls">${WCLASS[k] || ''}</div><h2 class="xl lo-name">${w.name}</h2></div><span class="lo-tag">Equipped</span></div>
@@ -35,12 +36,13 @@ function renderTeam() {   // the rail picks the gun; the panel lays out the one 
       ${stat('Reload', (w.reload * (att.ext ? EXT_RELOAD : 1)).toFixed(1) + ' s', 1 - (w.reload - 1.2) / 3.4)}
     </div>
     ${opts.length ? `<div class="attrow"><span>Sight</span>${opts.map(sk => `<button class="att${att.sight === sk ? ' on' : ''}" data-sight="${sk}">${SIGHTS[sk].name}</button>`).join('')}</div>` : ''}
+    ${SUPPRESSOR_OK[k] ? `<div class="attrow"><span>Muzzle</span><button class="att${att.suppressor ? '' : ' on'}" data-supp="0">NONE</button><button class="att${att.suppressor ? ' on' : ''}" data-supp="1">SUPPRESSOR</button></div>` : ''}
     ${w.ext ? `<div class="attrow"><span>Mag</span><button class="att${att.ext ? '' : ' on'}" data-ext="0">STANDARD ${w.mag}</button><button class="att${att.ext ? ' on' : ''}" data-ext="1">EXTENDED ${w.ext}</button></div>` : ''}
     <p class="lo-note">${note}</p>
     <div class="lo-actions"><button class="cta" id="lodone">Done</button></div>`;
   box.querySelectorAll('.att').forEach(b => b.onclick = () => {
     const a = meta.attach[k] || (meta.attach[k] = { sight: opts[0], ext: false });
-    if (b.dataset.sight) a.sight = b.dataset.sight; else a.ext = b.dataset.ext === '1';
+    if (b.dataset.sight) a.sight = b.dataset.sight; else if (b.dataset.supp) a.suppressor = b.dataset.supp === '1'; else a.ext = b.dataset.ext === '1';
     saveMeta(); renderTeam();
   });
   $('lodone').onclick = () => showScreen('map');

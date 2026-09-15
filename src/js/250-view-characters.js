@@ -45,13 +45,13 @@ function drawSoldier(s, wdt, set) {
     if ((rt >= 0.14 && rt < 0.24 && key !== 'rocket') || (rt >= 0.44 && rt < 0.62)) emitParts(J, magHandParts(), r.pal, set);
     if (s.horse) emitParts(r.H, horseParts(), r.pal, set);
   }
-  gunLife(r, J, key, rt, fired, own, wdt);
+  gunLife(r, J, key, rt, fired, own, wdt, !s.pistol && !!s.suppressor);
   decal(VIEW.fx.shadow, X, Z, s.horse ? 1.9 : 0.95, 0, WHITE, 0.02);
   if (s.slot !== state.controlled && s.hp < s.maxHp - 0.05) hpBar(X, Z, s.horse ? 2.45 : 2.05, s.hp / s.maxHp, '#9ed34a');
 }
-function gunLife(r, J, kind, rt, fired, own, wdt) {   // muzzle bloom, brass and the dropped magazine for a character's drawn gun
+function gunLife(r, J, kind, rt, fired, own, wdt, quiet) {   // muzzle bloom, brass and the dropped magazine for a character's drawn gun
   const gunM = J[HJ.gun].matrixWorld;
-  if (fired) { r.flashT = 0.07; r.flashRot = rand(0, TAU); if (EJECT[kind]) r.ejectT = kind === 'sniper' ? 0.45 : 1e-4; }
+  if (fired) { r.flashT = quiet ? 0 : 0.07; r.flashRot = rand(0, TAU); if (EJECT[kind]) r.ejectT = kind === 'sniper' ? 0.45 : 1e-4; }
   const muz = GUN_MUZ[kind] || ENEMY_MUZ[kind];
   if (muz && Q.glow) muzzleBloom(r, gunM, muz.y, muz.z, kind, wdt);
   if (r.ejectT > 0) { r.ejectT -= wdt; if (r.ejectT <= 0) throwBrass(gunM, kind, 1, own, 0, 0); }

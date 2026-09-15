@@ -1,8 +1,8 @@
 // ============================================================ ENEMY GUNS AND THE SECOND GUN
 // Riflemen drop their AK-47 and gunners their PKM where they fall (DROP_KIND), with what was left in the magazine and
 // one spare, for CFG.dropLife seconds (blinking for the last 5). You carry two guns: the one in your hands keeps the
-// soldier's own weapon / mag / reserve / sight / ext / supp fields, so everything that reads them stays right, and the
-// other waits in s.alt. Near a dropped gun a prompt names it; hold F (X on a controller, the button on a phone) for
+// soldier's own weapon / mag / reserve / sight / ext / suppressor fields, so everything that reads them stays right,
+// and the other waits in s.alt. Near a dropped gun a prompt names it; hold F (X on a controller, the button on a phone) for
 // CFG.pickHold to take it. With a free slot what you had goes on your back; with both full the gun in your hands drops
 // where you stand. On the pistol with a free slot, walking over a gun takes it at once; walking over one of a kind you
 // carry takes its rounds. Q, the mouse wheel, Y on a controller or the swap button changes guns in CFG.swapTime — they
@@ -12,15 +12,15 @@ const DROP_KIND = { grunt: 'ak', gunner: 'pkm' };
 const PICK_R = 64, AUTO_R = 36;   // px: close enough to be offered a gun; close enough to walk over one
 let weaponDrops = [];
 const gunName = key => (WEAPONS[key] || SIDEARM).name;
-const gunRecord = s => ({ weapon: s.weapon, mag: s.mag, reserve: s.reserve, sight: s.sight, ext: s.ext, supp: s.supp });
+const gunRecord = s => ({ weapon: s.weapon, mag: s.mag, reserve: s.reserve, sight: s.sight, ext: s.ext, suppressor: s.suppressor });
 const gunCap = g => { const w = WEAPONS[g.weapon]; return (g.ext && w.ext ? w.ext : w.mag) * (w.spare + 1); };   // rounds carried at most, magazine included
 function wearGun(s, g) {
-  s.weapon = g.weapon; s.mag = g.mag; s.reserve = g.reserve; s.sight = g.sight || 'iron'; s.ext = !!g.ext; s.supp = !!g.supp;
+  s.weapon = g.weapon; s.mag = g.mag; s.reserve = g.reserve; s.sight = g.sight || 'iron'; s.ext = !!g.ext; s.suppressor = !!g.suppressor;
   s.pistol = s.mag <= 0 && s.reserve <= 0;
 }
 function dropGun(key, x, y, mag, reserve, extra) {
   const d = Object.assign({ key, x: clamp(x, 20, CFG.arenaW - 20), y: clamp(y, 20, CFG.arenaH - 20), yaw: 0, mag, reserve, t: CFG.dropLife,
-    sight: 'iron', ext: false, supp: false }, extra);
+    sight: 'iron', ext: false, suppressor: false }, extra);
   weaponDrops.push(d);
   if (weaponDrops.length > 14) weaponDrops.shift();
   return d;
@@ -46,8 +46,8 @@ function updateSwap(s, dt) {
 function takeGun(s, d) {
   if (!s.alt) s.alt = gunRecord(s);   // a free slot: what you had goes on your back
   else if (!s.pistol && s.mag + s.reserve > 0)
-    dropGun(s.weapon, s.x + rand(-14, 14), s.y + rand(-14, 14), s.mag, s.reserve, { yaw: rand(0, TAU), sight: s.sight, ext: s.ext, supp: s.supp });   // both full: this one goes down where you stand
-  wearGun(s, { weapon: d.key, mag: d.mag, reserve: d.reserve, sight: d.sight, ext: d.ext, supp: d.supp });
+    dropGun(s.weapon, s.x + rand(-14, 14), s.y + rand(-14, 14), s.mag, s.reserve, { yaw: rand(0, TAU), sight: s.sight, ext: s.ext, suppressor: s.suppressor });   // both full: this one goes down where you stand
+  wearGun(s, { weapon: d.key, mag: d.mag, reserve: d.reserve, sight: d.sight, ext: d.ext, suppressor: d.suppressor });
   weaponDrops.splice(weaponDrops.indexOf(d), 1);
   s.reloadT = 0; s.pickT = 0; s.swapT = CFG.swapTime / 2; s.swapped = true;   // it comes up into view
   floaters.push({ x: d.x, y: d.y, z: 30, txt: gunName(d.key), life: 1 });

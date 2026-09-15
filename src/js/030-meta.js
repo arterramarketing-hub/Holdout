@@ -50,7 +50,7 @@ function awardStreak() {
   }
 }
 function respawnSoldier(s) {   // a fresh body off the reinforcement line: same name, same loadout
-  if (s.kit) { s.weapon = s.kit.weapon; s.sight = s.kit.sight; s.ext = s.kit.ext; }
+  if (s.kit) { s.weapon = s.kit.weapon; s.sight = s.kit.sight; s.ext = s.kit.ext; s.suppressor = s.kit.suppressor; }
   s.alt = null; s.swapT = 0; s.pickT = 0;
   const w = WEAPONS[s.weapon];
   s.alive = true; s.hp = s.maxHp; s.pistol = false;

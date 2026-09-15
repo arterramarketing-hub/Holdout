@@ -21,6 +21,8 @@ const CFG = {
   fragR: 200, fragDmg: 6, fragSelf: 0.5,           // 5 m blast, 6 at the centre falling to nothing at the edge; half of that to you, never to your squad
   sprintMul: 1.45, sprintOut: 0.18,                // sprint speed, and the moment it takes to get the gun up after one
   swapTime: 0.45, pickHold: 0.35, dropLife: 45,    // changing guns; holding to take one off the ground; how long a dropped gun lies there
+  hearLoud: 1400, hearQuiet: 400, hearFor: 5,      // enemies hear a shot within 35 m, a suppressed one within 10 m, and remember the shooter 5 s
+  suppressorAds: 0.88,                             // a suppressor's weight on the muzzle: the sights come up 12% slower
 };
 const TAU = Math.PI * 2;
 
@@ -48,18 +50,21 @@ const SIGHTS = {
   scope: { name:'SCOPE 6x',     zoom:6,    rate:7.5, spread:0.35, over:'scope', note:'6x scope: the far end of the street, fully blacked out around the glass; slow to shoulder.' },
 };
 const SIGHT_OPTS = { smg: ['iron', 'rds', 'acog'], ar: ['iron', 'rds', 'acog'], lmg: ['iron', 'rds', 'acog'], sniper: ['scope', 'acog'] };
-const NO_ATT = { sight: 'iron', ext: false };
+const NO_ATT = { sight: 'iron', ext: false, suppressor: false };
+const SUPPRESSOR_OK = { smg: true, ar: true, lmg: true, sniper: true };   // what takes a suppressor: never the rocket, the pistol or a gun off the ground
 const EXT_RELOAD = 1.1;   // an extended magazine is heavier and slower to seat
-const freshAttach = () => ({ smg: { sight: 'iron', ext: false }, ar: { sight: 'iron', ext: false }, lmg: { sight: 'iron', ext: false }, sniper: { sight: 'scope', ext: false } });
+const freshAttach = () => ({ smg: { sight: 'iron', ext: false, suppressor: false }, ar: { sight: 'iron', ext: false, suppressor: false },
+  lmg: { sight: 'iron', ext: false, suppressor: false }, sniper: { sight: 'scope', ext: false, suppressor: false } });
 function normAtt(key, att) {   // an attachment record a gun can actually mount: an unknown sight falls back to the gun's first option
   const opts = SIGHT_OPTS[key];
   if (!opts) return NO_ATT;
-  return { sight: att && opts.includes(att.sight) ? att.sight : opts[0], ext: !!(att && att.ext && WEAPONS[key].ext) };
+  return { sight: att && opts.includes(att.sight) ? att.sight : opts[0], ext: !!(att && att.ext && WEAPONS[key].ext), suppressor: !!(att && att.suppressor && SUPPRESSOR_OK[key]) };
 }
 const attFor = key => normAtt(key, meta && meta.attach && meta.attach[key]);   // what BATTLE PREP has on this gun
 const magCap = s => { const w = WEAPONS[s.weapon]; return s.ext && w.ext ? w.ext : w.mag; };
 const heroSight = () => { const s = soldiers[state.controlled]; return s && !s.pistol && SIGHTS[s.sight] ? SIGHTS[s.sight] : SIGHTS.iron; };
 const heroZoom = () => fpvActive() ? heroSight().zoom : Math.min(heroSight().zoom, 1.45);   // over the shoulder a 4x would be absurd
+const adsRate = () => { const s = soldiers[state.controlled]; return heroSight().rate * (s && !s.pistol && s.suppressor ? CFG.suppressorAds : 1); };
 const adsSens = () => clamp(0.8 / heroZoom(), 0.13, 0.66);   // look speed comes down with the magnification (0.55 on irons)
 const SIDEARM = { name:'PISTOL', cd:0.3, dmg:0.7, range:280, reach:800, spread:0.05, speed:3900, len:8 };   // bottomless, for when the rifle runs dry
 

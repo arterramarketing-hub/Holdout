@@ -34,6 +34,13 @@
   a loaded second gun before the pistol, and with guns on the ground nearby the banner says GRAB A RIFLE and the
   minimap blinks them. A reinforcement comes back with the loadout gun only; squadmates never pick guns up.
 
+  SUPPRESSOR — BATTLE PREP › Muzzle on the UMP45, M4A1, M249 and Intervention (SUPPRESSOR_OK). Suppressed rounds make
+  a dull thump with the action loud by comparison (suppressedSyn renders gunS: variants), show no muzzle flash and no
+  tracers, and are heard only within CFG.hearQuiet 10 m (CFG.hearLoud 35 m otherwise; squadmates are always loud).
+  The can adds weight: the sights come up CFG.suppressorAds 88% as fast. Damage is untouched, so the M4 still drops a
+  rifleman in three. HEARING: an enemy who hears a shot knows where the shooter is for CFG.hearFor 5 s and turns on
+  them over a nearer soldier up to half again as far away; a rifleman barks and re-picks cover facing that shooter.
+
   THE INSTALLED APP — on GitHub Pages the page is an installable web app: manifest.webmanifest (full screen, landscape,
   navy, the H-in-a-scope icons that tools/icons.py draws) and sw.js (built from src/pwa/sw.js with a version hashed
   from what it caches). After one launch online it starts offline: the page is network first with a 4 s fallback to
@@ -1190,6 +1197,8 @@ const CFG = {
   fragR: 200, fragDmg: 6, fragSelf: 0.5,           // 5 m blast, 6 at the centre falling to nothing at the edge; half of that to you, never to your squad
   sprintMul: 1.45, sprintOut: 0.18,                // sprint speed, and the moment it takes to get the gun up after one
   swapTime: 0.45, pickHold: 0.35, dropLife: 45,    // changing guns; holding to take one off the ground; how long a dropped gun lies there
+  hearLoud: 1400, hearQuiet: 400, hearFor: 5,      // enemies hear a shot within 35 m, a suppressed one within 10 m, and remember the shooter 5 s
+  suppressorAds: 0.88,                             // a suppressor's weight on the muzzle: the sights come up 12% slower
 };
 const TAU = Math.PI * 2;
 
@@ -1217,18 +1226,21 @@ const SIGHTS = {
   scope: { name:'SCOPE 6x',     zoom:6,    rate:7.5, spread:0.35, over:'scope', note:'6x scope: the far end of the street, fully blacked out around the glass; slow to shoulder.' },
 };
 const SIGHT_OPTS = { smg: ['iron', 'rds', 'acog'], ar: ['iron', 'rds', 'acog'], lmg: ['iron', 'rds', 'acog'], sniper: ['scope', 'acog'] };
-const NO_ATT = { sight: 'iron', ext: false };
+const NO_ATT = { sight: 'iron', ext: false, suppressor: false };
+const SUPPRESSOR_OK = { smg: true, ar: true, lmg: true, sniper: true };   // what takes a suppressor: never the rocket, the pistol or a gun off the ground
 const EXT_RELOAD = 1.1;   // an extended magazine is heavier and slower to seat
-const freshAttach = () => ({ smg: { sight: 'iron', ext: false }, ar: { sight: 'iron', ext: false }, lmg: { sight: 'iron', ext: false }, sniper: { sight: 'scope', ext: false } });
+const freshAttach = () => ({ smg: { sight: 'iron', ext: false, suppressor: false }, ar: { sight: 'iron', ext: false, suppressor: false },
+  lmg: { sight: 'iron', ext: false, suppressor: false }, sniper: { sight: 'scope', ext: false, suppressor: false } });
 function normAtt(key, att) {   // an attachment record a gun can actually mount: an unknown sight falls back to the gun's first option
   const opts = SIGHT_OPTS[key];
   if (!opts) return NO_ATT;
-  return { sight: att && opts.includes(att.sight) ? att.sight : opts[0], ext: !!(att && att.ext && WEAPONS[key].ext) };
+  return { sight: att && opts.includes(att.sight) ? att.sight : opts[0], ext: !!(att && att.ext && WEAPONS[key].ext), suppressor: !!(att && att.suppressor && SUPPRESSOR_OK[key]) };
 }
 const attFor = key => normAtt(key, meta && meta.attach && meta.attach[key]);   // what BATTLE PREP has on this gun
 const magCap = s => { const w = WEAPONS[s.weapon]; return s.ext && w.ext ? w.ext : w.mag; };
 const heroSight = () => { const s = soldiers[state.controlled]; return s && !s.pistol && SIGHTS[s.sight] ? SIGHTS[s.sight] : SIGHTS.iron; };
 const heroZoom = () => fpvActive() ? heroSight().zoom : Math.min(heroSight().zoom, 1.45);   // over the shoulder a 4x would be absurd
+const adsRate = () => { const s = soldiers[state.controlled]; return heroSight().rate * (s && !s.pistol && s.suppressor ? CFG.suppressorAds : 1); };
 const adsSens = () => clamp(0.8 / heroZoom(), 0.13, 0.66);   // look speed comes down with the magnification (0.55 on irons)
 const SIDEARM = { name:'PISTOL', cd:0.3, dmg:0.7, range:280, reach:800, spread:0.05, speed:3900, len:8 };   // bottomless, for when the rifle runs dry
 
@@ -1336,7 +1348,7 @@ function awardStreak() {
   }
 }
 function respawnSoldier(s) {   // a fresh body off the reinforcement line: same name, same loadout
-  if (s.kit) { s.weapon = s.kit.weapon; s.sight = s.kit.sight; s.ext = s.kit.ext; }
+  if (s.kit) { s.weapon = s.kit.weapon; s.sight = s.kit.sight; s.ext = s.kit.ext; s.suppressor = s.kit.suppressor; }
   s.alt = null; s.swapT = 0; s.pickT = 0;
   const w = WEAPONS[s.weapon];
   s.alive = true; s.hp = s.maxHp; s.pistol = false;
@@ -1377,14 +1389,14 @@ function buildSoldier(i) {
   return {
     slot: i, name: m.name,
     color: m.wren ? '#d9dbe4' : slotColor(i), helm: m.wren ? '#7a7d8c' : slotDark(i),
-    weapon, horse: false, sight: att.sight, ext: att.ext,
+    weapon, horse: false, sight: att.sight, ext: att.ext, suppressor: att.suppressor,
     x: CFG.arenaW / 2 + AI_SLOTS[i] + rand(-20, 20), y: CFG.lineY + rand(-30, 50),
     hp: maxHp, maxHp, alive: true, respawnT: 0,
     fireCd: rand(0, 0.4) * (i ? 1 : 0), regenCd: 0, invuln: 0, aim: -Math.PI / 2, r: 13,   // the squad's first shots are staggered; your own trigger is live the moment you deploy (the roll stays, so a seed replays the same front)
     walk: rand(0, TAU), moving: false, recoil: 0,
     mag: cap, reserve: cap * WEAPONS[weapon].spare, reloadT: 0, reloadDur: 1, pistol: false,
     frags: CFG.frags, throwT: 0, sprinting: false, sprintOutT: 0,
-    kit: { weapon, sight: att.sight, ext: att.ext }, alt: null, swapT: 0, pickT: 0,   // the loadout a reinforcement comes back with, and the second gun
+    kit: { weapon, sight: att.sight, ext: att.ext, suppressor: att.suppressor }, alt: null, swapT: 0, pickT: 0,   // the loadout a reinforcement comes back with, and the second gun
   };
 }
 function genTerrain() {   // the same town every front; its movable cover is rolled fresh each battle
@@ -1923,6 +1935,11 @@ const GUN_SYN = {   // snap/decay: blast envelope s · body: blast low-pass Hz �
             refl: [[0.07, 0.09, 0.2], [0.15, 0.12, 0.1]], mech: [[0.02, 0.12, 2900]] },
 };
 const GUN_VARS = { smg: 3, ar: 3, lmg: 3, sniper: 2, rocket: 2, ak: 2, pkm: 1, pistol: 2 };
+const SUPPRESSED_VARS = { smg: 2, ar: 2, lmg: 2, sniper: 1 };
+const suppressedSyn = p => Object.assign({}, p, {   // the same gun through a can: no crack, a short dull blast, a faint room, the action loud by comparison
+  snap: p.snap * 0.8, decay: p.decay * 0.55, body: p.body * 0.32, thump: p.thump * 1.35, thumpDecay: p.thumpDecay * 0.7, crack: p.crack * 0.1,
+  drive: p.drive * 0.55, tail: p.tail * 0.22, tailTau: p.tailTau * 0.5, tailLP: p.tailLP * 0.7,
+  refl: p.refl.map(([l, r, g]) => [l, r, g * 0.3]), mech: (p.mech || []).map(([t, g, hz]) => [t, g * 2.6, hz]) });
 function renderBlast(seed, far) {   // shell, mine or rocket impact: crack, roar, pressure thump, reflections, rumble, falling debris
   const sr = SR_SYN, rnd = synRng(seed), n = Math.floor(2.4 * sr), L = new Float32Array(n), R = new Float32Array(n);
   const nb = Math.floor(0.9 * sr), roar = new Float32Array(nb);
@@ -2110,6 +2127,7 @@ function sfxJobs() {   // render order = how soon each sound is needed
   for (const surf of ['hard', 'gravel', 'soft']) for (let i = 0; i < 4; i++) J.push([`step:${surf}:${i}`, () => renderStep(surf, 200 + i * 7 + surf.length)]);
   for (let i = 0; i < 6; i++) J.push([`bark:${i}`, () => renderBark(i, i < 3 ? 1 : 2)]);
   J.push(['radio', renderRadio]);
+  for (const w of ['ar', 'smg', 'lmg', 'sniper']) for (let i = 0; i < SUPPRESSED_VARS[w]; i++) { const k = `gunS:${w}:${i}`; J.push([k, () => renderShot(suppressedSyn(GUN_SYN[w]), seedOf(k), false)]); }
   return J;
 }
 function pumpSfx() {   // render in ~10 ms slices so the page never hitches
@@ -2148,8 +2166,14 @@ function pickVar(base, n) {   // a random rendered variant, so repeated shots ne
   for (let k = 0; k < n; k++) { const key = base + ((s + k) % n); if (SFX.buf[key]) return key; }
   return base + '0';
 }
-function sfxGun(w, x, y, isCtl) {
+function sfxGun(w, x, y, isCtl, quiet) {
   const n = GUN_VARS[w] || 1, rate = rand(0.97, 1.03);
+  if (quiet) {   // suppressed: a dull thump and the action working; until those are rendered, the shot itself, far down and muffled
+    const g = isCtl ? 1 : 0.4 * distMul(x, y);
+    if (!playBuf(pickVar(`gunS:${w}:`, SUPPRESSED_VARS[w] || 1), { gain: 0.3 * g, rate, force: isCtl, x: isCtl ? null : x, y }))
+      playBuf(pickVar(`gun:${w}:`, n), { gain: 0.14 * g, rate, lp: 900, force: isCtl, x: isCtl ? null : x, y });
+    return;
+  }
   if (isCtl) {
     playBuf(pickVar(`gun:${w}:`, n), { gain: 0.6, rate, force: true });   // your brass tinks when it actually lands (drawLoose)
     return;
@@ -3038,8 +3062,17 @@ function nearestSoldier(x, y) {
 }
 const hitsToDrop = k => Math.ceil(ETYPES.grunt.hp / squadDmg(k) - 1e-9);   // body hits on a rifleman at full damage
 const GUN_KICK = { smg: 0.6, ar: 1.0, lmg: 1.4, sniper: 2.6, rocket: 3.2, pistol: 0.4, ak: 1.25, pkm: 1.5 };
+function hearShot(s, r) {   // every enemy within earshot learns where the shooter is (see CFG.hearLoud)
+  const r2 = r * r;
+  for (const e of enemies) {
+    if (e.target || dist2(e.x, e.y, s.x, s.y) > r2) continue;
+    if (!(e.heardT > 0) || e.heard !== s) e.heardNew = true;
+    e.heard = s; e.heardT = CFG.hearFor;
+  }
+}
 function fire(s, target, fromPlayer, angle) {   // angle set = fired where the player is aiming, not at a target
   const key = s.pistol ? 'pistol' : s.weapon, w = s.pistol ? SIDEARM : WEAPONS[s.weapon];
+  const quiet = !s.pistol && !!s.suppressor;   // a suppressed shot: dull, flashless, no tracer, heard only close by
   const dx = target ? target.x - s.x : 0, dy = target ? target.y - s.y : 0;
   const jit = fromPlayer ? 0 : rand(-1, 1) * (w.spread + 0.03), a = (angle != null ? angle : Math.atan2(dy, dx)) + jit;   // your own spread is the 3D cone below
   s.aim = a; s.recoil = 0.09;
@@ -3070,14 +3103,15 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   }
   bullets.push({ x: bx, y: by, z: bz, vz: uz * w.speed, ballistic,
     vx: ux * w.speed, vy: uy * w.speed,
-    tracer: key === 'rocket' || key === 'sniper' || s.shotN % 3 === 0,   // every third round is loaded as a tracer; the .50 and the rocket always burn
+    tracer: !quiet && (key === 'rocket' || key === 'sniper' || s.shotN % 3 === 0),   // every third round is loaded as a tracer; the .50 and the rocket always burn
     life: (w.reach || w.range) / w.speed, age: 0, fromPlayer, wkey: key, slot: s.slot,
     dmg: s.pistol ? SIDEARM.dmg : squadDmg(s.weapon), hits: 0, maxHits: w.pierce || 1, aoe: w.aoe || 0, skip: coverNear(s, 34) });
   const mx = s.x + Math.cos(a) * mz, my = s.y + Math.sin(a) * mz;   // the flash and the brass are drawn by the view, at the gun it draws
   particles.push({ x: mx, y: my, z: 16, vx: Math.cos(a) * 20 + rand(-8, 8), vy: Math.sin(a) * 20 + rand(-8, 8),
     vz: rand(14, 32), life: rand(0.3, 0.55), max: 0.55, col: '#8a8a80', r: rand(1.5, 2.8) });   // muzzle smoke
   if (fromPlayer) cam.shake = Math.max(cam.shake, GUN_KICK[key]);                                // per-weapon kick
-  sfxGun(key, s.x, s.y, fromPlayer);
+  sfxGun(key, s.x, s.y, fromPlayer, quiet);
+  hearShot(s, quiet ? CFG.hearQuiet : CFG.hearLoud);
 }
 function burst(x, y, col, n, z = 10) {
   for (let i = 0; i < n; i++) {
@@ -3232,8 +3266,8 @@ function explode(x, y, r, eDmg, sDmg, credit) {
 // ============================================================ ENEMY GUNS AND THE SECOND GUN
 // Riflemen drop their AK-47 and gunners their PKM where they fall (DROP_KIND), with what was left in the magazine and
 // one spare, for CFG.dropLife seconds (blinking for the last 5). You carry two guns: the one in your hands keeps the
-// soldier's own weapon / mag / reserve / sight / ext / supp fields, so everything that reads them stays right, and the
-// other waits in s.alt. Near a dropped gun a prompt names it; hold F (X on a controller, the button on a phone) for
+// soldier's own weapon / mag / reserve / sight / ext / suppressor fields, so everything that reads them stays right,
+// and the other waits in s.alt. Near a dropped gun a prompt names it; hold F (X on a controller, the button on a phone) for
 // CFG.pickHold to take it. With a free slot what you had goes on your back; with both full the gun in your hands drops
 // where you stand. On the pistol with a free slot, walking over a gun takes it at once; walking over one of a kind you
 // carry takes its rounds. Q, the mouse wheel, Y on a controller or the swap button changes guns in CFG.swapTime — they
@@ -3243,15 +3277,15 @@ const DROP_KIND = { grunt: 'ak', gunner: 'pkm' };
 const PICK_R = 64, AUTO_R = 36;   // px: close enough to be offered a gun; close enough to walk over one
 let weaponDrops = [];
 const gunName = key => (WEAPONS[key] || SIDEARM).name;
-const gunRecord = s => ({ weapon: s.weapon, mag: s.mag, reserve: s.reserve, sight: s.sight, ext: s.ext, supp: s.supp });
+const gunRecord = s => ({ weapon: s.weapon, mag: s.mag, reserve: s.reserve, sight: s.sight, ext: s.ext, suppressor: s.suppressor });
 const gunCap = g => { const w = WEAPONS[g.weapon]; return (g.ext && w.ext ? w.ext : w.mag) * (w.spare + 1); };   // rounds carried at most, magazine included
 function wearGun(s, g) {
-  s.weapon = g.weapon; s.mag = g.mag; s.reserve = g.reserve; s.sight = g.sight || 'iron'; s.ext = !!g.ext; s.supp = !!g.supp;
+  s.weapon = g.weapon; s.mag = g.mag; s.reserve = g.reserve; s.sight = g.sight || 'iron'; s.ext = !!g.ext; s.suppressor = !!g.suppressor;
   s.pistol = s.mag <= 0 && s.reserve <= 0;
 }
 function dropGun(key, x, y, mag, reserve, extra) {
   const d = Object.assign({ key, x: clamp(x, 20, CFG.arenaW - 20), y: clamp(y, 20, CFG.arenaH - 20), yaw: 0, mag, reserve, t: CFG.dropLife,
-    sight: 'iron', ext: false, supp: false }, extra);
+    sight: 'iron', ext: false, suppressor: false }, extra);
   weaponDrops.push(d);
   if (weaponDrops.length > 14) weaponDrops.shift();
   return d;
@@ -3277,8 +3311,8 @@ function updateSwap(s, dt) {
 function takeGun(s, d) {
   if (!s.alt) s.alt = gunRecord(s);   // a free slot: what you had goes on your back
   else if (!s.pistol && s.mag + s.reserve > 0)
-    dropGun(s.weapon, s.x + rand(-14, 14), s.y + rand(-14, 14), s.mag, s.reserve, { yaw: rand(0, TAU), sight: s.sight, ext: s.ext, supp: s.supp });   // both full: this one goes down where you stand
-  wearGun(s, { weapon: d.key, mag: d.mag, reserve: d.reserve, sight: d.sight, ext: d.ext, supp: d.supp });
+    dropGun(s.weapon, s.x + rand(-14, 14), s.y + rand(-14, 14), s.mag, s.reserve, { yaw: rand(0, TAU), sight: s.sight, ext: s.ext, suppressor: s.suppressor });   // both full: this one goes down where you stand
+  wearGun(s, { weapon: d.key, mag: d.mag, reserve: d.reserve, sight: d.sight, ext: d.ext, suppressor: d.suppressor });
   weaponDrops.splice(weaponDrops.indexOf(d), 1);
   s.reloadT = 0; s.pickT = 0; s.swapT = CFG.swapTime / 2; s.swapped = true;   // it comes up into view
   floaters.push({ x: d.x, y: d.y, z: 30, txt: gunName(d.key), life: 1 });
@@ -4245,8 +4279,12 @@ function updateEnemies(dt) {
     e.cd -= dt; e.wob += dt * 6; e.atk = Math.max(0, e.atk - dt);
     e.supp = Math.max(0, (e.supp || 0) - dt * 0.6);
     if (e.relT > 0) e.relT -= dt;
-    const t = nearestSoldier(e.x, e.y);
+    e.heardT = Math.max(0, (e.heardT || 0) - dt);
+    let t = nearestSoldier(e.x, e.y);
     if (!t) continue;
+    const heard = e.heardT > 0 && e.heard && e.heard.alive ? e.heard : null;
+    if (heard && heard !== t && dist2(e.x, e.y, heard.x, heard.y) <= 2.25 * dist2(e.x, e.y, t.x, t.y)) t = heard;   // a shooter they heard draws them, up to half again as far as the nearest soldier
+    if (e.heardNew) { e.heardNew = false; if (e.ranged && !e.boss) { bark(e, 'spot'); e.tacT = Math.min(e.tacT, 0.25); } }   // and they turn to take cover from it
     const dx = t.x - e.x, dy = t.y - e.y, d = Math.hypot(dx, dy) || 1;
     e.face = dx >= 0 ? 1 : -1;
     e.aim = Math.atan2(dy, dx);
@@ -5084,7 +5122,21 @@ const GUN_STATIC = {
     P(HJ.gun, 'metal', 0.04, 0.12, 0.05, 0, -0.04, -0.05, 'gunm'), P(HJ.gun, 'metal', 0.04, 0.12, 0.05, 0, -0.04, -0.28, 'gunm'),
     P(HJ.gun, 'metal', 0.03, 0.06, 0.08, -0.07, 0.14, -0.2, 'gunm')],
 };
-const attSig = (key, att) => { const a = normAtt(key, att); return SIGHT_OPTS[key] ? ':' + a.sight + (a.ext ? 'X' : '') : ''; };
+const SUPPRESSOR_CAN = { smg: [0.021, 0.15], ar: [0.022, 0.17], lmg: [0.025, 0.18], sniper: [0.027, 0.22] };   // radius and length, m: a can threaded over the muzzle device
+for (const k of Object.keys(SUPPRESSOR_CAN)) {
+  const build = GUN_BUILD[k];
+  GUN_BUILD[k] = a => {
+    const rows = build(a);
+    if (!a.suppressor) return rows;
+    const [r, len] = SUPPRESSOR_CAN[k], m = GUN_MUZ[k];
+    return [...rows, C(r, len, 0, m.y, m.z - len / 2 + 0.01, 'poly'), C(r * 0.72, 0.012, 0, m.y, m.z - len + 0.012, 'gunm')];
+  };
+}
+const muzOf = (key, s) => {   // the barrel tip actually drawn: the far end of a suppressor when one is fitted
+  const m = GUN_MUZ[key] || GUN_MUZ.ar, can = s && !s.pistol && s.suppressor && SUPPRESSOR_CAN[key];
+  return can ? { y: m.y, z: m.z - can[1] + 0.01 } : m;
+};
+const attSig = (key, att) => { const a = normAtt(key, att); return SIGHT_OPTS[key] ? ':' + a.sight + (a.ext ? 'X' : '') + (a.suppressor ? 'S' : '') : ''; };
 const gunRows = (key, att) => GUN_BUILD[key] ? GUN_BUILD[key](normAtt(key, att)) : GUN_STATIC[key];
 const ENEMY_LEGS = [   // work trousers bloused into boots, gloves
   ...ARMS('coat', 'glove'),
@@ -5779,7 +5831,7 @@ function drawLoose(wdt) {
 function drawViewmodel(s, wdt, set) {
   const cam3 = VIEW.camera, key = s.pistol ? 'pistol' : s.weapon;
   if (s.recoil > FPV.lastRecoil + 0.02) {
-    FPV.kickV += 10 + RECOIL_KICK[key] * 30; FPV.flashT = VM_FLASH; FPV.flashRot = rand(0, TAU); FPV.flashSc = rand(0.85, 1.15);
+    FPV.kickV += 10 + RECOIL_KICK[key] * 30; FPV.flashT = !s.pistol && s.suppressor ? 0 : VM_FLASH; FPV.flashRot = rand(0, TAU); FPV.flashSc = rand(0.85, 1.15);   // a suppressor hides the flash
     if (EJECT[key]) FPV.ejectT = key === 'sniper' ? 0.45 : 1e-4;   // the bolt gun throws its brass when the bolt is worked
   }
   FPV.lastRecoil = s.recoil;
@@ -5794,7 +5846,7 @@ function drawViewmodel(s, wdt, set) {
   const thr = FPV.throwT > 0 ? Math.sin(Math.PI * (1 - FPV.throwT / 0.45)) : 0, spk = FPV.sprintK || 0;   // the gun dips out of the way for a throw; sprinting, it swings low and across
   const swp = s.swapT > 0 ? Math.sin(Math.PI * clamp(1 - s.swapT / CFG.swapTime, 0, 1)) : 0;   // changing guns: this one drops out of sight, the other comes up
   FPV.sway = approach(FPV.sway, clamp(-aim.lookDx * 2.2, -0.05, 0.05), 9, wdt);
-  const A = FPV.adsK, rel = 1 - A, ads = adsInfo(key, s), muz = GUN_MUZ[key] || GUN_MUZ.ar;
+  const A = FPV.adsK, rel = 1 - A, ads = adsInfo(key, s), muz = muzOf(key, s);
   const wall = clearRun(s.x, s.y, s.x + Math.sin(aim.yaw) * 60, s.y - Math.cos(aim.yaw) * 60, 4) ? 0 : 1;   // muzzle against a wall: bring it in
   const H = VM_HOLD[key] || VM_HOLD.ar, sp = splitMag(gunParts(key, s));
   const rl = s.reloadT > 0 && s.reloadDur > 0 ? clamp(1 - s.reloadT / s.reloadDur, 0, 1) : -1;
@@ -5899,13 +5951,13 @@ function drawSoldier(s, wdt, set) {
     if ((rt >= 0.14 && rt < 0.24 && key !== 'rocket') || (rt >= 0.44 && rt < 0.62)) emitParts(J, magHandParts(), r.pal, set);
     if (s.horse) emitParts(r.H, horseParts(), r.pal, set);
   }
-  gunLife(r, J, key, rt, fired, own, wdt);
+  gunLife(r, J, key, rt, fired, own, wdt, !s.pistol && !!s.suppressor);
   decal(VIEW.fx.shadow, X, Z, s.horse ? 1.9 : 0.95, 0, WHITE, 0.02);
   if (s.slot !== state.controlled && s.hp < s.maxHp - 0.05) hpBar(X, Z, s.horse ? 2.45 : 2.05, s.hp / s.maxHp, '#9ed34a');
 }
-function gunLife(r, J, kind, rt, fired, own, wdt) {   // muzzle bloom, brass and the dropped magazine for a character's drawn gun
+function gunLife(r, J, kind, rt, fired, own, wdt, quiet) {   // muzzle bloom, brass and the dropped magazine for a character's drawn gun
   const gunM = J[HJ.gun].matrixWorld;
-  if (fired) { r.flashT = 0.07; r.flashRot = rand(0, TAU); if (EJECT[kind]) r.ejectT = kind === 'sniper' ? 0.45 : 1e-4; }
+  if (fired) { r.flashT = quiet ? 0 : 0.07; r.flashRot = rand(0, TAU); if (EJECT[kind]) r.ejectT = kind === 'sniper' ? 0.45 : 1e-4; }
   const muz = GUN_MUZ[kind] || ENEMY_MUZ[kind];
   if (muz && Q.glow) muzzleBloom(r, gunM, muz.y, muz.z, kind, wdt);
   if (r.ejectT > 0) { r.ejectT -= wdt; if (r.ejectT <= 0) throwBrass(gunM, kind, 1, own, 0, 0); }
@@ -7293,7 +7345,7 @@ function updateCamera3(dt) {
   cam.shake = Math.max(0, cam.shake - dt * 26);
   cam.punch = Math.max(0, cam.punch - dt * 0.35);
   const reloading = soldiers[state.controlled] && soldiers[state.controlled].reloadT > 0;   // the sights come down while you reload, and back up after
-  FPV.adsK = approach(FPV.adsK, aim.ads && !reloading ? 1 : 0, heroSight().rate, dt);   // sights come up at the optic's own pace, in both views
+  FPV.adsK = approach(FPV.adsK, aim.ads && !reloading ? 1 : 0, adsRate(), dt);   // sights come up at the optic's own pace, in both views
   const hs = soldiers[state.controlled];
   FPV.sprintK = approach(FPV.sprintK || 0, hs && hs.alive && hs.sprinting && state.mode === 'play' ? 1 : 0, 6, dt);   // sprinting: the view widens, the gun drops
   steerFromCursor(dt);
@@ -8393,7 +8445,7 @@ function renderBrief() {
 
   const lk = WEAPONS[meta.loadout] ? meta.loadout : 'ar', lw = WEAPONS[lk], la = attFor(lk);
   $('kitname').textContent = lw.name;
-  $('kitsub').textContent = (SIGHT_OPTS[lk] ? SIGHTS[la.sight].name + ' · ' : '') + `${la.ext && lw.ext ? lw.ext : lw.mag} rds`;
+  $('kitsub').textContent = (SIGHT_OPTS[lk] ? SIGHTS[la.sight].name + ' · ' : '') + `${la.ext && lw.ext ? lw.ext : lw.mag} rds` + (la.suppressor ? ' · suppressed' : '');
   $('brSquad').innerHTML = meta.squad.slice(0, CFG.rosterSize).map((m, i) => {
     const gun = WEAPONS[i === 0 ? lk : m.weapon] || WEAPONS.ar;
     return `<li style="--c:${m.wren ? '#d9dbe4' : slotColor(i)}"><b>${SQUAD_ROLE_NAMES[i]}</b><span>${m.wren ? 'CPL ' : ''}${m.name}<em>${gun.name}</em></span></li>`;
@@ -8431,7 +8483,8 @@ function renderTeam() {   // the rail picks the gun; the panel lays out the one 
   const note = (opts.length ? SIGHTS[att.sight].note + ' ' : '')
     + (f ? `Full damage to ${Math.round(f.near / 40)} m, ${Math.round(f.min * 100)}% by ${Math.round(reach)} m.` : 'No damage drop-off.')
     + (w.pierce ? ` Pierces ${w.pierce} targets.` : '') + (w.aoe ? ` ${(w.aoe / 40).toFixed(1)} m blast.` : '')
-    + (att.ext ? ` The extended magazine reloads ${Math.round((EXT_RELOAD - 1) * 100)}% slower.` : '');
+    + (att.ext ? ` The extended magazine reloads ${Math.round((EXT_RELOAD - 1) * 100)}% slower.` : '')
+    + (att.suppressor ? ` Suppressed: a dull shot with no flash and no tracers, heard only within ${CFG.hearQuiet / 40} m (${CFG.hearLoud / 40} m without); the sights come up ${Math.round((1 - CFG.suppressorAds) * 100)}% slower.` : '');
   const box = $('loadout');
   box.innerHTML = `
     <div class="lo-head"><div><div class="lo-cls">${WCLASS[k] || ''}</div><h2 class="xl lo-name">${w.name}</h2></div><span class="lo-tag">Equipped</span></div>
@@ -8445,12 +8498,13 @@ function renderTeam() {   // the rail picks the gun; the panel lays out the one 
       ${stat('Reload', (w.reload * (att.ext ? EXT_RELOAD : 1)).toFixed(1) + ' s', 1 - (w.reload - 1.2) / 3.4)}
     </div>
     ${opts.length ? `<div class="attrow"><span>Sight</span>${opts.map(sk => `<button class="att${att.sight === sk ? ' on' : ''}" data-sight="${sk}">${SIGHTS[sk].name}</button>`).join('')}</div>` : ''}
+    ${SUPPRESSOR_OK[k] ? `<div class="attrow"><span>Muzzle</span><button class="att${att.suppressor ? '' : ' on'}" data-supp="0">NONE</button><button class="att${att.suppressor ? ' on' : ''}" data-supp="1">SUPPRESSOR</button></div>` : ''}
     ${w.ext ? `<div class="attrow"><span>Mag</span><button class="att${att.ext ? '' : ' on'}" data-ext="0">STANDARD ${w.mag}</button><button class="att${att.ext ? ' on' : ''}" data-ext="1">EXTENDED ${w.ext}</button></div>` : ''}
     <p class="lo-note">${note}</p>
     <div class="lo-actions"><button class="cta" id="lodone">Done</button></div>`;
   box.querySelectorAll('.att').forEach(b => b.onclick = () => {
     const a = meta.attach[k] || (meta.attach[k] = { sight: opts[0], ext: false });
-    if (b.dataset.sight) a.sight = b.dataset.sight; else a.ext = b.dataset.ext === '1';
+    if (b.dataset.sight) a.sight = b.dataset.sight; else if (b.dataset.supp) a.suppressor = b.dataset.supp === '1'; else a.ext = b.dataset.ext === '1';
     saveMeta(); renderTeam();
   });
   $('lodone').onclick = () => showScreen('map');

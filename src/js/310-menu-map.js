@@ -381,7 +381,7 @@ function renderBrief() {
 
   const lk = WEAPONS[meta.loadout] ? meta.loadout : 'ar', lw = WEAPONS[lk], la = attFor(lk);
   $('kitname').textContent = lw.name;
-  $('kitsub').textContent = (SIGHT_OPTS[lk] ? SIGHTS[la.sight].name + ' · ' : '') + `${la.ext && lw.ext ? lw.ext : lw.mag} rds`;
+  $('kitsub').textContent = (SIGHT_OPTS[lk] ? SIGHTS[la.sight].name + ' · ' : '') + `${la.ext && lw.ext ? lw.ext : lw.mag} rds` + (la.suppressor ? ' · suppressed' : '');
   $('brSquad').innerHTML = meta.squad.slice(0, CFG.rosterSize).map((m, i) => {
     const gun = WEAPONS[i === 0 ? lk : m.weapon] || WEAPONS.ar;
     return `<li style="--c:${m.wren ? '#d9dbe4' : slotColor(i)}"><b>${SQUAD_ROLE_NAMES[i]}</b><span>${m.wren ? 'CPL ' : ''}${m.name}<em>${gun.name}</em></span></li>`;

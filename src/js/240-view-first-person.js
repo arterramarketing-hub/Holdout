@@ -274,7 +274,7 @@ function drawLoose(wdt) {
 function drawViewmodel(s, wdt, set) {
   const cam3 = VIEW.camera, key = s.pistol ? 'pistol' : s.weapon;
   if (s.recoil > FPV.lastRecoil + 0.02) {
-    FPV.kickV += 10 + RECOIL_KICK[key] * 30; FPV.flashT = VM_FLASH; FPV.flashRot = rand(0, TAU); FPV.flashSc = rand(0.85, 1.15);
+    FPV.kickV += 10 + RECOIL_KICK[key] * 30; FPV.flashT = !s.pistol && s.suppressor ? 0 : VM_FLASH; FPV.flashRot = rand(0, TAU); FPV.flashSc = rand(0.85, 1.15);   // a suppressor hides the flash
     if (EJECT[key]) FPV.ejectT = key === 'sniper' ? 0.45 : 1e-4;   // the bolt gun throws its brass when the bolt is worked
   }
   FPV.lastRecoil = s.recoil;
@@ -289,7 +289,7 @@ function drawViewmodel(s, wdt, set) {
   const thr = FPV.throwT > 0 ? Math.sin(Math.PI * (1 - FPV.throwT / 0.45)) : 0, spk = FPV.sprintK || 0;   // the gun dips out of the way for a throw; sprinting, it swings low and across
   const swp = s.swapT > 0 ? Math.sin(Math.PI * clamp(1 - s.swapT / CFG.swapTime, 0, 1)) : 0;   // changing guns: this one drops out of sight, the other comes up
   FPV.sway = approach(FPV.sway, clamp(-aim.lookDx * 2.2, -0.05, 0.05), 9, wdt);
-  const A = FPV.adsK, rel = 1 - A, ads = adsInfo(key, s), muz = GUN_MUZ[key] || GUN_MUZ.ar;
+  const A = FPV.adsK, rel = 1 - A, ads = adsInfo(key, s), muz = muzOf(key, s);
   const wall = clearRun(s.x, s.y, s.x + Math.sin(aim.yaw) * 60, s.y - Math.cos(aim.yaw) * 60, 4) ? 0 : 1;   // muzzle against a wall: bring it in
   const H = VM_HOLD[key] || VM_HOLD.ar, sp = splitMag(gunParts(key, s));
   const rl = s.reloadT > 0 && s.reloadDur > 0 ? clamp(1 - s.reloadT / s.reloadDur, 0, 1) : -1;

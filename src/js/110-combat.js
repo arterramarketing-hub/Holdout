@@ -121,8 +121,17 @@ function nearestSoldier(x, y) {
 }
 const hitsToDrop = k => Math.ceil(ETYPES.grunt.hp / squadDmg(k) - 1e-9);   // body hits on a rifleman at full damage
 const GUN_KICK = { smg: 0.6, ar: 1.0, lmg: 1.4, sniper: 2.6, rocket: 3.2, pistol: 0.4, ak: 1.25, pkm: 1.5 };
+function hearShot(s, r) {   // every enemy within earshot learns where the shooter is (see CFG.hearLoud)
+  const r2 = r * r;
+  for (const e of enemies) {
+    if (e.target || dist2(e.x, e.y, s.x, s.y) > r2) continue;
+    if (!(e.heardT > 0) || e.heard !== s) e.heardNew = true;
+    e.heard = s; e.heardT = CFG.hearFor;
+  }
+}
 function fire(s, target, fromPlayer, angle) {   // angle set = fired where the player is aiming, not at a target
   const key = s.pistol ? 'pistol' : s.weapon, w = s.pistol ? SIDEARM : WEAPONS[s.weapon];
+  const quiet = !s.pistol && !!s.suppressor;   // a suppressed shot: dull, flashless, no tracer, heard only close by
   const dx = target ? target.x - s.x : 0, dy = target ? target.y - s.y : 0;
   const jit = fromPlayer ? 0 : rand(-1, 1) * (w.spread + 0.03), a = (angle != null ? angle : Math.atan2(dy, dx)) + jit;   // your own spread is the 3D cone below
   s.aim = a; s.recoil = 0.09;
@@ -153,14 +162,15 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   }
   bullets.push({ x: bx, y: by, z: bz, vz: uz * w.speed, ballistic,
     vx: ux * w.speed, vy: uy * w.speed,
-    tracer: key === 'rocket' || key === 'sniper' || s.shotN % 3 === 0,   // every third round is loaded as a tracer; the .50 and the rocket always burn
+    tracer: !quiet && (key === 'rocket' || key === 'sniper' || s.shotN % 3 === 0),   // every third round is loaded as a tracer; the .50 and the rocket always burn
     life: (w.reach || w.range) / w.speed, age: 0, fromPlayer, wkey: key, slot: s.slot,
     dmg: s.pistol ? SIDEARM.dmg : squadDmg(s.weapon), hits: 0, maxHits: w.pierce || 1, aoe: w.aoe || 0, skip: coverNear(s, 34) });
   const mx = s.x + Math.cos(a) * mz, my = s.y + Math.sin(a) * mz;   // the flash and the brass are drawn by the view, at the gun it draws
   particles.push({ x: mx, y: my, z: 16, vx: Math.cos(a) * 20 + rand(-8, 8), vy: Math.sin(a) * 20 + rand(-8, 8),
     vz: rand(14, 32), life: rand(0.3, 0.55), max: 0.55, col: '#8a8a80', r: rand(1.5, 2.8) });   // muzzle smoke
   if (fromPlayer) cam.shake = Math.max(cam.shake, GUN_KICK[key]);                                // per-weapon kick
-  sfxGun(key, s.x, s.y, fromPlayer);
+  sfxGun(key, s.x, s.y, fromPlayer, quiet);
+  hearShot(s, quiet ? CFG.hearQuiet : CFG.hearLoud);
 }
 function burst(x, y, col, n, z = 10) {
   for (let i = 0; i < n; i++) {

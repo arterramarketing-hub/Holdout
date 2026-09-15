@@ -24,7 +24,7 @@ function updateCamera3(dt) {
   cam.shake = Math.max(0, cam.shake - dt * 26);
   cam.punch = Math.max(0, cam.punch - dt * 0.35);
   const reloading = soldiers[state.controlled] && soldiers[state.controlled].reloadT > 0;   // the sights come down while you reload, and back up after
-  FPV.adsK = approach(FPV.adsK, aim.ads && !reloading ? 1 : 0, heroSight().rate, dt);   // sights come up at the optic's own pace, in both views
+  FPV.adsK = approach(FPV.adsK, aim.ads && !reloading ? 1 : 0, adsRate(), dt);   // sights come up at the optic's own pace, in both views
   const hs = soldiers[state.controlled];
   FPV.sprintK = approach(FPV.sprintK || 0, hs && hs.alive && hs.sprinting && state.mode === 'play' ? 1 : 0, 6, dt);   // sprinting: the view widens, the gun drops
   steerFromCursor(dt);

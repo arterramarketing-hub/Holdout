@@ -148,7 +148,21 @@ const GUN_STATIC = {
     P(HJ.gun, 'metal', 0.04, 0.12, 0.05, 0, -0.04, -0.05, 'gunm'), P(HJ.gun, 'metal', 0.04, 0.12, 0.05, 0, -0.04, -0.28, 'gunm'),
     P(HJ.gun, 'metal', 0.03, 0.06, 0.08, -0.07, 0.14, -0.2, 'gunm')],
 };
-const attSig = (key, att) => { const a = normAtt(key, att); return SIGHT_OPTS[key] ? ':' + a.sight + (a.ext ? 'X' : '') : ''; };
+const SUPPRESSOR_CAN = { smg: [0.021, 0.15], ar: [0.022, 0.17], lmg: [0.025, 0.18], sniper: [0.027, 0.22] };   // radius and length, m: a can threaded over the muzzle device
+for (const k of Object.keys(SUPPRESSOR_CAN)) {
+  const build = GUN_BUILD[k];
+  GUN_BUILD[k] = a => {
+    const rows = build(a);
+    if (!a.suppressor) return rows;
+    const [r, len] = SUPPRESSOR_CAN[k], m = GUN_MUZ[k];
+    return [...rows, C(r, len, 0, m.y, m.z - len / 2 + 0.01, 'poly'), C(r * 0.72, 0.012, 0, m.y, m.z - len + 0.012, 'gunm')];
+  };
+}
+const muzOf = (key, s) => {   // the barrel tip actually drawn: the far end of a suppressor when one is fitted
+  const m = GUN_MUZ[key] || GUN_MUZ.ar, can = s && !s.pistol && s.suppressor && SUPPRESSOR_CAN[key];
+  return can ? { y: m.y, z: m.z - can[1] + 0.01 } : m;
+};
+const attSig = (key, att) => { const a = normAtt(key, att); return SIGHT_OPTS[key] ? ':' + a.sight + (a.ext ? 'X' : '') + (a.suppressor ? 'S' : '') : ''; };
 const gunRows = (key, att) => GUN_BUILD[key] ? GUN_BUILD[key](normAtt(key, att)) : GUN_STATIC[key];
 const ENEMY_LEGS = [   // work trousers bloused into boots, gloves
   ...ARMS('coat', 'glove'),

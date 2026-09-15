@@ -22,6 +22,8 @@ Installed, it opens full screen in landscape and starts offline after its first 
 - Controller: sticks move and look, RT fire, LT sights, RB grenade, X reload (hold it to take a dropped gun), Y swap
   guns, L3 sprint, D-pad ← ↑ → killstreaks, D-pad ↓ view.
 - Enemy riflemen and gunners drop their AK-47s and PKMs: take one to carry a second gun beside your own.
+- BATTLE PREP fits sights, extended magazines and, on four guns, a suppressor: quieter, no flash or tracers, and
+  enemies only hear it close by.
 - Settings include graphics quality (Auto, Low, Medium, High), a frame-rate cap (Max, 60, 30), a battery saver (Off,
   On, or Auto at 20% battery where the browser reports it) and squad callouts; the firing range next to settings on
   the start menu teaches the controls.

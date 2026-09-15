@@ -28,14 +28,14 @@ function buildSoldier(i) {
   return {
     slot: i, name: m.name,
     color: m.wren ? '#d9dbe4' : slotColor(i), helm: m.wren ? '#7a7d8c' : slotDark(i),
-    weapon, horse: false, sight: att.sight, ext: att.ext,
+    weapon, horse: false, sight: att.sight, ext: att.ext, suppressor: att.suppressor,
     x: CFG.arenaW / 2 + AI_SLOTS[i] + rand(-20, 20), y: CFG.lineY + rand(-30, 50),
     hp: maxHp, maxHp, alive: true, respawnT: 0,
     fireCd: rand(0, 0.4) * (i ? 1 : 0), regenCd: 0, invuln: 0, aim: -Math.PI / 2, r: 13,   // the squad's first shots are staggered; your own trigger is live the moment you deploy (the roll stays, so a seed replays the same front)
     walk: rand(0, TAU), moving: false, recoil: 0,
     mag: cap, reserve: cap * WEAPONS[weapon].spare, reloadT: 0, reloadDur: 1, pistol: false,
     frags: CFG.frags, throwT: 0, sprinting: false, sprintOutT: 0,
-    kit: { weapon, sight: att.sight, ext: att.ext }, alt: null, swapT: 0, pickT: 0,   // the loadout a reinforcement comes back with, and the second gun
+    kit: { weapon, sight: att.sight, ext: att.ext, suppressor: att.suppressor }, alt: null, swapT: 0, pickT: 0,   // the loadout a reinforcement comes back with, and the second gun
   };
 }
 function genTerrain() {   // the same town every front; its movable cover is rolled fresh each battle

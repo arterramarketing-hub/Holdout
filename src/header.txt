@@ -33,6 +33,13 @@
   a loaded second gun before the pistol, and with guns on the ground nearby the banner says GRAB A RIFLE and the
   minimap blinks them. A reinforcement comes back with the loadout gun only; squadmates never pick guns up.
 
+  SUPPRESSOR — BATTLE PREP › Muzzle on the UMP45, M4A1, M249 and Intervention (SUPPRESSOR_OK). Suppressed rounds make
+  a dull thump with the action loud by comparison (suppressedSyn renders gunS: variants), show no muzzle flash and no
+  tracers, and are heard only within CFG.hearQuiet 10 m (CFG.hearLoud 35 m otherwise; squadmates are always loud).
+  The can adds weight: the sights come up CFG.suppressorAds 88% as fast. Damage is untouched, so the M4 still drops a
+  rifleman in three. HEARING: an enemy who hears a shot knows where the shooter is for CFG.hearFor 5 s and turns on
+  them over a nearer soldier up to half again as far away; a rifleman barks and re-picks cover facing that shooter.
+
   THE INSTALLED APP — on GitHub Pages the page is an installable web app: manifest.webmanifest (full screen, landscape,
   navy, the H-in-a-scope icons that tools/icons.py draws) and sw.js (built from src/pwa/sw.js with a version hashed
   from what it caches). After one launch online it starts offline: the page is network first with a 4 s fallback to

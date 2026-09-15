@@ -204,8 +204,12 @@ function updateEnemies(dt) {
     e.cd -= dt; e.wob += dt * 6; e.atk = Math.max(0, e.atk - dt);
     e.supp = Math.max(0, (e.supp || 0) - dt * 0.6);
     if (e.relT > 0) e.relT -= dt;
-    const t = nearestSoldier(e.x, e.y);
+    e.heardT = Math.max(0, (e.heardT || 0) - dt);
+    let t = nearestSoldier(e.x, e.y);
     if (!t) continue;
+    const heard = e.heardT > 0 && e.heard && e.heard.alive ? e.heard : null;
+    if (heard && heard !== t && dist2(e.x, e.y, heard.x, heard.y) <= 2.25 * dist2(e.x, e.y, t.x, t.y)) t = heard;   // a shooter they heard draws them, up to half again as far as the nearest soldier
+    if (e.heardNew) { e.heardNew = false; if (e.ranged && !e.boss) { bark(e, 'spot'); e.tacT = Math.min(e.tacT, 0.25); } }   // and they turn to take cover from it
     const dx = t.x - e.x, dy = t.y - e.y, d = Math.hypot(dx, dy) || 1;
     e.face = dx >= 0 ? 1 : -1;
     e.aim = Math.atan2(dy, dx);

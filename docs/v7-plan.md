@@ -354,3 +354,12 @@ GitHub Desktop mid-phase can never pick up half-finished work.
     raised above the dust cover after that look.
   - Controller view switching moved to D-pad ↓.
   - `22-pickups.test.js` adds 12 tests; 138 tests pass.
+- **Phase 5 — done.**
+  - BATTLE PREP › Muzzle fits a suppressor on the UMP45, M4A1, M249 and Intervention; saves without one load
+    without one.
+  - Suppressed shots are a rendered dull thump with the action audible, 8.7–10.1 dB under the bare shot. No flash,
+    no tracers, full damage, and the sights come up 12% slower.
+  - Enemy hearing: a shot is heard within 35 m (10 m suppressed). The shooter is remembered for 5 s and drawn in
+    over a nearer soldier up to 1.5× the distance.
+  - The suppressor can and muzzle point were checked in first person.
+  - `24-suppressor.test.js` adds 6 tests; 144 tests pass.

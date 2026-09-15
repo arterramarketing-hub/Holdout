@@ -111,6 +111,11 @@ const GUN_SYN = {   // snap/decay: blast envelope s Â· body: blast low-pass Hz Â
             refl: [[0.07, 0.09, 0.2], [0.15, 0.12, 0.1]], mech: [[0.02, 0.12, 2900]] },
 };
 const GUN_VARS = { smg: 3, ar: 3, lmg: 3, sniper: 2, rocket: 2, ak: 2, pkm: 1, pistol: 2 };
+const SUPPRESSED_VARS = { smg: 2, ar: 2, lmg: 2, sniper: 1 };
+const suppressedSyn = p => Object.assign({}, p, {   // the same gun through a can: no crack, a short dull blast, a faint room, the action loud by comparison
+  snap: p.snap * 0.8, decay: p.decay * 0.55, body: p.body * 0.32, thump: p.thump * 1.35, thumpDecay: p.thumpDecay * 0.7, crack: p.crack * 0.1,
+  drive: p.drive * 0.55, tail: p.tail * 0.22, tailTau: p.tailTau * 0.5, tailLP: p.tailLP * 0.7,
+  refl: p.refl.map(([l, r, g]) => [l, r, g * 0.3]), mech: (p.mech || []).map(([t, g, hz]) => [t, g * 2.6, hz]) });
 function renderBlast(seed, far) {   // shell, mine or rocket impact: crack, roar, pressure thump, reflections, rumble, falling debris
   const sr = SR_SYN, rnd = synRng(seed), n = Math.floor(2.4 * sr), L = new Float32Array(n), R = new Float32Array(n);
   const nb = Math.floor(0.9 * sr), roar = new Float32Array(nb);
@@ -298,6 +303,7 @@ function sfxJobs() {   // render order = how soon each sound is needed
   for (const surf of ['hard', 'gravel', 'soft']) for (let i = 0; i < 4; i++) J.push([`step:${surf}:${i}`, () => renderStep(surf, 200 + i * 7 + surf.length)]);
   for (let i = 0; i < 6; i++) J.push([`bark:${i}`, () => renderBark(i, i < 3 ? 1 : 2)]);
   J.push(['radio', renderRadio]);
+  for (const w of ['ar', 'smg', 'lmg', 'sniper']) for (let i = 0; i < SUPPRESSED_VARS[w]; i++) { const k = `gunS:${w}:${i}`; J.push([k, () => renderShot(suppressedSyn(GUN_SYN[w]), seedOf(k), false)]); }
   return J;
 }
 function pumpSfx() {   // render in ~10 ms slices so the page never hitches
@@ -336,8 +342,14 @@ function pickVar(base, n) {   // a random rendered variant, so repeated shots ne
   for (let k = 0; k < n; k++) { const key = base + ((s + k) % n); if (SFX.buf[key]) return key; }
   return base + '0';
 }
-function sfxGun(w, x, y, isCtl) {
+function sfxGun(w, x, y, isCtl, quiet) {
   const n = GUN_VARS[w] || 1, rate = rand(0.97, 1.03);
+  if (quiet) {   // suppressed: a dull thump and the action working; until those are rendered, the shot itself, far down and muffled
+    const g = isCtl ? 1 : 0.4 * distMul(x, y);
+    if (!playBuf(pickVar(`gunS:${w}:`, SUPPRESSED_VARS[w] || 1), { gain: 0.3 * g, rate, force: isCtl, x: isCtl ? null : x, y }))
+      playBuf(pickVar(`gun:${w}:`, n), { gain: 0.14 * g, rate, lp: 900, force: isCtl, x: isCtl ? null : x, y });
+    return;
+  }
   if (isCtl) {
     playBuf(pickVar(`gun:${w}:`, n), { gain: 0.6, rate, force: true });   // your brass tinks when it actually lands (drawLoose)
     return;
