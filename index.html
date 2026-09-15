@@ -108,16 +108,15 @@
   the mag is under half. Out of spares, everyone falls back to a bottomless pistol. Enemy dead drop a
   magazine 35% of the time (one mag, 30 s on the ground); care packages refill the whole squad.
 
-  HAZARDS — mines (8/front, r55 blast, 2 dmg, triggered by either side), enemy mortars (warning ring
-  then r55 blast, 2 dmg, hits both sides, faster at higher tiers), fire patches from incendiary strikes burn BOTH
-  sides (enemies 1.6/s, soldiers 0.8/s). Your artillery also has friendly-fire (3 enemy / 1.5 soldier dmg).
+  HAZARDS — mines (8/front, r55 blast, 2 dmg, triggered by either side) and fire patches from incendiary
+  strikes, which burn BOTH sides (enemies 1.6/s, soldiers 0.8/s). Your artillery also has friendly-fire
+  (3 enemy / 1.5 soldier dmg). There is no enemy bombardment: no mortars, no spotters calling them in, and
+  no distant artillery in the ambience.
 
   ENEMIES — rifleman 2HP (330 range, 2–3 round bursts of 0.5 dmg), runner 1HP, breacher 6HP/2dmg (wave 3+),
   ATV raider 3HP/2dmg (tier 2+/wave 5+),
-  PKM gunner 2HP (tier 2+/wave 2+: 380 range, 4–7 round bursts), spotter 3HP (tier 2+/
-  wave 4+, max 2: hides ~600 back and calls a mortar on you every ~6s until killed). Tier scaling: +20%
-  HP, +4% speed per tier. Waves every 18s. Ambient mortars only at tier 3+ now — spotters are the main
-  source below that.
+  PKM gunner 2HP (tier 2+/wave 2+: 380 range, 4–7 round bursts). Tier scaling: +20% HP, +4% speed per
+  tier. (The radio spotter still has a model but is no longer spawned: all it did was call mortars.)
 
   BOSS — at 90% front progress a WARLORD spawns (60 HP +35%/tier, HUD health bar) and gates progress
   at 99% until killed. Phases by HP: >66% melee brute; 66-33% summons 3 grunts every 8s; <33% enrages
@@ -157,7 +156,8 @@
   NO DIALOGUE — there is no radio chatter, no comm box, no personalities and no campaign story text.
   Soldiers keep names (the kill feed uses them on desktop) and nothing else talks.
 
-  TOUCH CONTROLS — Call of Duty Mobile's layout and proportions: left thumb moves, right thumb looks, and
+  TOUCH CONTROLS — Call of Duty Mobile's layout and proportions (both triggers marked with a round, sights
+  marked ADS): left thumb moves, right thumb looks, and
   the trigger is duplicated on both sides so you can fire with whichever thumb is free. Flat translucent
   circles sized off the screen height (--fb = 22vh, clamped 66-108 px) so they keep CoD Mobile's ratios on
   every phone: fire 1, lock-on .82, left trigger .8, ADS .68, reload .6. The fire button sits up off the
@@ -211,6 +211,12 @@
   gunner range equally; the HUD shows it under the wave counter. Rain adds streaks, a hiss layer, and
   lightning with thunder.
 
+  MENUS — laid out for a landscape screen with nothing to scroll. The start menu is the operations map on the
+  left and a command column on the right (title, the selected sector, DEPLOY, the loadout you carry, settings);
+  it opens with an attackable sector already selected. LOADOUT is the five guns in a rail on the left and the
+  one you carry on the right: stat bars (damage, fire rate, range, magazine, mobility, reload), sight and
+  magazine choices, DONE. A desktop window taller than it is wide stacks the columns.
+
   UI — flat and modern, in the Battlefield manner, built on the brand sheet: near-black navy (#05080f),
   hairline slate rules, one orange accent (#ff6b2c), square corners, and only the call to action glows.
   Archivo Expanded for headlines and buttons, Archivo for reading, JetBrains Mono for labels and numbers
@@ -221,6 +227,15 @@
   held, orange ring = attackable). Every end-of-front screen is the after-action layout: eyebrow,
   headline, one line, a hairline stat grid (kills, accuracy, headshots, longest kill, reinforcements,
   time), a solid orange button and a mono note. The rotate prompt uses the same system.
+
+  MUSIC — written in code like everything else and played live on the audio clock (updateMusic, musStep):
+  a MENU cue (D minor, 72 BPM: detuned pad walking i–VI–III–VII, sub bass, a slow heartbeat, a plucked
+  arpeggio, a bell at phrase starts) and a BATTLE cue (D minor, 104 BPM, i–VI–VII–V then i–bII–VII–i: bass
+  pulse, dark pad and hats always; string ostinato, taiko with a backbeat rim and fills, and brass stabs
+  layer in with the heat of the fight — enemies near and close, rounds flying, you hurt, the Warlord — with
+  a braam per phrase at full tilt). Stingers for a sector taken, a front lost and the Warlord's arrival.
+  Cues cross-fade on screen changes; the MUSIC slider in settings sets the level (0 is off); M mutes it and
+  the death cam muffles it with everything else.
 
   SOUND — no sample files: at the first tap every weapon sound is synthesised offline into 32 kHz
   stereo buffers (sub-millisecond attack, saturated muzzle blast, a falling pressure thump, early
@@ -247,7 +262,23 @@
   knee-buckle deaths continue from the pose the character died in; quad bikes roll their wheels with
   real distance and chatter on their suspension.
 
-  JUICE — muzzle smoke, ejected shell casings with gravity bounce, blood spurts biased along the hit
+  HANDS & RELOAD — the weapon in your hands is held by gloved hands built finger by finger (trigger hand
+  wrapped on the pistol grip with the index finger on the trigger, support hand clamped on the handguard,
+  thumbs placed, knuckle guards, cuffs and sleeves running out of frame), anchored per gun (VM_HOLD). The
+  first-person reload is keyframed and synced to its sounds (vmReload): the gun cants toward the support
+  hand, the magazine (its own MAG() part on every model) is stripped out and dropped to the ground, a fresh
+  one comes up from the pouch and seats with a bump, the action is worked (UMP and M4 pull back, the SAW
+  slaps its top cover shut), and the sights come down for the duration. The rocket loads a warhead into the
+  front of the tube and stands empty after a shot. Everyone else drops their empty magazines too.
+
+  MUZZLE FLASH & BRASS — each shot is a soft, semi-transparent additive bloom at the drawn muzzle (a warm wide
+  glow and a hot core, rolled differently each time, 3-4 frames, sized in render lines so it reads at range,
+  dimmed down the sights). Every shot throws a casing from the ejection port (EJECT, real sizes per calibre;
+  belt-feds throw down and right, the Intervention when its bolt is worked) that spins, inherits your
+  movement, bounces, settles on its side and tinks when your own lands. Brass lasts ~3 s (160 at most),
+  dropped magazines 15 s (12 at most).
+
+  JUICE — muzzle smoke, blood spurts biased along the hit
   direction, per-weapon-class camera kick (SMG light -> rocket heavy), tracer glow pass, and a 0.5s
   slow-motion beat (world at 30%, camera zoom punch) when a wave is wiped out (10s cooldown).
 
@@ -465,15 +496,15 @@
   .tbtn:active { background:rgba(255,255,255,.3); border-color:#fff; }
   #firebtn { width:var(--fb); height:var(--fb); right:calc(var(--fb) * .9); bottom:calc(var(--fb) * .95); }
   #lockbtn { width:calc(var(--fb) * .82); height:calc(var(--fb) * .82); right:calc(var(--fb) * .99); bottom:calc(var(--fb) * 1.04); font-size:calc(var(--fb) * .32); }
-  #adsbtn { width:calc(var(--fb) * .68); height:calc(var(--fb) * .68); right:calc(var(--fb) * .12); bottom:calc(var(--fb) * 1.88); font-size:calc(var(--fb) * .28); }
+  #adsbtn { width:calc(var(--fb) * .68); height:calc(var(--fb) * .68); right:calc(var(--fb) * .12); bottom:calc(var(--fb) * 1.88);
+    font-family:var(--mono); font-weight:800; font-size:calc(var(--fb) * .19); letter-spacing:.04em; }
   #adsbtn.on { background:rgba(255,255,255,.55); border-color:#fff; color:#0a0e16; }
   #reloadbtn { width:calc(var(--fb) * .6); height:calc(var(--fb) * .6); right:calc(var(--fb) * 2.02); bottom:calc(var(--fb) * 1.5); font-size:calc(var(--fb) * .28); }
   #reloadbtn.warn { border-color:var(--foe); color:#ffa596; }
   #firebtn2 { width:calc(var(--fb) * .8); height:calc(var(--fb) * .8); left:calc(var(--fb) * 1.3); bottom:calc(var(--fb) * 1.9); }
-  #firebtn span, #firebtn2 span { position:absolute; inset:30%; border:2px solid rgba(255,255,255,.92); border-radius:50%; }
-  #firebtn::before, #firebtn::after, #firebtn2::before, #firebtn2::after { content:''; position:absolute; left:50%; width:2px; height:14%;
-    margin-left:-1px; background:rgba(255,255,255,.92); }
-  #firebtn::before, #firebtn2::before { top:11%; } #firebtn::after, #firebtn2::after { bottom:11%; }
+  /* both triggers carry a round, the way CoD Mobile marks its fire buttons */
+  .tbtn .bullet { width:24%; height:48%; fill:rgba(255,255,255,.95); filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55)); pointer-events:none; }
+  .tbtn:active .bullet { fill:#fff; }
   body.touch.manual #firebtn, body.touch.manual #firebtn2, body.touch.manual #adsbtn { display:flex; }
   body.touch #lockbtn, body.touch #reloadbtn { display:flex; }
   body.manual #lockbtn { display:none !important; }
@@ -488,34 +519,72 @@
     background-image:linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
     background-size:56px 56px; }
   .scr.on { display:flex; }
-  .mhead { display:flex; align-items:flex-end; gap:10px; padding:26px 32px 18px; flex-wrap:wrap; }
-  .mhead .ttl { flex:1 1 320px; min-width:0; margin-right:12px; }
-  .mhead .eyebrow { margin-bottom:12px; }
-  .mhead .xl { font-size:clamp(34px, 5.4vw, 64px); }
-  .mbody { display:flex; flex:1; min-height:0; padding:0 32px; }
-  #mapsvg { flex:1; width:100%; min-height:240px; max-height:calc(100vh - 250px); background:var(--panel-solid); border:1px solid var(--line); }
-  #deploybar { display:flex; align-items:center; gap:24px; margin-top:18px; padding:16px 32px 24px; border-top:1px solid var(--line); }
-  #deploybar .dz { flex:1; min-width:0; }
+  /* Laid out for a landscape screen: a big picture on one side, a command column on the other, nothing to scroll. */
+  .menu { flex:1 0 auto; display:grid; grid-template-columns:minmax(0, 1fr) clamp(260px, 30vw, 400px); min-height:100%; }
+  .menu .eyebrow { margin-bottom:10px; }
+  .menu .ttl .xl { font-size:clamp(30px, 3.4vw, 50px); }   /* sized to the command column, not the window */
+  .menu-map { position:relative; display:flex; min-width:0; min-height:0; padding:clamp(12px, 3.2vh, 30px) 0 clamp(12px, 3.2vh, 30px) clamp(12px, 2.4vw, 32px); }
+  #mapsvg { flex:1; width:100%; height:auto; min-height:0; background:var(--panel-solid); border:1px solid var(--line); }
+  .map-key { position:absolute; left:calc(clamp(12px, 2.4vw, 32px) + 12px); bottom:calc(clamp(12px, 3.2vh, 30px) + 10px); display:flex; gap:14px;
+    font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--label); pointer-events:none; }
+  .map-key span { display:flex; align-items:center; gap:6px; }
+  .map-key span::before { content:''; width:8px; height:8px; border-radius:50%; box-sizing:border-box; }
+  .map-key .k-held::before { background:var(--friend); }
+  .map-key .k-atk::before { border:2px solid var(--accent); }
+  .map-key .k-out::before { background:#1b2230; border:1px solid var(--line-hi); }
+  .menu-side { display:flex; flex-direction:column; gap:12px; min-width:0; min-height:0; overflow:auto; padding:clamp(12px, 3.2vh, 30px) clamp(14px, 2.4vw, 32px);
+    border-left:1px solid var(--line); background:linear-gradient(180deg, rgba(8,12,21,.94), rgba(5,8,15,.97)); }
+  .menu-side .btn { width:100%; }
+  .sector { margin-top:auto; min-width:0; padding-top:14px; border-top:1px solid var(--line-hi); }
   #terrmeta { font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--label); }
-  #terrname { margin-top:7px; font-size:clamp(20px, 3vw, 36px); color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  #deploybtn { width:auto; min-width:230px; }
-  .tgrid { padding:0 32px 32px; }
-  #loadout { display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:12px; }
-  .wpick { text-align:left; padding:16px 18px; color:var(--ink); cursor:pointer; background:var(--panel-solid); border:1px solid var(--line); }
-  .wpick:hover { border-color:var(--line-hi); }
-  .wpick.on { border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }
-  .wpick .wtop { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
-  .wpick .wtop span { font-family:var(--display); font-stretch:125%; font-weight:800; font-size:20px; text-transform:uppercase; }
-  .wpick.on .wtop span { color:var(--accent); }
-  .wpick .wtop b { font-family:var(--mono); font-weight:800; font-size:13px; color:var(--ink); white-space:nowrap; }
-  .wpick .wstats { margin-top:8px; font-family:var(--mono); font-size:11px; letter-spacing:.03em; color:var(--label); font-variant-numeric:tabular-nums; }
-  .wpick .attrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:12px; }
-  .wpick .attrow > span { min-width:44px; font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.22em; color:var(--muted); }
+  #terrname { margin-top:6px; font-size:clamp(18px, 2vw, 28px); line-height:1; color:var(--ink); text-wrap:balance; overflow-wrap:anywhere; }
+  #terrhint { margin-top:6px; font-family:var(--mono); font-size:11px; line-height:1.5; color:var(--muted); }
+  .kitbtn { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:baseline; gap:3px 10px; width:100%; padding:12px 14px; text-align:left;
+    color:var(--ink); background:var(--panel); border:1px solid var(--line-hi); border-radius:0; }
+  .kitbtn:hover { border-color:var(--accent); }
+  .kb-k { font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--label); }
+  .kb-go { font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); }
+  .kb-v { grid-column:1 / -1; font-family:var(--display); font-stretch:125%; font-weight:800; font-size:clamp(15px, 1.6vw, 20px); text-transform:uppercase;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .kb-s { grid-column:1 / -1; font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--label);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* loadout: the guns in a rail on the left, the one you carry laid out on the right */
+  .menu.lo { grid-template-columns:clamp(220px, 27vw, 340px) minmax(0, 1fr); }
+  .lo-rail { display:flex; flex-direction:column; gap:12px; min-width:0; min-height:0; overflow:auto; padding:clamp(12px, 3.2vh, 30px) clamp(12px, 2vw, 26px);
+    border-right:1px solid var(--line); background:linear-gradient(180deg, rgba(8,12,21,.94), rgba(5,8,15,.97)); }
+  .wlist { display:flex; flex-direction:column; gap:3px; }
+  .wrow { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:baseline; gap:2px 10px; width:100%; padding:9px 12px; text-align:left;
+    color:var(--ink); background:transparent; border:0; border-left:2px solid var(--line-hi); border-radius:0; }
+  .wrow:hover { background:rgba(255,255,255,.035); }
+  .wrow.on { border-left-color:var(--accent); background:rgba(255,107,44,.09); }
+  .wr-n { font-family:var(--display); font-stretch:125%; font-weight:800; font-size:14px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .wrow.on .wr-n { color:var(--accent); }
+  .wr-d { font-family:var(--mono); font-weight:800; font-size:11px; color:var(--label); font-variant-numeric:tabular-nums; }
+  .wr-c { grid-column:1 / -1; font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); }
+  .lo-rail .btn { margin-top:auto; width:100%; }
+  .lo-detail { display:flex; flex-direction:column; gap:clamp(10px, 2.4vh, 22px); min-width:0; min-height:0; overflow:auto;
+    padding:clamp(12px, 3.2vh, 30px) clamp(14px, 2.8vw, 38px); }
+  .lo-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; padding-bottom:12px; border-bottom:1px solid var(--line-hi); }
+  .lo-head > div { min-width:0; }
+  .lo-cls { font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--accent); }
+  .lo-name { margin-top:6px; font-size:clamp(30px, 5.2vw, 68px); color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lo-tag { flex:none; padding:5px 9px; font-family:var(--mono); font-weight:800; font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--accent-ink); background:var(--accent); }
+  .lo-stats { display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:12px 26px; }
+  .lstat { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:baseline; gap:6px 10px; }
+  .lstat .k { font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--label); }
+  .lstat .v { font-family:var(--mono); font-weight:800; font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .lstat .v small { font-size:10px; color:var(--label); }
+  .lstat .bar { grid-column:1 / -1; position:relative; height:4px; background:rgba(255,255,255,.07); }
+  .lstat .bar i { position:absolute; left:0; top:0; bottom:0; background:var(--accent); }
+  .attrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .attrow > span { min-width:52px; font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); }
+  .lo-note { margin:0; max-width:74ch; font-family:var(--mono); font-size:11px; line-height:1.6; color:var(--muted); }
+  .lo-actions { margin-top:auto; display:flex; gap:10px; }
   .att { padding:6px 9px; font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.08em; color:var(--label);
     background:transparent; border:1px solid var(--line-hi); border-radius:0; }
   .att:hover { color:var(--ink); }
   .att.on { border-color:var(--accent); color:var(--accent); background:rgba(255,107,44,.08); }
-  .wpick .wnote { margin-top:10px; font-family:var(--mono); font-size:10.5px; line-height:1.55; color:var(--muted); }
 
   /* ---------- modal: the after-action layout from the brand sheet, over the blurred fight ---------- */
   #modal { position:fixed; inset:0; z-index:30; display:none; align-items:center; justify-content:center; overflow:auto; padding:32px;
@@ -578,21 +647,27 @@
     body.touch #feed { top:88px; bottom:auto; left:6px; }
     #hint { bottom:70px; font-size:10px; }
     #dmgdir i { width:210px; height:180px; margin:-180px 0 0 -105px; }
-    .mhead { padding:14px 16px 10px; }
-    .mbody { padding:0 16px; }
-    #deploybar { gap:14px; margin-top:10px; padding:10px 16px 12px; }
-    #deploybtn { min-width:150px; }
-    .tgrid { padding:0 16px 16px; }
-    #loadout { grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:8px; }
-    .wpick { padding:12px 14px; } .wpick .wtop span { font-size:16px; }
+    .menu { grid-template-columns:minmax(0, 1fr) clamp(220px, 34vw, 300px); }
+    .menu.lo { grid-template-columns:clamp(190px, 30vw, 260px) minmax(0, 1fr); }
   }
   /* phones in landscape: every pixel is the fight */
   @media (max-height:520px) {
     #banner, #hint, #floaters, #feed { display:none !important; }   /* no text toasts on a phone */
-    .mhead .eyebrow { margin-bottom:6px; font-size:10px; } .mhead .xl { font-size:30px; }
-    #mapsvg { min-height:0; max-height:calc(100vh - 142px); }
-    #terrmeta { font-size:9px; } #terrname { margin-top:3px; font-size:18px; }
+    .menu .eyebrow { margin-bottom:5px; font-size:9.5px; letter-spacing:.26em; } .menu .ttl .xl { font-size:28px; }
+    .menu-map { padding:10px 0 10px 10px; } .map-key { left:22px; bottom:18px; gap:10px; font-size:8.5px; }
+    .menu-side, .lo-rail { gap:8px; padding:10px 12px; }
+    .sector { padding-top:8px; }
+    #terrmeta { font-size:9px; } #terrname { margin-top:3px; font-size:18px; } #terrhint { margin-top:3px; font-size:9.5px; line-height:1.35; }
+    .kitbtn { gap:1px 8px; padding:7px 10px; } .kb-v { font-size:14px; } .kb-s { font-size:9px; }
+    .menu .btn { padding:8px 12px; font-size:10.5px; }
     .cta { padding:12px 18px; font-size:13px; }
+    .wrow { padding:5px 10px; } .wr-n { font-size:12px; } .wr-d { font-size:10px; } .wr-c { font-size:8px; letter-spacing:.16em; }
+    .lo-detail { gap:8px; padding:10px 14px; }
+    .lo-head { padding-bottom:6px; } .lo-cls { font-size:9px; } .lo-name { margin-top:2px; font-size:26px; } .lo-tag { padding:3px 7px; font-size:8.5px; }
+    .lo-stats { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px 16px; }
+    .lstat { gap:3px 8px; } .lstat .k { font-size:8.5px; letter-spacing:.14em; } .lstat .v { font-size:11px; }
+    .att { padding:4px 7px; font-size:9px; } .attrow > span { min-width:40px; font-size:8.5px; }
+    .lo-note { font-size:9.5px; line-height:1.45; }
     #modal { padding:14px 26px; }
     #modalbox .eyebrow { margin-bottom:8px; font-size:10px; }
     #modalbox h2 { margin-bottom:10px; font-size:40px; }
@@ -608,6 +683,13 @@
     #modalbox .note { margin-top:10px; font-size:10px; }
     #bootbox h1 { font-size:64px; } #bootbox .boot-press { margin:12px 0 14px; } #bootlines { min-height:0; font-size:10px; }
     body.touch #supports { gap:3px; } body.touch .supbtn { gap:2px; padding:4px 8px 5px; }   /* clear of the ADS button below */
+  }
+  /* a desktop window taller than it is wide stacks the menu columns (a phone is held sideways, so it never lands here) */
+  @media (max-aspect-ratio: 1/1) {
+    .menu, .menu.lo { grid-template-columns:minmax(0, 1fr); }
+    .menu-map { min-height:52vh; padding-right:clamp(12px, 2.4vw, 32px); }
+    .menu-side { border-left:0; border-top:1px solid var(--line); }
+    .lo-rail { border-right:0; border-bottom:1px solid var(--line); }
   }
 </style>
 </head>
@@ -644,35 +726,43 @@
   <div class="hud" id="topbar"><button id="tomap">◂ MAP</button><button id="tocfg" title="Settings">⚙</button></div>
   <div class="hud" id="supports"></div>
   <button class="tbtn" id="lockbtn">◉</button>
-  <button class="tbtn" id="firebtn2"><span></span></button>
-  <button class="tbtn" id="firebtn"><span></span></button>
-  <button class="tbtn" id="adsbtn">◎</button>
+  <button class="tbtn" id="firebtn2" aria-label="Fire"><svg class="bullet" viewBox="0 0 24 48" aria-hidden="true"><path d="M12 1.5C15.7 5.2 17 10.6 17 16.4V18H7v-1.6C7 10.6 8.3 5.2 12 1.5Z"/><path d="M6.6 19.6h10.8v20.9H6.6z"/><path d="M5.2 41.8h13.6v4.7H5.2z"/></svg></button>
+  <button class="tbtn" id="firebtn" aria-label="Fire"><svg class="bullet" viewBox="0 0 24 48" aria-hidden="true"><path d="M12 1.5C15.7 5.2 17 10.6 17 16.4V18H7v-1.6C7 10.6 8.3 5.2 12 1.5Z"/><path d="M6.6 19.6h10.8v20.9H6.6z"/><path d="M5.2 41.8h13.6v4.7H5.2z"/></svg></button>
+  <button class="tbtn" id="adsbtn" aria-label="Aim down sights">ADS</button>
   <button class="tbtn" id="reloadbtn">⟳</button>
 </div>
 
-<!-- ============ MAP SCREEN ============ -->
+<!-- ============ START MENU: the operations map ============ -->
 <div id="mapscr" class="scr">
-  <div class="mhead">
-    <div class="ttl"><div class="eyebrow" id="theatertag">Theater I · Operations</div><h1 class="xl">Holdout</h1></div>
-    <button class="btn" id="tosettings">Settings</button>
-    <button class="btn" id="toteam">Loadout</button>
-  </div>
-  <div class="mbody">
-    <svg id="mapsvg" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet"></svg>
-  </div>
-  <div id="deploybar">
-    <div class="dz"><div id="terrmeta">Select a territory</div><div class="xl" id="terrname">Operations</div></div>
-    <button class="cta" id="deploybtn" disabled>Deploy</button>
+  <div class="menu">
+    <div class="menu-map">
+      <svg id="mapsvg" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="map-key"><span class="k-held">Held</span><span class="k-atk">Attackable</span><span class="k-out">Out of reach</span></div>
+    </div>
+    <aside class="menu-side">
+      <div class="ttl"><div class="eyebrow" id="theatertag">Theater I · Operations</div><h1 class="xl">Holdout</h1></div>
+      <div class="sector">
+        <div id="terrmeta">Select a territory</div>
+        <div class="xl" id="terrname">Operations</div>
+        <div id="terrhint">Pick an orange ring on the map to attack it.</div>
+      </div>
+      <button class="cta" id="deploybtn" disabled>Deploy</button>
+      <button class="kitbtn" id="toteam"><span class="kb-k">Loadout</span><span class="kb-go">Change ›</span><span class="kb-v" id="kitname">M4A1</span><span class="kb-s" id="kitsub">Iron sights · 30 rds</span></button>
+      <button class="btn" id="tosettings">Settings</button>
+    </aside>
   </div>
 </div>
 
-<!-- ============ TEAM / ARMORY SCREEN ============ -->
+<!-- ============ LOADOUT ============ -->
 <div id="teamscr" class="scr">
-  <div class="mhead">
-    <div class="ttl"><div class="eyebrow">Battle prep</div><h1 class="xl">Loadout</h1></div>
-    <button class="btn" id="backmap">◂ Map</button>
+  <div class="menu lo">
+    <aside class="lo-rail">
+      <div class="ttl"><div class="eyebrow">Battle prep</div><h1 class="xl">Loadout</h1></div>
+      <div class="wlist" id="wlist"></div>
+      <button class="btn" id="backmap">◂ Map</button>
+    </aside>
+    <section class="lo-detail" id="loadout"></section>
   </div>
-  <div class="tgrid"><div id="loadout"></div></div>
 </div>
 
 <div id="modal"><div id="modalbox"></div></div>
@@ -697,7 +787,6 @@ const CFG = {
   saveKey: 'holdout.v2', saveEvery: 5,
   aiCdMul: 2.6,
   mineCount: 8, mineDmg: 2, mineR: 55,
-  mortarDmg: 2, mortarR: 55,
   headshotMul: 2,         // damage multiplier for a round that goes through the head column
   headshotChance: 0.35,   // ...and happened to be at head height (the sim has no elevation, so it is rolled)
 };
@@ -794,7 +883,7 @@ const cv = document.getElementById('game');
 // ============================================================ PERSISTENT META
 let meta = null;
 // ---------- player options (saved with the campaign) ----------
-const OPT_DEFAULTS = { v: 2, scheme: 'manual', fpv: true, aimAssist: true, sens: 1, fovAdd: 0, minimap: true, dmgDir: true, killfeed: true, vibe: true };
+const OPT_DEFAULTS = { v: 2, scheme: 'manual', fpv: true, aimAssist: true, sens: 1, fovAdd: 0, minimap: true, dmgDir: true, killfeed: true, vibe: true, music: 0.6 };
 const freshOpts = () => Object.assign({}, OPT_DEFAULTS);
 function freshMeta() {
   const taken = [];
@@ -866,7 +955,7 @@ const state = {   // per-battle / session
   kills: 0, tickets: 0, ks: 0, earned: { napalm: 0, artillery: 0, supply: 0 },
   enemyTotal: 26, enemyDown: 0, shots: 0, hits: 0, heads: 0, longest: 0, lastContact: null,
   progress: 0, controlled: 0, pending: -1, handoffT: 0, spectateT: 0, dyingT: 0,
-  wave: 1, waveT: 0, spawnT: 0, mortarT: 8,
+  wave: 1, waveT: 0, spawnT: 0,
   frontTime: 0, frontDeaths: 0, saveT: 0,
   slow: 0, slowCd: 0,   // wave-clear slow-mo beat
   bossSpawned: false, bossRef: null, spotterSeen: false,
@@ -1183,7 +1272,7 @@ function camTarget() {
 // the action cycling), then played back with per-shot variation, distance low-pass and stereo
 // placement around the camera. Buffers render a few at a time after the first tap, most-used first.
 let AC = null, master = null, noiseBuf = null, verbIn = null, shaper = null;
-const amb = { started: false, windGain: null, windFilt: null, droneGain: null, rainGain: null, rumbleT: 4, chatterT: 7, burstT: 6 };
+const amb = { started: false, windGain: null, windFilt: null, droneGain: null, rainGain: null, chatterT: 7, burstT: 6 };
 const SFX = { buf: {}, queue: [], voices: 0, ready: false };
 const SR_SYN = 32000;
 function audio() {
@@ -1563,9 +1652,7 @@ function pickVar(base, n) {   // a random rendered variant, so repeated shots ne
 function sfxGun(w, x, y, isCtl) {
   const n = GUN_VARS[w] || 1, rate = rand(0.97, 1.03);
   if (isCtl) {
-    playBuf(pickVar(`gun:${w}:`, n), { gain: 0.6, rate, force: true });
-    if (w !== 'rocket' && Math.random() < 0.4)
-      playBuf('tink:' + randi(0, 2), { gain: 0.045, rate: rand(0.9, 1.1), delay: rand(0.35, 0.6), x: x + rand(-30, 30), y });
+    playBuf(pickVar(`gun:${w}:`, n), { gain: 0.6, rate, force: true });   // your brass tinks when it actually lands (drawLoose)
     return;
   }
   if (Math.random() < 0.45) return;   // thin the squad's fire so the mix stays readable
@@ -1580,7 +1667,7 @@ function sfxBossBurst(x, y) {   // the Warlord's machine gun ripping a full circ
   const far = distMul(x, y), key = far < 0.5 && SFX.buf['gunf:pkm'] ? 'gunf:pkm' : 'gun:pkm:0';
   for (let k = 0; k < 7; k++) playBuf(key, { gain: 0.5 * far, rate: rand(0.96, 1.03), delay: k * 0.07, x, y, lp: 1500 + 18000 * far * far, force: k === 0 });
 }
-function sfxWhiz(x, y) { playBuf('snap:' + randi(0, 1), { gain: 0.5, rate: rand(0.9, 1.12), x, y, force: true }); }
+function sfxWhiz(x, y) { MUS.heat = performance.now(); playBuf('snap:' + randi(0, 1), { gain: 0.5, rate: rand(0.9, 1.12), x, y, force: true }); }
 function sfxRicochet(x, y) { playBuf('ric:' + randi(0, 2), { gain: 0.2 * distMul(x, y), rate: rand(0.85, 1.15), x, y }); }
 function sfxIncoming() {
   if (!playBuf('whistle', { gain: 0.3, rate: rand(0.94, 1.06), force: true })) beep(1500, 1.2, 'sine', 0.04, -900);
@@ -1617,6 +1704,7 @@ function startAmbience() {
 function updateAudio(dt) {
   if (!AC || !master) return;
   master.gain.value = meta && meta.muted ? 0 : 0.8;
+  updateMusic(dt);
   if (!amb.started) return;
   const inB = screen === 'battle' && (state.mode === 'play' || state.mode === 'dying' || state.mode === 'handoff' || state.mode === 'spectate');
   if (SFX.muffle) {   // everything goes underwater while you watch yourself die
@@ -1630,11 +1718,6 @@ function updateAudio(dt) {
   amb.rainGain.gain.value += ((inB && state.weather === 'rain' ? 0.05 : 0) - amb.rainGain.gain.value) * Math.min(1, dt * 1.2);
   if (!inB) return;
   const c = camTarget(), side = () => (Math.random() < 0.5 ? -1 : 1) * 2400;
-  amb.rumbleT -= dt;
-  if (amb.rumbleT <= 0 && c) {   // artillery landing somewhere past the hills
-    amb.rumbleT = rand(3.5, 9);
-    playBuf('blastf', { gain: rand(0.08, 0.18), lp: rand(350, 700), rate: rand(0.7, 0.9), x: c.x + side(), y: c.y - 2000 });
-  }
   amb.burstT -= dt;
   if (amb.burstT <= 0 && c) {   // a firefight further down the line
     amb.burstT = rand(5, 13);
@@ -1646,6 +1729,160 @@ function updateAudio(dt) {
     amb.chatterT = rand(6, 14);
     noise({ freq: 1500, dur: 0.05, gain: 0.03, q: 2 });
     noise({ freq: 1300, dur: rand(0.1, 0.25), gain: 0.025, q: 1.5, delay: 0.09 });
+  }
+}
+
+// ---------- music: two cues written in code, played on the audio clock ----------
+const MUS = { bus: null, sting: null, send: null, cue: null, next: 0, step: 0, int: 0.2, heat: -1e9, level: -1, phase: 'idle', switchAt: 0 };
+const MUS_BASE = 2;      // the music bus at a slider of 1
+const NOTE = n => 440 * Math.pow(2, (n - 69) / 12);   // MIDI note number to Hz
+const CUES = {
+  menu: { bpm: 72, chords: [[50, 53, 57, 62], [46, 50, 53, 58], [53, 57, 60, 65], [48, 52, 55, 60]] },   // Dm Bb F C, two bars each
+  battle: { bpm: 104, progs: [[[50, 53, 57], [46, 50, 53], [48, 52, 55], [45, 49, 52]],      // Dm Bb C A
+                               [[50, 53, 57], [51, 55, 58], [48, 52, 55], [50, 53, 57]]] },   // Dm Eb C Dm
+};
+function mTone(c, t, o) {   // one voice: {type, f, f2 glide target, glide, dur, gain, a, r, perc, lp, lp2, sweep, q, detune, pan, dest, send, sendAmt}
+  const osc = c.createOscillator(), g = c.createGain();
+  osc.type = o.type || 'sine';
+  osc.frequency.setValueAtTime(o.f, t);
+  if (o.f2) osc.frequency.exponentialRampToValueAtTime(o.f2, t + (o.glide || o.dur));
+  if (o.detune) osc.detune.setValueAtTime(o.detune, t);
+  let node = osc;
+  if (o.lp) {
+    const f = c.createBiquadFilter();
+    f.type = 'lowpass'; f.Q.value = o.q || 0.7;
+    f.frequency.setValueAtTime(o.lp, t);
+    if (o.lp2) f.frequency.exponentialRampToValueAtTime(o.lp2, t + (o.sweep || o.dur));
+    node.connect(f); node = f;
+  }
+  const a = o.a == null ? 0.005 : o.a;
+  g.gain.setValueAtTime(0.0001, t);
+  if (o.perc) { g.gain.exponentialRampToValueAtTime(o.gain, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + o.dur); }
+  else {
+    g.gain.linearRampToValueAtTime(o.gain, t + a);
+    g.gain.setValueAtTime(o.gain, t + Math.max(a + 0.001, o.dur - (o.r || 0.3)));
+    g.gain.linearRampToValueAtTime(0.0001, t + o.dur);
+  }
+  node.connect(g); node = g;
+  if (o.pan && c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = o.pan; g.connect(p); node = p; }
+  node.connect(o.dest);
+  if (o.send) { const s = c.createGain(); s.gain.value = o.sendAmt || 0.3; g.connect(s); s.connect(o.send); }
+  osc.start(t); osc.stop(t + o.dur + 0.05);
+}
+function mNoise(c, nb, t, dur, type, freq, q, gain, dest) {   // a filtered noise hit: hats, the skin of a drum, a rim
+  const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+  s.buffer = nb;
+  f.type = type; f.frequency.value = freq; f.Q.value = q;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(dest);
+  s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.02);
+}
+function musStep(c, bus, send, nb, t, cue, step, k) {   // everything that sounds on one sixteenth note; k = how hot the fight is (0..1)
+  const C = CUES[cue], spb = 60 / C.bpm / 4, bar = Math.floor(step / 16), s16 = step % 16;
+  if (cue === 'menu') {
+    const chord = C.chords[Math.floor(bar / 2) % 4], phrase = bar % 8;
+    if (step % 32 === 0) {   // a new chord every two bars: a detuned pad, the bass under it, a bell at the top of a phrase
+      const len = spb * 32 + 0.9;
+      chord.forEach((n, i) => { for (const dt of [-7, 7]) mTone(c, t, { type: 'sawtooth', f: NOTE(n), detune: dt + (i - 1.5) * 2, dur: len, gain: 0.02, a: 1.4, r: 1.3, lp: 950, q: 0.4, pan: (i - 1.5) * 0.24, dest: bus, send, sendAmt: 0.55 }); });
+      mTone(c, t, { type: 'triangle', f: NOTE(chord[0] - 12), dur: len, gain: 0.07, a: 0.9, r: 1.1, lp: 420, dest: bus });
+      if (phrase % 4 === 0) mTone(c, t + spb * 2, { type: 'sine', f: NOTE(chord[2] + 24), dur: 3, gain: 0.02, perc: true, a: 0.01, dest: bus, send, sendAmt: 0.9 });
+    }
+    if (s16 === 0 || s16 === 3) {   // a slow heartbeat, with a click a phone speaker can actually reproduce
+      mTone(c, t, { type: 'sine', f: s16 ? 70 : 82, f2: 42, glide: 0.22, dur: 0.42, gain: s16 ? 0.07 : 0.1, perc: true, a: 0.004, dest: bus });
+      mNoise(c, nb, t, 0.05, 'lowpass', 1400, 0.6, s16 ? 0.02 : 0.03, bus);
+    }
+    if (phrase >= 2 && step % 2 === 0 && Math.random() < 0.85) {   // a soft plucked arpeggio over the chord
+      const pat = [0, 2, 1, 3, 2, 1, 3, 2], idx = pat[(step / 2) % 8], n = (idx < 3 ? chord[idx] : chord[0] + 12) + 12;
+      mTone(c, t, { type: 'triangle', f: NOTE(n), dur: 0.75, gain: 0.03, perc: true, a: 0.004, lp: 2400, pan: (step / 2) % 2 ? 0.2 : -0.2, dest: bus, send, sendAmt: 0.45 });
+    }
+    return;
+  }
+  const prog = C.progs[Math.floor(bar / 8) % C.progs.length], chord = prog[bar % 4], root = chord[0];
+  const lOst = smooth(0.28, 0.5, k), lDrum = smooth(0.48, 0.72, k), lBrass = smooth(0.7, 0.9, k);
+  if (s16 === 0) {
+    chord.forEach((n, i) => mTone(c, t, { type: 'sawtooth', f: NOTE(n), detune: (i - 1) * 6, dur: spb * 16 + 0.3, gain: 0.03, a: 0.25, r: 0.35, lp: 680, q: 0.5, dest: bus, send, sendAmt: 0.35 }));
+    if (lBrass > 0.01) for (const [n, d] of [[root, -5], [root + 7, 5], [root + 12, 0]])   // brass stabs on the chord change
+      mTone(c, t, { type: 'sawtooth', f: NOTE(n), detune: d, dur: 0.95, gain: 0.058 * lBrass, a: 0.05, r: 0.55, lp: 500, lp2: 1900, sweep: 0.25, q: 1, dest: bus, send, sendAmt: 0.3 });
+    if (bar % 4 === 0 && k > 0.85) for (const [n, typ] of [[root - 24, 'sawtooth'], [root - 12, 'sawtooth'], [root - 12, 'square']])   // a braam on a new phrase at full tilt
+      mTone(c, t, { type: typ, f: NOTE(n), dur: 3, gain: 0.045, a: 0.08, r: 2, lp: 160, lp2: 1500, sweep: 1.4, q: 2, dest: bus, send, sendAmt: 0.4 });
+  }
+  if (step % 2 === 0) {   // the bass pulse, always there
+    const up = s16 % 8 === 6;
+    mTone(c, t, { type: 'sawtooth', f: NOTE(root - 12 + (up ? 12 : 0)), dur: spb * 1.7, gain: s16 % 8 === 0 ? 0.12 : 0.085, perc: true, a: 0.004, lp: 900, lp2: 200, sweep: spb * 1.5, q: 2.5, dest: bus });
+  }
+  mNoise(c, nb, t, 0.035, 'highpass', 7500, 0.7, (s16 % 4 === 2 ? 0.03 : 0.014) * (0.5 + k), bus);   // hats, leaning on the offbeats
+  if (lOst > 0.01) {   // the string ostinato: sixteenths over the chord
+    const pat = [0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 3, 2, 1, 2], p = pat[s16], n = (p < 3 ? chord[p] : root + 12) + 12;
+    mTone(c, t, { type: 'sawtooth', f: NOTE(n), dur: spb * 0.9, gain: (s16 % 4 === 0 ? 0.058 : 0.04) * lOst, perc: true, a: 0.003, lp: 2600, lp2: 800, sweep: spb * 0.8, q: 1.5, pan: s16 % 2 ? 0.28 : -0.28, dest: bus, send, sendAmt: 0.2 });
+  }
+  if (lDrum > 0.01) {   // taiko and a rim on the backbeat, rolling into every fourth bar
+    const fill = bar % 4 === 3 && s16 >= 12;
+    if (s16 === 0 || s16 === 7 || s16 === 10 || (k > 0.8 && s16 === 3) || fill) {
+      mTone(c, t, { type: 'sine', f: fill ? 120 + (s16 - 12) * 20 : 150, f2: 55, glide: 0.2, dur: 0.5, gain: (s16 === 0 ? 0.19 : 0.13) * lDrum, perc: true, a: 0.002, dest: bus, send, sendAmt: 0.25 });
+      mNoise(c, nb, t, 0.09, 'lowpass', 700, 0.5, 0.06 * lDrum, bus);
+    }
+    if (s16 === 4 || s16 === 12) {
+      mNoise(c, nb, t, 0.14, 'bandpass', 1900, 0.9, 0.065 * lDrum, bus);
+      mTone(c, t, { type: 'triangle', f: 210, f2: 140, glide: 0.08, dur: 0.1, gain: 0.045 * lDrum, perc: true, a: 0.001, dest: bus });
+    }
+  }
+}
+function musHeat() {   // how hot the fight is, 0..1: enemies near and close, rounds flying, you hurt, the Warlord
+  const me = soldiers[state.controlled];
+  if (!me) return 0.2;
+  let near = 0, close = 0;
+  for (const e of enemies) {
+    const d = Math.hypot(e.x - me.x, e.y - me.y);
+    if (d < 1400) near += e.boss ? 2 : 1;
+    if (d < 600) close++;
+  }
+  const firing = performance.now() - MUS.heat < 2500 ? 0.25 : 0;
+  const hurt = me.alive ? clamp(1 - me.hp / me.maxHp, 0, 1) * 0.25 : 0.3;
+  return clamp(0.15 + near * 0.08 + close * 0.12 + firing + hurt + (state.bossRef ? 0.45 : 0), 0, 1);
+}
+function updateMusic(dt) {
+  if (!AC || !master || !noiseBuf) return;
+  if (!MUS.bus) {
+    MUS.bus = AC.createGain(); MUS.bus.gain.value = 0.0001; MUS.bus.connect(master);
+    MUS.sting = AC.createGain(); MUS.sting.gain.value = 0.3; MUS.sting.connect(master);
+    MUS.send = AC.createGain(); MUS.send.gain.value = 0.6; MUS.send.connect(verbIn);   // the shared outdoor reverb
+  }
+  const now = AC.currentTime, level = meta && meta.opts && meta.opts.music != null ? meta.opts.music : 0.6;
+  const fight = screen === 'battle' && (state.mode === 'play' || state.mode === 'dying' || state.mode === 'handoff' || state.mode === 'spectate');
+  const want = level <= 0.001 || (meta && meta.muted) ? null : fight ? 'battle' : 'menu';
+  const g = MUS.bus.gain;
+  if (want !== MUS.cue && MUS.phase !== 'out') {   // fade the old cue out, then start the new one on a fresh bar
+    g.cancelScheduledValues(now); g.setValueAtTime(Math.max(0.0001, g.value), now); g.linearRampToValueAtTime(0.0001, now + 0.6);
+    MUS.phase = 'out'; MUS.switchAt = now + 0.65;
+  }
+  if (MUS.phase === 'out' && now >= MUS.switchAt) {
+    MUS.cue = want; MUS.step = 0; MUS.next = now + 0.05; MUS.phase = want ? 'in' : 'idle';
+    if (want) { g.cancelScheduledValues(now); g.setValueAtTime(0.0001, now); g.linearRampToValueAtTime(level * MUS_BASE, now + 1.4); MUS.level = level; }
+  }
+  if (!MUS.cue || MUS.phase === 'out') return;
+  if (MUS.level !== level && now > MUS.switchAt + 1.5) { g.cancelScheduledValues(now); g.setTargetAtTime(level * MUS_BASE, now, 0.08); MUS.level = level; }   // the settings slider
+  const heat = MUS.cue === 'battle' ? musHeat() : 0;
+  MUS.int += (heat - MUS.int) * Math.min(1, dt * (heat > MUS.int ? 0.9 : 0.25));   // rises fast, cools slowly
+  if (MUS.next < now - 0.25) MUS.next = now + 0.05;   // the page stalled or was hidden: pick up from here, no catch-up burst
+  const spb = 60 / CUES[MUS.cue].bpm / 4;
+  while (MUS.next < now + 0.15) { musStep(AC, MUS.bus, MUS.send, noiseBuf, MUS.next, MUS.cue, MUS.step, MUS.int); MUS.next += spb; MUS.step++; }
+}
+function musStinger(kind) {   // a sector taken, a front lost, the Warlord arriving: over the top of the cue change
+  if (!AC || !MUS.sting || (meta && meta.muted)) return;
+  const lv = meta && meta.opts && meta.opts.music != null ? meta.opts.music : 0.6;
+  if (lv <= 0.001) return;
+  const c = AC, t = c.currentTime + 0.05, d = MUS.sting, send = MUS.send;
+  d.gain.setValueAtTime(lv * MUS_BASE, c.currentTime);
+  if (kind === 'win') {   // D major opening up, a drum under it, a bell after
+    [50, 54, 57, 62, 66].forEach((n, i) => mTone(c, t + i * 0.03, { type: 'sawtooth', f: NOTE(n), detune: (i - 2) * 5, dur: 3.2, gain: 0.038, a: 0.35, r: 1.8, lp: 500, lp2: 2200, sweep: 0.8, q: 0.8, dest: d, send, sendAmt: 0.5 }));
+    mTone(c, t, { type: 'sine', f: 140, f2: 50, glide: 0.3, dur: 0.9, gain: 0.24, perc: true, a: 0.002, dest: d, send, sendAmt: 0.4 });
+    mTone(c, t + 0.4, { type: 'sine', f: NOTE(78), dur: 3, gain: 0.02, perc: true, a: 0.01, dest: d, send, sendAmt: 0.9 });
+  } else if (kind === 'lose') {   // D minor sagging and closing down
+    [38, 50, 53, 57].forEach((n, i) => mTone(c, t, { type: i ? 'sawtooth' : 'square', f: NOTE(n), f2: NOTE(n - 2), glide: 2.8, dur: 3.4, gain: i ? 0.032 : 0.036, a: 0.15, r: 2, lp: 1200, lp2: 180, sweep: 3, q: 1, dest: d, send, sendAmt: 0.5 }));
+    mTone(c, t, { type: 'sine', f: 110, f2: 38, glide: 0.4, dur: 1.2, gain: 0.24, perc: true, a: 0.002, dest: d });
+  } else if (kind === 'boss') {   // a braam
+    [26, 38, 38].forEach((n, i) => mTone(c, t, { type: i === 2 ? 'square' : 'sawtooth', f: NOTE(n), dur: 3.5, gain: 0.055, a: 0.06, r: 2.5, lp: 140, lp2: 1600, sweep: 1.2, q: 2, dest: d, send, sendAmt: 0.5 }));
+    mTone(c, t, { type: 'sine', f: 120, f2: 42, glide: 0.35, dur: 1, gain: 0.26, perc: true, a: 0.002, dest: d });
   }
 }
 
@@ -1933,11 +2170,10 @@ function spawnBoss() {
   e.epithet = pickL(WARLORD_EPITHETS);
   state.slow = CFG.bossIntro;   // the world crawls while the title card plays
   noise({ freq: 70, dur: 1.4, gain: 0.2, type: 'lowpass', q: 0.5, attack: 0.1 });
+  musStinger('boss');
 }
 function pickType() {
   const r = Math.random();
-  if ((state.tier >= 2 || state.wave >= 4) && r < 0.07 &&
-      enemies.reduce((n, e) => n + (e.spotter ? 1 : 0), 0) < 1) return 'spotter';   // one at a time in a four-man team
   if ((state.tier >= 2 || state.wave >= 2) && r < 0.22) return 'gunner';
   if ((state.tier >= 2 || state.wave >= 5) && r < 0.32) return 'rider';
   if (state.wave >= 3 && r > 0.90) return 'brute';
@@ -2016,22 +2252,16 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   }
   if (!s.pistol) s.mag--;
   s.shotN = (s.shotN || 0) + 1;
-  if (fromPlayer) state.shots++;
+  if (fromPlayer) { state.shots++; MUS.heat = performance.now(); }
   const mz = (s.pistol ? SIDEARM.len : w.len) + 6;   // the barrel tip: where the round actually leaves the weapon
   bullets.push({ x: s.x + Math.cos(a) * mz, y: s.y + Math.sin(a) * mz,
     vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed,
     tracer: key === 'rocket' || key === 'sniper' || s.shotN % 3 === 0,   // every third round is loaded as a tracer; the .50 and the rocket always burn
     life: (w.reach || w.range) / w.speed, age: 0, fromPlayer, wkey: key, slot: s.slot,
     dmg: s.pistol ? SIDEARM.dmg : squadDmg(s.weapon), hits: 0, maxHits: w.pierce || 1, aoe: w.aoe || 0, skip: coverNear(s, 34) });
-  const mx = s.x + Math.cos(a) * mz, my = s.y + Math.sin(a) * mz;
-  particles.push({ x: mx, y: my, z: 15, vx: 0, vy: 0, vz: 0, life: 0.04, max: 0.04, col: '#fff0b8', r: 3.4 });
+  const mx = s.x + Math.cos(a) * mz, my = s.y + Math.sin(a) * mz;   // the flash and the brass are drawn by the view, at the gun it draws
   particles.push({ x: mx, y: my, z: 16, vx: Math.cos(a) * 20 + rand(-8, 8), vy: Math.sin(a) * 20 + rand(-8, 8),
     vz: rand(14, 32), life: rand(0.3, 0.55), max: 0.55, col: '#8a8a80', r: rand(1.5, 2.8) });   // muzzle smoke
-  if (key !== 'rocket') {                                                                        // eject a casing
-    const pa = a + Math.PI / 2 * (Math.random() < 0.5 ? 1 : -1);
-    particles.push({ x: s.x, y: s.y, z: 16, vx: Math.cos(pa) * rand(30, 70), vy: Math.sin(pa) * rand(30, 70),
-      vz: rand(60, 120), life: rand(0.45, 0.7), max: 0.7, col: '#d8b45a', r: 1.2 });
-  }
   if (fromPlayer) cam.shake = Math.max(cam.shake, GUN_KICK[key]);                                // per-weapon kick
   sfxGun(key, s.x, s.y, fromPlayer);
 }
@@ -2118,7 +2348,7 @@ function damageSoldier(s, dmg, quiet) {
   if (!quiet) {
     burst(s.x, s.y, '#a03028', 5, 14);
     if (s.slot === state.controlled) {
-      cam.shake = 9; sfxHurt(); buzz(26);
+      cam.shake = 9; sfxHurt(); buzz(26); MUS.heat = performance.now();
       OV.hurt = Math.min(1, (OV.hurt || 0) + 0.42);   // the glass takes a hit
       if (meta.opts.dmgDir && s.lastHit) DMGDIR.push({ x: -s.lastHit.x, y: -s.lastHit.y, t: 1.3 });
       if (DMGDIR.length > 3) DMGDIR.shift();
@@ -2217,7 +2447,6 @@ function updateShells(dt) {
     sh.t -= dt;
     if (sh.t > 0) continue;
     if (sh.kind === 'he') explode(sh.x, sh.y, 60, 3 * (hasPerk(8) ? 1.25 : 1), 1.5, { player: true, wkey: null });
-    else if (sh.kind === 'mortar') explode(sh.x, sh.y, CFG.mortarR, CFG.mortarDmg, CFG.mortarDmg, { player: false, wkey: null });
     else if (sh.kind === 'fire') { fires.push({ x: sh.x, y: sh.y, r: 30, t: 8 * (hasPerk(8) ? 1.25 : 1) }); burst(sh.x, sh.y, '#e8843a', 8, 6); }
     else if (sh.kind === 'crate') {
       burst(sh.x, sh.y, '#b7d34a', 14, 10); sfxBuy();
@@ -2249,16 +2478,6 @@ function updateMines() {
     let hit = enemies.some(e => dist2(m.x, m.y, e.x, e.y) < (24 + e.r) * (24 + e.r));
     if (!hit) hit = soldiers.some(s => s.alive && dist2(m.x, m.y, s.x, s.y) < (24 + s.r) * (24 + s.r));
     if (hit) { mines.splice(i, 1); explode(m.x, m.y, CFG.mineR, CFG.mineDmg, CFG.mineDmg, { player: false, wkey: null }); }
-  }
-}
-function updateMortars(dt) {
-  if (state.tier < 3) return;   // below tier 3, mortars only come from spotters
-  state.mortarT -= dt;
-  if (state.mortarT <= 0) {
-    state.mortarT = rand(0.8, 1.2) * Math.max(10, 24 - state.tier * 2) * (hasPerk(5) ? 1.25 : 1);
-    const t = nearestSoldier(CFG.arenaW / 2, 0) || { x: CFG.arenaW / 2, y: CFG.lineY };
-    shells.push({ kind: 'mortar', x: t.x + rand(-140, 140), y: t.y + rand(-100, 100), t: 1.3 });
-    sfxIncoming();
   }
 }
 
@@ -2302,7 +2521,7 @@ function enterBattle(tid) {
   state.tier = effTier(t);
   state.progress = meta.terr[tid].progress;
   state.mode = 'play'; state.pending = -1;
-  state.wave = 1; state.waveT = 0; state.spawnT = 1.5; state.mortarT = rand(6, 10);
+  state.wave = 1; state.waveT = 0; state.spawnT = 1.5;
   state.enemyTotal = CFG.enemyTickets + CFG.enemyTicketsPerTier * state.tier;
   state.enemyDown = Math.min(state.enemyTotal - 1, Math.round(state.progress / 100 * state.enemyTotal));   // a front you left half-won resumes there
   state.shots = 0; state.hits = 0; state.heads = 0; state.longest = 0; state.lastContact = null;
@@ -2338,7 +2557,7 @@ function exitBattle() {
 function frontCleared() {
   if (state.mode === 'cleared') return;
   state.mode = 'cleared';
-  sfxClear();
+  sfxClear(); musStinger('win');
   const t = TERRITORIES[state.tid];
   meta.terr[state.tid] = { owner: 'p', progress: 0 };
   let wrenJoins = false;
@@ -2387,6 +2606,7 @@ function advanceTheater() {
   saveMeta();
 }
 function showFailModal() {
+  if (state.mode !== 'failed') musStinger('lose');
   state.mode = 'failed';
   const t = TERRITORIES[state.tid], acc = state.shots ? Math.round(state.hits / state.shots * 100) : 0;
   showModal(`
@@ -2456,9 +2676,7 @@ function startReload(s) {
     if (s.mag <= 0) { s.pistol = true; if (s.slot === state.controlled) showBanner('OUT OF AMMO — SIDEARM'); }
     return;
   }
-  s.reloadT = s.reloadDur = w.reload * (hasPerk(10) ? 0.9 : 1) * (s.ext ? EXT_RELOAD : 1);
-  particles.push({ x: s.x + Math.cos(s.aim + 0.6) * 8, y: s.y + Math.sin(s.aim + 0.6) * 8, z: 13, vx: rand(-15, 15), vy: rand(-15, 15),
-    vz: rand(5, 30), life: 1.4, max: 1.4, col: '#2e3034', r: 2.4 });   // the empty magazine hits the dirt
+  s.reloadT = s.reloadDur = w.reload * (hasPerk(10) ? 0.9 : 1) * (s.ext ? EXT_RELOAD : 1);   // the empty magazine is dropped by the view, from the hand
   sfxReload(s);
 }
 function finishReload(s) {
@@ -2696,8 +2914,6 @@ function enemyFire(e, t, spread) {
   bullets.push({ x: e.x + Math.cos(a) * 16, y: e.y + Math.sin(a) * 16,
     vx: Math.cos(a) * 1500, vy: Math.sin(a) * 1500, life: (e.ranged || 400) * 1.5 / 1500, tracer: Math.random() < 0.5,
     hostile: true, dmg: e.dmg, wkey: null, slot: null, hits: 0, maxHits: 1, aoe: 0, skip: coverNear(e, 34), srcType: e.type });
-  particles.push({ x: e.x + Math.cos(a) * 18, y: e.y + Math.sin(a) * 18, z: 14, vx: 0, vy: 0, vz: 0,
-    life: 0.04, max: 0.04, col: '#ffb36b', r: 3 });
   sfxEnemyShot(e.x, e.y, e.type === 'gunner' ? 1.1 : 0.85);
   state.lastContact = { x: e.x, y: e.y };   // gunfire gives a position away
 }
@@ -2835,7 +3051,7 @@ function meleeAI(e, t, dt, d) {   // runners flank down side streets, breachers 
   }
   followPath(e, e.sp * (e.type === 'runner' && e.supp > 1.2 ? 0.7 : 1), dt);
 }
-function spotterAI(e, t, dt, d) {   // hides well back behind cover and walks mortars onto the squad
+function spotterAI(e, t, dt, d) {   // hides well back behind cover and glasses the squad (no longer spawned: it only ever called mortars)
   e.pathT = (e.pathT || 0) - dt;
   if ((!e.path || !e.path.length) && e.pathT <= 0) {
     e.pathT = rand(4, 7);
@@ -2844,12 +3060,6 @@ function spotterAI(e, t, dt, d) {   // hides well back behind cover and walks mo
     if (ob) { e.coverRef = ob; goTo(e, SPOT.x, SPOT.y); } else { e.coverRef = null; goTo(e, gx, gy); }
   }
   followPath(e, e.sp, dt);
-  e.spotCd -= dt;
-  if (e.spotCd <= 0) {
-    e.spotCd = rand(5.5, 7) * (hasPerk(5) ? 1.25 : 1);
-    shells.push({ kind: 'mortar', x: t.x + rand(-70, 70), y: t.y + rand(-55, 55), t: 1.5 });
-    sfxIncoming();
-  }
 }
 function inCover(o) { return !!coverNear(o, 18); }   // hugging cover or a wall: ranged damage reduction
 function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every round, cover stops most and takes the damage
@@ -2961,7 +3171,6 @@ function battleUpdate(dt) {
     updateShells(wdt);
     updateFires(wdt);
     updateMines();
-    updateMortars(wdt);
     updatePickups(wdt);
   }
   updateFx(wdt);
@@ -3216,6 +3425,11 @@ function buildTextures() {
       g.strokeStyle = '#ffffff'; g.lineWidth = 5;
       g.beginPath(); g.arc(s / 2, s / 2, s / 2 - 5, 0, TAU); g.stroke();
     }), false),
+    bloom: finishTex(paintCanvas(64, (g, s) => {   // a muzzle bloom: a hot centre that falls away softly, no hard edge anywhere
+      const gr = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+      [[0, 1], [0.1, 0.92], [0.24, 0.55], [0.42, 0.24], [0.62, 0.08], [0.82, 0.02], [1, 0]].forEach(([o, a]) => gr.addColorStop(o, `rgba(255,255,255,${a})`));
+      g.fillStyle = gr; g.fillRect(0, 0, s, s);
+    }), false),
   };
 }
 
@@ -3284,12 +3498,14 @@ function buildKit() {
     hidebody: cell(lathe([[0, -0.5], [0.3, -0.48], [0.45, -0.3], [0.5, 0], [0.46, 0.3], [0.34, 0.46], [0, 0.5]], 10), C.hide),
     hidelimb: cell(latheLimb(0.5, 0.32, 7), C.hide),
   };
-  for (const k in kit) shadeGeo(kit[k], k === 'head' || k === 'mask' || k === 'hand' ? 0.84 : 0.68);
+  kit.palm = cell(superBall(3, 8, 6), C.leather);           // glove pieces: plain leather, not the camo cell
+  kit.fing = cell(latheLimb(0.5, 0.42, 6), C.leather);
+  for (const k in kit) shadeGeo(kit[k], k === 'head' || k === 'mask' || k === 'hand' || k === 'palm' || k === 'fing' ? 0.84 : 0.68);
   return kit;
 }
 const PART_KEYS = ['cloth', 'skin', 'metal', 'wood', 'burlap', 'leather', 'hide', 'stone', 'white', 'hood', 'cape', 'webbing',
   'crate', 'head', 'mask', 'hand', 'joint', 'helm', 'disc', 'band', 'cyl', 'cone', 'limb', 'legp', 'puttee', 'torso', 'skirt', 'boot',
-  'taper', 'hidebody', 'hidelimb'];
+  'taper', 'hidebody', 'hidelimb', 'palm', 'fing'];
 
 // ---------- instance batches ----------
 class Batch {
@@ -3363,11 +3579,17 @@ const HORSE = [   // mount skeleton, now a quad bike: body, handlebar, headlight
 
 // Part rows: [joint, geoKey, sx, sy, sz, ox, oy, oz, colourSlot, rx?, ry?, rz?]
 const P = (j, g, sx, sy, sz, ox, oy, oz, col, rx = 0, ry = 0, rz = 0) => [j, g, sx, sy, sz, ox, oy, oz, col, rx, ry, rz];
+const MAG = r => { r.mag = true; return r; };   // marks a gun part as the magazine, so a reload can take it out of the gun
 const ARMS = (coat, hand) => [
   P(HJ.uArmL, 'joint', 0.18, 0.18, 0.18, 0, -0.01, 0, coat), P(HJ.uArmR, 'joint', 0.18, 0.18, 0.18, 0, -0.01, 0, coat),
   P(HJ.uArmL, 'limb', 0.15, 0.32, 0.15, 0, -0.14, 0, coat), P(HJ.uArmR, 'limb', 0.15, 0.32, 0.15, 0, -0.14, 0, coat),
   P(HJ.fArmL, 'limb', 0.13, 0.28, 0.13, 0, -0.13, 0, coat), P(HJ.fArmR, 'limb', 0.13, 0.28, 0.13, 0, -0.13, 0, coat),
-  P(HJ.fArmL, 'hand', 0.12, 0.13, 0.12, 0, -0.3, 0, hand), P(HJ.fArmR, 'hand', 0.12, 0.13, 0.12, 0, -0.3, 0, hand),
+  ...[[HJ.fArmL, 1], [HJ.fArmR, -1]].flatMap(([j, s]) => [   // s: which side the thumb sits on
+    P(j, 'band', 0.112, 0.04, 0.112, 0, -0.26, 0, 'webbing'),                        // glove cuff
+    P(j, 'palm', 0.098, 0.1, 0.064, 0, -0.314, 0.004, hand),                          // palm and the back of the hand
+    P(j, 'palm', 0.092, 0.068, 0.054, 0, -0.374, -0.018, hand, 0.55),                  // fingers, curled forward
+    P(j, 'fing', 0.034, 0.072, 0.034, s * 0.047, -0.302, -0.03, hand, 0.55, 0, s * 0.4),   // thumb
+  ]),
 ];
 const SOLDIER_BODY = [   // modern infantry: camo uniform, plate carrier, ballistic helmet with NVG mount and ear pro; roster colour on the patches
   P(HJ.pelvis, 'legp', 0.36, 0.24, 0.27, 0, 0.02, 0, 'pants'),
@@ -3455,7 +3677,7 @@ const GUN_MUZ = {   // the barrel tip in the gun's frame: where the flash and th
 const GUN_BUILD = {
   smg: a => [   // UMP45: boxy polymer receiver, top rail, straight .45 mag ahead of the trigger, short barrel, hooded post, side-folding stock
     B(0.056, 0.074, 0.3, 0, 0.03, -0.07, 'poly'), B(0.034, 0.012, 0.3, 0, 0.073, -0.07, 'rail'),
-    B(0.05, 0.05, 0.11, 0, -0.03, -0.1, 'poly'), B(0.034, a.ext ? 0.22 : 0.15, 0.06, 0, a.ext ? -0.165 : -0.13, -0.1, 'gunm'),
+    B(0.05, 0.05, 0.11, 0, -0.03, -0.1, 'poly'), MAG(B(0.034, a.ext ? 0.22 : 0.15, 0.06, 0, a.ext ? -0.165 : -0.13, -0.1, 'gunm')),
     B(0.036, 0.095, 0.05, 0, -0.1, 0.05, 'poly', 0.3), B(0.012, 0.02, 0.07, 0, -0.065, 0.0, 'poly'), B(0.006, 0.02, 0.006, 0, -0.058, 0.0, 'rail'),
     B(0.008, 0.026, 0.05, 0.03, 0.04, -0.09, 'gunm'), B(0.024, 0.016, 0.03, -0.035, 0.05, -0.22, 'poly'),
     B(0.052, 0.06, 0.1, 0, 0.02, -0.27, 'poly'), B(0.012, 0.012, 0.09, 0, -0.012, -0.27, 'rail'),
@@ -3469,7 +3691,7 @@ const GUN_BUILD = {
   ar: a => [   // M4A1: flat-top upper, lower with magwell, quad-rail handguard, A2 front sight base, birdcage, collapsible stock
     B(0.06, 0.07, 0.26, 0, 0.035, -0.02, 'gunm'), B(0.052, 0.055, 0.2, 0, -0.025, 0.0, 'gunm'), B(0.038, 0.014, 0.25, 0, 0.078, -0.02, 'rail'),
     B(0.03, 0.014, 0.04, 0, 0.062, 0.115, 'gunm'), B(0.008, 0.028, 0.045, 0.03, 0.045, -0.02, 'rail'),
-    B(0.045, 0.07, 0.07, 0, -0.085, -0.055, 'gunm'), B(0.034, a.ext ? 0.25 : 0.165, 0.062, 0, a.ext ? -0.24 : -0.2, -0.065, 'poly', 0.16),
+    B(0.045, 0.07, 0.07, 0, -0.085, -0.055, 'gunm'), MAG(B(0.034, a.ext ? 0.25 : 0.165, 0.062, 0, a.ext ? -0.24 : -0.2, -0.065, 'poly', 0.16)),
     B(0.012, 0.02, 0.07, 0, -0.07, 0.03, 'gunm'), B(0.006, 0.02, 0.006, 0, -0.06, 0.02, 'rail'), B(0.036, 0.1, 0.048, 0, -0.1, 0.06, 'poly', 0.35),
     C(0.016, 0.2, 0, 0.02, 0.2, 'gunm'), B(0.05, 0.09, 0.12, 0, -0.005, 0.29, 'poly'), B(0.05, 0.03, 0.05, 0, 0.04, 0.24, 'poly'),
     B(0.056, 0.058, 0.2, 0, 0.03, -0.33, 'poly'),
@@ -3485,7 +3707,7 @@ const GUN_BUILD = {
   lmg: a => [   // M249 SAW: deep receiver, feed-tray cover with a rail, side-folded carry handle, soft ammo pouch, heat shield, gas tube, bipod, skeleton stock
     B(0.07, 0.095, 0.34, 0, 0.02, -0.02, 'gunm'), B(0.074, 0.028, 0.22, 0, 0.083, -0.07, 'gunm'), B(0.038, 0.012, 0.2, 0, 0.103, -0.07, 'rail'),
     B(0.02, 0.022, 0.12, -0.047, 0.085, -0.24, 'poly'), B(0.012, 0.03, 0.012, -0.047, 0.06, -0.19, 'poly'), B(0.012, 0.03, 0.012, -0.047, 0.06, -0.29, 'poly'),
-    B(a.ext ? 0.11 : 0.09, a.ext ? 0.14 : 0.11, a.ext ? 0.16 : 0.13, -0.015, a.ext ? -0.12 : -0.105, -0.06, 'tan'), B(0.03, 0.02, 0.06, -0.015, -0.045, -0.06, 'gunm'),
+    MAG(B(a.ext ? 0.11 : 0.09, a.ext ? 0.14 : 0.11, a.ext ? 0.16 : 0.13, -0.015, a.ext ? -0.12 : -0.105, -0.06, 'tan')), B(0.03, 0.02, 0.06, -0.015, -0.045, -0.06, 'gunm'),
     B(0.036, 0.1, 0.05, 0, -0.1, 0.09, 'poly', 0.35), B(0.012, 0.02, 0.07, 0, -0.07, 0.06, 'gunm'),
     B(0.062, 0.07, 0.16, 0, 0.015, -0.3, 'poly'), C(0.012, 0.28, 0, -0.012, -0.44, 'gunm'),
     C(0.014, 0.34, 0, 0.035, -0.52, 'gunm'), C(0.018, 0.05, 0, 0.035, -0.71, 'gunm'), B(0.03, 0.03, 0.03, 0, 0.04, -0.55, 'gunm'),
@@ -3498,7 +3720,7 @@ const GUN_BUILD = {
   sniper: a => [   // Intervention: long chassis and rail, barrel shroud, box mag ahead of the grip, bolt, fluted barrel, big brake, folded bipod, skeleton stock
     B(0.06, 0.085, 0.36, 0, 0.025, -0.04, 'gunm'), B(0.036, 0.014, 0.44, 0, 0.075, -0.06, 'rail'),
     B(0.055, 0.06, 0.24, 0, 0.02, -0.34, 'poly'), B(0.012, 0.012, 0.22, 0, -0.016, -0.34, 'rail'),
-    B(0.04, a.ext ? 0.15 : 0.11, 0.07, 0, a.ext ? -0.135 : -0.115, -0.12, 'gunm'),
+    MAG(B(0.04, a.ext ? 0.15 : 0.11, 0.07, 0, a.ext ? -0.135 : -0.115, -0.12, 'gunm')),
     B(0.036, 0.1, 0.05, 0, -0.1, 0.07, 'poly', 0.3), B(0.012, 0.02, 0.07, 0, -0.07, 0.03, 'gunm'),
     P(HJ.gun, 'cyl', 0.016, 0.06, 0.016, 0.05, 0.045, 0.1, 'rail', 0, 0, Math.PI / 2), P(HJ.gun, 'cyl', 0.024, 0.024, 0.024, 0.08, 0.045, 0.1, 'gunm', 0, 0, Math.PI / 2),
     C(0.017, 0.5, 0, 0.035, -0.62, 'gunm'), B(0.046, 0.046, 0.1, 0, 0.035, -0.9, 'gunm'), B(0.06, 0.01, 0.06, 0, 0.035, -0.88, 'rail'), B(0.06, 0.01, 0.06, 0, 0.035, -0.92, 'rail'),
@@ -3516,8 +3738,8 @@ const GUN_STATIC = {
     B(0.035, 0.08, 0.2, 0, 0.02, -0.06, 'gunm'), B(0.03, 0.1, 0.05, 0, -0.06, 0.02, 'gunm', 0.3), B(0.02, 0.03, 0.05, 0, 0.06, -0.13, 'gunm'),
     B(0.007, 0.018, 0.007, 0, 0.067, -0.15, 'sightw'), B(0.007, 0.018, 0.01, 0.011, 0.067, 0.03, 'sightw'), B(0.007, 0.018, 0.01, -0.011, 0.067, 0.03, 'sightw')],
   rocket: [   // RPG on the shoulder: tube, warhead, grips, blast cone
-    P(HJ.gun, 'cyl', 0.1, 0.9, 0.1, 0, 0.08, -0.12, 'tube', Math.PI / 2), P(HJ.gun, 'cyl', 0.17, 0.2, 0.17, 0, 0.08, -0.66, 'tube', Math.PI / 2),
-    P(HJ.gun, 'cone', 0.17, 0.26, 0.17, 0, 0.08, -0.89, 'accent', -Math.PI / 2), P(HJ.gun, 'cone', 0.16, 0.18, 0.16, 0, 0.08, 0.38, 'gunm', -Math.PI / 2),
+    P(HJ.gun, 'cyl', 0.1, 0.9, 0.1, 0, 0.08, -0.12, 'tube', Math.PI / 2), MAG(P(HJ.gun, 'cyl', 0.17, 0.2, 0.17, 0, 0.08, -0.66, 'tube', Math.PI / 2)),
+    MAG(P(HJ.gun, 'cone', 0.17, 0.26, 0.17, 0, 0.08, -0.89, 'accent', -Math.PI / 2)), P(HJ.gun, 'cone', 0.16, 0.18, 0.16, 0, 0.08, 0.38, 'gunm', -Math.PI / 2),
     P(HJ.gun, 'metal', 0.04, 0.12, 0.05, 0, -0.04, -0.05, 'gunm'), P(HJ.gun, 'metal', 0.04, 0.12, 0.05, 0, -0.04, -0.28, 'gunm'),
     P(HJ.gun, 'metal', 0.03, 0.06, 0.08, -0.07, 0.14, -0.2, 'gunm')],
 };
@@ -3544,9 +3766,9 @@ const PATROL_CAP = [P(HJ.head, 'band', 0.36, 0.1, 0.38, 0, 0.26, 0, 'helm'), P(H
   P(HJ.head, 'disc', 0.28, 0.02, 0.18, 0, 0.23, -0.18, 'helm')];
 const AK = [P(HJ.gun, 'wood', 0.06, 0.1, 0.2, 0, -0.01, 0.2, 'wood'), P(HJ.gun, 'metal', 0.06, 0.09, 0.32, 0, 0.02, -0.06, 'gunm'),
   P(HJ.gun, 'wood', 0.065, 0.07, 0.2, 0, 0.02, -0.32, 'wood'), P(HJ.gun, 'cyl', 0.025, 0.2, 0.025, 0, 0.04, -0.52, 'gunm', Math.PI / 2),
-  P(HJ.gun, 'metal', 0.035, 0.18, 0.06, 0, -0.12, -0.14, 'gunm', 0.35)];
+  MAG(P(HJ.gun, 'metal', 0.035, 0.18, 0.06, 0, -0.12, -0.14, 'gunm', 0.35))];
 const PKM = [P(HJ.gun, 'metal', 0.07, 0.11, 0.42, 0, 0.02, -0.06, 'gunm'), P(HJ.gun, 'wood', 0.06, 0.12, 0.22, 0, -0.01, 0.25, 'wood'),
-  P(HJ.gun, 'cyl', 0.035, 0.4, 0.035, 0, 0.03, -0.46, 'gunm', Math.PI / 2), P(HJ.gun, 'metal', 0.1, 0.12, 0.12, -0.03, -0.1, -0.05, 'metal'),
+  P(HJ.gun, 'cyl', 0.035, 0.4, 0.035, 0, 0.03, -0.46, 'gunm', Math.PI / 2), MAG(P(HJ.gun, 'metal', 0.1, 0.12, 0.12, -0.03, -0.1, -0.05, 'metal')),
   P(HJ.gun, 'metal', 0.02, 0.02, 0.28, -0.03, -0.05, -0.45, 'gunm'), P(HJ.gun, 'metal', 0.02, 0.02, 0.28, 0.03, -0.05, -0.45, 'gunm')];
 const ENEMY_ROWS = {   // one silhouette per enemy type
   grunt: () => [...ENEMY_BASE(MODERN_HELM), ...AK],
@@ -3619,7 +3841,7 @@ function soldierPalette(slot, col, helm) {   // multicam uniform; carriers alter
     coat: colorOf(wren ? '#7a7e88' : '#a09a7a'), pants: colorOf(wren ? '#6a6e78' : '#948e70'), boots: colorOf(wren ? '#2e2e30' : '#7a6446'),
     carrier: colorOf(wren ? '#2e3036' : slot % 2 ? '#7d6c4c' : '#4f5540'), pouch: colorOf(wren ? '#26282c' : slot % 2 ? '#6e5e42' : '#454a38'),
     helm: colorOf(wren ? '#3a3c44' : slot % 2 ? '#8a7a5a' : '#5a5e4a'), gaiter: colorOf(wren ? '#b8322a' : '#5a5a48'),
-    scarf: colorOf(wren ? '#b8322a' : col), skin: colorOf(SKIN_TONES[slot % 4]), glove: colorOf('#2c2a26'), lens: colorOf('#161a1e'),
+    scarf: colorOf(wren ? '#b8322a' : col), skin: colorOf(SKIN_TONES[slot % 4]), glove: colorOf('#8a7654'), knuck: colorOf('#3a3830'), lens: colorOf('#161a1e'),
     pad: colorOf('#34342e'), pack: colorOf(wren ? '#2a2c30' : '#6e6650'), webbing: colorOf('#6a6450'), leather: colorOf('#5c4430'),
     metal: colorOf('#8a8e92'), gunm: colorOf('#34363a'), tan: colorOf('#8c7a58'), wood: colorOf('#7c5432'), tube: colorOf('#58623c'),
     poly: colorOf('#24262a'), rail: colorOf('#5c6066'), sightw: colorOf('#f6f3e4'), reddot: colorOf('#ff3a2e'), glass: colorOf('#1d2c3c'),
@@ -3630,7 +3852,7 @@ function soldierPalette(slot, col, helm) {   // multicam uniform; carriers alter
 function enemyPalette(col, boss) {   // mixed paramilitary kit, jackets tinted toward each type's colour so silhouettes stay readable
   return {
     coat: new THREE.Color().copy(colorOf('#5a5e50')).lerp(colorOf(col), boss ? 0.45 : 0.16),
-    pants: colorOf('#45443c'), boots: colorOf('#2a2622'), glove: colorOf('#262624'), mask: colorOf('#ffffff'),
+    pants: colorOf('#45443c'), boots: colorOf('#2a2622'), glove: colorOf('#262624'), knuck: colorOf('#1c1c1a'), mask: colorOf('#ffffff'),
     helm: colorOf('#6a664e'), brass: colorOf('#c8a040'), metal: colorOf('#8a8a84'), gunm: colorOf('#2e2e2e'),
     wood: colorOf('#7a4e2a'), webbing: colorOf('#5e5a44'), pouch: colorOf('#4e4a3a'), hood: colorOf('#3a3a36'), cape: colorOf('#3a3a36'),
     armor: colorOf('#3c3e38'), shield: colorOf('#2a2c2e'), lens: colorOf('#121418'), pack: colorOf('#4a4a3c'),
@@ -3648,7 +3870,7 @@ function compileParts(rows) {
       new THREE.Vector3(r[5], r[6], r[7]),
       new THREE.Quaternion().setFromEuler(new THREE.Euler(r[9], r[10], r[11])),
       new THREE.Vector3(r[2], r[3], r[4]));
-    return { j: r[0], key: r[1], m, col: r[8] };
+    return { j: r[0], key: r[1], m, col: r[8], mag: !!r.mag };
   });
 }
 const partCache = new Map();
@@ -3687,7 +3909,15 @@ function initTmp() {
   dropRig = Array.from({ length: HUMANOID.length }, () => ({ matrixWorld: new THREE.Matrix4() }));
   vmRig = Array.from({ length: HUMANOID.length }, () => ({ matrixWorld: new THREE.Matrix4() }));
   WHITE = new THREE.Color(1, 1, 1);
+  for (const k of ['vb', 'vb2', 'vh', 'vl', 'vl2', 'zb', 'va', 'va2', 'vc', 'vm', 'vs']) LT[k] = new THREE.Vector3();
+  LT.qa = new THREE.Quaternion(); LT.ma = _m4();
+  LT.zb.set(0, 0, 1); LT.one = new THREE.Vector3(1, 1, 1);
+  for (const k of ['qb', 'qh', 'ql']) LT[k] = new THREE.Quaternion();
+  for (const k of ['mb', 'mh', 'mx']) LT[k] = _m4();
+  LT.eh = new THREE.Euler(); LT.eb = new THREE.Euler(); LT.cb = new THREE.Color();
+  BLOOM.wide = colorOf('#ff8a3c'); BLOOM.core = colorOf('#fff1c8'); BLOOM.brass = colorOf('#e2b04e');
 }
+const LT = {}, BLOOM = {};   // scratch for hands, loose brass and muzzle blooms
 // place a skeleton's root: ground position (metres), yaw, pitch about the feet, scale
 function placeRoot(joints, x, z, yaw, pitch, sx, sy, sz, lift = 0) {
   TMP.e.set(pitch, yaw, 0, 'YXZ');
@@ -3942,59 +4172,341 @@ function mountRider(r, x, z, dt, amp, phase) {   // the horse faces where it run
 }
 
 // ---------- first person: the weapon carried by the camera ----------
-const FPV = { bobP: 0, eyeY: null, kick: 0, kickV: 0, adsK: 0, lastRecoil: 0, flashT: 0, px: null, py: null, sway: 0 };
-const VM_S = 0.78;   // the viewmodel's scale in the camera's frame
-const VM_HANDS = [   // gloved hands and sleeves, in the weapon's own frame
-  P(HJ.gun, 'hand', 0.115, 0.12, 0.115, 0.005, -0.075, 0.03, 'glove'),
-  P(HJ.gun, 'limb', 0.1, 0.32, 0.1, 0.03, -0.22, 0.12, 'coat', 0.55),
-  P(HJ.gun, 'hand', 0.115, 0.12, 0.115, -0.015, -0.055, -0.28, 'glove'),
-  P(HJ.gun, 'limb', 0.1, 0.34, 0.1, -0.09, -0.2, -0.34, 'coat', 0.6, 0, 0.3),
-];
-const VM_MAG = [P(HJ.gun, 'metal', 0.05, 0.18, 0.1, -0.11, -0.26, 0.02, 'gunm')];   // the fresh magazine on its way in
+const FPV = { bobP: 0, eyeY: null, kick: 0, kickV: 0, adsK: 0, lastRecoil: 0, flashT: 0, px: null, py: null, sway: 0,
+  vx: 0, vz: 0, lastRl: -1, flashRot: 0, flashSc: 1, ejectT: 0 };
+const VM_S = 0.78;      // the viewmodel's scale in the camera's frame
+const VM_FLASH = 0.06;  // seconds a muzzle bloom lasts in your hands
+const VM_MAG = [P(HJ.gun, 'metal', 0.05, 0.18, 0.1, -0.11, -0.26, 0.02, 'gunm')];   // kept for debug tools; the real magazines are MAG() parts now
 const gunParts = (key, att) => partsFor('G' + key + attSig(key, att), () => gunRows(key, att));
-const vmHandParts = () => partsFor('VMH', () => VM_HANDS);
-const vmMagParts = () => partsFor('VMM', () => VM_MAG);
+const partsCached = (id, fn) => { let p = partCache.get(id); if (!p) { p = fn(); partCache.set(id, p); } return p; };
+
+// ---------- gloved hands, finger by finger ----------
+// Built in code as compiled parts (a matrix per piece), so a finger can run between two knuckle points at any angle.
+function partSeg(key, tip, base, r, col, extra = r * 1.4) {   // a tapered capsule: thick at the base, thin at the tip
+  const A = new THREE.Vector3(tip[0], tip[1], tip[2]), Bp = new THREE.Vector3(base[0], base[1], base[2]);
+  const d = new THREE.Vector3().subVectors(Bp, A), len = d.length() || 1e-4;
+  const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.divideScalar(len));
+  return { j: HJ.gun, key, col, m: new THREE.Matrix4().compose(A.add(Bp).multiplyScalar(0.5), q, new THREE.Vector3(r * 2, len + extra, r * 2)) };
+}
+function partBox(key, c, size, rot, col) {
+  return { j: HJ.gun, key, col, m: new THREE.Matrix4().compose(new THREE.Vector3(c[0], c[1], c[2]),
+    new THREE.Quaternion().setFromEuler(new THREE.Euler(rot[0], rot[1], rot[2])), new THREE.Vector3(size[0], size[1], size[2])) };
+}
+const xfParts = (parts, M) => parts.map(p => ({ j: p.j, key: p.key, col: p.col, m: new THREE.Matrix4().multiplyMatrices(M, p.m) }));
+function gripHand(sx) {   // round a pistol grip centred on the origin (grip along Y): palm behind, fingers round the front, index to the trigger, thumb high on the far side; sx -1 mirrors it for a left hand
+  const X = x => x * sx, R = r => [r[0], r[1] * sx, r[2] * sx];
+  const out = [
+    partBox('palm', [X(0.018), -0.006, 0.02], [0.03, 0.09, 0.062], R([0, -0.5, 0]), 'glove'),
+    partBox('palm', [X(0.031), -0.006, 0.016], [0.007, 0.07, 0.044], R([0, -0.5, 0]), 'knuck'),   // knuckle guard on the back of the hand
+    partBox('hand', [X(0.004), 0.044, 0.026], [0.04, 0.026, 0.046], [0, 0, 0], 'glove'),          // the web of the hand, high on the grip
+  ];
+  [[0.018, 0.0112], [-0.006, 0.0108], [-0.03, 0.0096]].forEach(([y, r]) => {   // middle, ring, little finger
+    out.push(partBox('hand', [X(0.02), y, -0.027], [r * 2.3, r * 2.3, r * 2.3], [0, 0, 0], 'glove'));
+    out.push(partSeg('fing', [X(0.001), y - 0.004, -0.037], [X(0.02), y, -0.027], r, 'glove'));
+    out.push(partSeg('fing', [X(-0.02), y - 0.006, -0.015], [X(0.001), y - 0.004, -0.037], r * 0.92, 'glove'));
+  });
+  out.push(partSeg('fing', [X(0.004), 0.034, -0.046], [X(0.017), 0.041, -0.024], 0.0108, 'glove'));   // index finger, out to the trigger
+  out.push(partSeg('fing', [X(-0.001), 0.022, -0.05], [X(0.004), 0.034, -0.046], 0.0098, 'glove'));
+  out.push(partSeg('fing', [X(-0.021), 0.05, -0.016], [X(-0.013), 0.038, 0.022], 0.0122, 'glove'));   // thumb
+  out.push(partSeg('fing', [X(-0.019), 0.057, -0.044], [X(-0.021), 0.05, -0.016], 0.011, 'glove'));
+  return out;
+}
+function guardHand(w, h) {   // on the near side of a handguard centred on the origin (barrel along -Z): back of the hand toward you, fingers over the top, thumb underneath
+  const out = [
+    partBox('palm', [-w - 0.018, -0.006, 0.002], [0.032, 0.09, 0.104], [0, 0, -0.18], 'glove'),   // back of the hand, leaning in over the top edge
+    partBox('palm', [-w - 0.035, -0.002, 0], [0.009, 0.056, 0.08], [0, 0, -0.18], 'knuck'),        // hard knuckle guard
+    partBox('hand', [-w - 0.012, -h - 0.006, 0.038], [0.04, 0.036, 0.05], [0, 0, 0], 'glove'),     // heel of the thumb, under the near edge
+  ];
+  [[-0.038, 0.0122], [-0.013, 0.0128], [0.012, 0.0124], [0.036, 0.011]].forEach(([z, r]) => {   // index finger at the front
+    const kx = -w - 0.008, ky = h + 0.004;   // knuckles along the top of the near edge
+    out.push(partBox('hand', [kx, ky, z], [r * 2.4, r * 2.4, r * 2.4], [0, 0, 0], 'glove'));
+    out.push(partSeg('fing', [-0.002, h + r + 0.003, z], [kx, ky, z], r, 'glove'));                          // across the top
+    out.push(partSeg('fing', [w + r * 0.35, h - 0.012, z + 0.002], [-0.002, h + r + 0.003, z], r * 0.9, 'glove'));   // curled down the far side
+  });
+  out.push(partSeg('fing', [-w + 0.008, -h - 0.014, -0.024], [-w - 0.012, -h - 0.006, 0.032], 0.013, 'glove'));   // thumb underneath, pointing forward
+  out.push(partSeg('fing', [-w + 0.02, -h - 0.016, -0.062], [-w + 0.008, -h - 0.014, -0.024], 0.0115, 'glove'));
+  return out;
+}
+const VM_ELBOW = { r: [0.34, -0.58, -0.18], l: [-0.26, -0.6, -0.26] };   // in the camera's frame: just below the corners of the view
+function drawArm(W, E, pal, set) {   // glove cuff, camo sleeve and rolled cuff from a wrist (world) to an elbow out of frame, at viewmodel scale
+  const d = LT.va2.subVectors(E, W), len = d.length(), s = VM_S;
+  if (len < 1e-3) return;
+  d.divideScalar(len);
+  LT.qa.setFromUnitVectors(TMP.up, d);
+  const seg = (k0, k1, r, key, col, extra) => {
+    LT.vm.copy(W).addScaledVector(d, (k0 + k1) / 2);
+    LT.ma.compose(LT.vm, LT.qa, LT.vs.set(r * 2, k1 - k0 + extra, r * 2));
+    set[key].push(LT.ma, pal[col] || WHITE);
+  };
+  seg(-0.004 * s, 0.036 * s, 0.031 * s, 'band', 'webbing', 0);
+  seg(0.05 * s, len, 0.045 * s, 'limb', 'coat', 0.05 * s);
+  seg(0.048 * s, 0.082 * s, 0.05 * s, 'band', 'carrier', 0);
+}
+const VM_HOLD = {   // where the hands hold each gun: the grip [x, y, z, rake] and the support hand's handguard [half-width, half-height] or second grip
+  smg:    { grip: [0, -0.1, 0.05, 0.3],  sup: [0, 0.02, -0.26, 0],       guard: [0.026, 0.03] },
+  ar:     { grip: [0, -0.1, 0.06, 0.35], sup: [0, 0.03, -0.31, 0],       guard: [0.028, 0.029] },
+  lmg:    { grip: [0, -0.1, 0.09, 0.35], sup: [0, 0.015, -0.3, 0],       guard: [0.031, 0.035] },
+  sniper: { grip: [0, -0.1, 0.07, 0.3],  sup: [0, 0.02, -0.34, 0],       guard: [0.0275, 0.03] },
+  pistol: { grip: [0, -0.06, 0.02, 0.3], sup: [-0.024, -0.086, 0.016, 0.3], guard: null },
+  rocket: { grip: [0, -0.04, -0.05, 0],  sup: [0, -0.04, -0.28, 0],      guard: null },
+};
+const VM_WRIST = {};   // wrist points found while the hands are built: 'g' + gun in the gun's frame, 's' + gun in the support hand's frame
+function vmGripParts(key) {   // the trigger hand and its arm, in the gun's frame: it never lets go
+  return partsCached('VG' + key, () => {
+    const g = (VM_HOLD[key] || VM_HOLD.ar).grip;
+    const M = new THREE.Matrix4().compose(new THREE.Vector3(g[0], g[1], g[2]), new THREE.Quaternion().setFromEuler(new THREE.Euler(g[3], 0, 0)), new THREE.Vector3(1, 1, 1));
+    VM_WRIST['g' + key] = new THREE.Vector3(0.02, -0.05, 0.045).applyMatrix4(M).toArray();   // where its forearm starts, in the gun's frame
+    return xfParts(gripHand(1), M);
+  });
+}
+function vmSupportParts(key) {   // the other hand and its arm, in the hand's own frame (origin on whatever it holds), so a reload can move it
+  return partsCached('VS' + key, () => {
+    const H = VM_HOLD[key] || VM_HOLD.ar;
+    if (H.guard) { VM_WRIST['s' + key] = [-H.guard[0] - 0.03, -0.05, 0.045]; return guardHand(H.guard[0], H.guard[1]); }
+    const M = new THREE.Matrix4().makeRotationX(H.sup[3]);
+    VM_WRIST['s' + key] = new THREE.Vector3(-0.02, -0.05, 0.045).applyMatrix4(M).toArray();
+    return xfParts(gripHand(-1), M);
+  });
+}
+const magSplit = new Map();
+function splitMag(parts) {   // a gun's parts without its magazine, the magazine on its own, where a hand grips it (under its floor) and its size
+  let s = magSplit.get(parts);
+  if (!s) {
+    const mag = parts.filter(p => p.mag);
+    let bot = 0, cx = 0, cz = 0, size = [0.04, 0.17, 0.07];
+    if (mag.length) {
+      bot = Infinity;
+      for (const p of mag) {
+        const e = p.m.elements;
+        bot = Math.min(bot, e[13] - Math.hypot(e[4], e[5], e[6]) / 2);
+        cx += e[12] / mag.length; cz += e[14] / mag.length;
+      }
+      const e = mag[0].m.elements;
+      size = [Math.hypot(e[0], e[1], e[2]), Math.hypot(e[4], e[5], e[6]), Math.hypot(e[8], e[9], e[10])];
+    }
+    s = { body: parts.filter(p => !p.mag), mag, grip: [cx, bot, cz], size };
+    magSplit.set(parts, s);
+  }
+  return s;
+}
+
+// ---------- the reload, in your hands ----------
+// Fractions of the reload, synced to its sounds (mag out 0.14, mag in 0.62, rack 0.8).
+function track(keys, t) {   // keys [[t, ...values]], eased between neighbours; returns a shared array
+  let i = 0;
+  while (i < keys.length - 2 && t > keys[i + 1][0]) i++;
+  const A = keys[i], B = keys[i + 1], k = smooth(A[0], B[0], t), out = track.out || (track.out = []);
+  for (let j = 1; j < A.length; j++) out[j - 1] = lerp(A[j], B[j], k);
+  return out;
+}
+const VM_CHG = {   // where the support hand works the action once the fresh magazine is in, and the tug it gives
+  smg: { at: [-0.05, 0.035, -0.2], rot: [0, 0, -0.25], tug: [0, 0, 0.06] },   // the UMP's handle, forward on the left
+  ar:  { at: [-0.06, 0.004, -0.03], rot: [0, 0, 0.35], tug: [0.024, 0, 0] },   // a palm slap on the M4's bolt catch, left of the receiver
+  lmg: { at: [-0.065, 0.1, -0.08], rot: [0, 0, -0.5], tug: [0.012, -0.034, 0] }, // the SAW's top cover, pushed shut from its left edge
+};
+const VM_POUCH = [-0.2, -0.46, 0.14, -0.8, 0.3, 0.5];
+const reloadKeyCache = new Map();
+function reloadKeys(key, sup, g) {   // support-hand keyframes [t, x, y, z, rx, ry, rz] for this gun; g = the magazine's grip point
+  const id = key + ':' + g.map(v => v.toFixed(3)).join(',');
+  let K = reloadKeyCache.get(id);
+  if (K) return K;
+  const G = [sup[0], sup[1], sup[2], 0, 0, 0], off = (a, dx, dy, dz, r) => [a[0] + dx, a[1] + dy, a[2] + dz, ...(r || a.slice(3))];
+  if (key === 'rocket') {   // hand under a fresh warhead, fed into the front of the tube
+    const W = [g[0], g[1] - 0.05, g[2], 0, 0, 0];
+    K = [[0, ...G], [0.16, ...off(G, -0.03, -0.1, 0.08)], [0.32, ...VM_POUCH], [0.5, ...off(W, 0, -0.02, -0.3)], [0.6, ...off(W, 0, 0, -0.1)],
+      [0.68, ...W], [0.72, ...W], [0.86, ...G], [1.01, ...G]];
+  } else {
+    const M = [g[0], g[1] + 0.02, g[2], 0.12, 0, 0.2], c = VM_CHG[key], C = c ? [...c.at, ...c.rot] : null;
+    K = [[0, ...G], [0.11, ...M], [0.15, ...M], [0.26, ...off(M, 0, -0.2, 0)], [0.31, ...off(M, -0.05, -0.3, 0.05, [-0.3, 0.2, 0.4])],
+      [0.42, ...VM_POUCH], [0.53, ...off(M, 0, -0.15, 0.01)], [0.62, ...M], [0.67, ...M]];
+    if (C) K.push([0.75, ...C], [0.8, ...off(C, c.tug[0], c.tug[1], c.tug[2])], [0.85, ...C], [0.95, ...G], [1.01, ...G]);
+    else K.push([0.8, ...G], [1.01, ...G]);
+  }
+  reloadKeyCache.set(id, K);
+  return K;
+}
+const VMR = { gx: 0, gy: 0, gz: 0, rx: 0, ry: 0, rz: 0, hx: 0, hy: 0, hz: 0, hrx: 0, hry: 0, hrz: 0, mag: 'seat', mx: 0, my: 0, mz: 0 };
+function vmReload(key, t, sp, sup) {   // the gun's extra offset, the support hand's frame and where the magazine is, t in 0..1
+  const O = VMR, rocket = key === 'rocket';
+  const c = smooth(0, rocket ? 0.16 : 0.13, t) * (1 - smooth(rocket ? 0.8 : 0.82, 1, t));
+  const seat = rocket ? 0.68 : 0.62, bump = t > seat - 0.02 && t < seat + 0.1 ? Math.sin((t - seat + 0.02) / 0.12 * Math.PI) : 0;
+  const tug = VM_CHG[key] && t > 0.76 && t < 0.86 ? Math.sin((t - 0.76) / 0.1 * Math.PI) : 0;
+  if (rocket) { O.gx = -0.06 * c; O.gy = -0.03 * c; O.gz = 0.14 * c - 0.015 * bump; O.rx = 0.4 * c; O.ry = 0.45 * c; O.rz = 0.15 * c; }
+  else {   // cant it toward the support hand, bump as the magazine seats, jolt with the charging handle
+    O.gx = -0.07 * c; O.gy = 0.035 * c + 0.012 * bump; O.gz = 0.03 * c + 0.012 * tug;
+    O.rx = 0.16 * c + 0.07 * bump; O.ry = 0.34 * c; O.rz = -0.5 * c;
+  }
+  const h = track(reloadKeys(key, sup, sp.grip), t);
+  O.hx = h[0]; O.hy = h[1]; O.hz = h[2]; O.hrx = h[3]; O.hry = h[4]; O.hrz = h[5];
+  if (rocket) {
+    O.mag = t < 0.4 ? null : t < seat ? 'hand' : 'seat';
+    O.mx = O.hx - sp.grip[0]; O.my = O.hy - (sp.grip[1] - 0.05); O.mz = O.hz - sp.grip[2];
+  } else {
+    O.mag = t < 0.15 || t >= seat ? 'seat' : t < 0.27 ? 'out' : t < 0.44 ? null : 'hand';
+    O.mx = O.hx - sp.grip[0]; O.my = O.hy - (sp.grip[1] + 0.02); O.mz = O.hz - sp.grip[2];
+  }
+  return O;
+}
+function emitXf(M, parts, pal, set) {   // parts through one extra frame: a hand, a sliding magazine
+  for (const p of parts) { TMP.m.multiplyMatrices(M, p.m); set[p.key].push(TMP.m, pal[p.col] || WHITE); }
+}
+
+// ---------- muzzle bloom and loose brass ----------
+const linePix = () => 2 * Math.tan(VIEW.camera.fov * Math.PI / 360) / ((N64.target && N64.target.height) || N64.lines);   // metres per render line, per metre away
+function bloomAt(pos, size, col, k, roll) {   // a soft additive glow that always faces the camera; k scales its brightness
+  if (k <= 0.01) return;
+  LT.qb.setFromAxisAngle(LT.zb, roll).premultiply(VIEW.camera.quaternion);
+  LT.mb.compose(pos, LT.qb, LT.vb2.set(size, size, 1));
+  VIEW.fx.bloom.push(LT.mb, LT.cb.copy(col).multiplyScalar(k));
+}
+const FLASH_SIZE = { smg: 0.9, ar: 1, lmg: 1.12, sniper: 1.35, rocket: 1.9, pistol: 0.75, ak: 1, pkm: 1.15, boss: 1.5 };
+function muzzleBloom(r, gunM, my, mz, kind, wdt) {   // everyone else's flash: a glow at the drawn muzzle, gone in a few frames
+  if (!(r.flashT > 0)) return;
+  LT.vb.set(0, my, mz).applyMatrix4(gunM);
+  const k = clamp(r.flashT / 0.07, 0, 1), px = LT.vb.distanceTo(VIEW.camera.position) * linePix(), big = FLASH_SIZE[kind] || 1;
+  bloomAt(LT.vb, Math.max(0.95 * big, px * 14), BLOOM.wide, 0.55 * k, r.flashRot);
+  bloomAt(LT.vb, Math.max(0.3 * big, px * 5), BLOOM.core, 0.95 * k, r.flashRot + 0.8);
+  r.flashT -= wdt;
+}
+// Brass and empty magazines live only in the view: thrown from the gun that is drawn, bouncing where they land.
+const BRASS = [], DROPS = [];
+const CASING = { smg: [0.012, 0.023], ar: [0.0095, 0.045], lmg: [0.0095, 0.045], sniper: [0.016, 0.077], pistol: [0.0098, 0.019], ak: [0.0112, 0.039], pkm: [0.012, 0.054] };   // diameter, length in metres
+const EJECT = { smg: [0.034, 0.045, -0.09], ar: [0.036, 0.045, -0.02], lmg: [0.038, -0.02, -0.04], sniper: [0.034, 0.05, 0], pistol: [0.02, 0.05, -0.05],
+  ak: [0.034, 0.04, -0.06], pkm: [0.04, -0.03, -0.03] };   // ejection ports, in each gun's frame
+function looseObj(list, cap) {
+  const o = list.length >= cap ? list.shift() : { p: new THREE.Vector3(), v: new THREE.Vector3(), q: new THREE.Quaternion(), w: new THREE.Vector3() };
+  list.push(o);
+  o.t = 0; o.rest = false; o.hits = 0;
+  return o;
+}
+function throwBrass(gunM, kind, scale, own, vx, vz) {   // out of the port to the right and up (belt-feds throw it down), spinning
+  const port = EJECT[kind], c = CASING[kind];
+  if (!port || !c) return;
+  const b = looseObj(BRASS, 160), down = kind === 'lmg' || kind === 'pkm';
+  b.p.set(port[0], port[1], port[2]).applyMatrix4(gunM);
+  b.v.set(rand(0.75, 1), down ? rand(-0.8, -0.4) : rand(0.35, 0.75), rand(0.1, 0.45)).transformDirection(gunM)
+    .multiplyScalar(kind === 'sniper' ? rand(1.4, 2) : rand(2.2, 3.3));
+  b.v.x += vx || 0; b.v.z += vz || 0;   // it leaves at the speed you are moving, plus its own
+  b.q.setFromEuler(LT.eb.set(rand(0, TAU), rand(0, TAU), rand(0, TAU)));
+  b.w.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize().multiplyScalar(rand(16, 32));
+  b.life = rand(2.4, 3.4); b.own = own; b.d = c[0] * scale; b.l = c[1] * scale;
+}
+function dropLoose(pos, quat, sx, sy, sz, col, own, vel) {   // an empty magazine let go of
+  const m = looseObj(DROPS, 12);
+  m.p.copy(pos); m.q.copy(quat); m.v.copy(vel);
+  m.w.set(rand(-1, 1), rand(-0.3, 0.3), rand(-1, 1)).normalize().multiplyScalar(rand(3, 7));
+  m.life = 15; m.own = own; m.sx = sx; m.sy = sy; m.sz = sz; m.col = col;
+}
+function stepLoose(o, dt, rest, bounce) {   // gravity, spin, bounce, then settle on its side; true on the step it strikes the ground
+  if (o.rest || dt <= 0) return false;
+  o.v.y -= 9.8 * dt;
+  o.p.addScaledVector(o.v, dt);
+  if (o.p.y < rest) {
+    o.p.y = rest; o.hits++;
+    o.v.y *= -bounce; o.v.x *= 0.5; o.v.z *= 0.5; o.w.multiplyScalar(0.55);
+    if (o.v.y < 0.4) {
+      o.rest = true; o.v.set(0, 0, 0);
+      LT.vl2.set(0, 1, 0).applyQuaternion(o.q); LT.vl2.y = 0;
+      if (LT.vl2.lengthSq() < 1e-6) LT.vl2.set(1, 0, 0);
+      o.q.setFromUnitVectors(TMP.up, LT.vl2.normalize());
+    }
+    return true;
+  }
+  const wl = o.w.length();
+  if (wl > 1e-3) { LT.qh.setFromAxisAngle(LT.vl2.copy(o.w).divideScalar(wl), wl * dt); o.q.premultiply(LT.qh); }
+  return false;
+}
+function drawLoose(wdt) {
+  const F = VIEW.fx, D = VIEW.dyn, cp = VIEW.camera.position, pix = linePix();
+  for (let i = BRASS.length - 1; i >= 0; i--) {
+    const b = BRASS[i];
+    b.t += wdt;
+    if (b.t >= b.life) { BRASS.splice(i, 1); continue; }
+    if (stepLoose(b, wdt, b.d / 2, 0.4) && b.hits === 1 && b.own && Math.random() < 0.65)
+      playBuf('tink:' + randi(0, 2), { gain: 0.05, rate: rand(0.92, 1.15) });
+    const px = b.p.distanceTo(cp) * pix, d = Math.max(b.d, px * 1.1);   // never thinner than a render line, or the dither eats it
+    LT.mb.compose(b.p, b.q, LT.vb2.set(d, Math.max(b.l, px * 2.2), d));
+    F.brass.push(LT.mb, BLOOM.brass);
+  }
+  for (let i = DROPS.length - 1; i >= 0; i--) {
+    const m = DROPS[i];
+    m.t += wdt;
+    if (m.t >= m.life) { DROPS.splice(i, 1); continue; }
+    if (stepLoose(m, wdt, Math.min(m.sx, m.sz) / 2, 0.22) && m.hits === 1 && m.own) playBuf('fall:0', { gain: 0.14, rate: rand(2.1, 2.5) });
+    LT.mb.compose(m.p, m.q, LT.vb2.set(m.sx, m.sy, m.sz));
+    D.metal.push(LT.mb, m.col);
+  }
+}
+
 function drawViewmodel(s, wdt, set) {
   const cam3 = VIEW.camera, key = s.pistol ? 'pistol' : s.weapon;
-  if (s.recoil > FPV.lastRecoil + 0.02) { FPV.kickV += 10 + RECOIL_KICK[key] * 30; FPV.flashT = 0.045; }
+  if (s.recoil > FPV.lastRecoil + 0.02) {
+    FPV.kickV += 10 + RECOIL_KICK[key] * 30; FPV.flashT = VM_FLASH; FPV.flashRot = rand(0, TAU); FPV.flashSc = rand(0.85, 1.15);
+    if (EJECT[key]) FPV.ejectT = key === 'sniper' ? 0.45 : 1e-4;   // the bolt gun throws its brass when the bolt is worked
+  }
   FPV.lastRecoil = s.recoil;
   springStep(FPV, 'kick', 'kickV', wdt, 240, 18);
   FPV.flashT = Math.max(0, FPV.flashT - wdt);
   const moved = FPV.px == null ? 0 : Math.hypot(s.x - FPV.px, s.y - FPV.py);
+  if (FPV.px != null && wdt > 0) { FPV.vx = (s.x - FPV.px) * XS / wdt; FPV.vz = (s.y - FPV.py) * XS / wdt; }
   FPV.px = s.x; FPV.py = s.y;
   const moveW = clamp(moved / Math.max(wdt, 1e-4) / 220, 0, 1);
   FPV.bobP += wdt * 9 * (0.2 + moveW);
   FPV.sway = approach(FPV.sway, clamp(-aim.lookDx * 2.2, -0.05, 0.05), 9, wdt);
   const A = FPV.adsK, rel = 1 - A, ads = adsInfo(key, s), muz = GUN_MUZ[key] || GUN_MUZ.ar;
   const wall = clearRun(s.x, s.y, s.x + Math.sin(aim.yaw) * 60, s.y - Math.cos(aim.yaw) * 60, 4) ? 0 : 1;   // muzzle against a wall: bring it in
-  const rl = s.reloadT > 0 ? 1 - s.reloadT / s.reloadDur : -1, rdip = rl < 0 ? 0 : Math.sin(clamp(rl, 0, 1) * Math.PI);
-  const ox = (0.13 + Math.sin(FPV.bobP) * 0.012 * moveW + FPV.sway) * rel;
+  const H = VM_HOLD[key] || VM_HOLD.ar, sp = splitMag(gunParts(key, s));
+  const rl = s.reloadT > 0 && s.reloadDur > 0 ? clamp(1 - s.reloadT / s.reloadDur, 0, 1) : -1;
+  const R = rl >= 0 ? vmReload(key, rl, sp, H.sup) : null;
+  const ox = (0.13 + Math.sin(FPV.bobP) * 0.012 * moveW + FPV.sway) * rel + (R ? R.gx : 0);
   // at full ADS the gun sits so its sight line (rear aperture / eyepiece at ads.y, ads.z) is dead on the camera axis, ads.relief in front of the eye
-  const oy = lerp(-0.15, -ads.y * VM_S, A) + Math.abs(Math.cos(FPV.bobP)) * 0.01 * moveW * rel - FPV.kick * 0.028 - rdip * 0.09 - wall * 0.05 * rel;
-  const oz = lerp(-0.52, -(ads.relief + ads.z * VM_S), A) + FPV.kick * 0.05 * rel + wall * 0.16 * rel;
-  TMP.e.set(FPV.kick * 0.14 + rdip * 0.5 + 0.05 * rel, (0.1 + FPV.sway * 2) * rel, (0.06 + rdip * 0.7) * rel, 'YXZ');
+  const oy = lerp(-0.15, -ads.y * VM_S, A) + Math.abs(Math.cos(FPV.bobP)) * 0.01 * moveW * rel - FPV.kick * 0.028 - wall * 0.05 * rel + (R ? R.gy : 0);
+  const oz = lerp(-0.52, -(ads.relief + ads.z * VM_S), A) + FPV.kick * 0.05 * rel + wall * 0.16 * rel + (R ? R.gz : 0);
+  TMP.e.set(FPV.kick * 0.14 + 0.05 * rel + (R ? R.rx : 0), (0.1 + FPV.sway * 2) * rel + (R ? R.ry : 0), 0.06 * rel + (R ? R.rz : 0), 'YXZ');
   TMP.q.setFromEuler(TMP.e);
   TMP.m2.compose(TMP.v.set(ox, oy, oz), TMP.q, TMP.s.set(VM_S, VM_S, VM_S));
   TMP.m.multiplyMatrices(cam3.matrixWorld, TMP.m2);
-  vmRig[HJ.gun].matrixWorld.copy(TMP.m);
+  const gunM = vmRig[HJ.gun].matrixWorld.copy(TMP.m);
   const rec = views.get(s);
   const pal = rec && rec.pal ? rec.pal : soldierPalette(s.slot, s.color, s.helm);
   const glass = !s.pistol && SIGHTS[s.sight] && SIGHTS[s.sight].over && SIGHTS[s.sight].over !== 'dot';
+  // where the magazine is: in the gun, sliding out with the hand, gone, or coming up in the hand; a fired rocket leaves the tube empty
+  const magAt = R ? R.mag : key === 'rocket' && s.mag <= 0 ? null : 'seat';
   if (!(glass && A > 0.85)) {   // settled behind a magnified optic, the picture is the optic's window (#sight), not the tube's insides
-    emitParts(vmRig, gunParts(key, s), pal, set);
-    emitParts(vmRig, vmHandParts(), pal, set);
-    if (rl > 0.26 && rl < 0.64) emitParts(vmRig, vmMagParts(), pal, set);
+    emitParts(vmRig, sp.body, pal, set);
+    if (sp.mag.length && magAt) {
+      if (magAt === 'seat') emitXf(gunM, sp.mag, pal, set);
+      else { LT.mx.multiplyMatrices(gunM, LT.mh.makeTranslation(R.mx, R.my, R.mz)); emitXf(LT.mx, sp.mag, pal, set); }
+    }
+    emitXf(gunM, vmGripParts(key), pal, set);
+    const wg = VM_WRIST['g' + key], el = VM_ELBOW;
+    drawArm(LT.va.set(wg[0], wg[1], wg[2]).applyMatrix4(gunM), LT.vc.set(el.r[0], el.r[1], el.r[2]).applyMatrix4(cam3.matrixWorld), pal, set);
+    if (R) LT.mh.compose(LT.vh.set(R.hx, R.hy, R.hz), LT.qh.setFromEuler(LT.eh.set(R.hrx, R.hry, R.hrz)), LT.one);
+    else LT.mh.makeTranslation(H.sup[0], H.sup[1], H.sup[2]);
+    LT.mx.multiplyMatrices(gunM, LT.mh);
+    emitXf(LT.mx, vmSupportParts(key), pal, set);
+    const ws = VM_WRIST['s' + key];
+    drawArm(LT.va.set(ws[0], ws[1], ws[2]).applyMatrix4(LT.mx), LT.vc.set(el.l[0], el.l[1], el.l[2]).applyMatrix4(cam3.matrixWorld), pal, set);
   }
-  {   // the muzzle in the world: the model's own barrel tip, turned with the weapon — tracers and the flash start there, not at the body
+  if (R && key !== 'rocket' && sp.mag.length && FPV.lastRl < 0.27 && rl >= 0.27) {   // the empty magazine leaves the hand and falls
+    LT.vl.set(sp.grip[0] + R.mx, sp.grip[1] + sp.size[1] / 2 + R.my, sp.grip[2] + R.mz).applyMatrix4(gunM);
+    gunM.decompose(LT.vb, LT.ql, LT.vb2);
+    LT.vh.set(-0.4, -1, 0.15).transformDirection(gunM).multiplyScalar(1.4);
+    LT.vh.x += FPV.vx; LT.vh.z += FPV.vz;
+    dropLoose(LT.vl, LT.ql, sp.size[0] * VM_S, sp.size[1] * VM_S, sp.size[2] * VM_S, pal[sp.mag[0].col] || WHITE, true, LT.vh);
+  }
+  FPV.lastRl = rl;
+  if (FPV.ejectT > 0) { FPV.ejectT -= wdt; if (FPV.ejectT <= 0) throwBrass(gunM, key, VM_S, true, FPV.vx, FPV.vz); }
+  {   // the muzzle in the world: the model's own barrel tip, turned with the weapon — tracers and the bloom start there, not at the body
     TMP.v.set(0, muz.y * VM_S, muz.z * VM_S).applyQuaternion(TMP.q).add(TMP.v2.set(ox, oy, oz));
     TMP.m2.compose(TMP.v, TMP.q, TMP.s.set(1, 1, 1));
     TMP.m.multiplyMatrices(cam3.matrixWorld, TMP.m2);
     FPV.muz = FPV.muz || TMP.v.clone();
     FPV.muz.setFromMatrixPosition(TMP.m);
-    if (FPV.flashT > 0) {
-      TMP.m2.compose(TMP.v, TMP.q, TMP.s.set(0.22, 0.22, 0.22));
-      TMP.m.multiplyMatrices(cam3.matrixWorld, TMP.m2);
-      VIEW.fx.flash.push(TMP.m, colorOf('#ffe9a3'));
+    if (FPV.flashT > 0) {   // down the sights the bloom sits in the middle of the picture: keep it from washing the sight out
+      const k = FPV.flashT / VM_FLASH, a = 1 - 0.55 * A, big = FLASH_SIZE[key] || 1;
+      bloomAt(FPV.muz, 0.3 * FPV.flashSc * big * a, BLOOM.wide, 0.5 * k * a, FPV.flashRot);
+      bloomAt(FPV.muz, 0.11 * FPV.flashSc * big, BLOOM.core, 0.9 * k * a, FPV.flashRot + 0.8);
     }
   }
   TMP.q.identity();
@@ -4014,7 +4526,8 @@ function drawSoldier(s, wdt, set) {
   }
   r.yaw = s.dive || r.yaw == null ? rootT : approachAng(r.yaw, rootT, 10, wdt);
   const twist = s.horse || s.dive ? 0 : clamp(angWrap(aimYaw - r.yaw), -1.2, 1.2);
-  if (s.recoil > r.lastRecoil + 0.02) r.kickV += RECOIL_KICK[key] * 22;
+  const fired = s.recoil > r.lastRecoil + 0.02;
+  if (fired) r.kickV += RECOIL_KICK[key] * 22;
   r.lastRecoil = s.recoil;
   if (s.hp < r.lastHp - 0.4) r.flinV += 9;
   r.lastHp = s.hp;
@@ -4044,17 +4557,32 @@ function drawSoldier(s, wdt, set) {
   if (s.horse) mountRider(r, X, Z, wdt, r.moveW, r.phase);
   else placeRoot(J, X, Z, r.yaw, pitch, 1, 1, 1, lift);
   const blink = s.invuln > 0 && Math.floor(s.invuln * 12) % 2 === 0;
+  const rt = s.reloadT > 0 && s.reloadDur > 0 ? 1 - s.reloadT / s.reloadDur : -1, own = s.slot === state.controlled;
   if (!blink) {
-    emitParts(J, soldierParts(key, true, isWrenCol(s.color), s), r.pal, set);
-    if (s.reloadT > 0) {
-      const rt = 1 - s.reloadT / s.reloadDur;
-      if (rt > 0.26 && rt < 0.64) emitParts(J, magHandParts(), r.pal, set);
-    }
+    const parts = soldierParts(key, true, isWrenCol(s.color), s);
+    const magOut = (rt >= 0.14 && rt < 0.62) || (key === 'rocket' && s.mag <= 0 && rt < 0);   // the magazine is out of the gun, or the tube is empty
+    emitParts(J, magOut ? splitMag(parts).body : parts, r.pal, set);
+    if ((rt >= 0.14 && rt < 0.24 && key !== 'rocket') || (rt >= 0.44 && rt < 0.62)) emitParts(J, magHandParts(), r.pal, set);
     if (s.horse) emitParts(r.H, horseParts(), r.pal, set);
   }
+  gunLife(r, J, key, rt, fired, own, wdt);
   decal(VIEW.fx.shadow, X, Z, s.horse ? 1.9 : 0.95, 0, WHITE, 0.02);
   if (s.slot !== state.controlled && s.hp < s.maxHp - 0.05) hpBar(X, Z, s.horse ? 2.45 : 2.05, s.hp / s.maxHp, '#9ed34a');
 }
+function gunLife(r, J, kind, rt, fired, own, wdt) {   // muzzle bloom, brass and the dropped magazine for a character's drawn gun
+  const gunM = J[HJ.gun].matrixWorld;
+  if (fired) { r.flashT = 0.07; r.flashRot = rand(0, TAU); if (EJECT[kind]) r.ejectT = kind === 'sniper' ? 0.45 : 1e-4; }
+  const muz = GUN_MUZ[kind] || ENEMY_MUZ[kind];
+  if (muz) muzzleBloom(r, gunM, muz.y, muz.z, kind, wdt);
+  if (r.ejectT > 0) { r.ejectT -= wdt; if (r.ejectT <= 0) throwBrass(gunM, kind, 1, own, 0, 0); }
+  if (kind !== 'rocket' && rt >= 0.24 && r.lastRt < 0.24) {   // let go of the empty magazine on the way down to the pouch
+    LT.vl.set(0, -0.36, -0.03).applyMatrix4(J[HJ.fArmL].matrixWorld);
+    J[HJ.fArmL].matrixWorld.decompose(LT.vb, LT.ql, LT.vb2);
+    dropLoose(LT.vl, LT.ql, 0.045 * LT.vb2.x, 0.17 * LT.vb2.x, 0.09 * LT.vb2.x, r.pal.gunm || WHITE, own, LT.vh.set(rand(-0.4, 0.4), -0.5, rand(-0.4, 0.4)));
+  }
+  r.lastRt = rt;
+}
+const ENEMY_MUZ = { ak: { y: 0.04, z: -0.63 }, pkm: { y: 0.03, z: -0.67 } };
 function drawEnemy(e, wdt, set) {
   const r = recFor(e), J = r.J;
   if (!r.pal) r.pal = enemyPalette(e.col, !!e.boss);
@@ -4073,7 +4601,8 @@ function drawEnemy(e, wdt, set) {
   const twist = clamp(angWrap(aimYaw - r.yaw), -1, 1);
   if (e.flash > r.lastFlash + 0.01) r.flinV += 8;
   r.lastFlash = e.flash;
-  if (e.ranged && e.atk > r.lastAtk + 0.05) r.kickV += 5;
+  const fired = e.ranged && e.atk > r.lastAtk + 0.05;
+  if (fired) r.kickV += 5;
   r.lastAtk = e.atk;
   springStep(r, 'kick', 'kickV', wdt, 300, 20);
   springStep(r, 'flin', 'flinV', wdt, 180, 16);
@@ -4106,7 +4635,10 @@ function drawEnemy(e, wdt, set) {
   J[HJ.head].rotation.x += r.flin * 0.4;
   if (e.horse) mountRider(r, X, Z, wdt, Math.max(r.moveW, 0.6), r.phase);
   else placeRoot(J, X, Z, r.yaw, 0, look[0], look[1], look[2]);
-  emitParts(J, enemyParts(e.type), r.pal, set, e.flash > 0);
+  const ert = e.ranged && e.relT > 0 ? 1 - e.relT / 1.6 : -1, ekind = e.type === 'gunner' ? 'pkm' : e.type === 'grunt' ? 'ak' : null;
+  emitParts(J, ert >= 0.14 && ert < 0.62 ? splitMag(enemyParts(e.type)).body : enemyParts(e.type), r.pal, set, e.flash > 0);
+  if ((ert >= 0.14 && ert < 0.24) || (ert >= 0.44 && ert < 0.62)) emitParts(J, magHandParts(), r.pal, set, e.flash > 0);
+  if (ekind) gunLife(r, J, ekind, ert, fired, false, wdt);
   if (e.horse) emitParts(r.H, horseParts(true), r.pal, set, e.flash > 0);
   if (e.spotter && Math.sin(now / 180) > 0) {
     TMP.m.multiplyMatrices(J[HJ.torso].matrixWorld, TMP.m2.makeTranslation(0.1, 1.16, 0.26));
@@ -4243,9 +4775,11 @@ function buildFxBatches() {
     hpBack: new Batch(plane, new THREE.MeshBasicMaterial({ fog: false, depthWrite: false }), 64, 6),
     hpFill: new Batch(plane, new THREE.MeshBasicMaterial({ fog: false, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 }), 64, 7),
     arrow: new Batch(new THREE.ConeGeometry(0.5, 1, 3), new THREE.MeshBasicMaterial({ fog: false, depthTest: false }), 4, 11),
+    bloom: new Batch(plane, new THREE.MeshBasicMaterial({ map: T.bloom, transparent: true, opacity: 0.62, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }), 96, 6),
+    brass: new Batch(VIEW.kit.cyl, VIEW.mats.shaded, 200),
   };
 }
-const FX_FRAME = ['shadow', 'crater', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow'];
+const FX_FRAME = ['shadow', 'crater', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass'];
 let TRACER_COLS = null;   // tracer palette, built once the engine is up
 const hash2 = (x, y) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };
 function muzzleWorld(s, out) {   // where the drawn weapon's barrel actually ends, this frame
@@ -4291,7 +4825,7 @@ function drawFx() {
     TMP.q.setFromUnitVectors(TMP.zax, TMP.dir);
     // Sized in render lines, not metres: the same on screen at 1 m or 40 m. A fixed size in metres is a thick
     // bar right in front of your eye and nothing at all down the street.
-    const px = TMP.bp.distanceTo(camPos) * PIX;   // one render line, at this round's distance
+    const px = Math.min(TMP.bp.distanceTo(camPos), TMP.v.copy(TMP.bp).addScaledVector(TMP.dir, -tail).distanceTo(camPos)) * PIX;   // one render line at the streak's nearer end: the same at range, never a wedge out of your own barrel
     const coreW = px * (rocket ? 3 : sniper ? 2 : 1.6);
     const glowW = px * (rocket ? 7 : 5);
     const core = rocket ? TR.rcore : b.hostile ? (hot ? TR.hcore : TR.hsoft) : (hot ? TR.core : TR.soft);
@@ -5137,7 +5671,8 @@ function updateCamera3(dt) {
   cam.shake = Math.max(0, cam.shake - dt * 26);
   cam.punch = Math.max(0, cam.punch - dt * 0.35);
   cam.nudgeT = Math.max(0, cam.nudgeT - dt);
-  FPV.adsK = approach(FPV.adsK, aim.ads && manualAim() ? 1 : 0, heroSight().rate, dt);   // sights come up at the optic's own pace, in both views
+  const reloading = soldiers[state.controlled] && soldiers[state.controlled].reloadT > 0;   // the sights come down while you reload, and back up after
+  FPV.adsK = approach(FPV.adsK, aim.ads && manualAim() && !reloading ? 1 : 0, heroSight().rate, dt);   // sights come up at the optic's own pace, in both views
   steerFromCursor(dt);
   {   // recoil recovery: the muzzle drifts back to where you were pointing once you stop firing
     const rate = dt * (aim.fire ? 0.35 : 1.8);
@@ -5382,7 +5917,7 @@ function drawIncoming(sh, now) {   // warning ring, then the round itself fallin
   const F = VIEW.fx, D = VIEW.dyn, X = sh.x * XS, Z = sh.y * XS;
   if (sh.kind === 'crate') { drawCrateDrop(sh, now); return; }
   const pulse = 0.85 + Math.sin(now / 90) * 0.15;
-  decal(F.ring, X, Z, (sh.kind === 'fire' ? 1.3 : 2.3) * pulse, 0, colorOf(sh.kind === 'mortar' ? '#ff4a32' : '#ffb040'), 0.04);
+  decal(F.ring, X, Z, (sh.kind === 'fire' ? 1.3 : 2.3) * pulse, 0, colorOf('#ffb040'), 0.04);
   if (sh.t >= 0.35) return;
   const h = sh.t / 0.35 * 22 + 0.2;
   TMP.q.identity();
@@ -5500,6 +6035,7 @@ function adaptQuality() {}   // the N64 line count is fixed, so there is nothing
 function viewEnterBattle() {
   if (!VIEW.ready) return;
   sweepViews(true);
+  BRASS.length = 0; DROPS.length = 0;
   corpseSig = '';
   buildProps();
   rebuildStatic();
@@ -5525,6 +6061,7 @@ function renderView(dt) {
   for (const e of enemies) drawEnemy(e, wdt, D);
   for (const b of bodies) drawBody(b, wdt, D);
   syncCorpses(wdt, D);
+  drawLoose(wdt);
   drawFx();
   const ctl = soldiers[state.controlled];
   if (ctl && ctl.alive && state.mode === 'play')
@@ -5699,6 +6236,7 @@ function showSettings() {
     <div class="setrow"><span>Kill feed</span><input type="checkbox" id="o_kf"${on(o.killfeed)}></div>
     <div class="setrow"><span>Vibration</span><input type="checkbox" id="o_vb"${on(o.vibe)}${navigator.vibrate ? '' : ' disabled'}></div>
     <div class="setrow"><span>Sound</span><input type="checkbox" id="o_snd"${on(!meta.muted)}></div>
+    <div class="setrow"><span>Music</span><input type="range" id="o_mus" min="0" max="1" step="0.05" value="${o.music == null ? 0.6 : o.music}"></div>
     </div>
     <button class="cta" id="mbtn">Done</button>
     <p class="note">Manual: hold left mouse to fire, right mouse for sights; click once to capture the mouse, Esc frees it.
@@ -5713,6 +6251,7 @@ function showSettings() {
   bind('o_dd', 'dmgDir', e => e.checked);
   bind('o_kf', 'killfeed', e => e.checked);
   bind('o_vb', 'vibe', e => e.checked);
+  bind('o_mus', 'music', e => +e.value);
   const snd = $('o_snd');
   if (snd) snd.onchange = () => { meta.muted = !snd.checked; saveMeta(); };
   $('mbtn').onclick = hideModal;
@@ -5735,6 +6274,11 @@ function hideModal() { el.modal.style.display = 'none'; }
 let selectedTid = -1;
 function renderMap() {
   el.theatertag.textContent = `Theater ${ROMAN[meta.theater] || meta.theater + 1} · Operations`;
+  if (!TERRITORIES[selectedTid]) {   // open on something you can fight for, so DEPLOY is one tap away
+    const act = TERRITORIES[meta.activeTid];
+    const pick = act && terrAttackable(act) ? act : TERRITORIES.find(tt => terrAttackable(tt));
+    if (pick) selectedTid = pick.id;
+  }
   const NS = 'http://www.w3.org/2000/svg';
   const svg = el.mapsvg;
   svg.innerHTML = '';
@@ -5788,56 +6332,75 @@ function renderMap() {
     g.addEventListener('click', () => { selectedTid = t.id; renderMap(); });
     svg.appendChild(g);
   }
-  // deploy bar
+  // the command column: the sector, DEPLOY, and the loadout you are carrying
   const t = TERRITORIES[selectedTid] || null;
   const db = $('deploybtn');
   if (!t) {
     $('terrmeta').textContent = 'Select a territory';
     $('terrname').textContent = 'Operations';
+    $('terrhint').textContent = 'Pick an orange ring on the map to attack it.';
     db.disabled = true; db.onclick = null;
   } else {
     const owned = terrOwned(t), atk = terrAttackable(t);
     const prog = meta.terr[t.id].progress;
     $('terrmeta').textContent = `Tier ${effTier(t)} · ` + (owned ? 'Held' : atk ? (prog > 0 ? `${Math.floor(prog)}% taken` : 'Attackable') : 'Out of reach');
     $('terrname').textContent = t.name;
+    $('terrhint').textContent = owned ? 'Held by your company.'
+      : atk ? `Four a side · ${CFG.enemyTickets + CFG.enemyTicketsPerTier * effTier(t)} enemy reinforcements`
+      : 'Take a neighbouring sector first.';
     db.disabled = !atk;
     db.onclick = atk ? () => { meta.activeTid = t.id; saveMeta(); enterBattle(t.id); } : null;
   }
+  const lk = WEAPONS[meta.loadout] ? meta.loadout : 'ar', lw = WEAPONS[lk], la = attFor(lk);
+  $('kitname').textContent = lw.name;
+  $('kitsub').textContent = (SIGHT_OPTS[lk] ? SIGHTS[la.sight].name + ' · ' : '') + `${la.ext && lw.ext ? lw.ext : lw.mag} rds`;
 }
 
 // ---------- TEAM / ARMORY SCREEN ----------
-function renderTeam() {
-  const box = $('loadout');
-  box.innerHTML = '';
+const WCLASS = { smg: 'Submachine gun', ar: 'Assault rifle', lmg: 'Light machine gun', sniper: 'Sniper rifle', rocket: 'Launcher' };
+function renderTeam() {   // the rail picks the gun; the panel lays out the one you carry
   if (!meta.attach) meta.attach = freshAttach();
+  const cur = WEAPONS[meta.loadout] ? meta.loadout : 'ar';
+  const list = $('wlist');
+  list.innerHTML = '';
   for (const k of WKEYS) {
-    const w = WEAPONS[k], on = (meta.loadout || 'ar') === k, att = attFor(k), opts = SIGHT_OPTS[k] || [];
-    const card = document.createElement('div');   // a div, not a button: the attachment buttons live inside it
-    card.className = 'wpick' + (on ? ' on' : '');
-    card.tabIndex = 0;
-    const sightBtns = opts.map(sk => `<button class="att${att.sight === sk ? ' on' : ''}" data-sight="${sk}">${SIGHTS[sk].name}</button>`).join('');
-    const magBtns = w.ext ? `<button class="att${att.ext ? '' : ' on'}" data-ext="0">STANDARD ${w.mag}</button>` +
-                            `<button class="att${att.ext ? ' on' : ''}" data-ext="1">EXTENDED ${w.ext}</button>` : '';
-    const note = opts.length ? SIGHTS[att.sight].note + (att.ext ? ` Extended magazine: ${w.ext} rounds, reload ${Math.round((EXT_RELOAD - 1) * 100)}% slower.` : '') : '';
-    card.innerHTML = `
-      <div class="wtop"><span>${w.name}</span><b>${squadDmg(k).toFixed(1)} DMG</b></div>
-      <div class="wstats">ROF ${(1 / w.cd).toFixed(1)}/s · MAG ${att.ext ? w.ext : w.mag} · SPARE ${w.spare}${w.pierce ? ' · PIERCE ' + w.pierce : ''}${w.aoe ? ' · BLAST ' + w.aoe : ''}</div>
-      <div class="wstats">${(() => { const f = FALLOFF[k], reach = ((w.reach || w.range) / 40).toFixed(0);
-        return f ? `REACH ${reach} m · full damage to ${(f.near / 40).toFixed(0)} m, ${Math.round(f.min * 100)}% at ${reach} m`
-                 : `REACH ${reach} m · no drop-off`; })()}</div>
-      ${opts.length ? `<div class="attrow"><span>SIGHT</span>${sightBtns}</div>` : ''}
-      ${magBtns ? `<div class="attrow"><span>MAG</span>${magBtns}</div>` : ''}
-      ${note ? `<div class="wnote">${note}</div>` : ''}`;
-    card.onclick = () => { meta.loadout = k; saveMeta(); renderTeam(); };
-    card.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.onclick(); } };
-    card.querySelectorAll('.att').forEach(b => b.onclick = e => {   // an attachment pick also picks the gun
-      e.stopPropagation();
-      const a = meta.attach[k] || (meta.attach[k] = { sight: opts[0], ext: false });
-      if (b.dataset.sight) a.sight = b.dataset.sight; else a.ext = b.dataset.ext === '1';
-      meta.loadout = k; saveMeta(); renderTeam();
-    });
-    box.appendChild(card);
+    const b = document.createElement('button');
+    b.className = 'wrow' + (k === cur ? ' on' : '');
+    b.innerHTML = `<span class="wr-n">${WEAPONS[k].name}</span><span class="wr-d">${squadDmg(k).toFixed(1)}</span><span class="wr-c">${WCLASS[k] || ''}</span>`;
+    b.onclick = () => { meta.loadout = k; saveMeta(); renderTeam(); };
+    list.appendChild(b);
   }
+  const k = cur, w = WEAPONS[k], att = attFor(k), opts = SIGHT_OPTS[k] || [];
+  const mag = att.ext && w.ext ? w.ext : w.mag, reach = (w.reach || w.range) / 40;
+  const top = f => Math.max(...WKEYS.map(f));
+  const stat = (label, val, frac) =>
+    `<div class="lstat"><span class="k">${label}</span><span class="v">${val}</span><span class="bar"><i style="width:${Math.round(clamp(frac, 0.04, 1) * 100)}%"></i></span></div>`;
+  const f = FALLOFF[k];
+  const note = (opts.length ? SIGHTS[att.sight].note + ' ' : '')
+    + (f ? `Full damage to ${Math.round(f.near / 40)} m, ${Math.round(f.min * 100)}% by ${Math.round(reach)} m.` : 'No damage drop-off.')
+    + (w.pierce ? ` Pierces ${w.pierce} targets.` : '') + (w.aoe ? ` ${(w.aoe / 40).toFixed(1)} m blast.` : '')
+    + (att.ext ? ` The extended magazine reloads ${Math.round((EXT_RELOAD - 1) * 100)}% slower.` : '');
+  const box = $('loadout');
+  box.innerHTML = `
+    <div class="lo-head"><div><div class="lo-cls">${WCLASS[k] || ''}</div><h2 class="xl lo-name">${w.name}</h2></div><span class="lo-tag">Equipped</span></div>
+    <div class="lo-stats">
+      ${stat('Damage', squadDmg(k).toFixed(1), squadDmg(k) / top(squadDmg))}
+      ${stat('Fire rate', (1 / w.cd).toFixed(1) + '/s', (1 / w.cd) / top(q => 1 / WEAPONS[q].cd))}
+      ${stat('Range', Math.round(reach) + ' m', (w.reach || w.range) / top(q => WEAPONS[q].reach || WEAPONS[q].range))}
+      ${stat('Magazine', `${mag} <small>×${w.spare}</small>`, Math.sqrt(mag / top(q => WEAPONS[q].ext || WEAPONS[q].mag)))}
+      ${stat('Mobility', Math.round((w.moveMul || 1) * 100) + '%', ((w.moveMul || 1) - 0.6) / 0.4)}
+      ${stat('Reload', (w.reload * (att.ext ? EXT_RELOAD : 1)).toFixed(1) + ' s', 1 - (w.reload - 1.2) / 3.4)}
+    </div>
+    ${opts.length ? `<div class="attrow"><span>Sight</span>${opts.map(sk => `<button class="att${att.sight === sk ? ' on' : ''}" data-sight="${sk}">${SIGHTS[sk].name}</button>`).join('')}</div>` : ''}
+    ${w.ext ? `<div class="attrow"><span>Mag</span><button class="att${att.ext ? '' : ' on'}" data-ext="0">STANDARD ${w.mag}</button><button class="att${att.ext ? ' on' : ''}" data-ext="1">EXTENDED ${w.ext}</button></div>` : ''}
+    <p class="lo-note">${note}</p>
+    <div class="lo-actions"><button class="cta" id="lodone">Done</button></div>`;
+  box.querySelectorAll('.att').forEach(b => b.onclick = () => {
+    const a = meta.attach[k] || (meta.attach[k] = { sight: opts[0], ext: false });
+    if (b.dataset.sight) a.sight = b.dataset.sight; else a.ext = b.dataset.ext === '1';
+    saveMeta(); renderTeam();
+  });
+  $('lodone').onclick = () => showScreen('map');
 }
 
 // nav buttons
@@ -5903,6 +6466,7 @@ loadThree().then(() => { const g = document.getElementById('bootgl'); if (g) g.i
 // title screen with loading lines (click/key to skip)
 (function bootSequence() {
   const bootEl = $('boot'), linesEl = $('bootlines');
+  if (isTouch) bootEl.querySelector('.boot-press').textContent = 'Tap to start';
   const lines = [
     'Reading the war journal . . .',
     loadedFromSave
