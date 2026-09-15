@@ -121,10 +121,9 @@ const GUN_KICK = { smg: 0.6, ar: 1.0, lmg: 1.4, sniper: 2.6, rocket: 3.2, pistol
 function fire(s, target, fromPlayer, angle) {   // angle set = fired where the player is aiming, not at a target
   const key = s.pistol ? 'pistol' : s.weapon, w = s.pistol ? SIDEARM : WEAPONS[s.weapon];
   const dx = target ? target.x - s.x : 0, dy = target ? target.y - s.y : 0;
-  const spread = w.spread * (fromPlayer && aim.ads ? heroSight().spread : 1) + (fromPlayer ? 0 : 0.03);
-  const jit = rand(-1, 1) * spread, a = (angle != null ? angle : Math.atan2(dy, dx)) + jit;
+  const jit = fromPlayer ? 0 : rand(-1, 1) * (w.spread + 0.03), a = (angle != null ? angle : Math.atan2(dy, dx)) + jit;   // your own spread is the 3D cone below
   s.aim = a; s.recoil = 0.09;
-  if (fromPlayer && manualAim()) {   // the weapon climbs: your next round goes where the recoil left the muzzle
+  if (fromPlayer) {   // the weapon climbs: your next round goes where the recoil left the muzzle
     const rk = RECOIL_KICK[key] || 0.2, steady = aim.ads ? 0.6 : 1;
     const kx = rand(-1, 1) * rk * 0.022 * steady;
     aim.pitch = clamp(aim.pitch + rk * 0.055 * steady, -0.7, 0.7);
@@ -137,7 +136,7 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   if (fromPlayer) { state.shots++; MUS.heat = performance.now(); }
   const mz = (s.pistol ? SIDEARM.len : w.len) + 6;   // the barrel tip: where the round actually leaves the weapon
   let bx = s.x + Math.cos(a) * mz, by = s.y + Math.sin(a) * mz, bz = 0, ux = Math.cos(a), uy = Math.sin(a), uz = 0, ballistic = false;
-  if (fromPlayer && manualAim()) {   // your round flies in 3D to whatever is under the crosshair, spread around that line
+  if (fromPlayer) {   // your round flies in 3D to whatever is under the crosshair, spread around that line
     const R = crosshairRay(s);
     crosshairPoint(R, (w.reach || w.range) + 400, AIMP);
     if (fpvActive()) { bx = R.ox + R.dx * 18; by = R.oy + R.dy * 18; bz = R.oz + R.dz * 18; }   // from just ahead of the eyes; the tracer is drawn from the barrel you see
@@ -276,7 +275,6 @@ function killSoldier(s) {
 function beginDeathCam() {   // hold on your soldier as they go down, before a reinforcement brings you back
   state.mode = 'dying'; state.dyingT = 0;
   state.slow = Math.max(state.slow, CFG.deathCam * 0.75);
-  lockRelease();
   sfxHeartbeat();
 }
 function beginFail() {

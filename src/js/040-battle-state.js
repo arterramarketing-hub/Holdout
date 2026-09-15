@@ -9,7 +9,7 @@ const state = {   // per-battle / session
   slow: 0, slowCd: 0,   // wave-clear slow-mo beat
   bossSpawned: false, bossRef: null, spotterSeen: false,
   streakN: 0, streakT: 0,
-  autoTarget: null, flyby: null,
+  crossTarget: null, flyby: null,
   tod: 1, weather: 'clear',
 };
 let screen = 'map'; // map | team | battle

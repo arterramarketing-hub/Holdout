@@ -22,7 +22,8 @@ function loadMeta() {
     }
     const optsV = save.opts && save.opts.v;   // read the SAVED version: Object.assign fills v from the defaults
     meta.opts = Object.assign(freshOpts(), save.opts || {});
-    if (!optsV) { meta.opts.v = 2; meta.opts.fpv = true; meta.opts.scheme = 'manual'; }   // first person is the default now
+    if (!optsV) { meta.opts.v = 2; meta.opts.fpv = true; }   // first person is the default now
+    delete meta.opts.scheme;   // auto-fire is gone: a save that used it aims by hand now, in the view it had
     meta.attach = freshAttach();   // per-gun, so a save from before attachments (or with a gun missing) still gets every default
     for (const k in meta.attach) Object.assign(meta.attach[k], (save.attach || {})[k] || {});
     return;

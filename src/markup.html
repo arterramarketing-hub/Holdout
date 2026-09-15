@@ -29,30 +29,45 @@
   <div class="hud" id="hint"></div>
   <div class="hud" id="topbar"><button id="tomap">◂ MAP</button><button id="tocfg" title="Settings">⚙</button></div>
   <div class="hud" id="supports"></div>
-  <button class="tbtn" id="lockbtn">◉</button>
   <button class="tbtn" id="firebtn2" aria-label="Fire"><svg class="bullet" viewBox="0 0 24 48" aria-hidden="true"><path d="M12 1.5C15.7 5.2 17 10.6 17 16.4V18H7v-1.6C7 10.6 8.3 5.2 12 1.5Z"/><path d="M6.6 19.6h10.8v20.9H6.6z"/><path d="M5.2 41.8h13.6v4.7H5.2z"/></svg></button>
   <button class="tbtn" id="firebtn" aria-label="Fire"><svg class="bullet" viewBox="0 0 24 48" aria-hidden="true"><path d="M12 1.5C15.7 5.2 17 10.6 17 16.4V18H7v-1.6C7 10.6 8.3 5.2 12 1.5Z"/><path d="M6.6 19.6h10.8v20.9H6.6z"/><path d="M5.2 41.8h13.6v4.7H5.2z"/></svg></button>
   <button class="tbtn" id="adsbtn" aria-label="Aim down sights">ADS</button>
   <button class="tbtn" id="reloadbtn">⟳</button>
 </div>
 
-<!-- ============ START MENU: the operations map ============ -->
+<!-- ============ START MENU: the theater map beside the briefing ============ -->
 <div id="mapscr" class="scr">
-  <div class="menu">
-    <div class="menu-map">
-      <svg id="mapsvg" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet"></svg>
-      <div class="map-key"><span class="k-held">Held</span><span class="k-atk">Attackable</span><span class="k-out">Out of reach</span></div>
-    </div>
-    <aside class="menu-side">
-      <div class="ttl"><div class="eyebrow" id="theatertag">Theater I · Operations</div><h1 class="xl">Holdout</h1></div>
-      <div class="sector">
-        <div id="terrmeta">Select a territory</div>
-        <div class="xl" id="terrname">Operations</div>
-        <div id="terrhint">Pick an orange ring on the map to attack it.</div>
+  <div class="ops">
+    <div class="ops-map">
+      <svg id="mapsvg" viewBox="-4 -5 108 70" preserveAspectRatio="xMidYMid meet" aria-label="Theater map: pick a sector"></svg>
+      <div class="ops-mark"><div class="om-co">The Ninth Company</div><h1 class="om-title">Holdout</h1></div>
+      <div class="ops-key" aria-hidden="true">
+        <span class="k-held">Held</span><span class="k-atk">Attackable</span><span class="k-foe">Enemy</span><span class="k-front">Front line</span>
       </div>
-      <button class="cta" id="deploybtn" disabled>Deploy</button>
-      <button class="kitbtn" id="toteam"><span class="kb-k">Loadout</span><span class="kb-go">Change ›</span><span class="kb-v" id="kitname">M4A1</span><span class="kb-s" id="kitsub">Iron sights · 30 rds</span></button>
-      <button class="btn" id="tosettings">Settings</button>
+      <div class="ops-scale" aria-hidden="true"><b>N</b><span class="sc-bar" id="opsbar"></span><span>10 km</span></div>
+    </div>
+    <aside class="brief">
+      <header class="br-head">
+        <div class="br-theater"><span class="br-tag" id="brTheater">Theater I</span><span class="br-held" id="brHeld">1 / 13 held</span></div>
+        <button class="br-cog" id="tosettings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 2.8v3.1M12 18.1v3.1M2.8 12h3.1M18.1 12h3.1M5.5 5.5l2.2 2.2M16.3 16.3l2.2 2.2M5.5 18.5l2.2-2.2M16.3 7.7l2.2-2.2"/></svg></button>
+        <div class="br-segs" id="brSegs" aria-hidden="true"></div>
+      </header>
+      <section class="br-sector" aria-live="polite">
+        <div class="br-status"><span class="chip" id="brChip">Attackable</span><span class="br-code" id="brCode">Sector 01</span></div>
+        <h2 class="br-name" id="brName">Miller Fields</h2>
+        <div class="br-stats">
+          <div class="bs"><span class="k">Threat</span><span class="v" id="brTier">Tier 1</span><span class="pips" id="brPips"></span></div>
+          <div class="bs"><span class="k">Reserves</span><span class="v" id="brRes">52</span><span class="s" id="brResSub">8 at once</span></div>
+          <div class="bs"><span class="k">Forecast</span><span class="v sky" id="brSky"></span><span class="s" id="brWx">Clear</span></div>
+        </div>
+        <div class="br-prog" id="brProg" hidden><i id="brProgFill"></i></div>
+        <p class="br-line" id="brLine"></p>
+      </section>
+      <button class="cta deploy" id="deploybtn"><span id="dbMain">Deploy</span><span class="db-sub" id="dbSub">Miller Fields</span></button>
+      <div class="br-foot">
+        <button class="kit" id="toteam"><span class="kit-k">Kit</span><span class="kit-go">Change ›</span><span class="kit-v" id="kitname">M4A1</span><span class="kit-s" id="kitsub">Iron sights · 30 rds</span></button>
+        <ol class="squad" id="brSquad" aria-label="Your squad"></ol>
+      </div>
     </aside>
   </div>
 </div>

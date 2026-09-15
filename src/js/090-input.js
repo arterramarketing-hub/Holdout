@@ -4,13 +4,15 @@ window.addEventListener('keydown', e => {
   if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
   keys[e.code] = true;
   if (e.code === 'KeyM' && meta) meta.muted = !meta.muted;
+  if (screen === 'map' && el.modal.style.display !== 'flex' && !document.getElementById('boot')) {   // the start menu: ←/→ picks a fight, Enter takes it
+    if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') cycleSector(e.code === 'ArrowRight' ? 1 : -1);
+    const ae = document.activeElement;
+    if (e.code === 'Enter' && (!ae || ae === document.body)) deploySelected();   // a focused button or sector handles its own Enter
+  }
   if (screen === 'battle') {
     if (e.code === 'KeyR') heroReload();
     if (e.code === 'KeyO') showSettings();
     if (e.code === 'KeyV') { meta.opts.fpv = !meta.opts.fpv; applyOpts(); saveMeta(); }
-    if (e.code === 'Tab') { e.preventDefault(); if (!manualAim()) lockPress(); }
-    if (e.code === 'Escape') lockRelease();
-    if (e.code === 'KeyQ' || e.code === 'KeyE') { cam.nudge = (e.code === 'KeyQ' ? -1 : 1) * 25 * Math.PI / 180; cam.nudgeT = 2; }
     if (e.code === 'Digit1') useSupport('napalm');
     if (e.code === 'Digit2') useSupport('artillery');
     if (e.code === 'Digit3') useSupport('supply');
@@ -32,7 +34,6 @@ function checkOrient() {   // a phone held upright has no room for this fight; a
 }
 addEventListener('resize', checkOrient);
 addEventListener('orientationchange', checkOrient);
-const tap = { id: -1, x: 0, y: 0, t: 0 };   // right-side taps lock onto the enemy under the finger
 cv.addEventListener('touchstart', e => {
   e.preventDefault(); audio(); startAmbience();
   const alive = id => { for (const t of e.touches) if (t.identifier === id) return true; return false; };
@@ -41,14 +42,12 @@ cv.addEventListener('touchstart', e => {
   for (const t of e.changedTouches) {
     if (t.clientX < innerWidth * 0.55) {
       if (!joy.active) { joy.active = true; joy.id = t.identifier; joy.bx = joy.x = t.clientX; joy.by = joy.y = t.clientY; joy.dx = joy.dy = 0; }
-    } else if (manualAim()) { if (look.id < 0) { look.id = t.identifier; look.x = t.clientX; look.y = t.clientY; } }
-    else if (tap.id < 0) { tap.id = t.identifier; tap.x = t.clientX; tap.y = t.clientY; tap.t = performance.now(); }
+    } else if (look.id < 0) { look.id = t.identifier; look.x = t.clientX; look.y = t.clientY; }   // the right thumb looks
   }
 }, { passive: false });
 cv.addEventListener('touchmove', e => {
   e.preventDefault();
   for (const t of e.changedTouches) {
-    if (t.identifier === tap.id && Math.hypot(t.clientX - tap.x, t.clientY - tap.y) > 12) tap.id = -1;
     if (t.identifier === look.id) { addLook(t.clientX - look.x, t.clientY - look.y, 0.006); look.x = t.clientX; look.y = t.clientY; continue; }
     if (t.identifier !== joy.id) continue;
     joy.x = t.clientX; joy.y = t.clientY;
@@ -61,11 +60,10 @@ cv.addEventListener('touchmove', e => {
 function endTouch(e) {
   for (const t of e.changedTouches) {
     if (t.identifier === joy.id) { joy.active = false; joy.id = -1; joy.dx = joy.dy = 0; }
-    if (t.identifier === tap.id) { if (performance.now() - tap.t < 250) tapLock(t.clientX, t.clientY); tap.id = -1; }
     if (t.identifier === look.id) look.id = -1;
   }
 }
-cv.addEventListener('contextmenu', e => { e.preventDefault(); if (screen === 'battle' && !manualAim()) lockPress(); });
+cv.addEventListener('contextmenu', e => e.preventDefault());   // the right mouse button is the sights
 cv.addEventListener('touchend', endTouch); cv.addEventListener('touchcancel', endTouch);
 function moveVector() {
   let mx = 0, my = 0;
@@ -80,11 +78,10 @@ function moveVector() {
   return { x: mx * c - my * s, y: mx * s + my * c };
 }
 
-// ---------- free aim: the manual scheme and first person ----------
-// Auto-fire keeps the old behaviour (the soldier picks targets). Manual hands you the crosshair: the
-// camera looks where you look, the trigger is yours, and aim assist only nudges — it never fires.
+// ---------- free aim ----------
+// You aim and you fire, in either view: the camera looks where you look, the trigger is yours, and aim assist
+// (third person only) only nudges — it never fires.
 const aim = { yaw: 0, pitch: 0, fire: false, ads: false, sticky: false, lookDx: 0, settle: 0, settleY: 0 };
-const manualAim = () => !!meta && (meta.opts.scheme === 'manual' || meta.opts.fpv);
 const fpvActive = () => !!meta && meta.opts.fpv && state.mode === 'play'
   && !!soldiers[state.controlled] && soldiers[state.controlled].alive && !soldiers[state.controlled].horse;
 function addLook(dx, dy, scale) {
@@ -119,20 +116,20 @@ function lockPointer() {   // some hosts (an iframe without allow-pointer-lock) 
   } catch (e) { aim.noLock = true; }
 }
 function steerFromCursor(dt) {   // only a real mouse, only where the host refuses pointer lock: the further the cursor sits from the middle, the faster you turn
-  if (isTouch || !aim.noLock || aim.cx == null || !manualAim() || screen !== 'battle' || document.pointerLockElement === cv) return;
+  if (isTouch || !aim.noLock || aim.cx == null || screen !== 'battle' || document.pointerLockElement === cv) return;
   const dx = (aim.cx - innerWidth / 2) / (innerWidth / 2), dy = (aim.cy - innerHeight / 2) / (innerHeight / 2), dead = 0.12;
   const ax = Math.abs(dx) < dead ? 0 : (dx - Math.sign(dx) * dead) / (1 - dead);
   const ay = Math.abs(dy) < dead ? 0 : (dy - Math.sign(dy) * dead) / (1 - dead);
   if (ax || ay) addLook(ax * 900 * dt, ay * 520 * dt, 0.0024);
 }
 cv.addEventListener('mousedown', e => {
-  if (screen !== 'battle' || !manualAim()) return;
+  if (screen !== 'battle') return;
   if (e.button === 0) { aim.fire = true; lockPointer(); }
   else if (e.button === 2) aim.ads = true;
 });
 window.addEventListener('mouseup', e => { if (e.button === 0) aim.fire = false; if (e.button === 2) aim.ads = false; });
 document.addEventListener('mousemove', e => {
-  if (screen !== 'battle' || !manualAim()) return;
+  if (screen !== 'battle') return;
   if (document.pointerLockElement === cv) addLook(e.movementX, e.movementY, 0.0024);
   else if (!isTouch && !(e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) && e.target === cv) { aim.cx = e.clientX; aim.cy = e.clientY; }   // a phone's tap makes fake mouse moves: never steer from those
   else aim.cx = null;
@@ -142,7 +139,7 @@ document.addEventListener('pointerlockchange', () => { if (document.pointerLockE
 function releaseInputs() {   // let go of everything held: a trigger, a thumb, a parked cursor
   aim.fire = false; aim.cx = null;
   joy.active = false; joy.id = -1; joy.dx = joy.dy = 0;
-  look.id = -1; tap.id = -1;
+  look.id = -1;
 }
 window.addEventListener('blur', releaseInputs);
 document.addEventListener('visibilitychange', () => { if (document.hidden) releaseInputs(); });
@@ -164,44 +161,5 @@ function bindHoldButton(id, down, up) {
   b.addEventListener('pointerup', end);
   b.addEventListener('pointercancel', end);
   b.addEventListener('lostpointercapture', () => up());   // hidden or cancelled mid-press: never leave the trigger held
-}
-// ---------- Z-targeting ----------
-const lock = { target: null, on: false, retargetT: 0 };
-function lockCandidates(s) {   // ahead of the camera and close first; bosses and spotters jump the queue
-  const fx = Math.sin(cam.yaw), fy = -Math.cos(cam.yaw), out = [], maxD = 700 * visMul();
-  for (const e of enemies) {
-    const dx = e.x - s.x, dy = e.y - s.y, d = Math.hypot(dx, dy);
-    if (d > maxD) continue;
-    const ang = Math.acos(clamp((dx * fx + dy * fy) / (d || 1), -1, 1));
-    out.push([ang + d / 700 * 0.6 - (e.boss ? 0.5 : 0) - (e.spotter ? 0.3 : 0), e]);
-  }
-  return out.sort((a, b) => a[0] - b[0]).map(p => p[1]);
-}
-function lockAcquire(cycle) {
-  const s = soldiers[state.controlled];
-  if (screen !== 'battle' || state.mode !== 'play' || !s || !s.alive) return;
-  const list = lockCandidates(s);
-  if (!list.length) { lockRelease(); return; }
-  const i = cycle && lock.target ? list.indexOf(lock.target) : -1;
-  lock.target = list[(i + 1) % list.length];
-  lock.on = true; lock.retargetT = 0;
-  beep(1320, 0.05, 'square', 0.03, -500);
-}
-function lockRelease() {
-  if (lock.on) beep(520, 0.05, 'square', 0.02, -200);
-  lock.target = null; lock.on = false;
-}
-const lockPress = () => lockAcquire(lock.on && !!lock.target);
-function updateLock(dt) {   // a locked target that dies hands the lock to the next one after a beat
-  if (!lock.on) return;
-  if (lock.target && (lock.target.hp <= 0 || !enemies.includes(lock.target))) { lock.target = null; lock.retargetT = 0.25; }
-  if (!lock.target && (lock.retargetT -= dt) <= 0) lockAcquire(false);
-}
-function tapLock(x, y) {
-  if (screen !== 'battle' || state.mode !== 'play' || !VIEW.ready) return;
-  const e = pickEnemyAtScreen(x, y, 56);
-  if (!e) return;
-  lock.target = e; lock.on = true; lock.retargetT = 0;
-  beep(1320, 0.05, 'square', 0.03, -500);
 }
 

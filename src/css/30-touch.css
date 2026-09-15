@@ -8,7 +8,6 @@
     background:rgba(9,13,21,.34); border:2px solid rgba(255,255,255,.55); box-shadow:0 0 0 1px rgba(0,0,0,.28); }
   .tbtn:active { background:rgba(255,255,255,.3); border-color:#fff; }
   #firebtn { width:var(--fb); height:var(--fb); right:calc(var(--fb) * .9); bottom:calc(var(--fb) * .95); }
-  #lockbtn { width:calc(var(--fb) * .82); height:calc(var(--fb) * .82); right:calc(var(--fb) * .99); bottom:calc(var(--fb) * 1.04); font-size:calc(var(--fb) * .32); }
   #adsbtn { width:calc(var(--fb) * .68); height:calc(var(--fb) * .68); right:calc(var(--fb) * .12); bottom:calc(var(--fb) * 1.88);
     font-family:var(--mono); font-weight:800; font-size:calc(var(--fb) * .19); letter-spacing:.04em; }
   #adsbtn.on { background:rgba(255,255,255,.55); border-color:#fff; color:#0a0e16; }
@@ -18,9 +17,7 @@
   /* both triggers carry a round, the way CoD Mobile marks its fire buttons */
   .tbtn .bullet { width:24%; height:48%; fill:rgba(255,255,255,.95); filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55)); pointer-events:none; }
   .tbtn:active .bullet { fill:#fff; }
-  body.touch.manual #firebtn, body.touch.manual #firebtn2, body.touch.manual #adsbtn { display:flex; }
-  body.touch #lockbtn, body.touch #reloadbtn { display:flex; }
-  body.manual #lockbtn { display:none !important; }
+  body.touch #firebtn, body.touch #firebtn2, body.touch #adsbtn, body.touch #reloadbtn { display:flex; }
   /* with touch buttons on screen the ammo takes the corner, the killstreaks stack under the menu buttons */
   body.touch #ammo { right:8px; bottom:8px; }
   body.touch #supports { top:54px; right:10px; bottom:auto; flex-direction:column; }

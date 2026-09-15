@@ -22,7 +22,7 @@ function enterBattle(tid) {
   state.frontTime = 0; state.frontDeaths = 0;
   state.bossSpawned = false; state.bossRef = null; state.spotterSeen = false;
   state.slow = 0; state.slowCd = 0;
-  state.flyby = null; state.autoTarget = null;
+  state.flyby = null; state.crossTarget = null;
   rollSky(tid);
   enemies = []; bullets = []; markers = []; floaters = []; bodies = []; particles = []; pickups = [];
   genTerrain();
@@ -32,10 +32,8 @@ function enterBattle(tid) {
   if (first >= 0) soldiers[state.controlled].invuln = CFG.spawnInvuln;
   const opening = Math.min(CFG.enemyCap, state.enemyTotal - state.enemyDown);   // their first four, somewhere far from the FOB
   for (let i = 0; i < opening; i++) spawnEnemy(pickType());
-  lockRelease();
   aim.yaw = 0; aim.pitch = 0; aim.fire = false; aim.ads = false; aim.lookDx = 0; aim.settle = 0; aim.settleY = 0;
   releaseInputs();   // every front opens facing the line, not wherever you last looked
-  applyOpts.wasManual = manualAim();
   viewEnterBattle();
   supportsDirty = true;
   state.streakN = 0; state.streakT = 0;

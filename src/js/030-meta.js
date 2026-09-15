@@ -1,7 +1,7 @@
 // ============================================================ PERSISTENT META
 let meta = null;
 // ---------- player options (saved with the campaign) ----------
-const OPT_DEFAULTS = { v: 2, scheme: 'manual', fpv: true, aimAssist: true, sens: 1, fovAdd: 0, minimap: true, dmgDir: true, killfeed: true, vibe: true, music: 0.6 };
+const OPT_DEFAULTS = { v: 2, fpv: true, aimAssist: true, sens: 1, fovAdd: 0, minimap: true, dmgDir: true, killfeed: true, vibe: true, music: 0.6 };
 const freshOpts = () => Object.assign({}, OPT_DEFAULTS);
 function freshMeta() {
   const taken = [];

@@ -383,11 +383,6 @@ function drawFx() {
   const boss = state.bossRef;
   if (boss && boss.phase === 3)
     decal(F.ring, boss.x * XS, boss.y * XS, 3.4 + Math.sin(now / 110) * 0.35, now / 700, colorOf('#ff3a1e'), 0.05);
-  const tgt = lock.target || (state.mode === 'play' ? state.autoTarget : null);
-  if (tgt && enemies.includes(tgt) && tgt === lock.target) {   // the locked target also gets a ring at its feet
-    const lk = ENEMY_LOOK[tgt.type] || ENEMY_LOOK.grunt;
-    decal(F.ring, tgt.x * XS, tgt.y * XS, 1.7 * lk[0], now / 600, colorOf('#ffd23a'), 0.045);
-  }
   TMP.q.identity();
 }
 

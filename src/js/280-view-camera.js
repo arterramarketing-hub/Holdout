@@ -9,14 +9,6 @@ function chasePose(sx, sy, yaw, pr, eye, look, dist = pr.dist) {
   eye.set(X - fx * dist + rx * pr.side, pr.height + (dist - pr.dist) * 0.3, Z - fz * dist + rz * pr.side);
   look.set(X + fx * pr.ahead, pr.lookH, Z + fz * pr.ahead);
 }
-function threatYaw(s) {   // lean the camera toward the nearest threat ahead, never all the way
-  const range = WEAPONS[s.weapon].range * 1.2;
-  let best = null, bd = range * range;
-  for (const e of enemies) { const d = dist2(s.x, s.y, e.x, e.y); if (d < bd) { bd = d; best = e; } }
-  if (!best) return 0;
-  const a = Math.atan2(best.x - s.x, -(best.y - s.y));
-  return Math.abs(a) < Math.PI / 3 ? a * 0.35 : 0;
-}
 function camAvoid(f, eye) {   // pull the chase camera in front of walls instead of through them; lift it over cover
   const ex = eye.x / XS, ey = eye.z / XS;
   let t = 1;
@@ -31,9 +23,8 @@ function updateCamera3(dt) {
   const C = camView, pr = innerWidth < innerHeight ? CAM3.port : CAM3.land, cam3 = VIEW.camera;
   cam.shake = Math.max(0, cam.shake - dt * 26);
   cam.punch = Math.max(0, cam.punch - dt * 0.35);
-  cam.nudgeT = Math.max(0, cam.nudgeT - dt);
   const reloading = soldiers[state.controlled] && soldiers[state.controlled].reloadT > 0;   // the sights come down while you reload, and back up after
-  FPV.adsK = approach(FPV.adsK, aim.ads && manualAim() && !reloading ? 1 : 0, heroSight().rate, dt);   // sights come up at the optic's own pace, in both views
+  FPV.adsK = approach(FPV.adsK, aim.ads && !reloading ? 1 : 0, heroSight().rate, dt);   // sights come up at the optic's own pace, in both views
   steerFromCursor(dt);
   aim.lookDx *= Math.exp(-dt * 8);   // the viewmodel's sway settles back to centre once you stop turning
   {   // recoil recovery: the muzzle drifts back to where you were pointing once you stop firing
@@ -44,7 +35,6 @@ function updateCamera3(dt) {
       aim.yaw = angWrap(aim.yaw - sgn * d); aim.settleY -= sgn * d;
     }
   }
-  if (cam.nudgeT <= 0) cam.nudge = approach(cam.nudge, 0, 3, dt);
   const boss = state.bossRef;
   if (boss && boss !== C.bossSeen && state.mode === 'play') { C.bossSeen = boss; C.bossT = CFG.bossIntro; showTitleCard(boss); }   // waits out a death camera
   const ctl = soldiers[state.controlled];
@@ -93,18 +83,9 @@ function updateCamera3(dt) {
     C.dieFrom = null;
     const follow = camTarget();
     if (follow) {
-      const tgt = state.mode === 'play' && lock.target && enemies.includes(lock.target) ? lock.target : null;
-      let dist = pr.dist;
-      if (manualAim()) cam.yaw = aim.yaw;   // you steer the camera yourself
-      else if (tgt) {   // Z-target: swing to face the target and pull back to frame both
-        cam.yaw = approachAng(cam.yaw, Math.atan2(tgt.x - follow.x, -(tgt.y - follow.y)), 5, dt);
-        dist += clamp(Math.hypot(tgt.x - follow.x, tgt.y - follow.y) * XS * 0.08, 0, 1.5);
-      } else if (state.mode === 'play' && follow.alive) {
-        cam.yaw = approachAng(cam.yaw, threatYaw(follow) + cam.nudge, 2.2, dt);
-      }
-      chasePose(follow.x, follow.y, cam.yaw, pr, C.cEye, C.cLook, dist);
-      if (tgt) C.cLook.set((follow.x + (tgt.x - follow.x) * 0.45) * XS, 1.0, (follow.y + (tgt.y - follow.y) * 0.45) * XS);
-      if (manualAim()) C.cLook.y += aim.pitch * 4.5;
+      cam.yaw = aim.yaw;   // you steer the camera yourself
+      chasePose(follow.x, follow.y, cam.yaw, pr, C.cEye, C.cLook);
+      C.cLook.y += aim.pitch * 4.5;
       camAvoid(follow, C.cEye);
       if (!C.have || cam.snap) { C.eye.copy(C.cEye); C.look.copy(C.cLook); C.have = true; cam.snap = false; }
       else { C.eye.lerp(C.cEye, 1 - Math.exp(-7 * dt)); C.look.lerp(C.cLook, 1 - Math.exp(-9 * dt)); }
@@ -179,11 +160,10 @@ function updateOverlays(dt) {
     d.style.opacity = (clamp(m.t / 1.3, 0, 1) * 0.9).toFixed(2);
   });
   const rt = OV.reticle, hero = soldiers[state.controlled];
-  const aimAt = hero && hero.alive && state.mode === 'play'
-    ? (lock.target && enemies.includes(lock.target) ? lock.target : state.autoTarget) : null;
+  const aimAt = hero && hero.alive && state.mode === 'play' ? state.crossTarget : null;
   if (rt) {
     let shown = false;
-    if (manualAim() && hero && hero.alive && state.mode === 'play') {   // you aim it: the crosshair sits in the middle
+    if (hero && hero.alive && state.mode === 'play') {   // you aim it: the crosshair sits in the middle
       const cx = innerWidth / 2, cy = innerHeight * (fpvActive() ? 0.5 : 0.46);
       OV.rtX = cx; OV.rtY = cy;
       rt.style.display = 'block';
@@ -191,22 +171,8 @@ function updateOverlays(dt) {
       const bloom = Math.max(0, (hero.moving ? 4 : 0) + (hero.recoil > 0 ? 6 : 0) + (hero.reloadT > 0 ? 8 : 0) - (aim.ads ? 3 : 0));
       OV.gap += (bloom - OV.gap) * Math.min(1, dt * 12);
       rt.style.setProperty('--g', OV.gap.toFixed(1) + 'px');
-      rt.classList.toggle('hot', !!aimAt);
+      rt.classList.toggle('hot', !!aimAt && enemies.includes(aimAt));
       shown = true;
-    } else if (aimAt && enemies.includes(aimAt)) {
-      const lk = ENEMY_LOOK[aimAt.type] || ENEMY_LOOK.grunt;
-      if (toScreen(aimAt.x, aimAt.y, (1.15 * lk[1] + (aimAt.horse ? 0.4 : 0)) / ZS)) {
-        if (!OV.rtOn) { OV.rtX = SCR.x; OV.rtY = SCR.y; }
-        const k = 1 - Math.exp(-dt * 18);
-        OV.rtX += (SCR.x - OV.rtX) * k; OV.rtY += (SCR.y - OV.rtY) * k;
-        rt.style.display = 'block';
-        rt.style.transform = `translate3d(${OV.rtX.toFixed(1)}px,${OV.rtY.toFixed(1)}px,0)`;
-        const bloom = (hero.moving ? 4 : 0) + (hero.recoil > 0 ? 5 : 0) + (hero.reloadT > 0 ? 7 : 0);
-        OV.gap += (bloom - OV.gap) * Math.min(1, dt * 12);
-        rt.style.setProperty('--g', OV.gap.toFixed(1) + 'px');
-        rt.classList.toggle('hot', true);
-        shown = true;
-      }
     }
     if (!shown) hideEl(rt);
     OV.rtOn = shown;
@@ -309,16 +275,6 @@ function drawPlane(x, y, z) {   // strike jet, nose toward +X
   part(0, 0, 3.6, 0.7, 0.7, 0.3, dark);
   TMP.q.identity();
 }
-function pickEnemyAtScreen(px, py, radius) {   // tap-to-lock: nearest enemy whose chest projects near the tap
-  let best = null, bd = radius * radius;
-  for (const e of enemies) {
-    const lk = ENEMY_LOOK[e.type] || ENEMY_LOOK.grunt;
-    if (!toScreen(e.x, e.y, (1.1 * lk[1] + (e.horse ? 0.4 : 0)) / ZS)) continue;
-    const d = (SCR.x - px) ** 2 + (SCR.y - py) ** 2;
-    if (d < bd) { bd = d; best = e; }
-  }
-  return best;
-}
 function showTitleCard(boss) {
   const card = document.getElementById('titlecard');
   card.querySelector('.tc-sub').textContent = boss.epithet || 'Carrier of the Other';
@@ -385,7 +341,7 @@ function viewEnterBattle() {
   rebuildStatic();
   camView.have = false; camView.bossSeen = null; camView.bossT = 0;
   hideTitleCard();
-  Object.assign(cam, { yaw: 0, shake: 0, punch: 0, snap: true, nudge: 0, nudgeT: 0 });
+  Object.assign(cam, { yaw: 0, shake: 0, punch: 0, snap: true });
   Object.assign(aim, { yaw: 0, pitch: 0, fire: false, ads: false, sticky: false, lookDx: 0 });
 }
 function renderView(dt) {

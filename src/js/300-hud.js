@@ -5,14 +5,14 @@ const el = {
   hurt: $('hurt'), banner: $('banner'),
   modal: $('modal'), modalbox: $('modalbox'), hint: $('hint'),
   bhud: $('bhud'), mapscr: $('mapscr'), teamscr: $('teamscr'),
-  supports: $('supports'), mapsvg: $('mapsvg'), theatertag: $('theatertag'),
+  supports: $('supports'), mapsvg: $('mapsvg'),
 };
 function showScreen(s) {
   screen = s;
   el.mapscr.classList.toggle('on', s === 'map');
   el.teamscr.classList.toggle('on', s === 'team');
   el.bhud.style.display = s === 'battle' ? 'block' : 'none';
-  if (s === 'map') renderMap();
+  if (s === 'map') { renderMap(); playMapEntrance(); }
   if (s === 'team') renderTeam();
 }
 let hpRefs = [];
@@ -113,22 +113,14 @@ function updateFeed() {
 }
 function applyOpts() {   // the options that change how the game looks and reads
   const o = meta.opts;
-  document.body.classList.toggle('manual', o.scheme === 'manual' || o.fpv);
   document.body.classList.toggle('fpv', !!o.fpv);
   document.body.classList.toggle('nomap', !o.minimap);
   document.body.classList.toggle('nofeed', !o.killfeed);
-  if (manualAim()) {
-    lockRelease();
-    if (!applyOpts.wasManual) { aim.yaw = cam.yaw; aim.pitch = 0; aim.lookDx = 0; }   // take the camera over where it stands, don't snap
-  } else { aim.fire = false; aim.ads = false; }
-  applyOpts.wasManual = manualAim();
   const ab = $('adsbtn');
   if (ab) ab.classList.toggle('on', aim.ads);
   el.hint.textContent = isTouch
-    ? (manualAim() ? 'LEFT THUMB MOVES · DRAG RIGHT TO LOOK · FIRE · ADS · TAP AMMO TO RELOAD'
-                   : 'LEFT THUMB MOVES · TAP AMMO TO RELOAD · TAP AN ENEMY TO LOCK ON')
-    : (manualAim() ? 'WASD MOVE · MOUSE AIMS (CLICK TO CAPTURE IT, ESC FREES) · CLICK FIRE · RIGHT-CLICK ADS · R RELOAD · V VIEW'
-                   : 'WASD MOVE · R RELOAD · TAB LOCK-ON · Q/E CAMERA · 1/2/3 KILLSTREAKS · V VIEW');
+    ? 'LEFT THUMB MOVES · DRAG RIGHT TO LOOK · FIRE · ADS · TAP AMMO TO RELOAD'
+    : 'WASD MOVE · MOUSE AIMS (CLICK TO CAPTURE IT, ESC FREES) · CLICK FIRE · RIGHT-CLICK ADS · R RELOAD · V VIEW';
   el.hint.style.opacity = 1;
   clearTimeout(applyOpts.t);
   applyOpts.t = setTimeout(() => { el.hint.style.opacity = 0; }, 6000);
@@ -139,9 +131,6 @@ function showSettings() {
     <div class="eyebrow">Settings</div>
     <h2>Controls</h2>
     <div class="setlist">
-    <div class="setrow"><span>Controls</span><span>
-      <label><input type="radio" name="sch" value="auto"${on(o.scheme === 'auto')}> Auto-fire</label>
-      <label><input type="radio" name="sch" value="manual"${on(o.scheme === 'manual')}> Manual</label></span></div>
     <div class="setrow"><span>View</span><span>
       <label><input type="radio" name="vw" value="tps"${on(!o.fpv)}> Third person</label>
       <label><input type="radio" name="vw" value="fps"${on(o.fpv)}> First person</label></span></div>
@@ -159,7 +148,6 @@ function showSettings() {
     <p class="note">Manual: hold left mouse to fire, right mouse for sights; click once to capture the mouse, Esc frees it.
       On a phone: drag the right side to look, fire with either trigger, ADS to steady. First person always aims manually.</p>`);
   const bind = (id, key, read) => { const e = $(id); if (e) e.oninput = () => { meta.opts[key] = read(e); applyOpts(); saveMeta(); }; };   // 'input' so the FOV and sensitivity sliders preview as you drag
-  document.querySelectorAll('input[name=sch]').forEach(r => { r.onchange = () => { meta.opts.scheme = r.value; applyOpts(); saveMeta(); }; });
   document.querySelectorAll('input[name=vw]').forEach(r => { r.onchange = () => { meta.opts.fpv = r.value === 'fps'; applyOpts(); saveMeta(); showSettings(); }; });   // redraw: first person drops the aim-assist row
   bind('o_aa', 'aimAssist', e => e.checked);
   bind('o_sens', 'sens', e => +e.value);

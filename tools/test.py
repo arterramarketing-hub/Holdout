@@ -5,11 +5,14 @@ it), serves the repository on a throwaway local port, opens the page in headless
 the suites post back. Exit code 1 if anything failed.
 
   passes:  desktop  a 1280x720 window, mouse and keyboard
-           touch    an 844x390 phone-shaped window that reports touch support
+           touch    an 844x390 phone that reports touch support
+           small    a 740x360 phone, touch
+           wide     a 1920x1080 desktop
+           tall     a 900x1200 desktop window taller than it is wide
            baseline the reference measurements later phases are held to (only with --baseline)
 
 usage:
-  python3 tools/test.py                    desktop and touch passes
+  python3 tools/test.py                    every pass but the baseline
   python3 tools/test.py --only ballistics  just the tests whose "suite › name" contains the text
   python3 tools/test.py --pass touch       one pass
   python3 tools/test.py --baseline         run the baseline pass and write tests/baseline.json
@@ -31,7 +34,10 @@ import urllib.parse
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TESTS = os.path.join(ROOT, 'tests')
 CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-PASSES = {'desktop': ('1280,807', ''), 'touch': ('844,477', '&touch=1'), 'baseline': ('1280,807', '')}   # headless windows lose 87 px to browser UI: inner sizes 1280x720 and 844x390
+# headless windows lose 87 px of height to browser UI, so these give inner sizes of 1280x720, 844x390, 740x360, 1920x1080 and 900x1200
+PASSES = {'desktop': ('1280,807', ''), 'touch': ('844,477', '&touch=1'), 'small': ('740,447', '&touch=1'), 'wide': ('1920,1167', ''),
+          'tall': ('900,1287', ''), 'baseline': ('1280,807', '')}
+DEFAULT_PASSES = ['desktop', 'touch', 'small', 'wide', 'tall']
 
 
 def arg(name, default=None):
@@ -136,7 +142,7 @@ def main():
         sys.exit('Google Chrome was not found; open tests/run.html?pass=desktop from a local server instead')
     n = build_page()
     only, headed = arg('--only'), '--headed' in sys.argv
-    passes = ['baseline'] if '--baseline' in sys.argv else [arg('--pass')] if arg('--pass') else ['desktop', 'touch']
+    passes = ['baseline'] if '--baseline' in sys.argv else [arg('--pass')] if arg('--pass') else DEFAULT_PASSES
     print(f'{n} suite files · passes: {", ".join(passes)}')
     all_ok = True
     for p in passes:

@@ -507,7 +507,6 @@
     background:rgba(9,13,21,.34); border:2px solid rgba(255,255,255,.55); box-shadow:0 0 0 1px rgba(0,0,0,.28); }
   .tbtn:active { background:rgba(255,255,255,.3); border-color:#fff; }
   #firebtn { width:var(--fb); height:var(--fb); right:calc(var(--fb) * .9); bottom:calc(var(--fb) * .95); }
-  #lockbtn { width:calc(var(--fb) * .82); height:calc(var(--fb) * .82); right:calc(var(--fb) * .99); bottom:calc(var(--fb) * 1.04); font-size:calc(var(--fb) * .32); }
   #adsbtn { width:calc(var(--fb) * .68); height:calc(var(--fb) * .68); right:calc(var(--fb) * .12); bottom:calc(var(--fb) * 1.88);
     font-family:var(--mono); font-weight:800; font-size:calc(var(--fb) * .19); letter-spacing:.04em; }
   #adsbtn.on { background:rgba(255,255,255,.55); border-color:#fff; color:#0a0e16; }
@@ -517,9 +516,7 @@
   /* both triggers carry a round, the way CoD Mobile marks its fire buttons */
   .tbtn .bullet { width:24%; height:48%; fill:rgba(255,255,255,.95); filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55)); pointer-events:none; }
   .tbtn:active .bullet { fill:#fff; }
-  body.touch.manual #firebtn, body.touch.manual #firebtn2, body.touch.manual #adsbtn { display:flex; }
-  body.touch #lockbtn, body.touch #reloadbtn { display:flex; }
-  body.manual #lockbtn { display:none !important; }
+  body.touch #firebtn, body.touch #firebtn2, body.touch #adsbtn, body.touch #reloadbtn { display:flex; }
   /* with touch buttons on screen the ammo takes the corner, the killstreaks stack under the menu buttons */
   body.touch #ammo { right:8px; bottom:8px; }
   body.touch #supports { top:54px; right:10px; bottom:auto; flex-direction:column; }
@@ -535,31 +532,160 @@
   .menu { flex:1 0 auto; display:grid; grid-template-columns:minmax(0, 1fr) clamp(260px, 30vw, 400px); min-height:100%; }
   .menu .eyebrow { margin-bottom:10px; }
   .menu .ttl .xl { font-size:clamp(30px, 3.4vw, 50px); }   /* sized to the command column, not the window */
-  .menu-map { position:relative; display:flex; min-width:0; min-height:0; padding:clamp(12px, 3.2vh, 30px) 0 clamp(12px, 3.2vh, 30px) clamp(12px, 2.4vw, 32px); }
-  #mapsvg { flex:1; width:100%; height:auto; min-height:0; background:var(--panel-solid); border:1px solid var(--line); }
-  .map-key { position:absolute; left:calc(clamp(12px, 2.4vw, 32px) + 12px); bottom:calc(clamp(12px, 3.2vh, 30px) + 10px); display:flex; gap:14px;
-    font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--label); pointer-events:none; }
-  .map-key span { display:flex; align-items:center; gap:6px; }
-  .map-key span::before { content:''; width:8px; height:8px; border-radius:50%; box-sizing:border-box; }
-  .map-key .k-held::before { background:var(--friend); }
-  .map-key .k-atk::before { border:2px solid var(--accent); }
-  .map-key .k-out::before { background:#1b2230; border:1px solid var(--line-hi); }
-  .menu-side { display:flex; flex-direction:column; gap:12px; min-width:0; min-height:0; overflow:auto; padding:clamp(12px, 3.2vh, 30px) clamp(14px, 2.4vw, 32px);
-    border-left:1px solid var(--line); background:linear-gradient(180deg, rgba(8,12,21,.94), rgba(5,8,15,.97)); }
-  .menu-side .btn { width:100%; }
-  .sector { margin-top:auto; min-width:0; padding-top:14px; border-top:1px solid var(--line-hi); }
-  #terrmeta { font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--label); }
-  #terrname { margin-top:6px; font-size:clamp(18px, 2vw, 28px); line-height:1; color:var(--ink); text-wrap:balance; overflow-wrap:anywhere; }
-  #terrhint { margin-top:6px; font-family:var(--mono); font-size:11px; line-height:1.5; color:var(--muted); }
-  .kitbtn { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:baseline; gap:3px 10px; width:100%; padding:12px 14px; text-align:left;
+  /* ---------- start menu: the theater map beside the briefing ----------
+     A field operations table. The map is drawn in theater units (x 0..100, y 0..60) and fills its pane; the
+     terrain runs past the edges so a letterbox is still land. Held ground is blue and hatched, theirs a red wash,
+     and the front line is the one thing on the map that glows. */
+  .ops { flex:1 0 auto; display:grid; grid-template-columns:minmax(0, 1fr) clamp(290px, 32vw, 430px); min-height:100%; }
+  .ops-map { position:relative; min-width:0; min-height:0; overflow:hidden; background:#070b13; }
+  .ops-map::after { content:''; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(120% 90% at 42% 48%, transparent 55%, rgba(3,5,10,.62) 100%); }
+  #mapsvg { position:absolute; inset:0; width:100%; height:100%; display:block; --lab:2px; --ref:1.6px; -webkit-tap-highlight-color:transparent; }
+  #mapsvg .t-ground { fill:#0a0f18; }
+  #mapsvg .t-contour { fill:none; stroke:#141c29; stroke-width:.16; stroke-linejoin:round; }
+  #mapsvg .t-index { fill:none; stroke:#1d2737; stroke-width:.3; stroke-linejoin:round; }
+  #mapsvg .t-river { fill:none; stroke:#101c2b; stroke-width:1.2; stroke-linecap:round; stroke-linejoin:round; }
+  #mapsvg .t-river-core { fill:none; stroke:#1b3552; stroke-width:.3; stroke-linecap:round; }
+  #mapsvg .t-marsh { fill:url(#m-marsh); opacity:.9; }
+  #mapsvg .marsh-tuft { fill:none; stroke:#1f3a4c; stroke-width:.16; }
+  #mapsvg .t-grid { fill:none; stroke:rgba(255,255,255,.035); stroke-width:.12; }
+  #mapsvg .t-frame { fill:none; stroke:rgba(255,255,255,.09); stroke-width:.16; }
+  #mapsvg .t-ref { font-family:var(--mono); font-weight:700; font-size:var(--ref); fill:#3a4556; letter-spacing:.05em; }
+  #mapsvg .rg { fill:transparent; cursor:pointer; transition:fill .25s; }
+  #mapsvg .rg.held { fill:rgba(92,182,255,.075); }
+  #mapsvg .rg.foe, #mapsvg .rg.atk { fill:rgba(255,77,61,.03); }
+  #mapsvg .rg.atk.sel { fill:rgba(255,107,44,.10); }
+  #mapsvg .rg.held.sel { fill:rgba(92,182,255,.15); }
+  #mapsvg .rg.foe.sel { fill:rgba(255,77,61,.085); }
+  #mapsvg .rg-hatch { fill:none; pointer-events:none; }
+  #mapsvg .rg-hatch.on { fill:url(#m-hatch); }
+  #mapsvg .hatch { fill:rgba(92,182,255,.13); }
+  #mapsvg .seam { fill:none; stroke:#243042; stroke-width:.2; stroke-dasharray:.55 .45; pointer-events:none; }
+  #mapsvg .g-front { pointer-events:none; }
+  #mapsvg .front-glow { fill:none; stroke:rgba(255,107,44,.16); stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+  #mapsvg .front { fill:none; stroke:var(--accent); stroke-width:.42; stroke-linecap:round; stroke-linejoin:round; }
+  #mapsvg .front-flow { fill:none; stroke:#ffd6c2; stroke-width:.16; stroke-dasharray:.45 1.45; stroke-linecap:round; animation:ops-march 2.6s linear infinite; }
+  #mapsvg .g-routes { pointer-events:none; }
+  #mapsvg .route { stroke:#2b3545; stroke-width:.24; stroke-dasharray:.7 .7; }
+  #mapsvg .route.own { stroke:#35689a; stroke-width:.34; stroke-dasharray:none; }
+  #mapsvg .route.adv { stroke:var(--accent); stroke-width:.3; stroke-dasharray:1.1 .7; opacity:.9; }
+  #mapsvg .adv-head { fill:var(--accent); }
+  #mapsvg .sec { cursor:pointer; outline:none; }
+  #mapsvg .sec-in { transform-origin:0 0; }
+  #mapsvg .hit { fill:transparent; }
+  #mapsvg .mk { stroke-linejoin:miter; }
+  #mapsvg .sec.held .mk { fill:var(--friend); stroke:#05080f; stroke-width:.3; }
+  #mapsvg .sec.held .hq { fill:#05080f; }
+  #mapsvg .sec.atk .mk { fill:#0b1019; stroke:var(--accent); stroke-width:.48; }
+  #mapsvg .sec.foe .mk { fill:#100b0f; stroke:rgba(255,77,61,.5); stroke-width:.3; }
+  #mapsvg .mk2 { fill:none; stroke:rgba(255,77,61,.6); stroke-width:.26; }
+  #mapsvg .sec.atk .mk2 { stroke:var(--accent); }
+  #mapsvg .pulse { fill:none; stroke:var(--accent); stroke-width:.3; transform-origin:0 0; animation:ops-pulse 2.4s ease-out infinite; }
+  #mapsvg .prog-ring { fill:none; stroke:rgba(255,107,44,.18); stroke-width:.42; }
+  #mapsvg .prog { fill:none; stroke:var(--accent); stroke-width:.42; }
+  #mapsvg .lab, #mapsvg .lab-sub { font-family:var(--mono); font-weight:700; letter-spacing:.06em; paint-order:stroke; stroke:#070b13; stroke-width:.55; stroke-linejoin:round; }
+  #mapsvg .lab { font-size:var(--lab); }
+  #mapsvg .lab-sub { font-size:calc(var(--lab) * .78); fill:var(--accent); }
+  #mapsvg .sec.held .lab { fill:#8ec8f5; }
+  #mapsvg .sec.atk .lab { fill:var(--ink); }
+  #mapsvg .sec.foe .lab { fill:#667183; }
+  #mapsvg .sec.sel .lab { fill:#fff; }
+  #mapsvg .sec:focus-visible .mk { stroke:#fff; stroke-width:.5; }
+  #mapsvg .reticle { pointer-events:none; }
+  #mapsvg .ret-in { transform-origin:0 0; animation:ops-lock .32s cubic-bezier(.2, .9, .3, 1) both; }
+  #mapsvg .ret-in path { fill:none; stroke:#fff; stroke-width:.3; stroke-linecap:square; }
+  .ops-mark { position:absolute; left:clamp(14px, 2.2vw, 30px); top:clamp(12px, 2.6vh, 26px); pointer-events:none; }
+  .om-co { font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.34em; text-transform:uppercase; color:var(--label); }
+  .om-title { margin:4px 0 0; font-family:var(--display); font-stretch:125%; font-weight:800; font-size:clamp(28px, 3.4vw, 50px); line-height:.9;
+    text-transform:uppercase; color:var(--accent); }
+  .ops-key { position:absolute; right:clamp(12px, 2vw, 26px); bottom:clamp(10px, 2.2vh, 22px); display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px 14px;
+    font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--label); pointer-events:none; }
+  .ops-key span { display:flex; align-items:center; gap:6px; }
+  .ops-key span::before { content:''; flex:none; box-sizing:border-box; }
+  .ops-key .k-held::before { width:8px; height:8px; background:var(--friend); }
+  .ops-key .k-atk::before { width:7px; height:7px; border:1.5px solid var(--accent); transform:rotate(45deg); }
+  .ops-key .k-foe::before { width:7px; height:7px; border:1px solid rgba(255,77,61,.65); transform:rotate(45deg); }
+  .ops-key .k-front::before { width:14px; height:2px; background:var(--accent); box-shadow:0 0 6px var(--accent-glow); }
+  .ops-scale { position:absolute; left:clamp(14px, 2.2vw, 30px); bottom:clamp(10px, 2.2vh, 22px); display:flex; align-items:center; gap:8px;
+    font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--label); pointer-events:none; }
+  .ops-scale b { display:grid; place-items:center; width:16px; height:16px; font-size:9px; color:var(--ink); border:1px solid var(--line-hi); }
+  .sc-bar { display:block; width:40px; height:5px; border:1px solid var(--label); border-top:0; }
+  .brief { position:relative; display:flex; flex-direction:column; gap:clamp(10px, 2vh, 16px); min-width:0; min-height:0; overflow:hidden auto;
+    padding:clamp(12px, 3vh, 28px) clamp(14px, 2vw, 28px); border-left:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(9,13,22,.98), rgba(5,8,15,.99)); }
+  .br-head { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:center; gap:10px 12px; }
+  .br-theater { display:flex; align-items:baseline; gap:12px; min-width:0; font-family:var(--mono); font-weight:700; text-transform:uppercase; white-space:nowrap; }
+  .br-tag { font-size:11px; letter-spacing:.3em; color:var(--accent); }
+  .br-held { font-size:11px; letter-spacing:.1em; color:var(--label); font-variant-numeric:tabular-nums; }
+  .br-cog { display:grid; place-items:center; width:34px; height:34px; padding:0; color:var(--label); background:transparent; border:1px solid var(--line-hi); border-radius:0; }
+  .br-cog:hover { color:var(--accent); border-color:var(--accent); }
+  .br-cog svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:square; }
+  .br-segs { grid-column:1 / -1; display:grid; grid-template-columns:repeat(13, minmax(0, 1fr)); gap:3px; }
+  .br-segs i { height:5px; background:#1a2231; }
+  .br-segs i.held { background:var(--friend); }
+  .br-segs i.atk { background:transparent; box-shadow:inset 0 0 0 1px var(--accent); }
+  .br-segs i.sel { box-shadow:0 0 0 1px #05080f, 0 0 0 2px #fff; }
+  .br-sector { display:flex; flex-direction:column; gap:clamp(7px, 1.4vh, 12px); min-width:0; margin-top:auto; padding-top:clamp(10px, 2vh, 18px); border-top:1px solid var(--line-hi); }
+  .br-status { display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:0; }
+  .chip { display:inline-flex; align-items:center; gap:7px; padding:4px 9px 4px 8px; font-family:var(--mono); font-weight:800; font-size:10px; letter-spacing:.18em;
+    text-transform:uppercase; white-space:nowrap; }
+  .chip::before { content:''; flex:none; width:7px; height:7px; box-sizing:border-box; }
+  .chip.atk { color:var(--accent); background:rgba(255,107,44,.1); } .chip.atk::before { background:var(--accent); transform:rotate(45deg); }
+  .chip.held { color:var(--friend); background:rgba(92,182,255,.1); } .chip.held::before { background:var(--friend); }
+  .chip.foe { color:#ff8b7f; background:rgba(255,77,61,.08); } .chip.foe::before { border:1.5px solid #ff8b7f; transform:rotate(45deg); }
+  .br-code { min-width:0; overflow:hidden; text-overflow:ellipsis; font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .br-name { margin:0; font-family:var(--display); font-stretch:125%; font-weight:800; font-size:clamp(22px, 2.5vw, 36px); line-height:.94; text-transform:uppercase;
+    color:var(--ink); text-wrap:balance; overflow-wrap:anywhere; }
+  .br-stats { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:1px; background:var(--line); border:1px solid var(--line); }
+  .bs { display:flex; flex-direction:column; gap:4px; min-width:0; padding:9px 10px 10px; background:var(--panel-solid); }
+  .bs .k { font-family:var(--mono); font-weight:700; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--label); }
+  .bs .v { display:flex; align-items:center; gap:6px; min-width:0; font-family:var(--mono); font-weight:800; font-size:clamp(14px, 1.35vw, 18px); line-height:1.05;
+    color:var(--ink); font-variant-numeric:tabular-nums; white-space:nowrap; text-transform:uppercase; }
+  .bs .v svg { flex:none; width:1em; height:1em; color:var(--accent); }
+  .bs .s { font-family:var(--mono); font-weight:500; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pips { display:flex; gap:2px; } .pips i { width:7px; height:4px; background:#232c3a; } .pips i.on { background:var(--foe); }
+  .br-prog { position:relative; height:4px; background:rgba(255,255,255,.07); }
+  .br-prog i { position:absolute; left:0; top:0; bottom:0; background:var(--accent); }
+  .br-line { margin:0; font-family:var(--mono); font-size:11px; line-height:1.55; color:var(--text); text-wrap:pretty; }
+  .br-line b { color:var(--ink); }
+  .deploy { display:flex; align-items:baseline; justify-content:space-between; gap:14px; text-align:left; }
+  .deploy .db-sub { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.14em; opacity:.72; }
+  .br-foot { display:grid; gap:8px; min-width:0; }
+  .kit { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:baseline; gap:2px 10px; width:100%; padding:10px 12px; text-align:left;
     color:var(--ink); background:var(--panel); border:1px solid var(--line-hi); border-radius:0; }
-  .kitbtn:hover { border-color:var(--accent); }
-  .kb-k { font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--label); }
-  .kb-go { font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); }
-  .kb-v { grid-column:1 / -1; font-family:var(--display); font-stretch:125%; font-weight:800; font-size:clamp(15px, 1.6vw, 20px); text-transform:uppercase;
+  .kit:hover { border-color:var(--accent); }
+  .kit-k { font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.24em; text-transform:uppercase; color:var(--label); }
+  .kit-go { font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); }
+  .kit-v { grid-column:1 / -1; font-family:var(--display); font-stretch:125%; font-weight:800; font-size:clamp(15px, 1.5vw, 19px); text-transform:uppercase;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .kb-s { grid-column:1 / -1; font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--label);
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .kit-s { grid-column:1 / -1; font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--label); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .squad { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1px; background:var(--line); border:1px solid var(--line); }
+  .squad li { display:grid; grid-template-columns:3px minmax(0, 1fr); column-gap:9px; min-width:0; padding:6px 8px 7px 0; background:var(--panel-solid); }
+  .squad li::before { content:''; grid-row:1 / 3; background:var(--c); }
+  .squad b { font-family:var(--mono); font-weight:700; font-size:8.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--label); }
+  .squad span { display:flex; align-items:baseline; gap:6px; min-width:0; font-family:var(--display); font-stretch:112%; font-weight:800; font-size:12px;
+    text-transform:uppercase; color:var(--ink); white-space:nowrap; overflow:hidden; }
+  .squad em { min-width:0; overflow:hidden; text-overflow:ellipsis; font-style:normal; font-family:var(--mono); font-weight:500; font-size:9px; letter-spacing:.04em; color:var(--muted); }
+  @keyframes ops-march { to { stroke-dashoffset:-1.9; } }
+  @keyframes ops-pulse { 0% { opacity:.7; transform:scale(1); } 100% { opacity:0; transform:scale(1.75); } }
+  @keyframes ops-lock { from { opacity:0; transform:scale(1.8); } }
+  @keyframes ops-fade { from { opacity:0; } }
+  @keyframes ops-draw { from { stroke-dashoffset:1; } to { stroke-dashoffset:0; } }
+  @keyframes ops-pop { from { opacity:0; transform:scale(.3); } }
+  @keyframes ops-rise { from { opacity:0; transform:translateX(14px); } }
+  @keyframes ops-taken { from { fill:rgba(140,205,255,.5); } }
+  #mapscr.enter .g-terrain, #mapscr.enter .g-grid { animation:ops-fade .8s ease-out both; }
+  #mapscr.enter .g-regions, #mapscr.enter .seam, #mapscr.enter .g-routes { animation:ops-fade .6s .3s ease-out both; }
+  #mapscr.enter .front { stroke-dasharray:1 1; animation:ops-draw 1.1s .5s cubic-bezier(.35, .1, .25, 1) both; }
+  #mapscr.enter .front-glow { animation:ops-fade .6s 1.3s both; }
+  #mapscr.enter .front-flow { animation:ops-fade .6s 1.4s both, ops-march 2.6s linear infinite; }
+  #mapscr.enter .sec-in { animation:ops-pop .42s calc(.55s + var(--i) * 55ms) cubic-bezier(.2, 1.5, .4, 1) both; }
+  #mapscr.enter .reticle { animation:ops-fade .3s 1.3s both; }
+  #mapscr.enter .ops-mark, #mapscr.enter .ops-key, #mapscr.enter .ops-scale { animation:ops-fade .6s .2s both; }
+  #mapscr.enter .brief > * { animation:ops-rise .5s cubic-bezier(.2, .8, .3, 1) both; }
+  #mapscr.enter .brief > :nth-child(2) { animation-delay:.08s; } #mapscr.enter .brief > :nth-child(3) { animation-delay:.16s; } #mapscr.enter .brief > :nth-child(4) { animation-delay:.24s; }
+  #mapscr .rg.fresh { animation:ops-taken 1.8s .9s ease-out both; }
   /* loadout: the guns in a rail on the left, the one you carry laid out on the right */
   .menu.lo { grid-template-columns:clamp(220px, 27vw, 340px) minmax(0, 1fr); }
   .lo-rail { display:flex; flex-direction:column; gap:12px; min-width:0; min-height:0; overflow:auto; padding:clamp(12px, 3.2vh, 30px) clamp(12px, 2vw, 26px);
@@ -637,6 +763,7 @@
   @media (prefers-reduced-motion: reduce) {
     #bootbox .boot-press, #titlecard.show .tc-name, #hurt.crit, #rotate .rot-icon { animation:none; }
     #reticle .hm { transition:none; }
+    #mapscr.enter *, #mapsvg .pulse, #mapsvg .front-flow, #mapsvg .ret-in, #mapscr .rg.fresh { animation:none !important; }
   }
   /* compact: phones, and any window too narrow for the spread-out layout */
   @media (max-width:899px), (max-height:520px) {
@@ -660,17 +787,28 @@
     #hint { bottom:70px; font-size:10px; }
     #dmgdir i { width:210px; height:180px; margin:-180px 0 0 -105px; }
     .menu { grid-template-columns:minmax(0, 1fr) clamp(220px, 34vw, 300px); }
+    .ops { grid-template-columns:minmax(0, 1fr) clamp(262px, 38vw, 330px); }
     .menu.lo { grid-template-columns:clamp(190px, 30vw, 260px) minmax(0, 1fr); }
   }
   /* phones in landscape: every pixel is the fight */
   @media (max-height:520px) {
     #banner, #hint, #floaters, #feed { display:none !important; }   /* no text toasts on a phone */
     .menu .eyebrow { margin-bottom:5px; font-size:9.5px; letter-spacing:.26em; } .menu .ttl .xl { font-size:28px; }
-    .menu-map { padding:10px 0 10px 10px; } .map-key { left:22px; bottom:18px; gap:10px; font-size:8.5px; }
-    .menu-side, .lo-rail { gap:8px; padding:10px 12px; }
-    .sector { padding-top:8px; }
-    #terrmeta { font-size:9px; } #terrname { margin-top:3px; font-size:18px; } #terrhint { margin-top:3px; font-size:9.5px; line-height:1.35; }
-    .kitbtn { gap:1px 8px; padding:7px 10px; } .kb-v { font-size:14px; } .kb-s { font-size:9px; }
+    .lo-rail { gap:8px; padding:10px 12px; }
+    .brief { gap:7px; padding:9px 12px 10px; }
+    .br-head { gap:6px 10px; } .br-tag, .br-held { font-size:9.5px; } .br-cog { width:28px; height:28px; } .br-cog svg { width:15px; height:15px; }
+    .br-segs i { height:4px; }
+    .br-sector { gap:5px; padding-top:7px; }
+    .chip { padding:3px 7px 3px 6px; font-size:8.5px; } .br-code { font-size:8.5px; }
+    .br-name { font-size:20px; }
+    .bs { gap:2px; padding:5px 7px 6px; } .bs .k { font-size:7.5px; letter-spacing:.16em; } .bs .v { font-size:12.5px; } .bs .s { font-size:8px; }
+    .br-line { font-size:9.5px; line-height:1.4; }
+    .deploy .db-sub { font-size:8.5px; }
+    .br-foot { grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr); gap:6px; }
+    .kit { gap:1px 6px; padding:6px 8px; } .kit-k, .kit-go { font-size:8px; } .kit-v { font-size:13px; } .kit-s { font-size:8px; }
+    .squad li { column-gap:6px; padding:3px 6px 4px 0; } .squad b { font-size:7px; } .squad span { gap:4px; font-size:9.5px; } .squad em { display:none; }
+    .om-co { font-size:8px; letter-spacing:.28em; } .om-title { margin-top:2px; font-size:24px; }
+    .ops-key { gap:4px 10px; font-size:8px; } .ops-scale { gap:6px; font-size:8px; } .ops-scale b { width:13px; height:13px; font-size:7.5px; }
     .menu .btn { padding:8px 12px; font-size:10.5px; }
     .cta { padding:12px 18px; font-size:13px; }
     .wrow { padding:5px 10px; } .wr-n { font-size:12px; } .wr-d { font-size:10px; } .wr-c { font-size:8px; letter-spacing:.16em; }
@@ -699,8 +837,9 @@
   /* a desktop window taller than it is wide stacks the menu columns (a phone is held sideways, so it never lands here) */
   @media (max-aspect-ratio: 1/1) {
     .menu, .menu.lo { grid-template-columns:minmax(0, 1fr); }
-    .menu-map { min-height:52vh; padding-right:clamp(12px, 2.4vw, 32px); }
-    .menu-side { border-left:0; border-top:1px solid var(--line); }
+    .ops { grid-template-columns:minmax(0, 1fr); grid-template-rows:minmax(52vh, 1fr) auto; }
+    .brief { border-left:0; border-top:1px solid var(--line); }
+    .br-sector { margin-top:0; }
     .lo-rail { border-right:0; border-bottom:1px solid var(--line); }
   }
 </style>
@@ -737,30 +876,45 @@
   <div class="hud" id="hint"></div>
   <div class="hud" id="topbar"><button id="tomap">◂ MAP</button><button id="tocfg" title="Settings">⚙</button></div>
   <div class="hud" id="supports"></div>
-  <button class="tbtn" id="lockbtn">◉</button>
   <button class="tbtn" id="firebtn2" aria-label="Fire"><svg class="bullet" viewBox="0 0 24 48" aria-hidden="true"><path d="M12 1.5C15.7 5.2 17 10.6 17 16.4V18H7v-1.6C7 10.6 8.3 5.2 12 1.5Z"/><path d="M6.6 19.6h10.8v20.9H6.6z"/><path d="M5.2 41.8h13.6v4.7H5.2z"/></svg></button>
   <button class="tbtn" id="firebtn" aria-label="Fire"><svg class="bullet" viewBox="0 0 24 48" aria-hidden="true"><path d="M12 1.5C15.7 5.2 17 10.6 17 16.4V18H7v-1.6C7 10.6 8.3 5.2 12 1.5Z"/><path d="M6.6 19.6h10.8v20.9H6.6z"/><path d="M5.2 41.8h13.6v4.7H5.2z"/></svg></button>
   <button class="tbtn" id="adsbtn" aria-label="Aim down sights">ADS</button>
   <button class="tbtn" id="reloadbtn">⟳</button>
 </div>
 
-<!-- ============ START MENU: the operations map ============ -->
+<!-- ============ START MENU: the theater map beside the briefing ============ -->
 <div id="mapscr" class="scr">
-  <div class="menu">
-    <div class="menu-map">
-      <svg id="mapsvg" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet"></svg>
-      <div class="map-key"><span class="k-held">Held</span><span class="k-atk">Attackable</span><span class="k-out">Out of reach</span></div>
-    </div>
-    <aside class="menu-side">
-      <div class="ttl"><div class="eyebrow" id="theatertag">Theater I · Operations</div><h1 class="xl">Holdout</h1></div>
-      <div class="sector">
-        <div id="terrmeta">Select a territory</div>
-        <div class="xl" id="terrname">Operations</div>
-        <div id="terrhint">Pick an orange ring on the map to attack it.</div>
+  <div class="ops">
+    <div class="ops-map">
+      <svg id="mapsvg" viewBox="-4 -5 108 70" preserveAspectRatio="xMidYMid meet" aria-label="Theater map: pick a sector"></svg>
+      <div class="ops-mark"><div class="om-co">The Ninth Company</div><h1 class="om-title">Holdout</h1></div>
+      <div class="ops-key" aria-hidden="true">
+        <span class="k-held">Held</span><span class="k-atk">Attackable</span><span class="k-foe">Enemy</span><span class="k-front">Front line</span>
       </div>
-      <button class="cta" id="deploybtn" disabled>Deploy</button>
-      <button class="kitbtn" id="toteam"><span class="kb-k">Loadout</span><span class="kb-go">Change ›</span><span class="kb-v" id="kitname">M4A1</span><span class="kb-s" id="kitsub">Iron sights · 30 rds</span></button>
-      <button class="btn" id="tosettings">Settings</button>
+      <div class="ops-scale" aria-hidden="true"><b>N</b><span class="sc-bar" id="opsbar"></span><span>10 km</span></div>
+    </div>
+    <aside class="brief">
+      <header class="br-head">
+        <div class="br-theater"><span class="br-tag" id="brTheater">Theater I</span><span class="br-held" id="brHeld">1 / 13 held</span></div>
+        <button class="br-cog" id="tosettings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 2.8v3.1M12 18.1v3.1M2.8 12h3.1M18.1 12h3.1M5.5 5.5l2.2 2.2M16.3 16.3l2.2 2.2M5.5 18.5l2.2-2.2M16.3 7.7l2.2-2.2"/></svg></button>
+        <div class="br-segs" id="brSegs" aria-hidden="true"></div>
+      </header>
+      <section class="br-sector" aria-live="polite">
+        <div class="br-status"><span class="chip" id="brChip">Attackable</span><span class="br-code" id="brCode">Sector 01</span></div>
+        <h2 class="br-name" id="brName">Miller Fields</h2>
+        <div class="br-stats">
+          <div class="bs"><span class="k">Threat</span><span class="v" id="brTier">Tier 1</span><span class="pips" id="brPips"></span></div>
+          <div class="bs"><span class="k">Reserves</span><span class="v" id="brRes">52</span><span class="s" id="brResSub">8 at once</span></div>
+          <div class="bs"><span class="k">Forecast</span><span class="v sky" id="brSky"></span><span class="s" id="brWx">Clear</span></div>
+        </div>
+        <div class="br-prog" id="brProg" hidden><i id="brProgFill"></i></div>
+        <p class="br-line" id="brLine"></p>
+      </section>
+      <button class="cta deploy" id="deploybtn"><span id="dbMain">Deploy</span><span class="db-sub" id="dbSub">Miller Fields</span></button>
+      <div class="br-foot">
+        <button class="kit" id="toteam"><span class="kit-k">Kit</span><span class="kit-go">Change ›</span><span class="kit-v" id="kitname">M4A1</span><span class="kit-s" id="kitsub">Iron sights · 30 rds</span></button>
+        <ol class="squad" id="brSquad" aria-label="Your squad"></ol>
+      </div>
     </aside>
   </div>
 </div>
@@ -894,7 +1048,7 @@ const cv = document.getElementById('game');
 // ============================================================ PERSISTENT META
 let meta = null;
 // ---------- player options (saved with the campaign) ----------
-const OPT_DEFAULTS = { v: 2, scheme: 'manual', fpv: true, aimAssist: true, sens: 1, fovAdd: 0, minimap: true, dmgDir: true, killfeed: true, vibe: true, music: 0.6 };
+const OPT_DEFAULTS = { v: 2, fpv: true, aimAssist: true, sens: 1, fovAdd: 0, minimap: true, dmgDir: true, killfeed: true, vibe: true, music: 0.6 };
 const freshOpts = () => Object.assign({}, OPT_DEFAULTS);
 function freshMeta() {
   const taken = [];
@@ -961,7 +1115,7 @@ const state = {   // per-battle / session
   slow: 0, slowCd: 0,   // wave-clear slow-mo beat
   bossSpawned: false, bossRef: null, spotterSeen: false,
   streakN: 0, streakT: 0,
-  autoTarget: null, flyby: null,
+  crossTarget: null, flyby: null,
   tod: 1, weather: 'clear',
 };
 let screen = 'map'; // map | team | battle
@@ -1320,7 +1474,7 @@ function tallyClaims() {   // each side counts only its own people on a piece of
 // ============================================================ CAMERA INTENT
 // The simulation only says how the camera should feel (shake, punch, snap); the 3D chase
 // camera in the VIEW LAYER reads these. yaw 0 looks north, toward the enemy front.
-const cam = { yaw: 0, shake: 0, punch: 0, snap: true, nudge: 0, nudgeT: 0 };
+const cam = { yaw: 0, shake: 0, punch: 0, snap: true };
 function camTarget() {
   const c = soldiers[state.controlled];
   return (c && c.alive) ? c : soldiers.find(s => s.alive) || c;
@@ -2000,13 +2154,15 @@ window.addEventListener('keydown', e => {
   if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
   keys[e.code] = true;
   if (e.code === 'KeyM' && meta) meta.muted = !meta.muted;
+  if (screen === 'map' && el.modal.style.display !== 'flex' && !document.getElementById('boot')) {   // the start menu: ←/→ picks a fight, Enter takes it
+    if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') cycleSector(e.code === 'ArrowRight' ? 1 : -1);
+    const ae = document.activeElement;
+    if (e.code === 'Enter' && (!ae || ae === document.body)) deploySelected();   // a focused button or sector handles its own Enter
+  }
   if (screen === 'battle') {
     if (e.code === 'KeyR') heroReload();
     if (e.code === 'KeyO') showSettings();
     if (e.code === 'KeyV') { meta.opts.fpv = !meta.opts.fpv; applyOpts(); saveMeta(); }
-    if (e.code === 'Tab') { e.preventDefault(); if (!manualAim()) lockPress(); }
-    if (e.code === 'Escape') lockRelease();
-    if (e.code === 'KeyQ' || e.code === 'KeyE') { cam.nudge = (e.code === 'KeyQ' ? -1 : 1) * 25 * Math.PI / 180; cam.nudgeT = 2; }
     if (e.code === 'Digit1') useSupport('napalm');
     if (e.code === 'Digit2') useSupport('artillery');
     if (e.code === 'Digit3') useSupport('supply');
@@ -2028,7 +2184,6 @@ function checkOrient() {   // a phone held upright has no room for this fight; a
 }
 addEventListener('resize', checkOrient);
 addEventListener('orientationchange', checkOrient);
-const tap = { id: -1, x: 0, y: 0, t: 0 };   // right-side taps lock onto the enemy under the finger
 cv.addEventListener('touchstart', e => {
   e.preventDefault(); audio(); startAmbience();
   const alive = id => { for (const t of e.touches) if (t.identifier === id) return true; return false; };
@@ -2037,14 +2192,12 @@ cv.addEventListener('touchstart', e => {
   for (const t of e.changedTouches) {
     if (t.clientX < innerWidth * 0.55) {
       if (!joy.active) { joy.active = true; joy.id = t.identifier; joy.bx = joy.x = t.clientX; joy.by = joy.y = t.clientY; joy.dx = joy.dy = 0; }
-    } else if (manualAim()) { if (look.id < 0) { look.id = t.identifier; look.x = t.clientX; look.y = t.clientY; } }
-    else if (tap.id < 0) { tap.id = t.identifier; tap.x = t.clientX; tap.y = t.clientY; tap.t = performance.now(); }
+    } else if (look.id < 0) { look.id = t.identifier; look.x = t.clientX; look.y = t.clientY; }   // the right thumb looks
   }
 }, { passive: false });
 cv.addEventListener('touchmove', e => {
   e.preventDefault();
   for (const t of e.changedTouches) {
-    if (t.identifier === tap.id && Math.hypot(t.clientX - tap.x, t.clientY - tap.y) > 12) tap.id = -1;
     if (t.identifier === look.id) { addLook(t.clientX - look.x, t.clientY - look.y, 0.006); look.x = t.clientX; look.y = t.clientY; continue; }
     if (t.identifier !== joy.id) continue;
     joy.x = t.clientX; joy.y = t.clientY;
@@ -2057,11 +2210,10 @@ cv.addEventListener('touchmove', e => {
 function endTouch(e) {
   for (const t of e.changedTouches) {
     if (t.identifier === joy.id) { joy.active = false; joy.id = -1; joy.dx = joy.dy = 0; }
-    if (t.identifier === tap.id) { if (performance.now() - tap.t < 250) tapLock(t.clientX, t.clientY); tap.id = -1; }
     if (t.identifier === look.id) look.id = -1;
   }
 }
-cv.addEventListener('contextmenu', e => { e.preventDefault(); if (screen === 'battle' && !manualAim()) lockPress(); });
+cv.addEventListener('contextmenu', e => e.preventDefault());   // the right mouse button is the sights
 cv.addEventListener('touchend', endTouch); cv.addEventListener('touchcancel', endTouch);
 function moveVector() {
   let mx = 0, my = 0;
@@ -2076,11 +2228,10 @@ function moveVector() {
   return { x: mx * c - my * s, y: mx * s + my * c };
 }
 
-// ---------- free aim: the manual scheme and first person ----------
-// Auto-fire keeps the old behaviour (the soldier picks targets). Manual hands you the crosshair: the
-// camera looks where you look, the trigger is yours, and aim assist only nudges — it never fires.
+// ---------- free aim ----------
+// You aim and you fire, in either view: the camera looks where you look, the trigger is yours, and aim assist
+// (third person only) only nudges — it never fires.
 const aim = { yaw: 0, pitch: 0, fire: false, ads: false, sticky: false, lookDx: 0, settle: 0, settleY: 0 };
-const manualAim = () => !!meta && (meta.opts.scheme === 'manual' || meta.opts.fpv);
 const fpvActive = () => !!meta && meta.opts.fpv && state.mode === 'play'
   && !!soldiers[state.controlled] && soldiers[state.controlled].alive && !soldiers[state.controlled].horse;
 function addLook(dx, dy, scale) {
@@ -2115,20 +2266,20 @@ function lockPointer() {   // some hosts (an iframe without allow-pointer-lock) 
   } catch (e) { aim.noLock = true; }
 }
 function steerFromCursor(dt) {   // only a real mouse, only where the host refuses pointer lock: the further the cursor sits from the middle, the faster you turn
-  if (isTouch || !aim.noLock || aim.cx == null || !manualAim() || screen !== 'battle' || document.pointerLockElement === cv) return;
+  if (isTouch || !aim.noLock || aim.cx == null || screen !== 'battle' || document.pointerLockElement === cv) return;
   const dx = (aim.cx - innerWidth / 2) / (innerWidth / 2), dy = (aim.cy - innerHeight / 2) / (innerHeight / 2), dead = 0.12;
   const ax = Math.abs(dx) < dead ? 0 : (dx - Math.sign(dx) * dead) / (1 - dead);
   const ay = Math.abs(dy) < dead ? 0 : (dy - Math.sign(dy) * dead) / (1 - dead);
   if (ax || ay) addLook(ax * 900 * dt, ay * 520 * dt, 0.0024);
 }
 cv.addEventListener('mousedown', e => {
-  if (screen !== 'battle' || !manualAim()) return;
+  if (screen !== 'battle') return;
   if (e.button === 0) { aim.fire = true; lockPointer(); }
   else if (e.button === 2) aim.ads = true;
 });
 window.addEventListener('mouseup', e => { if (e.button === 0) aim.fire = false; if (e.button === 2) aim.ads = false; });
 document.addEventListener('mousemove', e => {
-  if (screen !== 'battle' || !manualAim()) return;
+  if (screen !== 'battle') return;
   if (document.pointerLockElement === cv) addLook(e.movementX, e.movementY, 0.0024);
   else if (!isTouch && !(e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) && e.target === cv) { aim.cx = e.clientX; aim.cy = e.clientY; }   // a phone's tap makes fake mouse moves: never steer from those
   else aim.cx = null;
@@ -2138,7 +2289,7 @@ document.addEventListener('pointerlockchange', () => { if (document.pointerLockE
 function releaseInputs() {   // let go of everything held: a trigger, a thumb, a parked cursor
   aim.fire = false; aim.cx = null;
   joy.active = false; joy.id = -1; joy.dx = joy.dy = 0;
-  look.id = -1; tap.id = -1;
+  look.id = -1;
 }
 window.addEventListener('blur', releaseInputs);
 document.addEventListener('visibilitychange', () => { if (document.hidden) releaseInputs(); });
@@ -2160,45 +2311,6 @@ function bindHoldButton(id, down, up) {
   b.addEventListener('pointerup', end);
   b.addEventListener('pointercancel', end);
   b.addEventListener('lostpointercapture', () => up());   // hidden or cancelled mid-press: never leave the trigger held
-}
-// ---------- Z-targeting ----------
-const lock = { target: null, on: false, retargetT: 0 };
-function lockCandidates(s) {   // ahead of the camera and close first; bosses and spotters jump the queue
-  const fx = Math.sin(cam.yaw), fy = -Math.cos(cam.yaw), out = [], maxD = 700 * visMul();
-  for (const e of enemies) {
-    const dx = e.x - s.x, dy = e.y - s.y, d = Math.hypot(dx, dy);
-    if (d > maxD) continue;
-    const ang = Math.acos(clamp((dx * fx + dy * fy) / (d || 1), -1, 1));
-    out.push([ang + d / 700 * 0.6 - (e.boss ? 0.5 : 0) - (e.spotter ? 0.3 : 0), e]);
-  }
-  return out.sort((a, b) => a[0] - b[0]).map(p => p[1]);
-}
-function lockAcquire(cycle) {
-  const s = soldiers[state.controlled];
-  if (screen !== 'battle' || state.mode !== 'play' || !s || !s.alive) return;
-  const list = lockCandidates(s);
-  if (!list.length) { lockRelease(); return; }
-  const i = cycle && lock.target ? list.indexOf(lock.target) : -1;
-  lock.target = list[(i + 1) % list.length];
-  lock.on = true; lock.retargetT = 0;
-  beep(1320, 0.05, 'square', 0.03, -500);
-}
-function lockRelease() {
-  if (lock.on) beep(520, 0.05, 'square', 0.02, -200);
-  lock.target = null; lock.on = false;
-}
-const lockPress = () => lockAcquire(lock.on && !!lock.target);
-function updateLock(dt) {   // a locked target that dies hands the lock to the next one after a beat
-  if (!lock.on) return;
-  if (lock.target && (lock.target.hp <= 0 || !enemies.includes(lock.target))) { lock.target = null; lock.retargetT = 0.25; }
-  if (!lock.target && (lock.retargetT -= dt) <= 0) lockAcquire(false);
-}
-function tapLock(x, y) {
-  if (screen !== 'battle' || state.mode !== 'play' || !VIEW.ready) return;
-  const e = pickEnemyAtScreen(x, y, 56);
-  if (!e) return;
-  lock.target = e; lock.on = true; lock.retargetT = 0;
-  beep(1320, 0.05, 'square', 0.03, -500);
 }
 
 // ============================================================ ENEMIES / WAVES
@@ -2416,10 +2528,9 @@ const GUN_KICK = { smg: 0.6, ar: 1.0, lmg: 1.4, sniper: 2.6, rocket: 3.2, pistol
 function fire(s, target, fromPlayer, angle) {   // angle set = fired where the player is aiming, not at a target
   const key = s.pistol ? 'pistol' : s.weapon, w = s.pistol ? SIDEARM : WEAPONS[s.weapon];
   const dx = target ? target.x - s.x : 0, dy = target ? target.y - s.y : 0;
-  const spread = w.spread * (fromPlayer && aim.ads ? heroSight().spread : 1) + (fromPlayer ? 0 : 0.03);
-  const jit = rand(-1, 1) * spread, a = (angle != null ? angle : Math.atan2(dy, dx)) + jit;
+  const jit = fromPlayer ? 0 : rand(-1, 1) * (w.spread + 0.03), a = (angle != null ? angle : Math.atan2(dy, dx)) + jit;   // your own spread is the 3D cone below
   s.aim = a; s.recoil = 0.09;
-  if (fromPlayer && manualAim()) {   // the weapon climbs: your next round goes where the recoil left the muzzle
+  if (fromPlayer) {   // the weapon climbs: your next round goes where the recoil left the muzzle
     const rk = RECOIL_KICK[key] || 0.2, steady = aim.ads ? 0.6 : 1;
     const kx = rand(-1, 1) * rk * 0.022 * steady;
     aim.pitch = clamp(aim.pitch + rk * 0.055 * steady, -0.7, 0.7);
@@ -2432,7 +2543,7 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   if (fromPlayer) { state.shots++; MUS.heat = performance.now(); }
   const mz = (s.pistol ? SIDEARM.len : w.len) + 6;   // the barrel tip: where the round actually leaves the weapon
   let bx = s.x + Math.cos(a) * mz, by = s.y + Math.sin(a) * mz, bz = 0, ux = Math.cos(a), uy = Math.sin(a), uz = 0, ballistic = false;
-  if (fromPlayer && manualAim()) {   // your round flies in 3D to whatever is under the crosshair, spread around that line
+  if (fromPlayer) {   // your round flies in 3D to whatever is under the crosshair, spread around that line
     const R = crosshairRay(s);
     crosshairPoint(R, (w.reach || w.range) + 400, AIMP);
     if (fpvActive()) { bx = R.ox + R.dx * 18; by = R.oy + R.dy * 18; bz = R.oz + R.dz * 18; }   // from just ahead of the eyes; the tracer is drawn from the barrel you see
@@ -2571,7 +2682,6 @@ function killSoldier(s) {
 function beginDeathCam() {   // hold on your soldier as they go down, before a reinforcement brings you back
   state.mode = 'dying'; state.dyingT = 0;
   state.slow = Math.max(state.slow, CFG.deathCam * 0.75);
-  lockRelease();
   sfxHeartbeat();
 }
 function beginFail() {
@@ -2685,13 +2795,28 @@ function visMul() {
   return clamp(lerp(SKY_VIS[i], SKY_VIS[(i + 1) % 4], t - i) * (WEATHER[state.weather] || WEATHER.clear).vis, 0.7, 1);
 }
 const todName = () => TOD_NAMES[Math.round(state.tod) % 4];
+const skyName = tod => TOD_NAMES[Math.round(tod) % 4];
+// The sky a sector will be fought under is rolled the first time the briefing shows it, and that is the sky you get
+// when you deploy; fighting there (won, lost or left) clears it, so the next visit brings new weather.
+const FORECAST = {};
+function forecastFor(t) {
+  const f = FORECAST[t.id];
+  if (f && f.theater === meta.theater) return f;
+  let tod, weather;
+  if (t.id === 1 && meta.theater === 0 && !meta.story.seen[1]) { tod = 0.15; weather = 'clear'; }   // "the line broke at dawn"
+  else {
+    const r = Math.random();
+    tod = r < 0.15 ? 0.1 + Math.random() * 0.3 : r < 0.55 ? 0.8 + Math.random() * 0.6
+      : r < 0.8 ? 1.85 + Math.random() * 0.4 : 2.85 + Math.random() * 0.4;
+    const w = Math.random(), wet = Math.min(0.2, 0.04 * effTier(t));
+    weather = w < 0.12 + wet ? 'rain' : w < 0.3 + wet ? 'fog' : w < 0.5 + wet ? 'overcast' : 'clear';
+  }
+  return (FORECAST[t.id] = { tod, weather, theater: meta.theater });
+}
 function rollSky(tid) {
-  if (tid === 1 && meta.theater === 0 && !meta.story.seen[1]) { state.tod = 0.15; state.weather = 'clear'; return; }   // "the line broke at dawn"
-  const r = Math.random();
-  state.tod = r < 0.15 ? 0.1 + Math.random() * 0.3 : r < 0.55 ? 0.8 + Math.random() * 0.6
-    : r < 0.8 ? 1.85 + Math.random() * 0.4 : 2.85 + Math.random() * 0.4;
-  const w = Math.random(), wet = Math.min(0.2, 0.04 * state.tier);
-  state.weather = w < 0.12 + wet ? 'rain' : w < 0.3 + wet ? 'fog' : w < 0.5 + wet ? 'overcast' : 'clear';
+  const f = forecastFor(TERRITORIES[tid]);
+  state.tod = f.tod; state.weather = f.weather;
+  delete FORECAST[tid];
 }
 
 // ============================================================ FRONT LIFECYCLE
@@ -2718,7 +2843,7 @@ function enterBattle(tid) {
   state.frontTime = 0; state.frontDeaths = 0;
   state.bossSpawned = false; state.bossRef = null; state.spotterSeen = false;
   state.slow = 0; state.slowCd = 0;
-  state.flyby = null; state.autoTarget = null;
+  state.flyby = null; state.crossTarget = null;
   rollSky(tid);
   enemies = []; bullets = []; markers = []; floaters = []; bodies = []; particles = []; pickups = [];
   genTerrain();
@@ -2728,10 +2853,8 @@ function enterBattle(tid) {
   if (first >= 0) soldiers[state.controlled].invuln = CFG.spawnInvuln;
   const opening = Math.min(CFG.enemyCap, state.enemyTotal - state.enemyDown);   // their first four, somewhere far from the FOB
   for (let i = 0; i < opening; i++) spawnEnemy(pickType());
-  lockRelease();
   aim.yaw = 0; aim.pitch = 0; aim.fire = false; aim.ads = false; aim.lookDx = 0; aim.settle = 0; aim.settleY = 0;
   releaseInputs();   // every front opens facing the line, not wherever you last looked
-  applyOpts.wasManual = manualAim();
   viewEnterBattle();
   supportsDirty = true;
   state.streakN = 0; state.streakT = 0;
@@ -2843,7 +2966,8 @@ function loadMeta() {
     }
     const optsV = save.opts && save.opts.v;   // read the SAVED version: Object.assign fills v from the defaults
     meta.opts = Object.assign(freshOpts(), save.opts || {});
-    if (!optsV) { meta.opts.v = 2; meta.opts.fpv = true; meta.opts.scheme = 'manual'; }   // first person is the default now
+    if (!optsV) { meta.opts.v = 2; meta.opts.fpv = true; }   // first person is the default now
+    delete meta.opts.scheme;   // auto-fire is gone: a save that used it aims by hand now, in the view it had
     meta.attach = freshAttach();   // per-gun, so a save from before attachments (or with a gun missing) still gets every default
     for (const k in meta.attach) Object.assign(meta.attach[k], (save.attach || {})[k] || {});
     return;
@@ -3020,18 +3144,6 @@ function squadAI(s, spd, dt, lead, front, wrange) {
   const far = s.gx != null && dist2(s.x, s.y, s.gx, s.gy) > 300 * 300;
   followPath(s, spd * (far ? 1.15 : 1), dt);
 }
-function pickTarget(s, range) {   // controlled soldier: lock-on target, else nearest visible ahead of the camera, else anything visible close
-  const L = lock.target;
-  if (L && L.hp > 0 && dist2(s.x, s.y, L.x, L.y) < range * range * 1.21 && losClear(s.x, s.y, L.x, L.y)) return L;
-  const fx = Math.sin(cam.yaw), fy = -Math.cos(cam.yaw), cone = Math.cos(70 * Math.PI / 180);
-  let best = null, bd = range * range;
-  for (const e of enemies) {
-    const dx = e.x - s.x, dy = e.y - s.y, d2 = dx * dx + dy * dy;
-    if (d2 >= bd) continue;
-    if ((dx * fx + dy * fy) / (Math.sqrt(d2) || 1) >= cone && losClear(s.x, s.y, e.x, e.y)) { bd = d2; best = e; }
-  }
-  return best || nearestVisibleEnemy(s.x, s.y, range * 0.45);
-}
 function updateSoldiers(dt) {
   const vis = visMul(), lead = camTarget();
   tallyClaims();
@@ -3058,12 +3170,12 @@ function updateSoldiers(dt) {
     s.tgtT = (s.tgtT || 0) - dt;
     if (s.tgtT <= 0 || (s.tgt && (s.tgt.hp <= 0 || !enemies.includes(s.tgt)))) {
       s.tgtT = 0.2;
-      s.tgt = isCtl ? (manualAim() ? crosshairTarget(s, 0.2) : pickTarget(s, wrange)) : nearestVisibleEnemy(s.x, s.y, wrange);
+      s.tgt = isCtl ? crosshairTarget(s, 0.2) : nearestVisibleEnemy(s.x, s.y, wrange);
     }
     if (s.reloadT > 0) { s.reloadT -= dt; if (s.reloadT <= 0) finishReload(s); }
     const t = s.tgt;
-    if (isCtl) state.autoTarget = t;
-    if (isCtl && manualAim()) {   // you aim it and you pull the trigger
+    if (isCtl) state.crossTarget = t;   // the enemy under your crosshair turns it red
+    if (isCtl) {   // you aim it and you pull the trigger
       aimAssist(s, dt);
       s.aim = aim.yaw - Math.PI / 2;
       s.quietT = aim.fire ? 0 : (s.quietT || 0) + dt;
@@ -3080,8 +3192,8 @@ function updateSoldiers(dt) {
       s.quietT = 0;
       if (s.fireCd <= 0 && s.reloadT <= 0) {
         if (s.pistol || s.mag > 0) {
-          s.fireCd = (s.pistol ? SIDEARM.cd : w.cd) * (isCtl ? 1 : CFG.aiCdMul);
-          fire(s, t, isCtl);
+          s.fireCd = (s.pistol ? SIDEARM.cd : w.cd) * CFG.aiCdMul;
+          fire(s, t, false);
           s.peekT = 0.5;   // pop up over cover to shoot
         }
         if (!s.pistol && s.mag <= 0) startReload(s);
@@ -3358,7 +3470,6 @@ function battleUpdate(dt) {
     state.tod = (state.tod + wdt * CFG.todSpeed) % 4;
     if (!state.bossSpawned && state.progress >= 90) { state.bossSpawned = true; spawnBoss(); }
     updateWaves(wdt);
-    updateLock(dt);
     updateSoldiers(wdt);
     for (const s of soldiers)   // squadmates walk back on once their reinforcement clock runs out
       if (!s.alive && s.respawnT > 0 && s.slot !== state.controlled) {
@@ -5086,11 +5197,6 @@ function drawFx() {
   const boss = state.bossRef;
   if (boss && boss.phase === 3)
     decal(F.ring, boss.x * XS, boss.y * XS, 3.4 + Math.sin(now / 110) * 0.35, now / 700, colorOf('#ff3a1e'), 0.05);
-  const tgt = lock.target || (state.mode === 'play' ? state.autoTarget : null);
-  if (tgt && enemies.includes(tgt) && tgt === lock.target) {   // the locked target also gets a ring at its feet
-    const lk = ENEMY_LOOK[tgt.type] || ENEMY_LOOK.grunt;
-    decal(F.ring, tgt.x * XS, tgt.y * XS, 1.7 * lk[0], now / 600, colorOf('#ffd23a'), 0.045);
-  }
   TMP.q.identity();
 }
 
@@ -6059,14 +6165,6 @@ function chasePose(sx, sy, yaw, pr, eye, look, dist = pr.dist) {
   eye.set(X - fx * dist + rx * pr.side, pr.height + (dist - pr.dist) * 0.3, Z - fz * dist + rz * pr.side);
   look.set(X + fx * pr.ahead, pr.lookH, Z + fz * pr.ahead);
 }
-function threatYaw(s) {   // lean the camera toward the nearest threat ahead, never all the way
-  const range = WEAPONS[s.weapon].range * 1.2;
-  let best = null, bd = range * range;
-  for (const e of enemies) { const d = dist2(s.x, s.y, e.x, e.y); if (d < bd) { bd = d; best = e; } }
-  if (!best) return 0;
-  const a = Math.atan2(best.x - s.x, -(best.y - s.y));
-  return Math.abs(a) < Math.PI / 3 ? a * 0.35 : 0;
-}
 function camAvoid(f, eye) {   // pull the chase camera in front of walls instead of through them; lift it over cover
   const ex = eye.x / XS, ey = eye.z / XS;
   let t = 1;
@@ -6081,9 +6179,8 @@ function updateCamera3(dt) {
   const C = camView, pr = innerWidth < innerHeight ? CAM3.port : CAM3.land, cam3 = VIEW.camera;
   cam.shake = Math.max(0, cam.shake - dt * 26);
   cam.punch = Math.max(0, cam.punch - dt * 0.35);
-  cam.nudgeT = Math.max(0, cam.nudgeT - dt);
   const reloading = soldiers[state.controlled] && soldiers[state.controlled].reloadT > 0;   // the sights come down while you reload, and back up after
-  FPV.adsK = approach(FPV.adsK, aim.ads && manualAim() && !reloading ? 1 : 0, heroSight().rate, dt);   // sights come up at the optic's own pace, in both views
+  FPV.adsK = approach(FPV.adsK, aim.ads && !reloading ? 1 : 0, heroSight().rate, dt);   // sights come up at the optic's own pace, in both views
   steerFromCursor(dt);
   aim.lookDx *= Math.exp(-dt * 8);   // the viewmodel's sway settles back to centre once you stop turning
   {   // recoil recovery: the muzzle drifts back to where you were pointing once you stop firing
@@ -6094,7 +6191,6 @@ function updateCamera3(dt) {
       aim.yaw = angWrap(aim.yaw - sgn * d); aim.settleY -= sgn * d;
     }
   }
-  if (cam.nudgeT <= 0) cam.nudge = approach(cam.nudge, 0, 3, dt);
   const boss = state.bossRef;
   if (boss && boss !== C.bossSeen && state.mode === 'play') { C.bossSeen = boss; C.bossT = CFG.bossIntro; showTitleCard(boss); }   // waits out a death camera
   const ctl = soldiers[state.controlled];
@@ -6143,18 +6239,9 @@ function updateCamera3(dt) {
     C.dieFrom = null;
     const follow = camTarget();
     if (follow) {
-      const tgt = state.mode === 'play' && lock.target && enemies.includes(lock.target) ? lock.target : null;
-      let dist = pr.dist;
-      if (manualAim()) cam.yaw = aim.yaw;   // you steer the camera yourself
-      else if (tgt) {   // Z-target: swing to face the target and pull back to frame both
-        cam.yaw = approachAng(cam.yaw, Math.atan2(tgt.x - follow.x, -(tgt.y - follow.y)), 5, dt);
-        dist += clamp(Math.hypot(tgt.x - follow.x, tgt.y - follow.y) * XS * 0.08, 0, 1.5);
-      } else if (state.mode === 'play' && follow.alive) {
-        cam.yaw = approachAng(cam.yaw, threatYaw(follow) + cam.nudge, 2.2, dt);
-      }
-      chasePose(follow.x, follow.y, cam.yaw, pr, C.cEye, C.cLook, dist);
-      if (tgt) C.cLook.set((follow.x + (tgt.x - follow.x) * 0.45) * XS, 1.0, (follow.y + (tgt.y - follow.y) * 0.45) * XS);
-      if (manualAim()) C.cLook.y += aim.pitch * 4.5;
+      cam.yaw = aim.yaw;   // you steer the camera yourself
+      chasePose(follow.x, follow.y, cam.yaw, pr, C.cEye, C.cLook);
+      C.cLook.y += aim.pitch * 4.5;
       camAvoid(follow, C.cEye);
       if (!C.have || cam.snap) { C.eye.copy(C.cEye); C.look.copy(C.cLook); C.have = true; cam.snap = false; }
       else { C.eye.lerp(C.cEye, 1 - Math.exp(-7 * dt)); C.look.lerp(C.cLook, 1 - Math.exp(-9 * dt)); }
@@ -6229,11 +6316,10 @@ function updateOverlays(dt) {
     d.style.opacity = (clamp(m.t / 1.3, 0, 1) * 0.9).toFixed(2);
   });
   const rt = OV.reticle, hero = soldiers[state.controlled];
-  const aimAt = hero && hero.alive && state.mode === 'play'
-    ? (lock.target && enemies.includes(lock.target) ? lock.target : state.autoTarget) : null;
+  const aimAt = hero && hero.alive && state.mode === 'play' ? state.crossTarget : null;
   if (rt) {
     let shown = false;
-    if (manualAim() && hero && hero.alive && state.mode === 'play') {   // you aim it: the crosshair sits in the middle
+    if (hero && hero.alive && state.mode === 'play') {   // you aim it: the crosshair sits in the middle
       const cx = innerWidth / 2, cy = innerHeight * (fpvActive() ? 0.5 : 0.46);
       OV.rtX = cx; OV.rtY = cy;
       rt.style.display = 'block';
@@ -6241,22 +6327,8 @@ function updateOverlays(dt) {
       const bloom = Math.max(0, (hero.moving ? 4 : 0) + (hero.recoil > 0 ? 6 : 0) + (hero.reloadT > 0 ? 8 : 0) - (aim.ads ? 3 : 0));
       OV.gap += (bloom - OV.gap) * Math.min(1, dt * 12);
       rt.style.setProperty('--g', OV.gap.toFixed(1) + 'px');
-      rt.classList.toggle('hot', !!aimAt);
+      rt.classList.toggle('hot', !!aimAt && enemies.includes(aimAt));
       shown = true;
-    } else if (aimAt && enemies.includes(aimAt)) {
-      const lk = ENEMY_LOOK[aimAt.type] || ENEMY_LOOK.grunt;
-      if (toScreen(aimAt.x, aimAt.y, (1.15 * lk[1] + (aimAt.horse ? 0.4 : 0)) / ZS)) {
-        if (!OV.rtOn) { OV.rtX = SCR.x; OV.rtY = SCR.y; }
-        const k = 1 - Math.exp(-dt * 18);
-        OV.rtX += (SCR.x - OV.rtX) * k; OV.rtY += (SCR.y - OV.rtY) * k;
-        rt.style.display = 'block';
-        rt.style.transform = `translate3d(${OV.rtX.toFixed(1)}px,${OV.rtY.toFixed(1)}px,0)`;
-        const bloom = (hero.moving ? 4 : 0) + (hero.recoil > 0 ? 5 : 0) + (hero.reloadT > 0 ? 7 : 0);
-        OV.gap += (bloom - OV.gap) * Math.min(1, dt * 12);
-        rt.style.setProperty('--g', OV.gap.toFixed(1) + 'px');
-        rt.classList.toggle('hot', true);
-        shown = true;
-      }
     }
     if (!shown) hideEl(rt);
     OV.rtOn = shown;
@@ -6359,16 +6431,6 @@ function drawPlane(x, y, z) {   // strike jet, nose toward +X
   part(0, 0, 3.6, 0.7, 0.7, 0.3, dark);
   TMP.q.identity();
 }
-function pickEnemyAtScreen(px, py, radius) {   // tap-to-lock: nearest enemy whose chest projects near the tap
-  let best = null, bd = radius * radius;
-  for (const e of enemies) {
-    const lk = ENEMY_LOOK[e.type] || ENEMY_LOOK.grunt;
-    if (!toScreen(e.x, e.y, (1.1 * lk[1] + (e.horse ? 0.4 : 0)) / ZS)) continue;
-    const d = (SCR.x - px) ** 2 + (SCR.y - py) ** 2;
-    if (d < bd) { bd = d; best = e; }
-  }
-  return best;
-}
 function showTitleCard(boss) {
   const card = document.getElementById('titlecard');
   card.querySelector('.tc-sub').textContent = boss.epithet || 'Carrier of the Other';
@@ -6435,7 +6497,7 @@ function viewEnterBattle() {
   rebuildStatic();
   camView.have = false; camView.bossSeen = null; camView.bossT = 0;
   hideTitleCard();
-  Object.assign(cam, { yaw: 0, shake: 0, punch: 0, snap: true, nudge: 0, nudgeT: 0 });
+  Object.assign(cam, { yaw: 0, shake: 0, punch: 0, snap: true });
   Object.assign(aim, { yaw: 0, pitch: 0, fire: false, ads: false, sticky: false, lookDx: 0 });
 }
 function renderView(dt) {
@@ -6482,14 +6544,14 @@ const el = {
   hurt: $('hurt'), banner: $('banner'),
   modal: $('modal'), modalbox: $('modalbox'), hint: $('hint'),
   bhud: $('bhud'), mapscr: $('mapscr'), teamscr: $('teamscr'),
-  supports: $('supports'), mapsvg: $('mapsvg'), theatertag: $('theatertag'),
+  supports: $('supports'), mapsvg: $('mapsvg'),
 };
 function showScreen(s) {
   screen = s;
   el.mapscr.classList.toggle('on', s === 'map');
   el.teamscr.classList.toggle('on', s === 'team');
   el.bhud.style.display = s === 'battle' ? 'block' : 'none';
-  if (s === 'map') renderMap();
+  if (s === 'map') { renderMap(); playMapEntrance(); }
   if (s === 'team') renderTeam();
 }
 let hpRefs = [];
@@ -6590,22 +6652,14 @@ function updateFeed() {
 }
 function applyOpts() {   // the options that change how the game looks and reads
   const o = meta.opts;
-  document.body.classList.toggle('manual', o.scheme === 'manual' || o.fpv);
   document.body.classList.toggle('fpv', !!o.fpv);
   document.body.classList.toggle('nomap', !o.minimap);
   document.body.classList.toggle('nofeed', !o.killfeed);
-  if (manualAim()) {
-    lockRelease();
-    if (!applyOpts.wasManual) { aim.yaw = cam.yaw; aim.pitch = 0; aim.lookDx = 0; }   // take the camera over where it stands, don't snap
-  } else { aim.fire = false; aim.ads = false; }
-  applyOpts.wasManual = manualAim();
   const ab = $('adsbtn');
   if (ab) ab.classList.toggle('on', aim.ads);
   el.hint.textContent = isTouch
-    ? (manualAim() ? 'LEFT THUMB MOVES · DRAG RIGHT TO LOOK · FIRE · ADS · TAP AMMO TO RELOAD'
-                   : 'LEFT THUMB MOVES · TAP AMMO TO RELOAD · TAP AN ENEMY TO LOCK ON')
-    : (manualAim() ? 'WASD MOVE · MOUSE AIMS (CLICK TO CAPTURE IT, ESC FREES) · CLICK FIRE · RIGHT-CLICK ADS · R RELOAD · V VIEW'
-                   : 'WASD MOVE · R RELOAD · TAB LOCK-ON · Q/E CAMERA · 1/2/3 KILLSTREAKS · V VIEW');
+    ? 'LEFT THUMB MOVES · DRAG RIGHT TO LOOK · FIRE · ADS · TAP AMMO TO RELOAD'
+    : 'WASD MOVE · MOUSE AIMS (CLICK TO CAPTURE IT, ESC FREES) · CLICK FIRE · RIGHT-CLICK ADS · R RELOAD · V VIEW';
   el.hint.style.opacity = 1;
   clearTimeout(applyOpts.t);
   applyOpts.t = setTimeout(() => { el.hint.style.opacity = 0; }, 6000);
@@ -6616,9 +6670,6 @@ function showSettings() {
     <div class="eyebrow">Settings</div>
     <h2>Controls</h2>
     <div class="setlist">
-    <div class="setrow"><span>Controls</span><span>
-      <label><input type="radio" name="sch" value="auto"${on(o.scheme === 'auto')}> Auto-fire</label>
-      <label><input type="radio" name="sch" value="manual"${on(o.scheme === 'manual')}> Manual</label></span></div>
     <div class="setrow"><span>View</span><span>
       <label><input type="radio" name="vw" value="tps"${on(!o.fpv)}> Third person</label>
       <label><input type="radio" name="vw" value="fps"${on(o.fpv)}> First person</label></span></div>
@@ -6636,7 +6687,6 @@ function showSettings() {
     <p class="note">Manual: hold left mouse to fire, right mouse for sights; click once to capture the mouse, Esc frees it.
       On a phone: drag the right side to look, fire with either trigger, ADS to steady. First person always aims manually.</p>`);
   const bind = (id, key, read) => { const e = $(id); if (e) e.oninput = () => { meta.opts[key] = read(e); applyOpts(); saveMeta(); }; };   // 'input' so the FOV and sensitivity sliders preview as you drag
-  document.querySelectorAll('input[name=sch]').forEach(r => { r.onchange = () => { meta.opts.scheme = r.value; applyOpts(); saveMeta(); }; });
   document.querySelectorAll('input[name=vw]').forEach(r => { r.onchange = () => { meta.opts.fpv = r.value === 'fps'; applyOpts(); saveMeta(); showSettings(); }; });   // redraw: first person drops the aim-assist row
   bind('o_aa', 'aimAssist', e => e.checked);
   bind('o_sens', 'sens', e => +e.value);
@@ -6664,92 +6714,402 @@ function updateBanner(dt) {
 function showModal(html) { el.modalbox.innerHTML = html; el.modal.style.display = 'flex'; }
 function hideModal() { el.modal.style.display = 'none'; }
 
-// ---------- MAP SCREEN ----------
+// ---------- START MENU: the theater map beside the briefing ----------
+// A field operations table. The thirteen sectors are regions split by distance with hand-wandered borders; contour
+// lines climb to the northern ranges, a river runs past Velen Crossing into Dunmoor Marsh, and wherever your ground
+// meets theirs an orange front line burns. The briefing column says what the selected sector is, what holds it, what
+// the sky will be when you get there, and deploys. Map units are TERRITORIES' own (x 0..100, y 0..60; 1 unit = 2.5 km).
 let selectedTid = -1;
-function renderMap() {
-  el.theatertag.textContent = `Theater ${ROMAN[meta.theater] || meta.theater + 1} · Operations`;
-  if (!TERRITORIES[selectedTid]) {   // open on something you can fight for, so DEPLOY is one tap away
-    const act = TERRITORIES[meta.activeTid];
-    const pick = act && terrAttackable(act) ? act : TERRITORIES.find(tt => terrAttackable(tt));
-    if (pick) selectedTid = pick.id;
+const MAPV = { built: false, owned: null, cells: null, regions: [], nodes: [], layers: {}, enterT: 0 };
+const SVGNS = 'http://www.w3.org/2000/svg';
+const SQUAD_ROLE_NAMES = ['Lead', 'Point', 'Flank', 'Overwatch'];
+function svgEl(tag, attrs, parent) {
+  const n = document.createElementNS(SVGNS, tag);
+  if (attrs) for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+
+// ---- the land: value noise, a river, peaks, contour lines ----
+function mapNoise(x, y, seed) {   // smooth value noise in [0, 1): the same hills every visit, whatever Math.random is doing
+  const h = (i, j) => { let n = Math.imul(i + seed * 101, 374761393) ^ Math.imul(j - seed * 37, 668265263); n = Math.imul(n ^ (n >>> 13), 1274126177); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };
+  const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi, u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+  const a = h(xi, yi), b = h(xi + 1, yi), c = h(xi, yi + 1), d = h(xi + 1, yi + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+function mapFbm(x, y, seed) { let s = 0, amp = 0.5, f = 1; for (let o = 0; o < 4; o++) { s += amp * mapNoise(x * f, y * f, seed + o); amp *= 0.5; f *= 2.03; } return s; }
+const MAP_RIVER = [[35, -14], [38, -3], [41.5, 8], [44.6, 19], [46.6, 27], [47.3, 33], [48.6, 40.5], [51.5, 47.5], [55, 53.5], [60.5, 60], [68, 71]];
+const MAP_PEAKS = [[13, 22, 8, 0.32], [23, 7, 9, 0.42], [36, 3, 8, 0.3], [57, 4, 10, 0.46], [79, 3, 10, 0.34], [92, 18, 12, 0.26], [53, 54, 10, -0.28], [9, 50, 13, -0.08]];
+function distToPolyline(x, y, pts) {
+  let best = Infinity;
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i], dx = bx - ax, dy = by - ay;
+    const t = clamp(((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy), 0, 1);
+    best = Math.min(best, Math.hypot(x - ax - dx * t, y - ay - dy * t));
   }
-  const NS = 'http://www.w3.org/2000/svg';
+  return best;
+}
+function mapHeight(x, y) {   // the ranges rise to the north, the marsh sinks in the south-east, and the river cut its valley
+  let h = mapFbm(x * 0.07, y * 0.07, 3) * 0.75 + Math.pow(clamp((52 - y) / 62, 0, 1), 1.35) * 0.95;
+  for (const [px, py, r, a] of MAP_PEAKS) h += a * Math.exp(-((x - px) ** 2 + (y - py) ** 2) / (r * r));
+  const d = distToPolyline(x, y, MAP_RIVER);
+  return h - 0.3 * Math.exp(-(d * d) / 26);
+}
+function contourLines(x0, y0, x1, y1, step, levels) {   // marching squares, chained into polylines and smoothed once
+  const cols = Math.round((x1 - x0) / step), rows = Math.round((y1 - y0) / step), H = new Float32Array((cols + 1) * (rows + 1));
+  for (let j = 0; j <= rows; j++) for (let i = 0; i <= cols; i++) H[j * (cols + 1) + i] = mapHeight(x0 + i * step, y0 + j * step);
+  return levels.map(lv => {
+    const segs = [];
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const a = H[j * (cols + 1) + i], b = H[j * (cols + 1) + i + 1], c = H[(j + 1) * (cols + 1) + i + 1], d = H[(j + 1) * (cols + 1) + i];
+      const idx = (a > lv ? 8 : 0) | (b > lv ? 4 : 0) | (c > lv ? 2 : 0) | (d > lv ? 1 : 0);
+      if (idx === 0 || idx === 15) continue;
+      const X = x0 + i * step, Y = y0 + j * step;
+      const T = [X + step * (lv - a) / (b - a), Y], R = [X + step, Y + step * (lv - b) / (c - b)];
+      const B = [X + step * (lv - d) / (c - d), Y + step], L = [X, Y + step * (lv - a) / (d - a)];
+      const centre = (a + b + c + d) / 4 > lv;
+      switch (idx) {
+        case 1: case 14: segs.push([L, B]); break;
+        case 2: case 13: segs.push([B, R]); break;
+        case 3: case 12: segs.push([L, R]); break;
+        case 4: case 11: segs.push([T, R]); break;
+        case 6: case 9: segs.push([T, B]); break;
+        case 7: case 8: segs.push([L, T]); break;
+        case 5: if (centre) { segs.push([L, T]); segs.push([B, R]); } else { segs.push([T, R]); segs.push([L, B]); } break;
+        case 10: if (centre) { segs.push([T, R]); segs.push([L, B]); } else { segs.push([L, T]); segs.push([B, R]); } break;
+      }
+    }
+    return chainSegments(segs).map(smoothLine);
+  });
+}
+function chainSegments(segs) {
+  const key = p => Math.round(p[0] * 1000) + ',' + Math.round(p[1] * 1000);
+  const ends = new Map();
+  segs.forEach((s, i) => { for (const p of s) { const k = key(p), l = ends.get(k); if (l) l.push(i); else ends.set(k, [i]); } });
+  const used = new Uint8Array(segs.length), lines = [];
+  for (let i = 0; i < segs.length; i++) {
+    if (used[i]) continue;
+    used[i] = 1;
+    const line = [segs[i][0], segs[i][1]];
+    for (const tail of [true, false]) {
+      for (;;) {
+        const end = tail ? line[line.length - 1] : line[0], k = key(end), l = ends.get(k);
+        const j = l ? l.find(n => !used[n]) : undefined;
+        if (j === undefined) break;
+        used[j] = 1;
+        const other = key(segs[j][0]) === k ? segs[j][1] : segs[j][0];
+        if (tail) line.push(other); else line.unshift(other);
+      }
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+function smoothLine(pts) {   // one pass of Chaikin: contour steps become a drawn line
+  if (pts.length < 4) return pts;
+  const out = [pts[0]];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [ax, ay] = pts[i], [bx, by] = pts[i + 1];
+    out.push([ax * 0.75 + bx * 0.25, ay * 0.75 + by * 0.25], [ax * 0.25 + bx * 0.75, ay * 0.25 + by * 0.75]);
+  }
+  out.push(pts[pts.length - 1]);
+  return out;
+}
+const pathOf = (lines, close) => lines.map(l => 'M' + l.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') + (close ? 'Z' : '')).join('');
+function smoothPath(pts) {   // Catmull-Rom through the points, as cubic Béziers
+  let d = `M${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += `C${c1[0].toFixed(2)} ${c1[1].toFixed(2)} ${c2[0].toFixed(2)} ${c2[1].toFixed(2)} ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+}
+
+// ---- the sectors: regions split by distance, borders that wander a little, shared by both sides ----
+function clipHalf(poly, nx, ny, c) {   // keep the part of a polygon where nx*x + ny*y <= c
+  const out = [];
+  for (let i = 0; i < poly.length; i++) {
+    const p = poly[i], q = poly[(i + 1) % poly.length], dp = nx * p[0] + ny * p[1] - c, dq = nx * q[0] + ny * q[1] - c;
+    if (dp <= 0) out.push(p);
+    if ((dp < 0 && dq > 0) || (dp > 0 && dq < 0)) { const t = dp / (dp - dq); out.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]); }
+  }
+  return out;
+}
+function sectorCells() {
+  const frame = [[-80, -70], [180, -70], [180, 130], [-80, 130]];   // far past any letterbox
+  const cells = TERRITORIES.map(t => TERRITORIES.reduce((poly, o) => o === t ? poly
+    : clipHalf(poly, o.x - t.x, o.y - t.y, (o.x - t.x) * (t.x + o.x) / 2 + (o.y - t.y) * (t.y + o.y) / 2), frame.map(p => p.slice())));
+  const onBisector = (p, i, j) => {
+    const a = TERRITORIES[i], b = TERRITORIES[j], nx = b.x - a.x, ny = b.y - a.y;
+    return Math.abs(nx * p[0] + ny * p[1] - (nx * (a.x + b.x) + ny * (a.y + b.y)) / 2) / Math.hypot(nx, ny) < 1e-6;
+  };
+  const wander = (p, q) => {
+    const L = Math.hypot(q[0] - p[0], q[1] - p[1]), n = Math.max(1, Math.round(L / 1.1)), pts = [p];
+    for (let k = 1; k < n; k++) {
+      const x = p[0] + (q[0] - p[0]) * k / n, y = p[1] + (q[1] - p[1]) * k / n;
+      pts.push([x + (mapNoise(x * 0.38, y * 0.38, 11) - 0.5) * 1.7, y + (mapNoise(x * 0.38, y * 0.38, 29) - 0.5) * 1.7]);
+    }
+    pts.push(q);
+    return pts;
+  };
+  const edges = new Map(), outlines = cells.map((poly, i) => {
+    const out = [];
+    for (let k = 0; k < poly.length; k++) {
+      const p = poly[k], q = poly[(k + 1) % poly.length];
+      const j = TERRITORIES.findIndex((_, m) => m !== i && onBisector(p, i, m) && onBisector(q, i, m));
+      if (j < 0) { out.push(p); continue; }
+      const id = Math.min(i, j) + '-' + Math.max(i, j);
+      if (!edges.has(id)) edges.set(id, { a: Math.min(i, j), b: Math.max(i, j), pts: wander(p, q) });
+      const e = edges.get(id), pts = Math.hypot(e.pts[0][0] - p[0], e.pts[0][1] - p[1]) < 1e-4 ? e.pts : e.pts.slice().reverse();
+      for (let n = 0; n < pts.length - 1; n++) out.push(pts[n]);
+    }
+    return out;
+  });
+  return { outlines, edges: [...edges.values()] };
+}
+const gridRef = t => 'ABCDEFGHIJ'[clamp(Math.floor(t.x / 10), 0, 9)] + (Math.floor(t.y / 10) + 1);
+
+// ---- icons for the forecast ----
+const SKY_ICON = {
+  DAWN: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 12h12M4.6 12a3.4 3.4 0 0 1 6.8 0M8 3.6v2M3.6 6.6l1.3 1.2M12.4 6.6l-1.3 1.2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
+  DAY: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4" stroke="currentColor" stroke-width="1.5"/></svg>',
+  DUSK: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 12h12M4.6 12a3.4 3.4 0 0 1 6.8 0M8 8.6V3M6.2 4.8 8 3l1.8 1.8" fill="none" stroke="currentColor" stroke-width="1.5" transform="rotate(180 8 7.3)"/></svg>',
+  NIGHT: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10.8 2.6a5.6 5.6 0 1 0 2.6 8.6 4.6 4.6 0 0 1-2.6-8.6Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
+};
+
+// ---- building the map once ----
+function buildMapStatic() {
   const svg = el.mapsvg;
   svg.innerHTML = '';
-  // links
+  const defs = svgEl('defs', null, svg);
+  const hatch = svgEl('pattern', { id: 'm-hatch', width: 1.4, height: 1.4, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(45)' }, defs);
+  svgEl('rect', { width: 0.32, height: 1.4, class: 'hatch' }, hatch);
+  const marsh = svgEl('pattern', { id: 'm-marsh', width: 2.6, height: 2, patternUnits: 'userSpaceOnUse' }, defs);
+  svgEl('path', { d: 'M0.3 1.5h1.6M0.7 1.5v-0.55M1.1 1.5v-0.8M1.5 1.5v-0.55', class: 'marsh-tuft' }, marsh);
+  const arrow = svgEl('marker', { id: 'm-arrow', viewBox: '0 0 6 6', refX: 5, refY: 3, markerWidth: 3.2, markerHeight: 3.2, orient: 'auto' }, defs);
+  svgEl('path', { d: 'M0 0.4 5.6 3 0 5.6Z', class: 'adv-head' }, arrow);
+
+  const L = MAPV.layers;
+  L.terrain = svgEl('g', { class: 'g-terrain' }, svg);
+  svgEl('rect', { x: -80, y: -70, width: 260, height: 200, class: 't-ground' }, L.terrain);
+  const levels = [];
+  for (let lv = 0.18; lv < 1.9; lv += 0.085) levels.push(lv);
+  const lines = contourLines(-26, -22, 126, 82, 1, levels);
+  const minor = [], index = [];
+  lines.forEach((ls, k) => (k % 4 === 3 ? index : minor).push(...ls));
+  svgEl('path', { d: pathOf(minor), class: 't-contour' }, L.terrain);
+  svgEl('path', { d: pathOf(index), class: 't-index' }, L.terrain);
+  svgEl('path', { d: 'M46.8 49.8C51 47.4 58.6 48.6 62.2 52.4 65 55.6 62.6 60 57 60.6 51.4 61.2 45.6 58.8 44.8 55 44.2 52.4 45 50.8 46.8 49.8Z', class: 't-marsh' }, L.terrain);
+  const river = smoothPath(MAP_RIVER);
+  svgEl('path', { d: river, class: 't-river' }, L.terrain);
+  svgEl('path', { d: river, class: 't-river-core' }, L.terrain);
+
+  L.grid = svgEl('g', { class: 'g-grid' }, svg);
+  let gd = '';
+  for (let x = 10; x < 100; x += 10) gd += `M${x} 0V60`;
+  for (let y = 10; y < 60; y += 10) gd += `M0 ${y}H100`;
+  svgEl('path', { d: gd, class: 't-grid' }, L.grid);
+  svgEl('rect', { x: 0, y: 0, width: 100, height: 60, class: 't-frame' }, L.grid);
+  for (let i = 0; i < 10; i++) { const tx = svgEl('text', { x: i * 10 + 5, y: -1.6, class: 't-ref', 'text-anchor': 'middle' }, L.grid); tx.textContent = 'ABCDEFGHIJ'[i]; }
+  for (let j = 0; j < 6; j++) { const tx = svgEl('text', { x: -1.6, y: j * 10 + 5.6, class: 't-ref', 'text-anchor': 'middle' }, L.grid); tx.textContent = j + 1; }
+
+  L.regions = svgEl('g', { class: 'g-regions' }, svg);
+  L.seams = svgEl('path', { class: 'seam' }, svg);
+  L.front = svgEl('g', { class: 'g-front' }, svg);
+  L.routes = svgEl('g', { class: 'g-routes' }, svg);
+  L.nodes = svgEl('g', { class: 'g-nodes' }, svg);
+  L.reticle = svgEl('g', { class: 'reticle' }, svg);
+
+  MAPV.cells = sectorCells();
+  MAPV.regions = MAPV.cells.outlines.map((pts, i) => {
+    const p = svgEl('path', { d: pathOf([pts], true), class: 'rg' }, L.regions);
+    const hatchP = svgEl('path', { d: pathOf([pts], true), class: 'rg-hatch' }, L.regions);
+    p.addEventListener('click', () => selectSector(i));
+    hatchP.addEventListener('click', () => selectSector(i));
+    return { fill: p, hatch: hatchP };
+  });
+  addEventListener('resize', () => { if (screen === 'map') sizeMapText(); });
+  MAPV.built = true;
+}
+function sizeMapText() {   // labels keep a readable size in pixels whatever the map is scaled to
+  const svg = el.mapsvg, r = svg.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  const vb = svg.viewBox.baseVal, scale = Math.min(r.width / vb.width, r.height / vb.height);
+  const px = innerHeight < 520 ? 9.5 : clamp(9 + scale * 0.35, 10.5, 13);
+  svg.style.setProperty('--lab', (px / scale).toFixed(3) + 'px');
+  svg.style.setProperty('--ref', (Math.max(8, px - 2) / scale).toFixed(3) + 'px');
+  const bar = document.getElementById('opsbar');
+  if (bar) bar.style.width = Math.round(scale * 4) + 'px';   // 4 units = 10 km
+}
+
+// ---- what changes with the campaign ----
+function renderMap() {
+  if (!MAPV.built) buildMapStatic();
+  const L = MAPV.layers, owned = TERRITORIES.map(terrOwned);
+  const fresh = MAPV.owned ? TERRITORIES.filter(t => owned[t.id] && !MAPV.owned[t.id]).map(t => t.id) : [];
+  MAPV.owned = owned;
+
+  // the selection: keep what you picked unless you can't fight there, then open on the next fight
+  const sel = TERRITORIES[selectedTid];
+  if (!sel || !terrAttackable(sel)) {
+    const atk = TERRITORIES.filter(terrAttackable);
+    const next = atk.find(t => fresh.some(f => t.adj.includes(f))) || (TERRITORIES[meta.activeTid] && terrAttackable(TERRITORIES[meta.activeTid]) ? TERRITORIES[meta.activeTid] : null)
+      || atk.slice().sort((a, b) => effTier(a) - effTier(b) || a.id - b.id)[0];
+    selectedTid = next ? next.id : 0;
+  }
+
+  // regions
+  MAPV.regions.forEach((r, i) => {
+    const t = TERRITORIES[i], cls = owned[i] ? 'held' : terrAttackable(t) ? 'atk' : 'foe';
+    r.fill.setAttribute('class', `rg ${cls}${fresh.includes(i) ? ' fresh' : ''}`);
+    r.hatch.setAttribute('class', `rg-hatch${owned[i] ? ' on' : ''}`);
+  });
+  // borders: the front wherever held ground meets theirs, faint seams everywhere else
+  let seams = '';
+  L.front.innerHTML = '';
+  for (const e of MAPV.cells.edges) {
+    const d = pathOf([e.pts]);
+    if (owned[e.a] !== owned[e.b]) {
+      svgEl('path', { d, class: 'front-glow' }, L.front);
+      svgEl('path', { d, class: 'front', pathLength: 1 }, L.front);
+      svgEl('path', { d, class: 'front-flow' }, L.front);
+    } else seams += d;
+  }
+  L.seams.setAttribute('d', seams);
+  // routes between neighbours: supply lines behind the front, axes of advance across it
+  L.routes.innerHTML = '';
   for (const t of TERRITORIES) for (const a of t.adj) {
-    if (a < t.id) continue;
-    const o = TERRITORIES[a];
-    const ln = document.createElementNS(NS, 'line');
-    ln.setAttribute('x1', t.x); ln.setAttribute('y1', t.y);
-    ln.setAttribute('x2', o.x); ln.setAttribute('y2', o.y);
-    const both = terrOwned(t) && terrOwned(o);
-    ln.setAttribute('stroke', both ? '#3b76a6' : '#3a4454');
-    ln.setAttribute('stroke-width', both ? '0.4' : '0.3');
-    if (!both) ln.setAttribute('stroke-dasharray', '0.9 0.9');
-    svg.appendChild(ln);
+    const o = TERRITORIES[a], adv = owned[t.id] && !owned[o.id];
+    if (!adv && (owned[o.id] !== owned[t.id] || a < t.id)) continue;   // an advance is drawn from its held end; every other pair once
+    const dx = o.x - t.x, dy = o.y - t.y, d = Math.hypot(dx, dy), ux = dx / d, uy = dy / d, r1 = adv ? 4.2 : 3.4;
+    const attrs = { x1: (t.x + ux * 3.4).toFixed(2), y1: (t.y + uy * 3.4).toFixed(2), x2: (o.x - ux * r1).toFixed(2), y2: (o.y - uy * r1).toFixed(2),
+      class: adv ? 'route adv' : owned[t.id] ? 'route own' : 'route' };
+    if (adv) attrs['marker-end'] = 'url(#m-arrow)';
+    svgEl('line', attrs, L.routes);
   }
-  for (const t of TERRITORIES) {
-    const g = document.createElementNS(NS, 'g');
-    g.style.cursor = 'pointer';
-    const owned = terrOwned(t), atk = terrAttackable(t);
-    const c = document.createElementNS(NS, 'circle');
-    c.setAttribute('cx', t.x); c.setAttribute('cy', t.y);
-    c.setAttribute('r', t.tier === 6 ? 2.6 : 2);
-    c.setAttribute('fill', owned ? '#5cb6ff' : atk ? '#070b14' : '#1b2230');   // yours, attackable, out of reach
-    c.setAttribute('stroke', owned ? '#05080f' : atk ? '#ff6b2c' : '#3a4454');
-    c.setAttribute('stroke-width', atk ? 0.5 : 0.3);
-    if (t.id === selectedTid) {   // the selection: a hairline ring outside the node
-      const ring = document.createElementNS(NS, 'circle');
-      ring.setAttribute('cx', t.x); ring.setAttribute('cy', t.y); ring.setAttribute('r', (t.tier === 6 ? 2.6 : 2) + 1.5);
-      ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', '#ff6b2c'); ring.setAttribute('stroke-width', '0.28');
-      g.appendChild(ring);
+  // markers, pushed out from HQ in the order they pop in
+  L.nodes.innerHTML = '';
+  const hq = TERRITORIES[0];
+  const order = TERRITORIES.slice().sort((a, b) => Math.hypot(a.x - hq.x, a.y - hq.y) - Math.hypot(b.x - hq.x, b.y - hq.y)).map(t => t.id);
+  MAPV.nodes = TERRITORIES.map(t => {
+    const own = owned[t.id], atk = terrAttackable(t), prog = meta.terr[t.id].progress, cap = t.tier === 6;
+    const g = svgEl('g', { class: `sec ${own ? 'held' : atk ? 'atk' : 'foe'}`, transform: `translate(${t.x} ${t.y})`, tabindex: 0, role: 'button',
+      'aria-label': `${t.name}: ${own ? 'held' : atk ? (prog > 0 ? Math.floor(prog) + '% taken' : 'attackable') : 'enemy held'}` }, L.nodes);
+    g.style.setProperty('--i', order.indexOf(t.id));
+    const inner = svgEl('g', { class: 'sec-in' }, g);
+    svgEl('circle', { r: 4.6, class: 'hit' }, inner);
+    if (atk) svgEl('circle', { r: 2.7, class: 'pulse' }, inner);
+    if (own) {
+      svgEl('rect', { x: -1.55, y: -1.55, width: 3.1, height: 3.1, class: 'mk' }, inner);
+      if (t.tier === 0) svgEl('path', { d: 'M0-1 .29-.31 1-.31 .43 .12 .63 .82 0 .39-.63 .82-.43 .12-1-.31-.29-.31Z', class: 'hq' }, inner);
+    } else {
+      const R = cap ? 2.7 : 2.1;
+      svgEl('path', { d: `M0 ${-R}L${R} 0 0 ${R}${-R} 0Z`, class: 'mk' }, inner);
+      if (cap) svgEl('path', { d: 'M0-1.25 1.25 0 0 1.25-1.25 0Z', class: 'mk2' }, inner);
+      if (prog > 0) {
+        const r = cap ? 3.7 : 3.2, circ = 2 * Math.PI * r;
+        svgEl('circle', { r, class: 'prog-ring' }, inner);
+        svgEl('circle', { r, class: 'prog', 'stroke-dasharray': `${(circ * prog / 100).toFixed(2)} ${circ.toFixed(2)}`, transform: 'rotate(-90)' }, inner);
+      }
     }
-    g.appendChild(c);
-    const prog = meta.terr[t.id].progress;
-    if (!owned && prog > 0) {
-      const arc = document.createElementNS(NS, 'circle');
-      arc.setAttribute('cx', t.x); arc.setAttribute('cy', t.y); arc.setAttribute('r', 2.9);
-      arc.setAttribute('fill', 'none'); arc.setAttribute('stroke', '#ff6b2c'); arc.setAttribute('stroke-width', '0.45');
-      const circ = 2 * Math.PI * 2.9;
-      arc.setAttribute('stroke-dasharray', `${circ * prog / 100} ${circ}`);
-      arc.setAttribute('transform', `rotate(-90 ${t.x} ${t.y})`);
-      g.appendChild(arc);
-    }
-    const tx = document.createElementNS(NS, 'text');
-    tx.setAttribute('x', t.x); tx.setAttribute('y', t.y + 4.9);
-    tx.setAttribute('text-anchor', 'middle');
-    tx.setAttribute('font-size', '1.75'); tx.setAttribute('fill', owned ? '#9fd2ff' : atk ? '#f1f3f6' : '#7b879a');
-    tx.setAttribute('font-family', "'JetBrains Mono', ui-monospace, monospace"); tx.setAttribute('font-weight', '700'); tx.setAttribute('letter-spacing', '0.18');
-    tx.textContent = t.name.toUpperCase();
-    g.appendChild(tx);
-    g.addEventListener('click', () => { selectedTid = t.id; renderMap(); });
-    svg.appendChild(g);
+    const lab = svgEl('text', { y: cap ? 6.7 : 6.0, class: 'lab', 'text-anchor': 'middle' }, inner);
+    lab.textContent = t.name.toUpperCase();
+    if (!own && prog > 0) { const pl = svgEl('text', { y: cap ? 9.0 : 8.3, class: 'lab-sub', 'text-anchor': 'middle' }, inner); pl.textContent = Math.floor(prog) + '% TAKEN'; }
+    g.addEventListener('click', e => { e.stopPropagation(); selectSector(t.id); });
+    g.addEventListener('keydown', e => { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); if (selectedTid === t.id) deploySelected(); else selectSector(t.id); } });
+    return g;
+  });
+  sizeMapText();
+  selectSector(selectedTid, true);
+}
+function selectSector(id, quiet) {
+  const t = TERRITORIES[id];
+  if (!t) return;
+  const moved = selectedTid !== id;
+  selectedTid = id;
+  MAPV.regions.forEach((r, i) => r.fill.classList.toggle('sel', i === id));
+  MAPV.nodes.forEach((g, i) => g.classList.toggle('sel', i === id));
+  const L = MAPV.layers, R = t.tier === 6 ? 4.9 : 4.1;   // reticle corners: re-made so the lock-in plays again
+  L.reticle.innerHTML = '';
+  L.reticle.setAttribute('transform', `translate(${t.x} ${t.y})`);
+  const inner = svgEl('g', { class: 'ret-in' }, L.reticle), c = R * 0.42;
+  svgEl('path', { d: `M${-R} ${-R + c}V${-R}H${-R + c}M${R - c} ${-R}H${R}V${-R + c}M${R} ${R - c}V${R}H${R - c}M${-R + c} ${R}H${-R}V${R - c}` }, inner);
+  renderBrief();
+  if (moved && !quiet) beep(1250, 0.03, 'square', 0.012, -300);
+}
+function cycleSector(dir) {
+  const atk = TERRITORIES.filter(terrAttackable);
+  const list = atk.length ? atk : TERRITORIES;
+  const i = list.findIndex(t => t.id === selectedTid);
+  selectSector(list[(i + dir + list.length) % list.length].id);
+}
+function deploySelected() {
+  const t = TERRITORIES[selectedTid];
+  if (!t || !terrAttackable(t)) return;
+  meta.activeTid = t.id; saveMeta();
+  enterBattle(t.id);
+}
+
+// ---- the briefing column ----
+function renderBrief() {
+  const t = TERRITORIES[selectedTid];
+  if (!t) return;
+  const heldN = TERRITORIES.filter(terrOwned).length;
+  $('brTheater').textContent = `Theater ${ROMAN[meta.theater] || meta.theater + 1}`;
+  $('brHeld').textContent = `${heldN} / ${TERRITORIES.length} held`;
+  const segs = $('brSegs');
+  if (segs.children.length !== TERRITORIES.length) segs.innerHTML = TERRITORIES.map(() => '<i></i>').join('');
+  TERRITORIES.forEach((tt, i) => { segs.children[i].className = (terrOwned(tt) ? 'held' : terrAttackable(tt) ? 'atk' : '') + (i === t.id ? ' sel' : ''); });
+
+  const own = terrOwned(t), atk = terrAttackable(t), prog = meta.terr[t.id].progress, tier = effTier(t);
+  const chip = $('brChip');
+  chip.className = 'chip ' + (own ? 'held' : atk ? 'atk' : 'foe');
+  chip.textContent = own ? 'Held' : atk ? (prog > 0 ? `${Math.floor(prog)}% taken` : 'Attackable') : 'Enemy held';
+  $('brCode').textContent = `Sector ${String(t.id).padStart(2, '0')} · Grid ${gridRef(t)}`;
+  $('brName').textContent = t.name;
+  $('brTier').textContent = `Tier ${tier}`;
+  $('brPips').innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < Math.min(tier, 6) ? 'on' : ''}"></i>`).join('');
+  const reserves = CFG.enemyTickets + CFG.enemyTicketsPerTier * tier, left = reserves - Math.round(prog / 100 * reserves);
+  $('brRes').textContent = own ? '0' : left;
+  $('brResSub').textContent = own ? 'Cleared' : prog > 0 ? `Of ${reserves}` : `${CFG.enemyCap} at once`;
+  const sky = $('brSky'), wx = $('brWx');
+  if (atk) {
+    const f = forecastFor(t), name = skyName(f.tod);
+    sky.innerHTML = SKY_ICON[name] + `<span>${name}</span>`;
+    wx.textContent = (WEATHER[f.weather] || WEATHER.clear).label;
+  } else { sky.innerHTML = '<span>—</span>'; wx.textContent = own ? 'Secure' : 'No recon'; }
+  const bar = $('brProg');
+  bar.hidden = own || !(prog > 0);
+  $('brProgFill').style.width = prog + '%';
+  const line = $('brLine');
+  if (own) line.textContent = t.tier === 0 ? 'Headquarters. Every push starts here.' : 'Held by the Ninth Company.';
+  else if (atk) line.innerHTML = `Break <b>${left}</b> enemy reserves. A Warlord takes the field at 90%.`;
+  else {
+    const via = t.adj.map(i => TERRITORIES[i]).filter(terrAttackable).map(x => x.name);
+    line.textContent = via.length ? `Out of reach. Take ${via.join(' or ')} first.` : 'Out of reach. Push the front closer.';
   }
-  // the command column: the sector, DEPLOY, and the loadout you are carrying
-  const t = TERRITORIES[selectedTid] || null;
   const db = $('deploybtn');
-  if (!t) {
-    $('terrmeta').textContent = 'Select a territory';
-    $('terrname').textContent = 'Operations';
-    $('terrhint').textContent = 'Pick an orange ring on the map to attack it.';
-    db.disabled = true; db.onclick = null;
-  } else {
-    const owned = terrOwned(t), atk = terrAttackable(t);
-    const prog = meta.terr[t.id].progress;
-    $('terrmeta').textContent = `Tier ${effTier(t)} · ` + (owned ? 'Held' : atk ? (prog > 0 ? `${Math.floor(prog)}% taken` : 'Attackable') : 'Out of reach');
-    $('terrname').textContent = t.name;
-    $('terrhint').textContent = owned ? 'Held by your company.'
-      : atk ? `Your four against ${CFG.enemyCap} at a time · ${CFG.enemyTickets + CFG.enemyTicketsPerTier * effTier(t)} enemy reinforcements`
-      : 'Take a neighbouring sector first.';
-    db.disabled = !atk;
-    db.onclick = atk ? () => { meta.activeTid = t.id; saveMeta(); enterBattle(t.id); } : null;
-  }
+  db.disabled = !atk;
+  $('dbMain').textContent = atk ? (prog > 0 ? 'Resume' : 'Deploy') : own ? 'Held' : 'Out of reach';
+  $('dbSub').textContent = atk ? t.name : 'Pick an orange sector';
+
   const lk = WEAPONS[meta.loadout] ? meta.loadout : 'ar', lw = WEAPONS[lk], la = attFor(lk);
   $('kitname').textContent = lw.name;
   $('kitsub').textContent = (SIGHT_OPTS[lk] ? SIGHTS[la.sight].name + ' · ' : '') + `${la.ext && lw.ext ? lw.ext : lw.mag} rds`;
+  $('brSquad').innerHTML = meta.squad.slice(0, CFG.rosterSize).map((m, i) => {
+    const gun = WEAPONS[i === 0 ? lk : m.weapon] || WEAPONS.ar;
+    return `<li style="--c:${m.wren ? '#d9dbe4' : slotColor(i)}"><b>${SQUAD_ROLE_NAMES[i]}</b><span>${m.wren ? 'CPL ' : ''}${m.name}<em>${gun.name}</em></span></li>`;
+  }).join('');
 }
-
+function playMapEntrance() {   // the map lays itself out: land, sectors, the front line, markers, then the briefing
+  const scr = el.mapscr;
+  scr.classList.remove('enter');
+  void scr.offsetWidth;
+  scr.classList.add('enter');
+  clearTimeout(MAPV.enterT);
+  MAPV.enterT = setTimeout(() => scr.classList.remove('enter'), 2200);
+}
 // ---------- TEAM / ARMORY SCREEN ----------
 const WCLASS = { smg: 'Submachine gun', ar: 'Assault rifle', lmg: 'Light machine gun', sniper: 'Sniper rifle', rocket: 'Launcher' };
 function renderTeam() {   // the rail picks the gun; the panel lays out the one you carry
@@ -6800,14 +7160,8 @@ function renderTeam() {   // the rail picks the gun; the panel lays out the one 
 
 // nav buttons
 $('toteam').onclick = () => showScreen('team');
+$('deploybtn').onclick = deploySelected;
 $('backmap').onclick = () => showScreen('map');
-{   // mobile lock button: tap to lock or cycle, hold to release
-  const lb = $('lockbtn');
-  let holdT = null, held = false;
-  lb.addEventListener('pointerdown', e => { e.preventDefault(); held = false; holdT = setTimeout(() => { held = true; lockRelease(); }, 500); });
-  lb.addEventListener('pointerup', () => { clearTimeout(holdT); if (!held) lockPress(); });
-  lb.addEventListener('pointerleave', () => clearTimeout(holdT));
-}
 $('ammo').addEventListener('pointerdown', e => { e.preventDefault(); heroReload(); });
 bindHoldButton('firebtn', () => { aim.fire = true; }, () => { aim.fire = false; });
 (function leftTrigger(id) {   // the left-thumb trigger only fires; looking stays with the right thumb
@@ -6897,7 +7251,7 @@ window.G = { state, meta, cam, CFG, WEAPONS, TERRITORIES,
   VIEW, stats: viewStats, frame(dt = 1 / 60) { renderView(dt); updateBattleHud(); },
   spawn(type, x, y) { spawnEnemy(type); const e = enemies[enemies.length - 1]; if (x != null) { e.x = x; e.y = y; } return e; },
   spawnMany(type, n) { for (let i = 0; i < n; i++) spawnEnemy(type); },
-  lock, lockPress, lockRelease, spawnBoss, visMul, rollSky, SFX, playBuf, heroReload, startReload, destroyCover, navPath, TOWN,
+  spawnBoss, visMul, rollSky, SFX, playBuf, heroReload, startReload, destroyCover, navPath, TOWN,
   get pickups() { return pickups; },
   aim, applyOpts, showSettings, fpvActive, crosshairTarget, FPV, adsInfo, heroSight, attFor,
   get buildings() { return buildings; }, get rubble() { return rubble; },

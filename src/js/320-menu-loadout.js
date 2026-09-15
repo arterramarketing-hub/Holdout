@@ -48,14 +48,8 @@ function renderTeam() {   // the rail picks the gun; the panel lays out the one 
 
 // nav buttons
 $('toteam').onclick = () => showScreen('team');
+$('deploybtn').onclick = deploySelected;
 $('backmap').onclick = () => showScreen('map');
-{   // mobile lock button: tap to lock or cycle, hold to release
-  const lb = $('lockbtn');
-  let holdT = null, held = false;
-  lb.addEventListener('pointerdown', e => { e.preventDefault(); held = false; holdT = setTimeout(() => { held = true; lockRelease(); }, 500); });
-  lb.addEventListener('pointerup', () => { clearTimeout(holdT); if (!held) lockPress(); });
-  lb.addEventListener('pointerleave', () => clearTimeout(holdT));
-}
 $('ammo').addEventListener('pointerdown', e => { e.preventDefault(); heroReload(); });
 bindHoldButton('firebtn', () => { aim.fire = true; }, () => { aim.fire = false; });
 (function leftTrigger(id) {   // the left-thumb trigger only fires; looking stays with the right thumb

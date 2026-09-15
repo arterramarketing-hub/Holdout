@@ -60,18 +60,6 @@ function squadAI(s, spd, dt, lead, front, wrange) {
   const far = s.gx != null && dist2(s.x, s.y, s.gx, s.gy) > 300 * 300;
   followPath(s, spd * (far ? 1.15 : 1), dt);
 }
-function pickTarget(s, range) {   // controlled soldier: lock-on target, else nearest visible ahead of the camera, else anything visible close
-  const L = lock.target;
-  if (L && L.hp > 0 && dist2(s.x, s.y, L.x, L.y) < range * range * 1.21 && losClear(s.x, s.y, L.x, L.y)) return L;
-  const fx = Math.sin(cam.yaw), fy = -Math.cos(cam.yaw), cone = Math.cos(70 * Math.PI / 180);
-  let best = null, bd = range * range;
-  for (const e of enemies) {
-    const dx = e.x - s.x, dy = e.y - s.y, d2 = dx * dx + dy * dy;
-    if (d2 >= bd) continue;
-    if ((dx * fx + dy * fy) / (Math.sqrt(d2) || 1) >= cone && losClear(s.x, s.y, e.x, e.y)) { bd = d2; best = e; }
-  }
-  return best || nearestVisibleEnemy(s.x, s.y, range * 0.45);
-}
 function updateSoldiers(dt) {
   const vis = visMul(), lead = camTarget();
   tallyClaims();
@@ -98,12 +86,12 @@ function updateSoldiers(dt) {
     s.tgtT = (s.tgtT || 0) - dt;
     if (s.tgtT <= 0 || (s.tgt && (s.tgt.hp <= 0 || !enemies.includes(s.tgt)))) {
       s.tgtT = 0.2;
-      s.tgt = isCtl ? (manualAim() ? crosshairTarget(s, 0.2) : pickTarget(s, wrange)) : nearestVisibleEnemy(s.x, s.y, wrange);
+      s.tgt = isCtl ? crosshairTarget(s, 0.2) : nearestVisibleEnemy(s.x, s.y, wrange);
     }
     if (s.reloadT > 0) { s.reloadT -= dt; if (s.reloadT <= 0) finishReload(s); }
     const t = s.tgt;
-    if (isCtl) state.autoTarget = t;
-    if (isCtl && manualAim()) {   // you aim it and you pull the trigger
+    if (isCtl) state.crossTarget = t;   // the enemy under your crosshair turns it red
+    if (isCtl) {   // you aim it and you pull the trigger
       aimAssist(s, dt);
       s.aim = aim.yaw - Math.PI / 2;
       s.quietT = aim.fire ? 0 : (s.quietT || 0) + dt;
@@ -120,8 +108,8 @@ function updateSoldiers(dt) {
       s.quietT = 0;
       if (s.fireCd <= 0 && s.reloadT <= 0) {
         if (s.pistol || s.mag > 0) {
-          s.fireCd = (s.pistol ? SIDEARM.cd : w.cd) * (isCtl ? 1 : CFG.aiCdMul);
-          fire(s, t, isCtl);
+          s.fireCd = (s.pistol ? SIDEARM.cd : w.cd) * CFG.aiCdMul;
+          fire(s, t, false);
           s.peekT = 0.5;   // pop up over cover to shoot
         }
         if (!s.pistol && s.mag <= 0) startReload(s);
@@ -398,7 +386,6 @@ function battleUpdate(dt) {
     state.tod = (state.tod + wdt * CFG.todSpeed) % 4;
     if (!state.bossSpawned && state.progress >= 90) { state.bossSpawned = true; spawnBoss(); }
     updateWaves(wdt);
-    updateLock(dt);
     updateSoldiers(wdt);
     for (const s of soldiers)   // squadmates walk back on once their reinforcement clock runs out
       if (!s.alive && s.respawnT > 0 && s.slot !== state.controlled) {

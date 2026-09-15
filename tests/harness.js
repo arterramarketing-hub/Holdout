@@ -10,7 +10,7 @@
   const origError = console.error.bind(console);
   console.error = (...a) => { H.errors.push('console.error: ' + a.map(String).join(' ')); origError(...a); };
 
-  window.suite = (name, fn, opts = {}) => H.suites.push({ name, fn, pass: opts.pass || 'desktop' });
+  window.suite = (name, fn, opts = {}) => H.suites.push({ name, fn, passes: [].concat(opts.pass || 'desktop') });
 
   const fmt = v => { try { return typeof v === 'string' ? JSON.stringify(v) : JSON.stringify(v); } catch (e) { return String(v); } };
   window.assert = {
@@ -35,7 +35,7 @@
     await wait(700);
     const t0 = performance.now();
     for (const s of H.suites) {
-      if (s.pass !== PASS) continue;
+      if (!s.passes.includes(PASS)) continue;
       const tests = [];
       s.fn({ test: (name, fn, opts = {}) => tests.push({ name, fn, timeout: opts.timeout || 90000 }) });
       for (const t of tests) {
