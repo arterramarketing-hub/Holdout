@@ -350,6 +350,9 @@ Work runs in eight phases. Every phase ends with the audit gate below, one commi
 
 ## Phase 8 — Final audit and release
 
+Found along the way, to review here:
+- **Phase 2:** on a phone-shaped screen the first-person support forearm reads as a long thin pole from the bottom-left corner to the handguard. It was already there before v6.
+
 - **Tests:** the full suite, plus a screenshot review of every screen at phone and desktop sizes.
 - **Performance:** a pass on the Low and Auto presets.
 - **Docs:** the header notes rewritten for everything.

@@ -41,7 +41,7 @@
     .br-name { font-size:20px; }
     .bs { gap:2px; padding:5px 7px 6px; } .bs .k { font-size:7.5px; letter-spacing:.16em; } .bs .v { font-size:12.5px; } .bs .s { font-size:8px; }
     .br-line { font-size:9.5px; line-height:1.4; }
-    .deploy .db-sub { font-size:8.5px; }
+    .deploy { min-height:44px; align-items:center; } .deploy .db-sub { font-size:8.5px; }
     .br-foot { grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr); gap:6px; }
     .kit { gap:1px 6px; padding:6px 8px; } .kit-k, .kit-go { font-size:8px; } .kit-v { font-size:13px; } .kit-s { font-size:8px; }
     .squad li { column-gap:6px; padding:3px 6px 4px 0; } .squad b { font-size:7px; } .squad span { gap:4px; font-size:9.5px; } .squad em { display:none; }

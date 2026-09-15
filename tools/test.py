@@ -17,6 +17,7 @@ usage:
   python3 tools/test.py --pass touch       one pass
   python3 tools/test.py --baseline         run the baseline pass and write tests/baseline.json
   python3 tools/test.py --headed           watch it in a visible window
+  python3 tools/test.py --source old.html --suites 'tests/scratch/*.js'   another build, other suites (comparisons)
 """
 import glob
 import http.server
@@ -48,12 +49,12 @@ def arg(name, default=None):
 
 
 def build_page():
-    html = open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()
+    html = open(arg('--source', os.path.join(ROOT, 'index.html')), encoding='utf-8').read()
     game = html.rfind('<script>')
     end = html.rfind('</script>')
     if game < 0 or end < game:
         sys.exit('index.html has no game script')
-    suites = sorted(glob.glob(os.path.join(TESTS, 'suites', '*.test.js')))
+    suites = sorted(glob.glob(arg('--suites', os.path.join(TESTS, 'suites', '*.test.js'))))
     after = ['harness.js', 'helpers.js'] + [os.path.relpath(s, TESTS) for s in suites]
     tail = ''.join(f'<script src="{s}"></script>\n' for s in after)
     page = html[:game] + '<script src="pre.js"></script>\n' + html[game:end + len('</script>')] + '\n' + tail + html[end + len('</script>'):]

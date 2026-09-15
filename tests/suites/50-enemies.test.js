@@ -1,10 +1,10 @@
 suite('enemies', t => {
   t.test('every enemy type fights and dies', () => {
     newCampaign(); seed(21);
-    const h = battle({ fpv: false, clear: true });
+    const h = battle({ clear: true });   // the simulation alone: headless software WebGL makes every rendered frame expensive
     const d0 = state.enemyDown;
     ['grunt', 'runner', 'brute', 'rider', 'gunner', 'spotter'].forEach((ty, i) => G.spawn(ty, h.x + (i - 2.5) * 120, h.y - 380));
-    ticks(60 * 20, 2, () => { h.invuln = 1e9; botTick(h); });
+    ticks(60 * 20, 0, () => { h.invuln = 1e9; botTick(h); });
     assert.eq(enemies.length, 0, 'left standing: ' + enemies.map(e => e.type).join(','));
     assert.eq(state.enemyDown - d0, 6, 'counted down');
   }, { timeout: 120000 });
@@ -21,10 +21,10 @@ suite('enemies', t => {
     newCampaign(); seed(9);
     battle({ weapon: 'sniper' });
     state.enemyDown = state.enemyTotal - 6; state.progress = 91;
-    ticks(60, 2);
+    ticks(60, 30);
     const boss = state.bossRef;
     assert.ok(boss, 'a Warlord arrived at 90%');
-    ticks(180, 4);
+    ticks(180, 30);
     boss.hp = 0.5; enemies.length = 0; enemies.push(boss);
     hurtEnemy(0, 5, { player: true, wkey: 'sniper' }, { x: 0, y: -1 });
     ticks(10);

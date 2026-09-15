@@ -4,13 +4,13 @@ suite('lifecycle', t => {
     const h = battle({ invuln: false });
     damageSoldier(h, 99);
     assert.eq(state.mode, 'dying');
-    ticks(60 * 3, 4);
+    ticks(60 * 3, 30);
     assert.eq(state.mode, 'play', 'back in play');
     assert.ok(hero().alive, 'alive again');
     assert.eq(state.tickets, CFG.tickets - 1, 'one reinforcement spent');
     state.tickets = 0;
     for (const s of soldiers) { s.invuln = 0; if (s.alive) damageSoldier(s, 99); }
-    ticks(60 * 4, 4);
+    ticks(60 * 4, 30);
     assert.ok(/front lost/i.test(el.modalbox.innerText), 'defeat card');
     $('mbtn').click();
     assert.eq(state.mode, 'play', 'retry deploys again');

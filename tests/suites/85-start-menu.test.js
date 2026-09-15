@@ -72,13 +72,15 @@ suite('start menu layout', t => {
     meta.terr[3].progress = 42;
     hideModal(); showScreen('map');
     const scr = $('mapscr'), brief = document.querySelector('.brief');
+    scr.classList.remove('enter'); void scr.offsetWidth;   // measure the settled layout, not the entrance slide
     assert.ok(scr.scrollHeight <= innerHeight + 1, `screen scrolls: ${scr.scrollHeight} > ${innerHeight}`);
     assert.ok(brief.scrollHeight <= brief.clientHeight + 1, `briefing scrolls: ${brief.scrollHeight} > ${brief.clientHeight}`);
     const cta = $('deploybtn').getBoundingClientRect();
-    assert.ok(cta.bottom <= innerHeight && cta.height >= 40, 'deploy button fully visible and thumb-sized');
+    assert.ok(cta.bottom <= innerHeight + 0.5, `deploy button cut off: bottom ${cta.bottom} of ${innerHeight}`);
+    assert.ok(cta.height >= 44, `deploy button ${cta.height.toFixed(1)} px tall, under a 44 px thumb`);
     const svg = $('mapsvg').getBoundingClientRect();
     assert.ok(svg.width > 200 && svg.height > 150, 'the map has room');
-    for (const id of ['brName', 'dbSub', 'kitname']) { const e = $(id); assert.ok(e.getBoundingClientRect().right <= innerWidth + 1, id + ' inside the screen'); }
+    for (const id of ['brName', 'dbSub', 'kitname']) { const q = $(id).getBoundingClientRect(); assert.ok(q.right <= innerWidth + 1, `${id} runs off the screen: right ${q.right.toFixed(1)} of ${innerWidth} (brief ${brief.getBoundingClientRect().left.toFixed(0)}-${brief.getBoundingClientRect().right.toFixed(0)}, doc ${document.documentElement.clientWidth})`); }
     return { size: [innerWidth, innerHeight], brief: [brief.clientWidth, brief.clientHeight], map: [Math.round(svg.width), Math.round(svg.height)] };
   });
 }, { pass: ['desktop', 'touch', 'small', 'wide', 'tall'] });

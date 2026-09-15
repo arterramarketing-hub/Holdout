@@ -145,8 +145,8 @@ function showSettings() {
     <div class="setrow"><span>Music</span><input type="range" id="o_mus" min="0" max="1" step="0.05" value="${o.music == null ? 0.6 : o.music}"></div>
     </div>
     <button class="cta" id="mbtn">Done</button>
-    <p class="note">Manual: hold left mouse to fire, right mouse for sights; click once to capture the mouse, Esc frees it.
-      On a phone: drag the right side to look, fire with either trigger, ADS to steady. First person always aims manually.</p>`);
+    <p class="note">Hold left mouse to fire, right mouse for sights; click once to capture the mouse, Esc frees it.
+      On a phone: drag the right side to look, fire with either trigger, ADS to steady. Aim assist is for third person only.</p>`);
   const bind = (id, key, read) => { const e = $(id); if (e) e.oninput = () => { meta.opts[key] = read(e); applyOpts(); saveMeta(); }; };   // 'input' so the FOV and sensitivity sliders preview as you drag
   document.querySelectorAll('input[name=vw]').forEach(r => { r.onchange = () => { meta.opts.fpv = r.value === 'fps'; applyOpts(); saveMeta(); showSettings(); }; });   // redraw: first person drops the aim-assist row
   bind('o_aa', 'aimAssist', e => e.checked);

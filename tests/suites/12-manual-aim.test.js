@@ -32,15 +32,17 @@ suite('manual aim only', t => {
     newCampaign(); seed(8);
     const h = battle({ fpv: false, clear: true });
     benchSquad();
-    h.x = 48 * PX; h.y = 40 * PX; clearArea(h.x, h.y - 300, 700);
-    aim.yaw = 0; aim.pitch = -0.02; frames(4);
-    const R = crosshairRay(h), k = 12 * PX;
-    const e = G.spawn('grunt', R.ox + R.dx * k, R.oy + R.dy * k); e.sp = 0; e.ranged = 0; e.hp = 1e6;
-    const zAt = R.oz + R.dz * k;
-    aim.pitch += ((bodyTop(e) * 0.55) - zAt) / k;   // lift or drop the crosshair onto the chest at that distance
-    frames(2);
+    h.x = 48 * PX; h.y = 40 * PX; clearArea(h.x, h.y - 300, 900);
+    const yaw0 = 0, pitch0 = -0.12;
+    const settle = () => { aim.yaw = yaw0; aim.pitch = pitch0; aim.settle = 0; aim.settleY = 0; cam.snap = true; frames(2); };   // snap: the chase camera sits where the aim says
+    settle();
+    const R = crosshairRay(h), chest = 1.0 * PX, k = (chest - R.oz) / R.dz;   // where the crosshair's line comes down to chest height
+    assert.range(k / PX, 5, 25, 'crosshair meets chest height this far out (m)');
+    const e = G.spawn('grunt', R.ox + R.dx * k, R.oy + R.dy * k); e.sp = 0; e.ranged = 0; e.hp = 1e6; e.maxHp = 1e6;
     const hits0 = state.hits;
-    for (let i = 0; i < 10; i++) { h.fireCd = 0; h.mag = 30; aim.ads = true; aim.fire = true; tick(1 / 60); aim.fire = false; frames(1); ticks(14); aim.pitch = aim.pitch; }
-    assert.range(state.hits - hits0, 7, 10, 'hits out of 10');
+    for (let i = 0; i < 10; i++) { settle(); h.fireCd = 0; h.mag = 30; aim.fire = true; tick(1 / 60); aim.fire = false; ticks(20); }
+    const hits = state.hits - hits0;
+    assert.range(hits, 8, 10, 'hits out of 10');
+    return { metres: +(k / PX).toFixed(1), hits };
   });
 });
