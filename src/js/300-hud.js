@@ -67,7 +67,7 @@ function updateBattleHud() {
     if (om.className !== mcls) { om.className = mcls; if (msg) om.textContent = msg.text; }
     const co = $('callout'), cl = state.callout;
     const ccls = 'hud' + (cl ? ' on ' + cl.side : '');   // keep .hud: it is what pins the tag to the screen
-    if (co.className !== ccls) { co.className = ccls; if (cl) co.textContent = cl.side === 'sniper' ? 'Sniper · ' + cl.name : (cl.side === 'grenade' ? 'Grenade' : cl.side === 'behind' ? 'Behind' : 'Flank · ' + cl.side) + ' · ' + cl.dist + ' m'; }
+    if (co.className !== ccls) { co.className = ccls; if (cl) co.textContent = cl.side === 'sniper' ? 'Sniper · ' + cl.name : 'Grenade · ' + cl.dist + ' m'; }
     const T = state.training, tb = $('trainbox');
     if (T && (T.dirty || OV.trainKind !== inputKind())) {
       T.dirty = false; OV.trainKind = inputKind();
@@ -104,47 +104,63 @@ function feedPush(who, whom, bad, head) {
   if (FEED.length > 6) FEED.shift();
   FEED.dirty = true;
 }
-function drawMinimap() {
+function drawMinimap() {   // heading up: the map turns with you, your arrow always points forward, and north is marked on the rim
   const c = $('minimap'), s = camTarget();
   if (!c || !s) return;
-  const g = c.getContext('2d'), W = c.width, H = c.height, span = 1600, sc = W / span;
-  const ox = s.x - span / 2, oy = s.y - H / sc / 2;
-  const X = x => (x - ox) * sc, Y = y => (y - oy) * sc;
+  const g = c.getContext('2d'), W = c.width, H = c.height, sc = W / 1600, cx = W / 2, cy = H / 2;
+  const cosA = Math.cos(-cam.yaw), sinA = Math.sin(-cam.yaw);
+  const P = (x, y) => { const dx = (x - s.x) * sc, dy = (y - s.y) * sc; MMP.x = cx + dx * cosA - dy * sinA; MMP.y = cy + dx * sinA + dy * cosA; return MMP; };
   g.clearRect(0, 0, W, H);
   g.fillStyle = 'rgba(5,8,15,0.5)'; g.fillRect(0, 0, W, H);
   g.fillStyle = '#1d2634';
-  for (const b of buildings) g.fillRect(X(b.x - b.hw), Y(b.y - b.hd), b.hw * 2 * sc, b.hd * 2 * sc);
-  g.fillStyle = '#3a4454';
-  for (const o of obstacles) g.fillRect(X(o.x) - 1.5, Y(o.y) - 1.5, 3, 3);
-  g.fillStyle = '#ff6b2c';
-  for (const p of pickups) g.fillRect(X(p.x) - 2, Y(p.y) - 2, 4, 4);
-  const dry = s.pistol, blinkOff = dry && Math.sin(performance.now() / 150) < 0;   // on the pistol, dropped guns blink
-  if (!blinkOff) { g.fillStyle = dry ? '#ff6b2c' : '#aeb6c2'; for (const d of weaponDrops) g.fillRect(X(d.x) - 3, Y(d.y) - 1, 6, 2.5); }
-  g.font = '800 9px "JetBrains Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  for (const o of state.objs || []) {   // objectives: the ring in the owner's colour, the letter in the middle
-    const col = o.owner === 'p' ? '#5cb6ff' : o.owner === 'e' ? '#ff4d3d' : '#c9d1dc';
-    g.strokeStyle = col; g.lineWidth = 1.5;
-    g.beginPath(); g.arc(X(o.x), Y(o.y), Math.max(5, o.r * sc), 0, TAU); g.stroke();
-    g.fillStyle = col; g.fillText(o.letter, X(o.x), Y(o.y) + 0.5);
+  for (const b of buildings) {   // a turned rectangle is four corners
+    g.beginPath();
+    P(b.x - b.hw, b.y - b.hd); g.moveTo(MMP.x, MMP.y); P(b.x + b.hw, b.y - b.hd); g.lineTo(MMP.x, MMP.y);
+    P(b.x + b.hw, b.y + b.hd); g.lineTo(MMP.x, MMP.y); P(b.x - b.hw, b.y + b.hd); g.lineTo(MMP.x, MMP.y);
+    g.fill();
   }
-  for (const e of enemies) {   // only what you could plausibly know about: close, or shooting
-    if (e.target || (e.sniper && !(e.glint > 0))) continue;   // a marksman gives itself away only by its glint
-    const d = Math.hypot(e.x - s.x, e.y - s.y);
-    if (d > 950 && !(e.fireT < 0.5 && d < 1600)) continue;
+  const dot = (x, y, w, h) => { P(x, y); g.fillRect(MMP.x - w / 2, MMP.y - h / 2, w, h); };
+  g.fillStyle = '#3a4454';
+  for (const o of obstacles) dot(o.x, o.y, 3, 3);
+  g.fillStyle = '#ff6b2c';
+  for (const p of pickups) dot(p.x, p.y, 4, 4);
+  const dry = s.pistol, blinkOff = dry && Math.sin(performance.now() / 150) < 0;   // on the pistol, dropped guns blink
+  if (!blinkOff) { g.fillStyle = dry ? '#ff6b2c' : '#aeb6c2'; for (const d of weaponDrops) dot(d.x, d.y, 5, 5); }
+  g.font = '800 9px "JetBrains Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const o of state.objs || []) {   // objectives: the ring in the owner's colour, the letter upright in the middle
+    const col = o.owner === 'p' ? '#5cb6ff' : o.owner === 'e' ? '#ff4d3d' : '#c9d1dc';
+    P(o.x, o.y);
+    g.strokeStyle = col; g.lineWidth = 1.5;
+    g.beginPath(); g.arc(MMP.x, MMP.y, Math.max(5, o.r * sc), 0, TAU); g.stroke();
+    g.fillStyle = col; g.fillText(o.letter, MMP.x, MMP.y + 0.5);
+  }
+  const uav = state.uavT > 0, now = state.frontTime;
+  for (const e of enemies) {   // what you have earned: an enemy that has just fired, the Warlord, and everyone while a UAV is up
+    if (e.target) continue;
+    if (!uav && !e.boss && !(now - (e.firedT == null ? -99 : e.firedT) < MINIMAP_FIRED) && !(e.sniper && e.glint > 0)) continue;
+    P(e.x, e.y);
     g.fillStyle = e.boss ? '#ff8a3d' : e.sniper ? '#dff2ff' : '#ff4d3d';
-    g.beginPath(); g.arc(X(e.x), Y(e.y), e.boss ? 4 : 2.6, 0, TAU); g.fill();
+    g.beginPath(); g.arc(MMP.x, MMP.y, e.boss ? 4 : 2.6, 0, TAU); g.fill();
   }
   g.fillStyle = '#5fdc4a';   // your squad, the same green as over their heads
   for (const m of soldiers) {
     if (!m.alive || m.slot === state.controlled) continue;
-    g.beginPath(); g.arc(X(m.x), Y(m.y), 2.6, 0, TAU); g.fill();
+    P(m.x, m.y);
+    g.beginPath(); g.arc(MMP.x, MMP.y, 2.6, 0, TAU); g.fill();
   }
-  g.save();
-  g.translate(X(s.x), Y(s.y)); g.rotate(cam.yaw);
-  g.fillStyle = '#ffffff';
-  g.beginPath(); g.moveTo(0, -7); g.lineTo(4.5, 4.5); g.lineTo(-4.5, 4.5); g.closePath(); g.fill();
-  g.restore();
+  if (uav) {   // the UAV's sweep
+    const a = now * 2.2 % TAU, R = Math.hypot(W, H) / 2;
+    const grad = g.createRadialGradient(cx, cy, 0, cx, cy, R);
+    grad.addColorStop(0, 'rgba(255,77,61,0.0)'); grad.addColorStop(1, 'rgba(255,77,61,0.16)');
+    g.fillStyle = grad;
+    g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, R, a - 0.7, a); g.closePath(); g.fill();
+  }
+  const na = -cam.yaw - Math.PI / 2, nr = Math.min(W, H) / 2 - 7;   // N on the rim, where north is
+  g.fillStyle = '#c9d1dc'; g.fillText('N', cx + Math.cos(na) * nr, cy + Math.sin(na) * nr + 0.5);
+  g.fillStyle = '#ffffff';   // you, at the middle, always pointing up
+  g.beginPath(); g.moveTo(cx, cy - 7); g.lineTo(cx + 4.5, cy + 4.5); g.lineTo(cx - 4.5, cy + 4.5); g.closePath(); g.fill();
 }
+const MMP = { x: 0, y: 0 }, MINIMAP_FIRED = 1.5;   // seconds an enemy shows on the minimap after it fires
 function updateFeed() {
   const box = $('feed'), now = performance.now();
   if (!box) return;
@@ -186,7 +202,6 @@ function showSettings() {
     <div class="setrow"><span>Minimap</span><input type="checkbox" id="o_map"${on(o.minimap)}></div>
     <div class="setrow"><span>Damage direction</span><input type="checkbox" id="o_dd"${on(o.dmgDir)}></div>
     <div class="setrow"><span>Kill feed</span><input type="checkbox" id="o_kf"${on(o.killfeed)}></div>
-    <div class="setrow"><span>Callouts</span><input type="checkbox" id="o_co"${on(o.callouts !== false)}></div>
     <div class="setrow"><span>Vibration</span><input type="checkbox" id="o_vb"${on(o.vibe)}${navigator.vibrate ? '' : ' disabled'}></div>
     <div class="setrow"><span>Sound</span><input type="checkbox" id="o_snd"${on(!meta.muted)}></div>
     <div class="setrow"><span>Music</span><input type="range" id="o_mus" min="0" max="1" step="0.05" value="${o.music == null ? 0.6 : o.music}"></div>
@@ -208,7 +223,6 @@ function showSettings() {
   bind('o_map', 'minimap', e => e.checked);
   bind('o_dd', 'dmgDir', e => e.checked);
   bind('o_kf', 'killfeed', e => e.checked);
-  bind('o_co', 'callouts', e => e.checked);
   bind('o_vb', 'vibe', e => e.checked);
   bind('o_mus', 'music', e => +e.value);
   bind('o_pad', 'padSens', e => +e.value);

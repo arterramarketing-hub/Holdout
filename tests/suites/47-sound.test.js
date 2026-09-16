@@ -68,33 +68,23 @@ suite('footsteps, barks and callouts', t => {
     assert.ok(nearSteps.every(l => panOf(l.o.x, l.o.y) < -0.3), 'on the left');
     assert.eq(ear.log.slice(before).filter(l => l.k.startsWith('step:')).length, 0, 'nothing from 30 m');
   }, { timeout: 120000 });
-  t.test('a squadmate sees an enemy off to your left: FLANK · LEFT; one in front of you is not called', async () => {
-    await audioReady();
+  t.test('the squad never calls where an enemy is: nothing for one on your flank or behind you, and no setting for it', () => {
     newCampaign(); seed(4);
     const h = battle({ clear: true });
-    h.x = 48 * PX; h.y = 50 * PX; clearArea(h.x, h.y, 1200);   // on the south road: open street to the west
+    h.x = 48 * PX; h.y = 50 * PX; clearArea(h.x, h.y, 1200);
     aim.yaw = 0; cam.yaw = 0;
     const mate = soldiers.find(s => s !== h);
     for (const s of soldiers) if (s !== h && s !== mate) { s.alive = false; s.respawnT = 1e9; s.x = -999; }
     const pin = () => { h.invuln = 1e9; mate.invuln = 1e9; mate.fireCd = 999; mate.x = h.x; mate.y = h.y + 1.5 * PX; mate.path = null; };
-    const front = G.spawn('grunt', h.x, h.y - 12 * PX); front.sp = 0; front.ranged = 0; front.hp = 1e6;
-    const ear = listen();
-    ticks(40, 0, () => { pin(); front.x = h.x; front.y = h.y - 12 * PX; });
-    assert.eq(state.callout, null, 'nothing called for an enemy in plain view');
-    const left = G.spawn('grunt', h.x - 14 * PX, h.y + 0.5 * PX); left.sp = 0; left.ranged = 0; left.hp = 1e6;
-    ticks(40, 0, () => { pin(); left.x = h.x - 14 * PX; left.y = h.y + 0.5 * PX; front.x = h.x; front.y = h.y - 12 * PX; });
-    ear.stop();
-    assert.ok(state.callout && state.callout.side === 'left', 'called on the left: ' + JSON.stringify(state.callout));
-    frames(1);
-    assert.ok(/flank · left/i.test($('callout').textContent), 'the tag reads FLANK · LEFT');
-    const tag = $('callout').getBoundingClientRect();
-    assert.ok(getComputedStyle($('callout')).position === 'fixed' && tag.left > 0 && tag.right < innerWidth / 2 && tag.top > 0 && tag.bottom < innerHeight / 2, 'the tag sits up on the left of the screen');
-    assert.ok(ear.log.some(l => l.k === 'radio'), 'the squad net chirps');
-    meta.opts.callouts = false; state.callout = null; VOICE.callCd = 0; left.calledT = -99;
-    ticks(40, 0, pin);
-    assert.eq(state.callout, null, 'the setting turns them off');
-    meta.opts.callouts = true;
-  }, { timeout: 120000 });
+    const left = G.spawn('grunt', h.x - 14 * PX, h.y + 0.5 * PX), behind = G.spawn('grunt', h.x + 1 * PX, h.y + 12 * PX);
+    for (const e of [left, behind]) { e.sp = 0; e.ranged = 0; e.hp = 1e6; }
+    ticks(120, 0, () => { pin(); left.x = h.x - 14 * PX; left.y = h.y + 0.5 * PX; behind.x = h.x + PX; behind.y = h.y + 12 * PX; });
+    assert.eq(state.callout, null, 'nothing called: ' + JSON.stringify(state.callout));
+    assert.ok(!('callouts' in freshMeta().opts), 'no Callouts option in a new campaign');
+    showSettings();
+    assert.ok(!/callouts/i.test(el.modalbox.innerText), 'and no row for it in Settings');
+    hideModal();
+  });
   t.test('barks keep their spacing over a whole front: 1.2 s apart, 6 s per enemy', async () => {
     await audioReady();
     newCampaign(); seed(1);

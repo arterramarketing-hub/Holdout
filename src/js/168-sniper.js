@@ -70,7 +70,7 @@ function sniperShot(e, t) {   // one heavy round in 3D, from the scope's eye lin
   bullets.push({ x: e.x + Math.cos(a) * 20, y: e.y + Math.sin(a) * 20, z: mz, ballistic: true,
     vx: Math.cos(a) * h * SNIPER.speed, vy: Math.sin(a) * h * SNIPER.speed, vz: Math.sin(el) * SNIPER.speed, life: e.ranged * 1.2 / SNIPER.speed, tracer: true,
     hostile: true, dmg: e.dmg, wkey: null, slot: null, hits: 0, maxHits: 1, aoe: 0, skip: null, srcType: 'sniper' });
-  e.atk = 0.2; e.shots = (e.shots || 0) + 1;
+  e.atk = 0.2; e.shots = (e.shots || 0) + 1; e.firedT = state.frontTime;
   const far = distMul(e.x, e.y);
   playBuf(far < 0.5 && SFX.buf['gunf:sniper'] ? 'gunf:sniper' : 'gun:sniper:0', { gain: 0.5 * Math.max(far, 0.3), rate: rand(0.95, 1.02), x: e.x, y: e.y, lp: 1600 + 16000 * far * far, force: true });
   state.lastContact = { x: e.x, y: e.y };

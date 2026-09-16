@@ -41,3 +41,38 @@ suite('friend or foe', t => {
     for (const type of Object.keys(ENEMY_ROWS)) assert.ok(ENEMY_ROWS[type]().some(p => p[8] === 'armband'), type + ' wears it too');
   });
 });
+
+suite('information you earn', t => {
+  const mapPixel = (dxm, dym) => {   // the minimap's colour a given number of metres right/up of centre, as drawn
+    drawMinimap();
+    const c = $('minimap'), g = c.getContext('2d'), sc = c.width / 1600;
+    const d = g.getImageData(Math.round(c.width / 2 + dxm * PX * sc), Math.round(c.height / 2 - dym * PX * sc), 1, 1).data;
+    return { r: d[0], g: d[1], b: d[2] };
+  };
+  const red = p => p.r > 150 && p.g < 110 && p.b < 110;
+  t.test('the minimap turns with you: what is ahead of you is up, whichever way you face', () => {
+    const h = squadScene();
+    for (const s of soldiers) if (s.slot !== state.controlled) { s.alive = false; s.x = -999; }
+    const e = G.spawn('grunt', h.x + 10 * PX, h.y); e.sp = 0; e.ranged = 0; e.firedT = state.frontTime;   // 10 m east of you, and it has just fired
+    aim.yaw = Math.PI / 2; cam.yaw = Math.PI / 2;   // facing east
+    assert.ok(red(mapPixel(0, 10)), 'facing east, the enemy to the east is straight up the map');
+    aim.yaw = 0; cam.yaw = 0;   // facing north
+    assert.ok(red(mapPixel(10, 0)), 'facing north, it is off to the right');
+    assert.ok(!red(mapPixel(0, 10)), 'and no longer up');
+  });
+  t.test('an enemy shows on the minimap only for a moment after it fires, or while a UAV is up', () => {
+    const h = squadScene();
+    for (const s of soldiers) if (s.slot !== state.controlled) { s.alive = false; s.x = -999; }
+    aim.yaw = 0; cam.yaw = 0;
+    const e = G.spawn('grunt', h.x, h.y - 8 * PX); e.sp = 0; e.ranged = 0;   // 8 m ahead: close, but quiet
+    e.firedT = null;
+    assert.ok(!red(mapPixel(0, 8)), 'close and quiet: not shown');
+    e.firedT = state.frontTime;
+    assert.ok(red(mapPixel(0, 8)), 'just fired: shown');
+    state.frontTime += MINIMAP_FIRED + 0.1;
+    assert.ok(!red(mapPixel(0, 8)), 'gone again a moment later');
+    state.uavT = 10;
+    assert.ok(red(mapPixel(0, 8)), 'under a UAV: shown, fired or not');
+    state.uavT = 0;
+  });
+});

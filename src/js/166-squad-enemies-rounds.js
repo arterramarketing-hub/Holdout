@@ -307,7 +307,7 @@ function fireLogic(e, t, dt, moving) {
   if (e.fireT > 0) return;
   const mg = e.type === 'gunner';
   if (e.burst <= 0) e.burst = mg ? randi(4, 7) : randi(2, 3);
-  e.atk = 0.2;
+  e.atk = 0.2; e.firedT = state.frontTime;   // it gives itself away on your minimap for a moment
   enemyFire(e, t, (mg ? 0.1 : 0.13) + (moving ? 0.07 : 0) + Math.min(0.12, e.supp * 0.05));
   e.burst--;
   e.fireT = e.burst > 0 ? (mg ? 0.1 : 0.16) : (mg ? 2.6 : 3.2) * rand(0.8, 1.25) * (1 + e.supp * 0.3);

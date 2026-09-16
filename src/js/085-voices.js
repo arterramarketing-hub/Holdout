@@ -5,12 +5,12 @@
 // breachers louder. No more than six footfalls in any quarter second.
 // BARKS: enemies shout — not words — when they spot one of yours, start a flank, change magazines or charge; placed where
 // they stand, pitched per voice, never within 1.2 s of another bark or 6 s of that enemy's last (a frag's shout skips the 6 s).
-// CALLOUTS: when an enemy within 25 m is outside your view (more than 60° off your aim) and a squadmate can see it, the
-// squad net chirps and a tag says where: FLANK · LEFT, FLANK · RIGHT or BEHIND. One every 4 s, each enemy called once in
-// 8 s. The Callouts setting turns them off.
+// CALLOUTS: the squad used to call enemies you could not see (FLANK · LEFT, BEHIND). That read the fight for you, so it is
+// gone: reading it is the game. What is still shouted is danger, not intel — a frag landing near you — and the marksman's
+// perch the first time its scope flashes, which you could have seen for yourself.
 const STEP_SURF = { asphalt: 'hard', paving: 'hard', concrete: 'hard', cobble: 'hard', gravel: 'gravel', dirt: 'soft', grass: 'soft' };
 const STEP_GAIN = { runner: 1.25, brute: 1.5, boss: 1.9 };
-const VOICE = { steps: 0, barkT: -99, callCd: 0, scanT: 0, barks: [] };
+const VOICE = { steps: 0, barkT: -99, callCd: 0, barks: [] };
 function surfaceAt(x, y) {   // the ground under a sim point: the last rectangle laid over it wins
   const xm = x / PX, ym = y / PX, G = TOWN.ground;
   for (let i = G.length - 1; i >= 0; i--) { const g = G[i]; if (xm >= g[0] && xm < g[2] && ym >= g[1] && ym < g[3]) return STEP_SURF[g[4]] || 'soft'; }
@@ -47,26 +47,8 @@ function bark(e, kind, force) {   // 'spot' | 'flank' | 'reload' | 'charge' | 't
   playBuf('bark:' + (kind === 'reload' || kind === 'flank' ? aRandi(3, 5) : aRandi(0, 2)), { gain: 0.2 * m, rate: e.voice, x: e.x, y: e.y, lp: 1800 + 9000 * m, verb: 0.12 });
   return true;
 }
-function updateVoices(dt) {
+function updateVoices(dt) {   // the squad no longer calls where enemies are (it took the reading of the fight away from you); only a frag landing near you, and the marksman's perch, are still shouted
   VOICE.steps = Math.max(0, VOICE.steps - dt * 24);
   if (state.callout && (state.callout.t -= dt) <= 0) state.callout = null;
-  VOICE.callCd -= dt; VOICE.scanT -= dt;
-  if (VOICE.scanT > 0) return;
-  VOICE.scanT = 0.25;
-  const h = soldiers[state.controlled];
-  if (!meta.opts.callouts || state.mode !== 'play' || VOICE.callCd > 0 || !h || !h.alive) return;
-  const fx = Math.sin(aim.yaw), fy = -Math.cos(aim.yaw), cone = Math.cos(Math.PI / 3);
-  let best = null, bd = 1000 * 1000;
-  for (const e of enemies) {
-    const dx = e.x - h.x, dy = e.y - h.y, d2 = dx * dx + dy * dy;
-    if (d2 >= bd || state.frontTime - (e.calledT == null ? -99 : e.calledT) < 8) continue;
-    if ((dx * fx + dy * fy) / (Math.sqrt(d2) || 1) > cone) continue;   // you can see this one yourself
-    if (!soldiers.some(s => s.alive && s !== h && dist2(s.x, s.y, e.x, e.y) < 1300 * 1300 && losClear(s.x, s.y, e.x, e.y))) continue;
-    bd = d2; best = e;
-  }
-  if (!best) return;
-  const rel = angWrap(Math.atan2(best.x - h.x, -(best.y - h.y)) - aim.yaw);
-  best.calledT = state.frontTime; VOICE.callCd = 4;
-  state.callout = { side: Math.abs(rel) > 2.36 ? 'behind' : rel < 0 ? 'left' : 'right', dist: Math.round(Math.sqrt(bd) / PX), t: 1.5 };
-  playBuf('radio', { gain: 0.28, force: true });
+  VOICE.callCd -= dt;
 }
