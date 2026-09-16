@@ -32,6 +32,14 @@
     letter-spacing:.2em; text-transform:uppercase; color:var(--ink); text-shadow:0 1px 3px rgba(0,0,0,.9); opacity:0; transition:opacity .2s; }
   #objmsg.on { opacity:1; } #objmsg.good { color:var(--friend); } #objmsg.bad { color:#ff8b7f; }
   #objtags { position:fixed; inset:0; z-index:8; pointer-events:none; overflow:hidden; }
+  /* your squad: a green triangle over each teammate, the name above it while they are close enough to matter */
+  #mates { position:fixed; inset:0; z-index:8; pointer-events:none; overflow:hidden; }
+  #mates i { position:absolute; left:0; top:0; display:none; flex-direction:column; align-items:center; gap:2px; font-style:normal; will-change:transform; }
+  #mates i::after { content:''; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid var(--mate);
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.85)); }
+  #mates b { font:800 10px var(--mono); letter-spacing:.1em; text-transform:uppercase; white-space:nowrap; color:var(--mate-ink);
+    text-shadow:0 1px 2px rgba(0,0,0,.95), 0 0 1px #000; }
+  #mates i.far b { display:none; }
   /* squad callouts: a tag on the side the enemy is, with the squad net's chirp */
   #callout { top:27%; display:none; padding:6px 10px 6px 9px; font-family:var(--mono); font-weight:800; font-size:12px; letter-spacing:.18em; text-transform:uppercase;
     color:var(--ink); background:rgba(9,13,21,.72); border:1px solid var(--line-hi); white-space:nowrap; }

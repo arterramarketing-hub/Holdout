@@ -202,6 +202,21 @@ function updateOverlays(dt) {
     const sp = !!(soldiers[state.controlled] && soldiers[state.controlled].sprinting);
     if (sp !== OV.joySprint) { OV.joySprint = sp; jb.classList.toggle('sprint', sp); }
   } else hideEl(jb);
+  {   // your squad: a green triangle over each living teammate, through walls, so you never put a round into one of your own
+    const tags = OV.mates || (OV.mates = [0, 1, 2, 3].map(i => document.getElementById('mate' + i)));
+    const me = soldiers[state.controlled], top = innerHeight < 520 ? 70 : 96;
+    for (let i = 0; i < tags.length; i++) {
+      const tag = tags[i], s = soldiers.find(u => u.slot === i);
+      if (!tag) continue;
+      if (!s || !s.alive || s.slot === state.controlled || state.mode !== 'play' || !me
+        || !toScreen(s.x, s.y, (soldierTop(s) / PX + 0.3) / ZS) || SCR.x < -30 || SCR.x > innerWidth + 30 || SCR.y < top || SCR.y > innerHeight + 30) { hideEl(tag); continue; }
+      if (tag.style.display !== 'flex') tag.style.display = 'flex';
+      const m = meta.squad[i], name = m ? (m.wren ? 'Cpl ' : '') + m.name : '';
+      if (tag.dataset.n !== name) { tag.dataset.n = name; tag.firstChild.textContent = name; }
+      tag.classList.toggle('far', dist2(s.x, s.y, me.x, me.y) > 35 * PX * 35 * PX);   // a name only while they are close enough to matter
+      tag.style.transform = `translate3d(${SCR.x.toFixed(1)}px,${SCR.y.toFixed(1)}px,0) translate(-50%,-100%)`;
+    }
+  }
   {   // objective letters over each flag, through fog and walls
     const T = state.training, signs = T && TRAIN_STEPS[T.step] && TRAIN_STEPS[T.step].id === 'look';
     const objs = signs ? RANGE.signs.map((p, i) => ({ x: p[0] * PX, y: p[1] * PX, letter: String(i + 1), owner: T.seen[i] ? 'p' : null })) : (state.objs || []);

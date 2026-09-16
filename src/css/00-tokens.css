@@ -8,6 +8,7 @@
     --ink: #f1f3f6; --text: #c9d1dc; --label: #a6b0bf; --muted: #7b879a;
     --accent: #ff6b2c; --accent-hi: #ff8551; --accent-ink: #140903; --accent-glow: rgba(255, 107, 44, .36);
     --friend: #5cb6ff; --foe: #ff4d3d; --ok: #86dd90;
+    --mate: #5fdc4a; --mate-ink: #c8f5b8;   /* your squad, over their heads and on the minimap: held ground stays blue, people are green */
     --display: 'Archivo', 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
     --body: 'Archivo', 'Helvetica Neue', Arial, system-ui, sans-serif;
     --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;

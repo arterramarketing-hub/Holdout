@@ -489,6 +489,7 @@
     --ink: #f1f3f6; --text: #c9d1dc; --label: #a6b0bf; --muted: #7b879a;
     --accent: #ff6b2c; --accent-hi: #ff8551; --accent-ink: #140903; --accent-glow: rgba(255, 107, 44, .36);
     --friend: #5cb6ff; --foe: #ff4d3d; --ok: #86dd90;
+    --mate: #5fdc4a; --mate-ink: #c8f5b8;   /* your squad, over their heads and on the minimap: held ground stays blue, people are green */
     --display: 'Archivo', 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
     --body: 'Archivo', 'Helvetica Neue', Arial, system-ui, sans-serif;
     --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -560,6 +561,14 @@
     letter-spacing:.2em; text-transform:uppercase; color:var(--ink); text-shadow:0 1px 3px rgba(0,0,0,.9); opacity:0; transition:opacity .2s; }
   #objmsg.on { opacity:1; } #objmsg.good { color:var(--friend); } #objmsg.bad { color:#ff8b7f; }
   #objtags { position:fixed; inset:0; z-index:8; pointer-events:none; overflow:hidden; }
+  /* your squad: a green triangle over each teammate, the name above it while they are close enough to matter */
+  #mates { position:fixed; inset:0; z-index:8; pointer-events:none; overflow:hidden; }
+  #mates i { position:absolute; left:0; top:0; display:none; flex-direction:column; align-items:center; gap:2px; font-style:normal; will-change:transform; }
+  #mates i::after { content:''; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid var(--mate);
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.85)); }
+  #mates b { font:800 10px var(--mono); letter-spacing:.1em; text-transform:uppercase; white-space:nowrap; color:var(--mate-ink);
+    text-shadow:0 1px 2px rgba(0,0,0,.95), 0 0 1px #000; }
+  #mates i.far b { display:none; }
   /* squad callouts: a tag on the side the enemy is, with the squad net's chirp */
   #callout { top:27%; display:none; padding:6px 10px 6px 9px; font-family:var(--mono); font-weight:800; font-size:12px; letter-spacing:.18em; text-transform:uppercase;
     color:var(--ink); background:rgba(9,13,21,.72); border:1px solid var(--line-hi); white-space:nowrap; }
@@ -1112,6 +1121,7 @@
   <div class="hud" id="callout"></div>
   <div class="hud" id="trainbox"><div class="tb-top"><span id="tbStep">Basic training · 1 / 8</span><button id="tbSkip">Skip</button></div><div class="tb-title" id="tbTitle"></div><div class="tb-hint" id="tbHint"></div><div class="tb-dots" id="tbDots"></div></div>
   <div class="hud" id="objtags"><i id="otag0">A</i><i id="otag1">B</i><i id="otag2">C</i></div>
+  <div class="hud" id="mates" aria-hidden="true"><i id="mate0"><b></b></i><i id="mate1"><b></b></i><i id="mate2"><b></b></i><i id="mate3"><b></b></i></div>
   <div class="hud" id="bossbar"><div id="bossname">WARLORD</div><div id="bosshp"><i id="bosshpfill"></i></div></div>
   <canvas class="hud" id="minimap" width="150" height="120"></canvas>
   <div class="hud" id="feed"></div>
@@ -5439,8 +5449,9 @@ const muzOf = (key, s) => {   // the barrel tip actually drawn: the far end of a
 };
 const attSig = (key, att) => { const a = normAtt(key, att); return SIGHT_OPTS[key] ? ':' + a.sight + (a.ext ? 'X' : '') + (a.suppressor ? 'S' : '') : ''; };
 const gunRows = (key, att) => GUN_BUILD[key] ? GUN_BUILD[key](normAtt(key, att)) : GUN_STATIC[key];
-const ENEMY_LEGS = [   // work trousers bloused into boots, gloves
+const ENEMY_LEGS = [   // work trousers bloused into boots, gloves, and the red armband every one of them wears on both arms
   ...ARMS('coat', 'glove'),
+  P(HJ.uArmL, 'band', 0.165, 0.085, 0.165, 0, -0.17, 0, 'armband'), P(HJ.uArmR, 'band', 0.165, 0.085, 0.165, 0, -0.17, 0, 'armband'),
   P(HJ.thighL, 'legp', 0.17, 0.4, 0.18, 0, -0.19, 0, 'pants'), P(HJ.thighR, 'legp', 0.17, 0.4, 0.18, 0, -0.19, 0, 'pants'),
   P(HJ.shinL, 'puttee', 0.16, 0.32, 0.17, 0, -0.15, 0, 'pants'), P(HJ.shinR, 'puttee', 0.16, 0.32, 0.17, 0, -0.15, 0, 'pants'),
   P(HJ.shinL, 'boot', 0.17, 0.12, 0.27, 0, -0.34, -0.045, 'boots'), P(HJ.shinR, 'boot', 0.17, 0.12, 0.27, 0, -0.34, -0.045, 'boots'),
@@ -5547,13 +5558,13 @@ function soldierPalette(slot, col, helm) {   // multicam uniform; carriers alter
     hair: colorOf(['#3a2a1c', '#6a4a2a', '#2a2420', '#8a6a3a'][slot % 4]),
   };
 }
-function enemyPalette(col, boss) {   // mixed paramilitary kit, jackets tinted toward each type's colour so silhouettes stay readable
-  return {
-    coat: new THREE.Color().copy(colorOf('#5a5e50')).lerp(colorOf(col), boss ? 0.45 : 0.16),
-    pants: colorOf('#45443c'), boots: colorOf('#2a2622'), glove: colorOf('#262624'), knuck: colorOf('#1c1c1a'), mask: colorOf('#ffffff'),
-    helm: colorOf('#6a664e'), brass: colorOf('#c8a040'), metal: colorOf('#8a8a84'), gunm: colorOf('#2e2e2e'),
-    wood: colorOf('#7a4e2a'), webbing: colorOf('#5e5a44'), pouch: colorOf('#4e4a3a'), hood: colorOf('#3a3a36'), cape: colorOf('#3a3a36'),
-    armor: colorOf('#3c3e38'), shield: colorOf('#2a2c2e'), lens: colorOf('#121418'), pack: colorOf('#4a4a3c'),
+function enemyPalette(col, boss) {   // the enemy in dark charcoal with a red armband: your squad wears light tan multicam, and a difference in
+  return {                          // lightness survives fog, dusk and the dither where a difference in hue does not; jackets still lean toward each type's colour
+    coat: new THREE.Color().copy(colorOf('#3a3c41')).lerp(colorOf(col), boss ? 0.45 : 0.14),
+    pants: colorOf('#2d2f33'), boots: colorOf('#1c1c1e'), glove: colorOf('#1e1e20'), knuck: colorOf('#161618'), mask: colorOf('#ffffff'),
+    helm: colorOf('#2c2e31'), brass: colorOf('#c8a040'), metal: colorOf('#8a8a84'), gunm: colorOf('#2e2e2e'),
+    wood: colorOf('#7a4e2a'), webbing: colorOf('#3b3a34'), pouch: colorOf('#33322c'), hood: colorOf('#2e2f32'), cape: colorOf('#2e2f32'),
+    armor: colorOf('#2a2c2e'), shield: colorOf('#2a2c2e'), lens: colorOf('#121418'), pack: colorOf('#34352f'), armband: colorOf('#c4302a'),
     plume: colorOf('#c02e24'), blanket: colorOf('#2a2420'), hide: colorOf('#7a5e40'), mane: colorOf('#1a1816'), lamp: colorOf('#ffe0a0'),
     leather: colorOf('#3a2c22'), tube: colorOf('#4a5230'),
     poly: colorOf('#222426'), rail: colorOf('#5a5c5e'), sightw: colorOf('#f6f3e4'), reddot: colorOf('#ff3a2e'), glass: colorOf('#1d2c3c'),
@@ -7844,6 +7855,21 @@ function updateOverlays(dt) {
     const sp = !!(soldiers[state.controlled] && soldiers[state.controlled].sprinting);
     if (sp !== OV.joySprint) { OV.joySprint = sp; jb.classList.toggle('sprint', sp); }
   } else hideEl(jb);
+  {   // your squad: a green triangle over each living teammate, through walls, so you never put a round into one of your own
+    const tags = OV.mates || (OV.mates = [0, 1, 2, 3].map(i => document.getElementById('mate' + i)));
+    const me = soldiers[state.controlled], top = innerHeight < 520 ? 70 : 96;
+    for (let i = 0; i < tags.length; i++) {
+      const tag = tags[i], s = soldiers.find(u => u.slot === i);
+      if (!tag) continue;
+      if (!s || !s.alive || s.slot === state.controlled || state.mode !== 'play' || !me
+        || !toScreen(s.x, s.y, (soldierTop(s) / PX + 0.3) / ZS) || SCR.x < -30 || SCR.x > innerWidth + 30 || SCR.y < top || SCR.y > innerHeight + 30) { hideEl(tag); continue; }
+      if (tag.style.display !== 'flex') tag.style.display = 'flex';
+      const m = meta.squad[i], name = m ? (m.wren ? 'Cpl ' : '') + m.name : '';
+      if (tag.dataset.n !== name) { tag.dataset.n = name; tag.firstChild.textContent = name; }
+      tag.classList.toggle('far', dist2(s.x, s.y, me.x, me.y) > 35 * PX * 35 * PX);   // a name only while they are close enough to matter
+      tag.style.transform = `translate3d(${SCR.x.toFixed(1)}px,${SCR.y.toFixed(1)}px,0) translate(-50%,-100%)`;
+    }
+  }
   {   // objective letters over each flag, through fog and walls
     const T = state.training, signs = T && TRAIN_STEPS[T.step] && TRAIN_STEPS[T.step].id === 'look';
     const objs = signs ? RANGE.signs.map((p, i) => ({ x: p[0] * PX, y: p[1] * PX, letter: String(i + 1), owner: T.seen[i] ? 'p' : null })) : (state.objs || []);
@@ -8282,7 +8308,7 @@ function drawMinimap() {
     g.fillStyle = e.boss ? '#ff8a3d' : e.sniper ? '#dff2ff' : '#ff4d3d';
     g.beginPath(); g.arc(X(e.x), Y(e.y), e.boss ? 4 : 2.6, 0, TAU); g.fill();
   }
-  g.fillStyle = '#5cb6ff';
+  g.fillStyle = '#5fdc4a';   // your squad, the same green as over their heads
   for (const m of soldiers) {
     if (!m.alive || m.slot === state.controlled) continue;
     g.beginPath(); g.arc(X(m.x), Y(m.y), 2.6, 0, TAU); g.fill();

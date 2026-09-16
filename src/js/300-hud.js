@@ -134,7 +134,7 @@ function drawMinimap() {
     g.fillStyle = e.boss ? '#ff8a3d' : e.sniper ? '#dff2ff' : '#ff4d3d';
     g.beginPath(); g.arc(X(e.x), Y(e.y), e.boss ? 4 : 2.6, 0, TAU); g.fill();
   }
-  g.fillStyle = '#5cb6ff';
+  g.fillStyle = '#5fdc4a';   // your squad, the same green as over their heads
   for (const m of soldiers) {
     if (!m.alive || m.slot === state.controlled) continue;
     g.beginPath(); g.arc(X(m.x), Y(m.y), 2.6, 0, TAU); g.fill();

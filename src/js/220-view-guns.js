@@ -164,8 +164,9 @@ const muzOf = (key, s) => {   // the barrel tip actually drawn: the far end of a
 };
 const attSig = (key, att) => { const a = normAtt(key, att); return SIGHT_OPTS[key] ? ':' + a.sight + (a.ext ? 'X' : '') + (a.suppressor ? 'S' : '') : ''; };
 const gunRows = (key, att) => GUN_BUILD[key] ? GUN_BUILD[key](normAtt(key, att)) : GUN_STATIC[key];
-const ENEMY_LEGS = [   // work trousers bloused into boots, gloves
+const ENEMY_LEGS = [   // work trousers bloused into boots, gloves, and the red armband every one of them wears on both arms
   ...ARMS('coat', 'glove'),
+  P(HJ.uArmL, 'band', 0.165, 0.085, 0.165, 0, -0.17, 0, 'armband'), P(HJ.uArmR, 'band', 0.165, 0.085, 0.165, 0, -0.17, 0, 'armband'),
   P(HJ.thighL, 'legp', 0.17, 0.4, 0.18, 0, -0.19, 0, 'pants'), P(HJ.thighR, 'legp', 0.17, 0.4, 0.18, 0, -0.19, 0, 'pants'),
   P(HJ.shinL, 'puttee', 0.16, 0.32, 0.17, 0, -0.15, 0, 'pants'), P(HJ.shinR, 'puttee', 0.16, 0.32, 0.17, 0, -0.15, 0, 'pants'),
   P(HJ.shinL, 'boot', 0.17, 0.12, 0.27, 0, -0.34, -0.045, 'boots'), P(HJ.shinR, 'boot', 0.17, 0.12, 0.27, 0, -0.34, -0.045, 'boots'),
@@ -272,13 +273,13 @@ function soldierPalette(slot, col, helm) {   // multicam uniform; carriers alter
     hair: colorOf(['#3a2a1c', '#6a4a2a', '#2a2420', '#8a6a3a'][slot % 4]),
   };
 }
-function enemyPalette(col, boss) {   // mixed paramilitary kit, jackets tinted toward each type's colour so silhouettes stay readable
-  return {
-    coat: new THREE.Color().copy(colorOf('#5a5e50')).lerp(colorOf(col), boss ? 0.45 : 0.16),
-    pants: colorOf('#45443c'), boots: colorOf('#2a2622'), glove: colorOf('#262624'), knuck: colorOf('#1c1c1a'), mask: colorOf('#ffffff'),
-    helm: colorOf('#6a664e'), brass: colorOf('#c8a040'), metal: colorOf('#8a8a84'), gunm: colorOf('#2e2e2e'),
-    wood: colorOf('#7a4e2a'), webbing: colorOf('#5e5a44'), pouch: colorOf('#4e4a3a'), hood: colorOf('#3a3a36'), cape: colorOf('#3a3a36'),
-    armor: colorOf('#3c3e38'), shield: colorOf('#2a2c2e'), lens: colorOf('#121418'), pack: colorOf('#4a4a3c'),
+function enemyPalette(col, boss) {   // the enemy in dark charcoal with a red armband: your squad wears light tan multicam, and a difference in
+  return {                          // lightness survives fog, dusk and the dither where a difference in hue does not; jackets still lean toward each type's colour
+    coat: new THREE.Color().copy(colorOf('#3a3c41')).lerp(colorOf(col), boss ? 0.45 : 0.14),
+    pants: colorOf('#2d2f33'), boots: colorOf('#1c1c1e'), glove: colorOf('#1e1e20'), knuck: colorOf('#161618'), mask: colorOf('#ffffff'),
+    helm: colorOf('#2c2e31'), brass: colorOf('#c8a040'), metal: colorOf('#8a8a84'), gunm: colorOf('#2e2e2e'),
+    wood: colorOf('#7a4e2a'), webbing: colorOf('#3b3a34'), pouch: colorOf('#33322c'), hood: colorOf('#2e2f32'), cape: colorOf('#2e2f32'),
+    armor: colorOf('#2a2c2e'), shield: colorOf('#2a2c2e'), lens: colorOf('#121418'), pack: colorOf('#34352f'), armband: colorOf('#c4302a'),
     plume: colorOf('#c02e24'), blanket: colorOf('#2a2420'), hide: colorOf('#7a5e40'), mane: colorOf('#1a1816'), lamp: colorOf('#ffe0a0'),
     leather: colorOf('#3a2c22'), tube: colorOf('#4a5230'),
     poly: colorOf('#222426'), rail: colorOf('#5a5c5e'), sightw: colorOf('#f6f3e4'), reddot: colorOf('#ff3a2e'), glass: colorOf('#1d2c3c'),
