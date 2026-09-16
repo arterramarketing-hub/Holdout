@@ -25,12 +25,16 @@ self.addEventListener('activate', event => {
 
 async function networkFirst(request, saveAs) {
   const cache = await caches.open(CACHE);
+  let timer = null;
   try {
-    const response = await Promise.race([fetch(request), new Promise((_, fail) => setTimeout(() => fail(new Error('slow network')), 4000))]);
-    if (response.ok) cache.put(saveAs || request, response.clone());
+    const response = await Promise.race([fetch(request), new Promise((_, fail) => { timer = setTimeout(() => fail(new Error('slow network')), 4000); })]);
+    if (!response.ok) throw new Error('status ' + response.status);   // a deploy in flight answers 404: the saved copy is better than an error page
+    cache.put(saveAs || request, response.clone());
     return response;
   } catch (e) {
     return (await cache.match(saveAs || request, { ignoreSearch: true })) || Response.error();
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 

@@ -25,7 +25,7 @@ suite('enemy fire in 3D', t => {
     });
     return 1000 - target.hp;
   }
-  const avg = (kind, opts) => { const r = Array.from({ length: 12 }, (_, i) => standoff(kind, i + 1, opts)); return r.reduce((a, b) => a + b, 0) / r.length; };   // 12 seeds, like the baseline
+  const avg = (kind, opts) => { const r = Array.from({ length: 24 }, (_, i) => standoff(kind, i + 1, opts)); return r.reduce((a, b) => a + b, 0) / r.length; };   // 24 seeds, like the baseline
   t.test('enemy rounds are 3D, from the shoulder, and never headshots', () => {
     newCampaign(); seed(3);
     const h = battle({ clear: true });

@@ -3,14 +3,15 @@
 // Assertions throw; a test passes when it returns (or resolves) without throwing and raised no page errors.
 (() => {
   const P = new URLSearchParams(location.search);
-  const PASS = P.get('pass') || 'desktop', ONLY = P.get('only'), REPORT = P.has('report');
+  const PASS = P.get('pass') || 'desktop', ONLY = P.get('only'), REPORT = P.has('report'), FILES = +P.get('files') || 0;
   const H = window.HT = { suites: [], results: [], errors: [], baseline: {}, pass: PASS, done: false };
   window.addEventListener('error', e => H.errors.push(String(e.message || e)));
   window.addEventListener('unhandledrejection', e => H.errors.push('unhandled rejection: ' + String((e.reason && e.reason.stack) || e.reason)));
   const origError = console.error.bind(console);
   console.error = (...a) => { H.errors.push('console.error: ' + a.map(String).join(' ')); origError(...a); };
 
-  window.suite = (name, fn, opts = {}) => H.suites.push({ name, fn, passes: [].concat(opts.pass || 'desktop') });
+  const currentFile = () => { const s = document.currentScript; return s && s.src ? s.src.split('/').pop() : '(inline)'; };
+  window.suite = (name, fn, opts = {}) => H.suites.push({ name, fn, file: currentFile(), passes: [].concat(opts.pass || 'desktop') });
 
   const fmt = v => { try { return typeof v === 'string' ? JSON.stringify(v) : JSON.stringify(v); } catch (e) { return String(v); } };
   window.assert = {
@@ -29,6 +30,8 @@
   window.waitFor = waitFor;
 
   async function run() {
+    const files = new Set(H.suites.map(s => s.file));
+    if (FILES && files.size !== FILES) throw new Error(`only ${files.size} of ${FILES} suite files loaded — scripts went missing`);
     await waitFor(() => typeof VIEW !== 'undefined' && (VIEW.ready || VIEW.failed), 60000, 'the 3D engine');
     const bootEl = document.getElementById('boot');
     if (bootEl) bootEl.click();

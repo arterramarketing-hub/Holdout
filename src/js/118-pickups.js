@@ -44,11 +44,12 @@ function updateSwap(s, dt) {
   if (s.swapT < 0) s.swapT = 0;
 }
 function takeGun(s, d) {
+  const i = weaponDrops.indexOf(d);   // off the ground first: dropping another gun here could otherwise push this one off the list
+  if (i >= 0) weaponDrops.splice(i, 1);
   if (!s.alt) s.alt = gunRecord(s);   // a free slot: what you had goes on your back
   else if (!s.pistol && s.mag + s.reserve > 0)
     dropGun(s.weapon, s.x + rand(-14, 14), s.y + rand(-14, 14), s.mag, s.reserve, { yaw: rand(0, TAU), sight: s.sight, ext: s.ext, suppressor: s.suppressor });   // both full: this one goes down where you stand
   wearGun(s, { weapon: d.key, mag: d.mag, reserve: d.reserve, sight: d.sight, ext: d.ext, suppressor: d.suppressor });
-  weaponDrops.splice(weaponDrops.indexOf(d), 1);
   s.reloadT = 0; s.pickT = 0; s.swapT = CFG.swapTime / 2; s.swapped = true;   // it comes up into view
   floaters.push({ x: d.x, y: d.y, z: 30, txt: gunName(d.key), life: 1 });
   playBuf('pick', { gain: 0.5, force: true });
@@ -58,7 +59,8 @@ function takeAmmo(s, d, into) {   // a dropped gun of a kind you carry: as many 
   if (room <= 0) return false;
   const got = Math.min(room, d.mag + d.reserve);
   into.reserve += got;
-  weaponDrops.splice(weaponDrops.indexOf(d), 1);
+  const i = weaponDrops.indexOf(d);
+  if (i >= 0) weaponDrops.splice(i, 1);
   floaters.push({ x: d.x, y: d.y, z: 30, txt: `+${got} ${gunName(d.key)}`, life: 1 });
   playBuf('pick', { gain: 0.45, force: true });
   if (into === s && s.pistol) { s.pistol = false; startReload(s); }

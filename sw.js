@@ -3,7 +3,7 @@
 // copy), so anyone online always gets the newest build; three.js and the font files are cache first, since their
 // URLs are versioned; the font stylesheet comes from the cache while a fresh copy is fetched. A new build takes
 // over at once and deletes the old cache.
-const CACHE = 'holdout-9c94f3f19ce0';
+const CACHE = 'holdout-2a822f3e06cf';
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-32.png"];
 const ENGINE = ['https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js', 'https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.core.js'];
 
@@ -25,12 +25,16 @@ self.addEventListener('activate', event => {
 
 async function networkFirst(request, saveAs) {
   const cache = await caches.open(CACHE);
+  let timer = null;
   try {
-    const response = await Promise.race([fetch(request), new Promise((_, fail) => setTimeout(() => fail(new Error('slow network')), 4000))]);
-    if (response.ok) cache.put(saveAs || request, response.clone());
+    const response = await Promise.race([fetch(request), new Promise((_, fail) => { timer = setTimeout(() => fail(new Error('slow network')), 4000); })]);
+    if (!response.ok) throw new Error('status ' + response.status);   // a deploy in flight answers 404: the saved copy is better than an error page
+    cache.put(saveAs || request, response.clone());
     return response;
   } catch (e) {
     return (await cache.match(saveAs || request, { ignoreSearch: true })) || Response.error();
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 

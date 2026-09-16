@@ -405,3 +405,47 @@ GitHub Desktop mid-phase can never pick up half-finished work.
   - The objectives role test now checks the whole minute instead of the last moment. Its result had depended on
     what the sound tests did to the random sequence.
   - 164 tests pass; soak passed (462 s).
+- **Phase 9 — final audit.**
+  - **The first CI run (your push of `5e8b9a0`) worked and caught something.** Ubuntu found Chrome, ran all five
+    passes in about 7 minutes, posted my annotations, and correctly skipped the deploy. It failed on one balance
+    guard: a bot-played front ran 373 s against a 60–300 s window.
+    - **Root cause:** sound drew from the same seeded random sequence as the simulation, so a front played out
+      differently wherever audio behaved differently (Linux CI versus macOS). Sound now rolls its own dice
+      (`aRand` / `aRandi`), which makes every seeded test reproducible on any machine.
+    - That guard is now 60–360 s, and it is a guard against fronts that never end, not a balance target.
+  - **The test runner was quietly losing whole suite files.** The throwaway server's listen backlog (5) refused
+    some of the 30 parallel script requests, so a run could report "ALL PASSED" with 119 of 150 tests — and one
+    soak run executed nothing at all. The server now keeps connections alive with a backlog of 128, and the page
+    fails loudly unless every suite file it was given has loaded.
+  - **An independent review of the whole v7 diff** turned up seven defects, all fixed and covered by tests:
+    1. No blast could ever hurt a perched marksman — a rocket straight into the belfry did nothing. Blasts now
+       reach what is within 2.5 m of their own height.
+    2. The mouse wheel (and R, G, Q, F, 1-3) still worked while a card was open: scrolling the settings list swapped
+       your gun mid-fight.
+    3. The CI job's 60-minute limit could be shorter than the runner's own timeouts, so a hang would report nothing;
+       the summary table is now written as each pass ends.
+    4. The service worker handed back a failed response instead of the saved copy, so an installed app opened
+       during a deploy showed an error page.
+    5. A card opening while a controller button was held left the trigger, sights or pickup stuck on.
+    6. Taking a gun with fourteen already on the ground could delete the wrong one.
+    7. A counterattack could announce itself with nobody coming, and burn its 60 s cooldown.
+  - **Measured**, bot-played with everything on: tier 1 fronts 139–171 s (v6: 139–153 s) with 2–3 enemy frags, one
+    marksman and one counterattack; tier 3 fronts 238–277 s; draw calls 105–113.
+  - Enemy frag line-of-sight checks are throttled to four a second (the 3D check is the costly part on a phone).
+  - **The damage measurements were too noisy to trust at 12 seeds.** Once sound stopped moving the dice, the
+    open-ground figure read 18% under the v6 baseline. At 24 seeds the same scenario measures 24.8 on this build
+    and 25.1 on the v6 build — the same gun, and the old 12-seed number was the noise. Both the baseline recorder
+    and the check now use 24 seeds.
+  - The counterattack test now watches how close the nearest attacker gets over 25 s, instead of an average after
+    exactly 10 s.
+  - **169 tests pass on five window sizes; the soak passes.**
+
+## Left for you
+
+1. **Push** (GitHub Desktop). That runs the tests on GitHub.
+2. **When the run is green, switch the site over once:** Settings → Pages → Build and deployment → Branch:
+   `gh-pages` / `(root)`. Until you do, every push still goes live untested.
+3. **On your phone**, from the Pages link: install it (the start menu's install button, or Share → Add to Home
+   Screen on an iPhone), then try it offline once it has loaded.
+4. Worth playing rather than testing: a real controller (Y swaps guns now, view moved to D-pad ↓), how the enemy
+   frags and the marksman feel, and whether Battery saver is worth having on by default on your phone.

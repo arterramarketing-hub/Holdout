@@ -22,8 +22,7 @@ usage:
 
 Chrome is found at $CHROME, the macOS app, or google-chrome / chromium on the PATH. Before the passes, one probe
 window measures the browser's own frame, so every pass gets exactly its inner size on any platform. With CI set (as
-on GitHub Actions) timeouts are longer, failures become ::error annotations, and a results table goes to the run
-summary.
+on GitHub Actions) failures become ::error annotations and a results table goes to the run summary as each pass ends.
 """
 import glob
 import http.server
@@ -71,6 +70,9 @@ def arg(name, default=None):
     return default
 
 
+SUITE_FILES = [0]   # how many suite scripts the page must load; a missing one is a fatal, not a quiet pass
+
+
 def build_page():
     html = open(arg('--source', os.path.join(ROOT, 'index.html')), encoding='utf-8').read()
     html = re.sub(r'^\s*<(link|meta)\b[^>]*\bdata-pwa\b[^>]*>\s*\n', '', html, flags=re.M | re.I)   # like the Artifact form: the app suite adds these back itself
@@ -84,6 +86,7 @@ def build_page():
     base_path = os.path.join(TESTS, 'baseline.json')
     if os.path.exists(base_path):
         tail = f'<script>window.HT_BASELINE = {open(base_path).read()};</script>\n' + tail
+    SUITE_FILES[0] = len(suites)
     page = html[:game] + '<script src="pre.js"></script>\n' + html[game:end + len('</script>')] + '\n' + tail + html[end + len('</script>'):]
     open(os.path.join(TESTS, 'run.html'), 'w', encoding='utf-8').write(page)
     return len(suites)
@@ -97,6 +100,8 @@ class Results:
 
 def serve(results):
     class Handler(http.server.SimpleHTTPRequestHandler):
+        protocol_version = 'HTTP/1.1'   # keep-alive: the page pulls 30+ suite scripts at once
+
         def __init__(self, *a, **k):
             super().__init__(*a, directory=ROOT, **k)
 
@@ -122,6 +127,7 @@ def serve(results):
             self.end_headers()
 
     socketserver.TCPServer.allow_reuse_address = True
+    socketserver.TCPServer.request_queue_size = 128   # a refused connection would drop a suite file, and its tests with it
     httpd = socketserver.ThreadingTCPServer(('127.0.0.1', 0), Handler)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd
@@ -165,7 +171,7 @@ def run_pass(name, chrome, frame, only, headed, timeout):
     results = Results()
     httpd = serve(results)
     port = httpd.server_address[1]
-    url = f'http://127.0.0.1:{port}/tests/run.html?report=1&pass={name}{extra}'
+    url = f'http://127.0.0.1:{port}/tests/run.html?report=1&pass={name}&files={SUITE_FILES[0]}{extra}'
     if only:
         url += '&only=' + urllib.parse.quote(only)
     t0 = time.time()
@@ -207,11 +213,12 @@ def report(data, wall):
     return data.get('failed', 1) == 0 and not data.get('fatal') and data.get('total', 0) > 0
 
 
-def summary(rows):   # GitHub Actions: a table on the run's page
+def summary(rows):   # GitHub Actions: a table on the run's page, one pass at a time
     path = os.environ.get('GITHUB_STEP_SUMMARY')
     if not path:
         return
-    lines = ['## Holdout tests', '', '| Pass | Window | Passed | Time |', '|---|---|---|---|']
+    first = not (os.path.exists(path) and os.path.getsize(path))
+    lines = ['## Holdout tests', '', '| Pass | Window | Passed | Time |', '|---|---|---|---|'] if first else []
     fails = []
     for data, wall, ok in rows:
         size = data.get('size') or PASSES.get(data.get('pass'), ((0, 0),))[0]
@@ -236,17 +243,16 @@ def main():
     passes = ['baseline'] if '--baseline' in sys.argv else ['soak'] if '--soak' in sys.argv else [arg('--pass')] if arg('--pass') else DEFAULT_PASSES
     frame, probe = calibrate(chrome, headed)
     print(f'{n} suite files · passes: {", ".join(passes)} · window frame +{frame[0]}×+{frame[1]} px · pixel ratio {probe.get("dpr")}')
-    all_ok, rows = True, []
+    all_ok = True
     for p in passes:
-        data, wall = run_pass(p, chrome, frame, only, headed, timeout=(1500 if p in ('baseline', 'soak') else 900) * (3 if CI else 1))
+        data, wall = run_pass(p, chrome, frame, only, headed, timeout=1500 if p in ('baseline', 'soak') else 900)
         ok = report(data, wall)
-        rows.append((data, wall, ok))
+        summary([(data, wall, ok)])   # written as each pass ends, so a job cancelled on its own timeout still shows what happened
         all_ok = ok and all_ok
         if p == 'baseline' and data.get('baseline'):
             path = os.path.join(TESTS, 'baseline.json')
             json.dump(data['baseline'], open(path, 'w'), indent=2)
             print('  wrote tests/baseline.json:', json.dumps(data['baseline']))
-    summary(rows)
     print('\nALL PASSED' if all_ok else '\nFAILURES')
     sys.exit(0 if all_ok else 1)
 

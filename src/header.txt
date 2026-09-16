@@ -57,8 +57,9 @@
   they couldn't look up at it — your view stops 35° up — then lines up for 1.4 s with its scope glinting (a blue-white
   star sized for the screen, bigger when it's you), fires one 3D round for 2.5 (tier-scaled, capped at 3.6 so never a
   one-shot) and works the bolt 1.6 s. Three rounds cracking within 2 m send it down behind its cover for 2 s. It is
-  hit only above its cover (e.lip), takes a rifleman's rounds (three M4 hits inside 20 m), shrugs off blasts more
-  than 2.5 m below it, dies where it knelt, and on the minimap shows only while glinting. Raised enemies: e.z lifts
+  hit only above its cover (e.lip), takes a rifleman's rounds (three M4 hits inside 20 m), and is reached by a blast
+  only within 2.5 m of its own height — a rocket into the belfry kills it, one in the street below does not. It dies
+  where it knelt, and on the minimap shows only while glinting. Raised enemies: e.z lifts
   the rig, the hit tests, the crosshair ray and the corpse; flat squad rounds never reach a roof, so squadmates fire
   a real line up at one. The squad calls it by name the first time it glints ("Sniper · Bell tower").
 
@@ -67,7 +68,8 @@
   and B's chip pulses red. Up to four attackers: the nearest enemies on the field, then whoever walks on during the
   6 s gather (spawn zones near B score higher). Then they push: riflemen move cover to cover into the ring on 1-2 s
   holds, runners and breachers head straight for it unless someone is within 7.5 m, and a rifleman's frag still goes
-  in at anyone dug in. It ends when B is taken (neutral counts), when every attacker is down (COUNTERATTACK REPELLED:
+  in at anyone dug in. The banner waits for the first attacker to actually join, and one nobody joins ends free (no
+  60 s gap). It ends when B is taken (neutral counts), when every attacker is down (COUNTERATTACK REPELLED:
   drainEnemy(2), so the Warlord's ticket stays safe), or after 60 s. One at a time and 60 s apart; none in a front's
   first 60 s, while the Warlord is up, or with fewer than 4 reserves left.
 
@@ -383,7 +385,10 @@
   Cues cross-fade on screen changes; the MUSIC slider in settings sets the level (0 is off); M mutes it and
   the death cam muffles it with everything else.
 
-  SOUND — no sample files: at the first tap every weapon sound is synthesised offline into 32 kHz
+  SOUND — sound rolls its own dice (aRand / aRandi, next to the audio helpers): which variant plays and at what rate
+  never touches the simulation's rand(), so a front plays out the same whether or not audio is running — which is what
+  makes a seeded test reproducible on any machine.
+  No sample files: at the first tap every weapon sound is synthesised offline into 32 kHz
   stereo buffers (sub-millisecond attack, saturated muzzle blast, a falling pressure thump, early
   reflections at 70–620 ms, a rolling outdoor tail, the action cycling), 1–3 variants per weapon plus
   a distant variant, rendered in 10 ms slices. Playback adds ±3% pitch, distance low-pass and stereo

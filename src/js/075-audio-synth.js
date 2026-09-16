@@ -338,12 +338,12 @@ function playBuf(key, o) {   // {gain, rate, delay, x, y (stereo placement), lp 
   return true;
 }
 function pickVar(base, n) {   // a random rendered variant, so repeated shots never sound identical
-  const s = randi(0, n - 1);
+  const s = aRandi(0, n - 1);
   for (let k = 0; k < n; k++) { const key = base + ((s + k) % n); if (SFX.buf[key]) return key; }
   return base + '0';
 }
 function sfxGun(w, x, y, isCtl, quiet) {
-  const n = GUN_VARS[w] || 1, rate = rand(0.97, 1.03);
+  const n = GUN_VARS[w] || 1, rate = aRand(0.97, 1.03);
   if (quiet) {   // suppressed: a dull thump and the action working; until those are rendered, the shot itself, far down and muffled
     const g = isCtl ? 1 : 0.4 * distMul(x, y);
     if (!playBuf(pickVar(`gunS:${w}:`, SUPPRESSED_VARS[w] || 1), { gain: 0.3 * g, rate, force: isCtl, x: isCtl ? null : x, y }))
@@ -360,25 +360,25 @@ function sfxGun(w, x, y, isCtl, quiet) {
 }
 function sfxEnemyShot(x, y, mul = 1) {   // their AKs: lower, chunkier 7.62
   const far = distMul(x, y), key = far < 0.5 && SFX.buf['gunf:ak'] ? 'gunf:ak' : pickVar('gun:ak:', GUN_VARS.ak);
-  playBuf(key, { gain: 0.42 * far * mul, rate: rand(0.95, 1.04), x, y, lp: 1500 + 18000 * far * far });
+  playBuf(key, { gain: 0.42 * far * mul, rate: aRand(0.95, 1.04), x, y, lp: 1500 + 18000 * far * far });
 }
 function sfxBossBurst(x, y) {   // the Warlord's machine gun ripping a full circle
   const far = distMul(x, y), key = far < 0.5 && SFX.buf['gunf:pkm'] ? 'gunf:pkm' : 'gun:pkm:0';
-  for (let k = 0; k < 7; k++) playBuf(key, { gain: 0.5 * far, rate: rand(0.96, 1.03), delay: k * 0.07, x, y, lp: 1500 + 18000 * far * far, force: k === 0 });
+  for (let k = 0; k < 7; k++) playBuf(key, { gain: 0.5 * far, rate: aRand(0.96, 1.03), delay: k * 0.07, x, y, lp: 1500 + 18000 * far * far, force: k === 0 });
 }
-function sfxWhiz(x, y) { MUS.heat = performance.now(); playBuf('snap:' + randi(0, 1), { gain: 0.5, rate: rand(0.9, 1.12), x, y, force: true }); }
-function sfxRicochet(x, y) { playBuf('ric:' + randi(0, 2), { gain: 0.2 * distMul(x, y), rate: rand(0.85, 1.15), x, y }); }
+function sfxWhiz(x, y) { MUS.heat = performance.now(); playBuf('snap:' + aRandi(0, 1), { gain: 0.5, rate: aRand(0.9, 1.12), x, y, force: true }); }
+function sfxRicochet(x, y) { playBuf('ric:' + aRandi(0, 2), { gain: 0.2 * distMul(x, y), rate: aRand(0.85, 1.15), x, y }); }
 function sfxExplosion(x, y, big) {
   const m = distMul(x, y);
-  const ok = playBuf(m > 0.4 ? 'blast:' + randi(0, 1) : 'blastf', { gain: (big ? 0.95 : 0.7) * Math.max(m, 0.25),
-    rate: big ? rand(0.88, 0.98) : rand(1.02, 1.14), x, y, lp: 2000 + 18000 * m * m, force: true });
+  const ok = playBuf(m > 0.4 ? 'blast:' + aRandi(0, 1) : 'blastf', { gain: (big ? 0.95 : 0.7) * Math.max(m, 0.25),
+    rate: big ? aRand(0.88, 0.98) : aRand(1.02, 1.14), x, y, lp: 2000 + 18000 * m * m, force: true });
   if (!ok && !playBuf('blast:0', { gain: 0.7 * m, x, y, force: true })) noise({ freq: 700, type: 'lowpass', dur: 0.9, gain: 0.5 * m, drive: true, slide: -560 });
 }
 function sfxJet() { if (!playBuf('jet', { gain: 0.75, force: true })) noise({ freq: 600, type: 'lowpass', dur: 2, gain: 0.2, attack: 0.6 }); }
 function sfxOutgoing() {   // the battery firing from miles back
-  for (let k = 0; k < 3; k++) playBuf('blastf', { gain: 0.3, lp: 650, rate: rand(0.78, 0.92), delay: k * 0.45 + rand(0, 0.15), force: true });
+  for (let k = 0; k < 3; k++) playBuf('blastf', { gain: 0.3, lp: 650, rate: aRand(0.78, 0.92), delay: k * 0.45 + aRand(0, 0.15), force: true });
 }
-const sfxKill  = (x, y) => { playBuf('fall:' + randi(0, 1), { gain: 0.32 * distMul(x, y), rate: rand(0.9, 1.1), delay: 0.1, x, y }); };
+const sfxKill  = (x, y) => { playBuf('fall:' + aRandi(0, 1), { gain: 0.32 * distMul(x, y), rate: aRand(0.9, 1.1), delay: 0.1, x, y }); };
 const sfxHurt  = () => { playBuf('fall:0', { gain: 0.55, rate: 1.5, force: true }); noise({ freq: 300, type: 'lowpass', dur: 0.12, gain: 0.22 }); beep(3900, 0.8, 'sine', 0.01); };
 const sfxKia   = () => { playBuf('fall:1', { gain: 0.6, force: true }); beep(62, 0.9, 'sine', 0.16, -30, 0, 0.4); };
 const sfxClear = () => { beep(440, 0.15, 'square', 0.05); beep(660, 0.25, 'square', 0.05, 0, 0.14); };
@@ -413,18 +413,18 @@ function updateAudio(dt) {
   amb.droneGain.gain.value += (dT - amb.droneGain.gain.value) * Math.min(1, dt * 1.5);
   amb.rainGain.gain.value += ((inB && state.weather === 'rain' ? 0.05 : 0) - amb.rainGain.gain.value) * Math.min(1, dt * 1.2);
   if (!inB) return;
-  const c = camTarget(), side = () => (Math.random() < 0.5 ? -1 : 1) * 2400;
+  const c = camTarget(), side = () => (aRnd() < 0.5 ? -1 : 1) * 2400;
   amb.burstT -= dt;
   if (amb.burstT <= 0 && c) {   // a firefight further down the line
-    amb.burstT = rand(5, 13);
-    const key = Math.random() < 0.5 ? 'gunf:lmg' : 'gunf:ak', n = randi(4, 9), gap = rand(0.07, 0.11), g = rand(0.04, 0.09), px = c.x + side();
-    for (let k = 0; k < n; k++) playBuf(key, { gain: g, lp: 1300, rate: rand(0.95, 1.05), delay: k * gap, x: px, y: c.y - 1200 });
+    amb.burstT = aRand(5, 13);
+    const key = aRnd() < 0.5 ? 'gunf:lmg' : 'gunf:ak', n = aRandi(4, 9), gap = aRand(0.07, 0.11), g = aRand(0.04, 0.09), px = c.x + side();
+    for (let k = 0; k < n; k++) playBuf(key, { gain: g, lp: 1300, rate: aRand(0.95, 1.05), delay: k * gap, x: px, y: c.y - 1200 });
   }
   amb.chatterT -= dt;
   if (amb.chatterT <= 0) {
-    amb.chatterT = rand(6, 14);
+    amb.chatterT = aRand(6, 14);
     noise({ freq: 1500, dur: 0.05, gain: 0.03, q: 2 });
-    noise({ freq: 1300, dur: rand(0.1, 0.25), gain: 0.025, q: 1.5, delay: 0.09 });
+    noise({ freq: 1300, dur: aRand(0.1, 0.25), gain: 0.025, q: 1.5, delay: 0.09 });
   }
 }
 

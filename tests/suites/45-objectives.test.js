@@ -127,7 +127,7 @@ suite('objectives', t => {
     battle();
     const r = botFront(600);
     assert.eq(r.mode, 'cleared', `ended ${r.mode} after ${r.seconds} s`);
-    assert.range(r.seconds, 60, 300, 'front length (s)');
+    assert.range(r.seconds, 60, 360, 'front length (s)');   // a guard against fronts that never end, not a balance target: v7's marksman and frags stretch a bot front
     return r;
   }, { timeout: 300000 });
 });

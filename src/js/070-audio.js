@@ -82,3 +82,10 @@ function panOf(x, y) {   // −1 left … 1 right of the camera
   return clamp((dx * Math.cos(cam.yaw) + dy * Math.sin(cam.yaw)) / (Math.hypot(dx, dy) + 90), -0.85, 0.85);
 }
 
+
+// Sound picks its own variants and playback rates from its own dice: the simulation's rand() decides the fight, and a
+// front plays out the same whether or not the audio is running (which is what makes a seeded test reproducible).
+let sfxSeed = 0x9e3779b9;
+const aRnd = () => ((sfxSeed = (sfxSeed * 1664525 + 1013904223) >>> 0) / 4294967296);
+const aRand = (a, b) => a + aRnd() * (b - a);
+const aRandi = (a, b) => a + Math.floor(aRnd() * (b - a + 1));

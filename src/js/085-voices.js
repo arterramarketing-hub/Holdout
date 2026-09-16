@@ -24,7 +24,7 @@ function stepSound(u, moved, who) {
   u.stepD %= stride;
   u.steps = (u.steps || 0) + 1;
   if (!AC || VOICE.steps >= 6 || screen !== 'battle') return;
-  const key = `step:${surfaceAt(u.x, u.y)}:${randi(0, 3)}`, rate = rand(0.92, 1.08);
+  const key = `step:${surfaceAt(u.x, u.y)}:${aRandi(0, 3)}`, rate = aRand(0.92, 1.08);
   if (who === 'hero') { if (playBuf(key, { gain: u.sprinting ? 0.1 : 0.065, rate })) VOICE.steps++; return; }
   const me = camTarget();
   if (!me) return;
@@ -40,11 +40,11 @@ function bark(e, kind, force) {   // 'spot' | 'flank' | 'reload' | 'charge' | 't
   const me = camTarget();
   if (!me || Math.hypot(e.x - me.x, e.y - me.y) > 1400) return false;
   VOICE.barkT = now; e.barkT = now;
-  if (e.voice == null) e.voice = rand(0.86, 1.14) * (e.type === 'brute' || e.boss ? 0.82 : 1);
+  if (e.voice == null) e.voice = aRand(0.86, 1.14) * (e.type === 'brute' || e.boss ? 0.82 : 1);
   VOICE.barks.push({ t: now, e, kind });
   if (VOICE.barks.length > 60) VOICE.barks.shift();
   const m = distMul(e.x, e.y);
-  playBuf('bark:' + (kind === 'reload' || kind === 'flank' ? randi(3, 5) : randi(0, 2)), { gain: 0.2 * m, rate: e.voice, x: e.x, y: e.y, lp: 1800 + 9000 * m, verb: 0.12 });
+  playBuf('bark:' + (kind === 'reload' || kind === 'flank' ? aRandi(3, 5) : aRandi(0, 2)), { gain: 0.2 * m, rate: e.voice, x: e.x, y: e.y, lp: 1800 + 9000 * m, verb: 0.12 });
   return true;
 }
 function updateVoices(dt) {

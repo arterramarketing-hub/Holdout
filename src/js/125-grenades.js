@@ -32,8 +32,12 @@ function throwGrenade(s) {
 }
 function enemyFragLogic(e, t, dt, d) {   // from the rifleman AI: time the target spends out of reach behind cover, then a throw
   if (!e.frags || state.noEnemyFrags) return;
+  e.fragAcc = (e.fragAcc || 0) + dt;
+  if (e.fragAcc < 0.25) return;   // four looks a second: the 3D line check is the costly part on a phone
+  const step = e.fragAcc;
+  e.fragAcc = 0;
   const blocked = d >= CFG.eFragMin && d <= CFG.eFragMax && !los3(e.x, e.y, bodyTop(e) * 0.8, t.x, t.y, soldierTop(t) * 0.62, coverNear(e, 34));   // the cover it hugs is not in its way
-  e.coverT = blocked ? (e.coverT || 0) + dt : 0;
+  e.coverT = blocked ? (e.coverT || 0) + step : 0;
   if (e.coverT < CFG.eFragCovered || e.relT > 0 || !t.alive) return;
   const gap = lerp(CFG.eFragGap[0], CFG.eFragGap[1], clamp((state.tier - 1) / 5, 0, 1));
   if (state.frontTime < CFG.eFragFirst || state.frontTime - state.eFragAt < gap || grenades.some(g => g.hostile)) return;
@@ -128,7 +132,7 @@ function fragBlast(g) {
   }
   const credit = { player: true, wkey: 'frag', slot: g.owner };
   for (let j = enemies.length - 1; j >= 0; j--) {
-    const e = enemies[j], k = (e.z || 0) > 2.5 * PX ? 0 : reach(e.x, e.y, e.r);
+    const e = enemies[j], k = Math.abs((e.z || 0) - (g.z || 0)) > 2.5 * PX ? 0 : reach(e.x, e.y, e.r);   // a frag on the roof beside it counts; one in the street below does not
     if (k > 0) { e.lastHit = { x: e.x - x, y: e.y - y }; hurtEnemy(j, CFG.fragDmg * k, credit, null); }
   }
   const me = soldiers[state.controlled];

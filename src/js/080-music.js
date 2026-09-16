@@ -206,9 +206,9 @@ function sfxHeartbeat() {   // the world goes muffled and you hear your own puls
 }
 function sfxBreak(x, y, mat) {   // cover giving way: splintering wood, slumping sandbags, crumbling stone
   const m = distMul(x, y);
-  playBuf('fall:' + randi(0, 1), { gain: 0.5 * m, rate: mat === 'wood' ? 1.7 : 0.8, x, y, force: true });
+  playBuf('fall:' + aRandi(0, 1), { gain: 0.5 * m, rate: mat === 'wood' ? 1.7 : 0.8, x, y, force: true });
   if (mat !== 'dirt') playBuf('blastf', { gain: 0.22 * m, lp: mat === 'wood' ? 2500 : 900, rate: 1.4, x, y });
-  for (let k = 0; k < 4; k++) playBuf('tink:' + randi(0, 2), { gain: 0.03 * m, rate: mat === 'wood' ? 0.45 : 0.7, delay: 0.05 + k * 0.07, x, y });
+  for (let k = 0; k < 4; k++) playBuf('tink:' + aRandi(0, 2), { gain: 0.03 * m, rate: mat === 'wood' ? 0.45 : 0.7, delay: 0.05 + k * 0.07, x, y });
 }
 function sfxDive() { noise({ freq: 700, type: 'bandpass', q: 0.8, dur: 0.3, gain: 0.12, slide: -400, attack: 0.02 }); }
 

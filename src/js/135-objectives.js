@@ -102,20 +102,23 @@ function startCounterattack(o) {
   state.counter = { obj: o, t: 0, phase: 'gather', attackers: [], joined: 0 };
   const near = enemies.filter(e => !e.boss && !e.perch && !e.target).sort((a, b) => dist2(a.x, a.y, o.x, o.y) - dist2(b.x, b.y, o.x, o.y));
   for (const e of near.slice(0, COUNTER.attackers)) joinCounterattack(e);
-  showBanner('COUNTERATTACK · ' + o.letter);
-  playBuf('radio', { gain: 0.3, force: true });
 }
 function joinCounterattack(e) {   // this enemy goes for the objective under counterattack
   const C = state.counter;
   if (!C || C.phase !== 'gather' || C.attackers.length >= COUNTER.attackers || e.boss || e.perch || e.target) return false;
   C.attackers.push(e); C.joined++;
   e.counterObj = C.obj; e.tacT = Math.min(e.tacT || 0, 0.3); e.pathT = 0;
+  if (C.joined === 1) {   // someone is actually coming: now say so
+    showBanner('COUNTERATTACK · ' + C.obj.letter);
+    playBuf('radio', { gain: 0.3, force: true });
+  }
   return true;
 }
 function endCounterattack(how) {
   const C = state.counter;
   for (const e of C.attackers) e.counterObj = null;
-  state.counter = null; state.counterNext = state.frontTime + COUNTER.gap;
+  state.counter = null;
+  state.counterNext = state.frontTime + (how === 'none' ? 0 : COUNTER.gap);   // one nobody ever joined costs nothing
   if (how === 'repelled') {
     drainEnemy(COUNTER.reward);
     showBanner('COUNTERATTACK REPELLED');

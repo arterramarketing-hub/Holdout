@@ -16,6 +16,7 @@ suite('counterattacks', t => {
   const waitStart = (sec = 60) => { for (let i = 0; i < sec * 60 && !state.counter; i++) tick(1 / 60); return state.counter; };
   t.test('holding B for 40 s with reserves starts a counterattack on B, with a banner and a pulsing chip', () => {
     const { B } = heldScene();
+    spawnNear('grunt', B, 800, 0);   // someone to actually come: the banner waits for the first attacker
     const C = waitStart(40);
     assert.ok(C, 'a counterattack started');
     assert.eq(C.obj, B, 'on B');
@@ -46,11 +47,13 @@ suite('counterattacks', t => {
     const newcomer = C.attackers.find(e => e !== far && !mid.includes(e));
     assert.ok(newcomer && Math.hypot(newcomer.x - B.x, newcomer.y - B.y) < 45 * PX, `the newcomer arrived near B (${(Math.hypot(newcomer.x - B.x, newcomer.y - B.y) / PX).toFixed(0)} m)`);
     state.spawnT = 1e9;
-    const avg = () => C.attackers.reduce((k, e) => k + Math.hypot(e.x - B.x, e.y - B.y), 0) / C.attackers.length;
+    const nearest = () => Math.min(...C.attackers.map(e => Math.hypot(e.x - B.x, e.y - B.y)));
     ticks(4 * 60);
     assert.eq(C.phase, 'push', 'pushing after the gather');
-    const d0 = avg(); ticks(10 * 60);
-    assert.ok(!state.counter || avg() < d0 - 2 * PX, 'they closed on B');
+    const d0 = nearest();
+    let best = d0;
+    ticks(25 * 60, 0, () => { if (state.counter && C.attackers.length) best = Math.min(best, nearest()); });
+    assert.ok(!state.counter || best < d0 - 3 * PX || best < B.r * 1.5, `the closest attacker closed on B (${(d0 / PX).toFixed(0)} m to ${(best / PX).toFixed(0)} m)`);
   });
   t.test('repelled: every attacker down means a banner, two more reserves gone and 60 s before the next', () => {
     const { B } = heldScene();

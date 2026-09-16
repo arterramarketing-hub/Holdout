@@ -57,7 +57,8 @@ function botTick(h) {   // one tick of a first-person player: shoot what you can
   aim.fire = false;
   const b = h._bot || (h._bot = { t: 0, path: null });
   b.t -= 1 / 60;
-  const target = nearestEnemy(h.x, h.y, 1e9);
+  const ground = enemies.filter(q => !q.z && !q.target);   // walk to fights on the ground first: a marksman on a roof only once nobody else is left
+  const target = ground.length ? ground.reduce((a, q) => dist2(q.x, q.y, h.x, h.y) < dist2(a.x, a.y, h.x, h.y) ? q : a) : nearestEnemy(h.x, h.y, 1e9);
   if (!target) { keys.KeyW = false; return; }
   if (b.t <= 0 || !b.path || !b.path.length) {
     b.t = 0.5;

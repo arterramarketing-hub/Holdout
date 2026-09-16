@@ -32,7 +32,12 @@ function pollPad(dt) {
   GPAD.seen = true; GPAD.active = true;
   if (touched && GPAD.lastInput !== 'pad') { GPAD.lastInput = 'pad'; document.body.classList.add('pad'); if (screen === 'battle') applyOpts(); }
   const modalOpen = el.modal.style.display === 'flex';
-  if (modalOpen) padMenu(p, hit, lx, ly, dt, $('modalbox'));
+  if (modalOpen) {   // a card is up: let go of anything held before its menu takes over
+    if (GPAD.fire) { GPAD.fire = false; aim.fire = false; }
+    if (GPAD.ads) { GPAD.ads = false; aim.ads = false; const ab = $('adsbtn'); if (ab) ab.classList.remove('on'); }
+    if (GPAD.xHold != null) { GPAD.xHold = null; aim.take = false; }
+    padMenu(p, hit, lx, ly, dt, $('modalbox'));
+  }
   else if (screen === 'battle' && state.mode === 'play') {
     GPAD.lx = lx; GPAD.ly = ly;
     if (rx || ry) {

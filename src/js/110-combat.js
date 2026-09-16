@@ -316,7 +316,7 @@ function beginFail() {
   state.mode = 'spectate'; state.spectateT = 0;
 }
 // area damage. eDmg to enemies, sDmg to soldiers (friendly fire), env credit
-function explode(x, y, r, eDmg, sDmg, credit) {
+function explode(x, y, r, eDmg, sDmg, credit, z = 0) {   // z: how high the blast went off, so a rocket into a roof still kills what stands on it
   sfxExplosion(x, y, r >= 60);
   burst(x, y, '#e8a75a', 22, 8);
   particles.push({ x, y, z: 4, vx: 0, vy: 0, vz: 0, life: 0.22, max: 0.22, col: 'rgba(255,220,140,0.9)', r });
@@ -329,7 +329,7 @@ function explode(x, y, r, eDmg, sDmg, credit) {
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 500 * 500) cam.shake = Math.max(cam.shake, 7);
   for (let j = enemies.length - 1; j >= 0; j--) {
     const e = enemies[j];
-    if ((e.z || 0) > 2.5 * PX) continue;   // a blast in the street never reaches a roof
+    if (Math.abs((e.z || 0) - z) > 2.5 * PX) continue;   // a blast in the street never reaches a roof, and one on the roof never reaches the street
     if (dist2(x, y, e.x, e.y) < (r + e.r) * (r + e.r)) {
       const d = Math.hypot(e.x - x, e.y - y) || 1;
       hurtEnemy(j, eDmg, credit, { x: (e.x - x) / d, y: (e.y - y) / d });

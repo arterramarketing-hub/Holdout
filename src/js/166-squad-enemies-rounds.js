@@ -366,7 +366,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
         if (b.z <= 0) { b.z = 0; impact(b, '#8a7a5a', false); dead = true; break; }   // into the ground where you aimed low
       }
       if (b.life <= 0) {
-        if (b.aoe) explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey });
+        if (b.aoe) explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }, b.ballistic ? b.z : 0);
         dead = true; break;
       }
       for (const bd of buildings) if (insideShape(bd, b.x, b.y) && (!b.ballistic || b.z < bd.top)) { impact(b, '#c8c0b0', true); dead = true; break; }
@@ -401,7 +401,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
           if (ez && !b.ballistic) continue;   // a flat round never reaches a roof
           if (b.ballistic && b.z > ez + bodyTop(e)) continue;   // over their head
           if (b.ballistic && ez && b.z < ez + (e.lip || 0)) { impact(b, '#c8c0b0', false); dead = true; break; }   // into the sill or sandbags it kneels behind
-          if (b.aoe) { explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }); dead = true; break; }
+          if (b.aoe) { explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }, b.ballistic ? b.z : 0); dead = true; break; }
           const bl = Math.hypot(b.vx, b.vy) || 1;
           const head = b.ballistic ? headHit(e, b) : headShot(e, b);
           if (b.fromPlayer) { state.hits++; if (head) state.heads++; }
@@ -420,7 +420,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
   }
 }
 function impact(b, col, wall) {   // a round striking a wall or cover: rockets detonate, everything else throws chips
-  if (b.aoe) { explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }); return; }
+  if (b.aoe) { explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }, b.ballistic ? b.z : 0); return; }
   for (let k = 0; k < 3; k++)
     particles.push({ x: b.x, y: b.y, z: b.ballistic ? b.z / (PX * ZS) : rand(10, 18), vx: rand(-60, 60), vy: rand(-60, 60), vz: rand(30, 100), life: 0.25, max: 0.25, col: k ? col : '#ffe8a0', r: k ? 1.8 : 1.2 });
   if (Math.random() < (wall ? 0.12 : 0.22)) sfxRicochet(b.x, b.y);

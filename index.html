@@ -58,8 +58,9 @@
   they couldn't look up at it — your view stops 35° up — then lines up for 1.4 s with its scope glinting (a blue-white
   star sized for the screen, bigger when it's you), fires one 3D round for 2.5 (tier-scaled, capped at 3.6 so never a
   one-shot) and works the bolt 1.6 s. Three rounds cracking within 2 m send it down behind its cover for 2 s. It is
-  hit only above its cover (e.lip), takes a rifleman's rounds (three M4 hits inside 20 m), shrugs off blasts more
-  than 2.5 m below it, dies where it knelt, and on the minimap shows only while glinting. Raised enemies: e.z lifts
+  hit only above its cover (e.lip), takes a rifleman's rounds (three M4 hits inside 20 m), and is reached by a blast
+  only within 2.5 m of its own height — a rocket into the belfry kills it, one in the street below does not. It dies
+  where it knelt, and on the minimap shows only while glinting. Raised enemies: e.z lifts
   the rig, the hit tests, the crosshair ray and the corpse; flat squad rounds never reach a roof, so squadmates fire
   a real line up at one. The squad calls it by name the first time it glints ("Sniper · Bell tower").
 
@@ -68,7 +69,8 @@
   and B's chip pulses red. Up to four attackers: the nearest enemies on the field, then whoever walks on during the
   6 s gather (spawn zones near B score higher). Then they push: riflemen move cover to cover into the ring on 1-2 s
   holds, runners and breachers head straight for it unless someone is within 7.5 m, and a rifleman's frag still goes
-  in at anyone dug in. It ends when B is taken (neutral counts), when every attacker is down (COUNTERATTACK REPELLED:
+  in at anyone dug in. The banner waits for the first attacker to actually join, and one nobody joins ends free (no
+  60 s gap). It ends when B is taken (neutral counts), when every attacker is down (COUNTERATTACK REPELLED:
   drainEnemy(2), so the Warlord's ticket stays safe), or after 60 s. One at a time and 60 s apart; none in a front's
   first 60 s, while the Warlord is up, or with fewer than 4 reserves left.
 
@@ -384,7 +386,10 @@
   Cues cross-fade on screen changes; the MUSIC slider in settings sets the level (0 is off); M mutes it and
   the death cam muffles it with everything else.
 
-  SOUND — no sample files: at the first tap every weapon sound is synthesised offline into 32 kHz
+  SOUND — sound rolls its own dice (aRand / aRandi, next to the audio helpers): which variant plays and at what rate
+  never touches the simulation's rand(), so a front plays out the same whether or not audio is running — which is what
+  makes a seeded test reproducible on any machine.
+  No sample files: at the first tap every weapon sound is synthesised offline into 32 kHz
   stereo buffers (sub-millisecond attack, saturated muzzle blast, a falling pressure thump, early
   reflections at 70–620 ms, a rolling outdoor tail, the action cycling), 1–3 variants per weapon plus
   a distant variant, rendered in 10 ms slices. Playback adds ±3% pitch, distance low-pass and stereo
@@ -1860,6 +1865,13 @@ function panOf(x, y) {   // −1 left … 1 right of the camera
   return clamp((dx * Math.cos(cam.yaw) + dy * Math.sin(cam.yaw)) / (Math.hypot(dx, dy) + 90), -0.85, 0.85);
 }
 
+
+// Sound picks its own variants and playback rates from its own dice: the simulation's rand() decides the fight, and a
+// front plays out the same whether or not the audio is running (which is what makes a seeded test reproducible).
+let sfxSeed = 0x9e3779b9;
+const aRnd = () => ((sfxSeed = (sfxSeed * 1664525 + 1013904223) >>> 0) / 4294967296);
+const aRand = (a, b) => a + aRnd() * (b - a);
+const aRandi = (a, b) => a + Math.floor(aRnd() * (b - a + 1));
 // ---------- offline synthesis: plain Float32Array DSP at SR_SYN ----------
 function synRng(seed) { let s = (seed >>> 0) || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 2147483648) - 1; }
 function lp1(a, f, sr) { const k = 1 - Math.exp(-TAU * f / sr); let y = 0; for (let i = 0; i < a.length; i++) { y += (a[i] - y) * k; a[i] = y; } return a; }
@@ -2200,12 +2212,12 @@ function playBuf(key, o) {   // {gain, rate, delay, x, y (stereo placement), lp 
   return true;
 }
 function pickVar(base, n) {   // a random rendered variant, so repeated shots never sound identical
-  const s = randi(0, n - 1);
+  const s = aRandi(0, n - 1);
   for (let k = 0; k < n; k++) { const key = base + ((s + k) % n); if (SFX.buf[key]) return key; }
   return base + '0';
 }
 function sfxGun(w, x, y, isCtl, quiet) {
-  const n = GUN_VARS[w] || 1, rate = rand(0.97, 1.03);
+  const n = GUN_VARS[w] || 1, rate = aRand(0.97, 1.03);
   if (quiet) {   // suppressed: a dull thump and the action working; until those are rendered, the shot itself, far down and muffled
     const g = isCtl ? 1 : 0.4 * distMul(x, y);
     if (!playBuf(pickVar(`gunS:${w}:`, SUPPRESSED_VARS[w] || 1), { gain: 0.3 * g, rate, force: isCtl, x: isCtl ? null : x, y }))
@@ -2222,25 +2234,25 @@ function sfxGun(w, x, y, isCtl, quiet) {
 }
 function sfxEnemyShot(x, y, mul = 1) {   // their AKs: lower, chunkier 7.62
   const far = distMul(x, y), key = far < 0.5 && SFX.buf['gunf:ak'] ? 'gunf:ak' : pickVar('gun:ak:', GUN_VARS.ak);
-  playBuf(key, { gain: 0.42 * far * mul, rate: rand(0.95, 1.04), x, y, lp: 1500 + 18000 * far * far });
+  playBuf(key, { gain: 0.42 * far * mul, rate: aRand(0.95, 1.04), x, y, lp: 1500 + 18000 * far * far });
 }
 function sfxBossBurst(x, y) {   // the Warlord's machine gun ripping a full circle
   const far = distMul(x, y), key = far < 0.5 && SFX.buf['gunf:pkm'] ? 'gunf:pkm' : 'gun:pkm:0';
-  for (let k = 0; k < 7; k++) playBuf(key, { gain: 0.5 * far, rate: rand(0.96, 1.03), delay: k * 0.07, x, y, lp: 1500 + 18000 * far * far, force: k === 0 });
+  for (let k = 0; k < 7; k++) playBuf(key, { gain: 0.5 * far, rate: aRand(0.96, 1.03), delay: k * 0.07, x, y, lp: 1500 + 18000 * far * far, force: k === 0 });
 }
-function sfxWhiz(x, y) { MUS.heat = performance.now(); playBuf('snap:' + randi(0, 1), { gain: 0.5, rate: rand(0.9, 1.12), x, y, force: true }); }
-function sfxRicochet(x, y) { playBuf('ric:' + randi(0, 2), { gain: 0.2 * distMul(x, y), rate: rand(0.85, 1.15), x, y }); }
+function sfxWhiz(x, y) { MUS.heat = performance.now(); playBuf('snap:' + aRandi(0, 1), { gain: 0.5, rate: aRand(0.9, 1.12), x, y, force: true }); }
+function sfxRicochet(x, y) { playBuf('ric:' + aRandi(0, 2), { gain: 0.2 * distMul(x, y), rate: aRand(0.85, 1.15), x, y }); }
 function sfxExplosion(x, y, big) {
   const m = distMul(x, y);
-  const ok = playBuf(m > 0.4 ? 'blast:' + randi(0, 1) : 'blastf', { gain: (big ? 0.95 : 0.7) * Math.max(m, 0.25),
-    rate: big ? rand(0.88, 0.98) : rand(1.02, 1.14), x, y, lp: 2000 + 18000 * m * m, force: true });
+  const ok = playBuf(m > 0.4 ? 'blast:' + aRandi(0, 1) : 'blastf', { gain: (big ? 0.95 : 0.7) * Math.max(m, 0.25),
+    rate: big ? aRand(0.88, 0.98) : aRand(1.02, 1.14), x, y, lp: 2000 + 18000 * m * m, force: true });
   if (!ok && !playBuf('blast:0', { gain: 0.7 * m, x, y, force: true })) noise({ freq: 700, type: 'lowpass', dur: 0.9, gain: 0.5 * m, drive: true, slide: -560 });
 }
 function sfxJet() { if (!playBuf('jet', { gain: 0.75, force: true })) noise({ freq: 600, type: 'lowpass', dur: 2, gain: 0.2, attack: 0.6 }); }
 function sfxOutgoing() {   // the battery firing from miles back
-  for (let k = 0; k < 3; k++) playBuf('blastf', { gain: 0.3, lp: 650, rate: rand(0.78, 0.92), delay: k * 0.45 + rand(0, 0.15), force: true });
+  for (let k = 0; k < 3; k++) playBuf('blastf', { gain: 0.3, lp: 650, rate: aRand(0.78, 0.92), delay: k * 0.45 + aRand(0, 0.15), force: true });
 }
-const sfxKill  = (x, y) => { playBuf('fall:' + randi(0, 1), { gain: 0.32 * distMul(x, y), rate: rand(0.9, 1.1), delay: 0.1, x, y }); };
+const sfxKill  = (x, y) => { playBuf('fall:' + aRandi(0, 1), { gain: 0.32 * distMul(x, y), rate: aRand(0.9, 1.1), delay: 0.1, x, y }); };
 const sfxHurt  = () => { playBuf('fall:0', { gain: 0.55, rate: 1.5, force: true }); noise({ freq: 300, type: 'lowpass', dur: 0.12, gain: 0.22 }); beep(3900, 0.8, 'sine', 0.01); };
 const sfxKia   = () => { playBuf('fall:1', { gain: 0.6, force: true }); beep(62, 0.9, 'sine', 0.16, -30, 0, 0.4); };
 const sfxClear = () => { beep(440, 0.15, 'square', 0.05); beep(660, 0.25, 'square', 0.05, 0, 0.14); };
@@ -2275,18 +2287,18 @@ function updateAudio(dt) {
   amb.droneGain.gain.value += (dT - amb.droneGain.gain.value) * Math.min(1, dt * 1.5);
   amb.rainGain.gain.value += ((inB && state.weather === 'rain' ? 0.05 : 0) - amb.rainGain.gain.value) * Math.min(1, dt * 1.2);
   if (!inB) return;
-  const c = camTarget(), side = () => (Math.random() < 0.5 ? -1 : 1) * 2400;
+  const c = camTarget(), side = () => (aRnd() < 0.5 ? -1 : 1) * 2400;
   amb.burstT -= dt;
   if (amb.burstT <= 0 && c) {   // a firefight further down the line
-    amb.burstT = rand(5, 13);
-    const key = Math.random() < 0.5 ? 'gunf:lmg' : 'gunf:ak', n = randi(4, 9), gap = rand(0.07, 0.11), g = rand(0.04, 0.09), px = c.x + side();
-    for (let k = 0; k < n; k++) playBuf(key, { gain: g, lp: 1300, rate: rand(0.95, 1.05), delay: k * gap, x: px, y: c.y - 1200 });
+    amb.burstT = aRand(5, 13);
+    const key = aRnd() < 0.5 ? 'gunf:lmg' : 'gunf:ak', n = aRandi(4, 9), gap = aRand(0.07, 0.11), g = aRand(0.04, 0.09), px = c.x + side();
+    for (let k = 0; k < n; k++) playBuf(key, { gain: g, lp: 1300, rate: aRand(0.95, 1.05), delay: k * gap, x: px, y: c.y - 1200 });
   }
   amb.chatterT -= dt;
   if (amb.chatterT <= 0) {
-    amb.chatterT = rand(6, 14);
+    amb.chatterT = aRand(6, 14);
     noise({ freq: 1500, dur: 0.05, gain: 0.03, q: 2 });
-    noise({ freq: 1300, dur: rand(0.1, 0.25), gain: 0.025, q: 1.5, delay: 0.09 });
+    noise({ freq: 1300, dur: aRand(0.1, 0.25), gain: 0.025, q: 1.5, delay: 0.09 });
   }
 }
 
@@ -2498,9 +2510,9 @@ function sfxHeartbeat() {   // the world goes muffled and you hear your own puls
 }
 function sfxBreak(x, y, mat) {   // cover giving way: splintering wood, slumping sandbags, crumbling stone
   const m = distMul(x, y);
-  playBuf('fall:' + randi(0, 1), { gain: 0.5 * m, rate: mat === 'wood' ? 1.7 : 0.8, x, y, force: true });
+  playBuf('fall:' + aRandi(0, 1), { gain: 0.5 * m, rate: mat === 'wood' ? 1.7 : 0.8, x, y, force: true });
   if (mat !== 'dirt') playBuf('blastf', { gain: 0.22 * m, lp: mat === 'wood' ? 2500 : 900, rate: 1.4, x, y });
-  for (let k = 0; k < 4; k++) playBuf('tink:' + randi(0, 2), { gain: 0.03 * m, rate: mat === 'wood' ? 0.45 : 0.7, delay: 0.05 + k * 0.07, x, y });
+  for (let k = 0; k < 4; k++) playBuf('tink:' + aRandi(0, 2), { gain: 0.03 * m, rate: mat === 'wood' ? 0.45 : 0.7, delay: 0.05 + k * 0.07, x, y });
 }
 function sfxDive() { noise({ freq: 700, type: 'bandpass', q: 0.8, dur: 0.3, gain: 0.12, slide: -400, attack: 0.02 }); }
 
@@ -2533,7 +2545,7 @@ function stepSound(u, moved, who) {
   u.stepD %= stride;
   u.steps = (u.steps || 0) + 1;
   if (!AC || VOICE.steps >= 6 || screen !== 'battle') return;
-  const key = `step:${surfaceAt(u.x, u.y)}:${randi(0, 3)}`, rate = rand(0.92, 1.08);
+  const key = `step:${surfaceAt(u.x, u.y)}:${aRandi(0, 3)}`, rate = aRand(0.92, 1.08);
   if (who === 'hero') { if (playBuf(key, { gain: u.sprinting ? 0.1 : 0.065, rate })) VOICE.steps++; return; }
   const me = camTarget();
   if (!me) return;
@@ -2549,11 +2561,11 @@ function bark(e, kind, force) {   // 'spot' | 'flank' | 'reload' | 'charge' | 't
   const me = camTarget();
   if (!me || Math.hypot(e.x - me.x, e.y - me.y) > 1400) return false;
   VOICE.barkT = now; e.barkT = now;
-  if (e.voice == null) e.voice = rand(0.86, 1.14) * (e.type === 'brute' || e.boss ? 0.82 : 1);
+  if (e.voice == null) e.voice = aRand(0.86, 1.14) * (e.type === 'brute' || e.boss ? 0.82 : 1);
   VOICE.barks.push({ t: now, e, kind });
   if (VOICE.barks.length > 60) VOICE.barks.shift();
   const m = distMul(e.x, e.y);
-  playBuf('bark:' + (kind === 'reload' || kind === 'flank' ? randi(3, 5) : randi(0, 2)), { gain: 0.2 * m, rate: e.voice, x: e.x, y: e.y, lp: 1800 + 9000 * m, verb: 0.12 });
+  playBuf('bark:' + (kind === 'reload' || kind === 'flank' ? aRandi(3, 5) : aRandi(0, 2)), { gain: 0.2 * m, rate: e.voice, x: e.x, y: e.y, lp: 1800 + 9000 * m, verb: 0.12 });
   return true;
 }
 function updateVoices(dt) {
@@ -2591,7 +2603,7 @@ window.addEventListener('keydown', e => {
     const ae = document.activeElement;
     if (e.code === 'Enter' && (!ae || ae === document.body)) deploySelected();   // a focused button or sector handles its own Enter
   }
-  if (screen === 'battle') {
+  if (screen === 'battle' && el.modal.style.display !== 'flex') {   // a card is up: the game's keys wait
     if (e.code === 'KeyR') heroReload();
     if (e.code === 'KeyG') throwGrenade(soldiers[state.controlled]);
     if (e.code === 'KeyQ' && !e.repeat) swapWeapon(soldiers[state.controlled]);
@@ -2605,7 +2617,7 @@ window.addEventListener('keydown', e => {
   audio(); startAmbience();
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; if (e.code === 'KeyF') aim.take = false; });
-window.addEventListener('wheel', e => { if (screen === 'battle' && Math.abs(e.deltaY) > 2) swapWeapon(soldiers[state.controlled]); }, { passive: true });   // either way: two guns
+window.addEventListener('wheel', e => { if (screen === 'battle' && el.modal.style.display !== 'flex' && Math.abs(e.deltaY) > 2) swapWeapon(soldiers[state.controlled]); }, { passive: true });   // either way: two guns; not while scrolling a card
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 document.addEventListener('pointerdown', () => { audio(); startAmbience(); });
 
@@ -2785,7 +2797,12 @@ function pollPad(dt) {
   GPAD.seen = true; GPAD.active = true;
   if (touched && GPAD.lastInput !== 'pad') { GPAD.lastInput = 'pad'; document.body.classList.add('pad'); if (screen === 'battle') applyOpts(); }
   const modalOpen = el.modal.style.display === 'flex';
-  if (modalOpen) padMenu(p, hit, lx, ly, dt, $('modalbox'));
+  if (modalOpen) {   // a card is up: let go of anything held before its menu takes over
+    if (GPAD.fire) { GPAD.fire = false; aim.fire = false; }
+    if (GPAD.ads) { GPAD.ads = false; aim.ads = false; const ab = $('adsbtn'); if (ab) ab.classList.remove('on'); }
+    if (GPAD.xHold != null) { GPAD.xHold = null; aim.take = false; }
+    padMenu(p, hit, lx, ly, dt, $('modalbox'));
+  }
   else if (screen === 'battle' && state.mode === 'play') {
     GPAD.lx = lx; GPAD.ly = ly;
     if (rx || ry) {
@@ -3303,7 +3320,7 @@ function beginFail() {
   state.mode = 'spectate'; state.spectateT = 0;
 }
 // area damage. eDmg to enemies, sDmg to soldiers (friendly fire), env credit
-function explode(x, y, r, eDmg, sDmg, credit) {
+function explode(x, y, r, eDmg, sDmg, credit, z = 0) {   // z: how high the blast went off, so a rocket into a roof still kills what stands on it
   sfxExplosion(x, y, r >= 60);
   burst(x, y, '#e8a75a', 22, 8);
   particles.push({ x, y, z: 4, vx: 0, vy: 0, vz: 0, life: 0.22, max: 0.22, col: 'rgba(255,220,140,0.9)', r });
@@ -3316,7 +3333,7 @@ function explode(x, y, r, eDmg, sDmg, credit) {
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 500 * 500) cam.shake = Math.max(cam.shake, 7);
   for (let j = enemies.length - 1; j >= 0; j--) {
     const e = enemies[j];
-    if ((e.z || 0) > 2.5 * PX) continue;   // a blast in the street never reaches a roof
+    if (Math.abs((e.z || 0) - z) > 2.5 * PX) continue;   // a blast in the street never reaches a roof, and one on the roof never reaches the street
     if (dist2(x, y, e.x, e.y) < (r + e.r) * (r + e.r)) {
       const d = Math.hypot(e.x - x, e.y - y) || 1;
       hurtEnemy(j, eDmg, credit, { x: (e.x - x) / d, y: (e.y - y) / d });
@@ -3372,11 +3389,12 @@ function updateSwap(s, dt) {
   if (s.swapT < 0) s.swapT = 0;
 }
 function takeGun(s, d) {
+  const i = weaponDrops.indexOf(d);   // off the ground first: dropping another gun here could otherwise push this one off the list
+  if (i >= 0) weaponDrops.splice(i, 1);
   if (!s.alt) s.alt = gunRecord(s);   // a free slot: what you had goes on your back
   else if (!s.pistol && s.mag + s.reserve > 0)
     dropGun(s.weapon, s.x + rand(-14, 14), s.y + rand(-14, 14), s.mag, s.reserve, { yaw: rand(0, TAU), sight: s.sight, ext: s.ext, suppressor: s.suppressor });   // both full: this one goes down where you stand
   wearGun(s, { weapon: d.key, mag: d.mag, reserve: d.reserve, sight: d.sight, ext: d.ext, suppressor: d.suppressor });
-  weaponDrops.splice(weaponDrops.indexOf(d), 1);
   s.reloadT = 0; s.pickT = 0; s.swapT = CFG.swapTime / 2; s.swapped = true;   // it comes up into view
   floaters.push({ x: d.x, y: d.y, z: 30, txt: gunName(d.key), life: 1 });
   playBuf('pick', { gain: 0.5, force: true });
@@ -3386,7 +3404,8 @@ function takeAmmo(s, d, into) {   // a dropped gun of a kind you carry: as many 
   if (room <= 0) return false;
   const got = Math.min(room, d.mag + d.reserve);
   into.reserve += got;
-  weaponDrops.splice(weaponDrops.indexOf(d), 1);
+  const i = weaponDrops.indexOf(d);
+  if (i >= 0) weaponDrops.splice(i, 1);
   floaters.push({ x: d.x, y: d.y, z: 30, txt: `+${got} ${gunName(d.key)}`, life: 1 });
   playBuf('pick', { gain: 0.45, force: true });
   if (into === s && s.pistol) { s.pistol = false; startReload(s); }
@@ -3517,8 +3536,12 @@ function throwGrenade(s) {
 }
 function enemyFragLogic(e, t, dt, d) {   // from the rifleman AI: time the target spends out of reach behind cover, then a throw
   if (!e.frags || state.noEnemyFrags) return;
+  e.fragAcc = (e.fragAcc || 0) + dt;
+  if (e.fragAcc < 0.25) return;   // four looks a second: the 3D line check is the costly part on a phone
+  const step = e.fragAcc;
+  e.fragAcc = 0;
   const blocked = d >= CFG.eFragMin && d <= CFG.eFragMax && !los3(e.x, e.y, bodyTop(e) * 0.8, t.x, t.y, soldierTop(t) * 0.62, coverNear(e, 34));   // the cover it hugs is not in its way
-  e.coverT = blocked ? (e.coverT || 0) + dt : 0;
+  e.coverT = blocked ? (e.coverT || 0) + step : 0;
   if (e.coverT < CFG.eFragCovered || e.relT > 0 || !t.alive) return;
   const gap = lerp(CFG.eFragGap[0], CFG.eFragGap[1], clamp((state.tier - 1) / 5, 0, 1));
   if (state.frontTime < CFG.eFragFirst || state.frontTime - state.eFragAt < gap || grenades.some(g => g.hostile)) return;
@@ -3613,7 +3636,7 @@ function fragBlast(g) {
   }
   const credit = { player: true, wkey: 'frag', slot: g.owner };
   for (let j = enemies.length - 1; j >= 0; j--) {
-    const e = enemies[j], k = (e.z || 0) > 2.5 * PX ? 0 : reach(e.x, e.y, e.r);
+    const e = enemies[j], k = Math.abs((e.z || 0) - (g.z || 0)) > 2.5 * PX ? 0 : reach(e.x, e.y, e.r);   // a frag on the roof beside it counts; one in the street below does not
     if (k > 0) { e.lastHit = { x: e.x - x, y: e.y - y }; hurtEnemy(j, CFG.fragDmg * k, credit, null); }
   }
   const me = soldiers[state.controlled];
@@ -3770,20 +3793,23 @@ function startCounterattack(o) {
   state.counter = { obj: o, t: 0, phase: 'gather', attackers: [], joined: 0 };
   const near = enemies.filter(e => !e.boss && !e.perch && !e.target).sort((a, b) => dist2(a.x, a.y, o.x, o.y) - dist2(b.x, b.y, o.x, o.y));
   for (const e of near.slice(0, COUNTER.attackers)) joinCounterattack(e);
-  showBanner('COUNTERATTACK · ' + o.letter);
-  playBuf('radio', { gain: 0.3, force: true });
 }
 function joinCounterattack(e) {   // this enemy goes for the objective under counterattack
   const C = state.counter;
   if (!C || C.phase !== 'gather' || C.attackers.length >= COUNTER.attackers || e.boss || e.perch || e.target) return false;
   C.attackers.push(e); C.joined++;
   e.counterObj = C.obj; e.tacT = Math.min(e.tacT || 0, 0.3); e.pathT = 0;
+  if (C.joined === 1) {   // someone is actually coming: now say so
+    showBanner('COUNTERATTACK · ' + C.obj.letter);
+    playBuf('radio', { gain: 0.3, force: true });
+  }
   return true;
 }
 function endCounterattack(how) {
   const C = state.counter;
   for (const e of C.attackers) e.counterObj = null;
-  state.counter = null; state.counterNext = state.frontTime + COUNTER.gap;
+  state.counter = null;
+  state.counterNext = state.frontTime + (how === 'none' ? 0 : COUNTER.gap);   // one nobody ever joined costs nothing
   if (how === 'repelled') {
     drainEnemy(COUNTER.reward);
     showBanner('COUNTERATTACK REPELLED');
@@ -4616,7 +4642,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
         if (b.z <= 0) { b.z = 0; impact(b, '#8a7a5a', false); dead = true; break; }   // into the ground where you aimed low
       }
       if (b.life <= 0) {
-        if (b.aoe) explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey });
+        if (b.aoe) explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }, b.ballistic ? b.z : 0);
         dead = true; break;
       }
       for (const bd of buildings) if (insideShape(bd, b.x, b.y) && (!b.ballistic || b.z < bd.top)) { impact(b, '#c8c0b0', true); dead = true; break; }
@@ -4651,7 +4677,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
           if (ez && !b.ballistic) continue;   // a flat round never reaches a roof
           if (b.ballistic && b.z > ez + bodyTop(e)) continue;   // over their head
           if (b.ballistic && ez && b.z < ez + (e.lip || 0)) { impact(b, '#c8c0b0', false); dead = true; break; }   // into the sill or sandbags it kneels behind
-          if (b.aoe) { explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }); dead = true; break; }
+          if (b.aoe) { explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }, b.ballistic ? b.z : 0); dead = true; break; }
           const bl = Math.hypot(b.vx, b.vy) || 1;
           const head = b.ballistic ? headHit(e, b) : headShot(e, b);
           if (b.fromPlayer) { state.hits++; if (head) state.heads++; }
@@ -4670,7 +4696,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
   }
 }
 function impact(b, col, wall) {   // a round striking a wall or cover: rockets detonate, everything else throws chips
-  if (b.aoe) { explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }); return; }
+  if (b.aoe) { explode(b.x, b.y, b.aoe, b.dmg, 0, { player: b.fromPlayer, wkey: b.wkey }, b.ballistic ? b.z : 0); return; }
   for (let k = 0; k < 3; k++)
     particles.push({ x: b.x, y: b.y, z: b.ballistic ? b.z / (PX * ZS) : rand(10, 18), vx: rand(-60, 60), vy: rand(-60, 60), vz: rand(30, 100), life: 0.25, max: 0.25, col: k ? col : '#ffe8a0', r: k ? 1.8 : 1.2 });
   if (Math.random() < (wall ? 0.12 : 0.22)) sfxRicochet(b.x, b.y);

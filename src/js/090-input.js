@@ -10,7 +10,7 @@ window.addEventListener('keydown', e => {
     const ae = document.activeElement;
     if (e.code === 'Enter' && (!ae || ae === document.body)) deploySelected();   // a focused button or sector handles its own Enter
   }
-  if (screen === 'battle') {
+  if (screen === 'battle' && el.modal.style.display !== 'flex') {   // a card is up: the game's keys wait
     if (e.code === 'KeyR') heroReload();
     if (e.code === 'KeyG') throwGrenade(soldiers[state.controlled]);
     if (e.code === 'KeyQ' && !e.repeat) swapWeapon(soldiers[state.controlled]);
@@ -24,7 +24,7 @@ window.addEventListener('keydown', e => {
   audio(); startAmbience();
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; if (e.code === 'KeyF') aim.take = false; });
-window.addEventListener('wheel', e => { if (screen === 'battle' && Math.abs(e.deltaY) > 2) swapWeapon(soldiers[state.controlled]); }, { passive: true });   // either way: two guns
+window.addEventListener('wheel', e => { if (screen === 'battle' && el.modal.style.display !== 'flex' && Math.abs(e.deltaY) > 2) swapWeapon(soldiers[state.controlled]); }, { passive: true });   // either way: two guns; not while scrolling a card
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 document.addEventListener('pointerdown', () => { audio(); startAmbience(); });
 
