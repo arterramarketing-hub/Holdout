@@ -437,17 +437,6 @@ function drawFx() {
       TMP.m.compose(TMP.v.set(X, 1.95, Z), TMP.q, TMP.s.set(0.9, 0.6, 0.06)); F.flag.push(TMP.m, colorOf('#e8e2cf'));
     }
   }
-  for (const mk of markers) {   // battlefield cross where soldiers fell: rifle planted muzzle-down, helmet on the stock, boots in front
-    const X = mk.x * XS, Z = mk.y * XS;
-    TMP.q.setFromAxisAngle(TMP.up, hash2(mk.x, mk.y) * 0.8 - 0.4);
-    TMP.m.compose(TMP.v.set(X, 0.42, Z), TMP.q, TMP.s.set(0.05, 0.84, 0.08)); D.metal.push(TMP.m, colorOf('#34363a'));
-    TMP.m.compose(TMP.v.set(X, 0.3, Z), TMP.q, TMP.s.set(0.04, 0.16, 0.07)); D.metal.push(TMP.m, colorOf('#34363a'));
-    TMP.m.compose(TMP.v.set(X, 0.84, Z), TMP.q, TMP.s.set(0.4, 0.3, 0.44)); D.helm.push(TMP.m, colorOf('#6a6450'));
-    for (const o of [-0.12, 0.12]) {
-      TMP.v2.set(o, 0, -0.34).applyQuaternion(TMP.q);
-      TMP.m.compose(TMP.v.set(X + TMP.v2.x, 0.08, Z + TMP.v2.z), TMP.q, TMP.s.set(0.16, 0.13, 0.27)); D.boot.push(TMP.m, colorOf('#6a5640'));
-    }
-  }
   const me = soldiers[state.controlled], dry = me && me.alive && me.pistol;
   for (const d of weaponDrops) {   // a gun on the ground, blinking as it times out; ringed when it's on offer, or when you're dry
     if (d.t < 5 && Math.sin(now / 90) < 0) continue;

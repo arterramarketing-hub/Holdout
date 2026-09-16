@@ -1389,7 +1389,7 @@ const state = {   // per-battle / session
   tod: 1, weather: 'clear',
 };
 let screen = 'map'; // map | team | battle
-let soldiers = [], enemies = [], bullets = [], particles = [], floaters = [], markers = [], bodies = [];
+let soldiers = [], enemies = [], bullets = [], particles = [], floaters = [], bodies = [];
 let mines = [], shells = [], fires = [], craters = [], splats = [], obstacles = [], corpses = [], pickups = [], grenades = [];
 const CORPSE_CAP = 120; // enemy corpses beyond this fade oldest-first; squad corpses never removed
 const AI_SLOTS = [0, -140, 140, 280];   // where each of the four starts inside the FOB, just south of its gate
@@ -3265,7 +3265,6 @@ function damageSoldier(s, dmg, quiet) {
 function killSoldier(s) {
   s.alive = false; s.hp = 0;
   state.frontDeaths++;
-  markers.push({ x: s.x, y: s.y });
   const hd = s.lastHit, front = hd ? Math.cos(s.aim) * hd.x + Math.sin(s.aim) * hd.y < 0 : Math.random() < 0.6;
   const ga = s.aim + rand(0.5, 1.4) * (Math.random() < 0.5 ? 1 : -1);
   bodies.push({ x: s.x, y: s.y, color: s.color, t: CFG.fallDur, face: Math.cos(s.aim) >= 0 ? 1 : -1, horse: s.horse,
@@ -3856,7 +3855,7 @@ function enterBattle(tid) {
   state.eFragAt = -99; state.noEnemyFrags = false; state.sniperDownAt = null;
   state.flyby = null; state.crossTarget = null;
   rollSky(tid);
-  enemies = []; bullets = []; markers = []; floaters = []; bodies = []; particles = []; pickups = [];
+  enemies = []; bullets = []; floaters = []; bodies = []; particles = []; pickups = [];
   genTerrain();
   setupObjectives(objectiveSites(tid)); state.squadObj = null;
   state.callout = null; VOICE.barkT = -99; VOICE.callCd = 0; VOICE.barks.length = 0;
@@ -6661,17 +6660,6 @@ function drawFx() {
       TMP.m.compose(TMP.v.set(X, 1.95, Z), TMP.q, TMP.s.set(0.9, 0.6, 0.06)); F.flag.push(TMP.m, colorOf('#e8e2cf'));
     }
   }
-  for (const mk of markers) {   // battlefield cross where soldiers fell: rifle planted muzzle-down, helmet on the stock, boots in front
-    const X = mk.x * XS, Z = mk.y * XS;
-    TMP.q.setFromAxisAngle(TMP.up, hash2(mk.x, mk.y) * 0.8 - 0.4);
-    TMP.m.compose(TMP.v.set(X, 0.42, Z), TMP.q, TMP.s.set(0.05, 0.84, 0.08)); D.metal.push(TMP.m, colorOf('#34363a'));
-    TMP.m.compose(TMP.v.set(X, 0.3, Z), TMP.q, TMP.s.set(0.04, 0.16, 0.07)); D.metal.push(TMP.m, colorOf('#34363a'));
-    TMP.m.compose(TMP.v.set(X, 0.84, Z), TMP.q, TMP.s.set(0.4, 0.3, 0.44)); D.helm.push(TMP.m, colorOf('#6a6450'));
-    for (const o of [-0.12, 0.12]) {
-      TMP.v2.set(o, 0, -0.34).applyQuaternion(TMP.q);
-      TMP.m.compose(TMP.v.set(X + TMP.v2.x, 0.08, Z + TMP.v2.z), TMP.q, TMP.s.set(0.16, 0.13, 0.27)); D.boot.push(TMP.m, colorOf('#6a5640'));
-    }
-  }
   const me = soldiers[state.controlled], dry = me && me.alive && me.pistol;
   for (const d of weaponDrops) {   // a gun on the ground, blinking as it times out; ringed when it's on offer, or when you're dry
     if (d.t < 5 && Math.sin(now / 90) < 0) continue;
@@ -7018,6 +7006,48 @@ const WEATHER_LOOK = {   // multipliers layered on top of the time-of-day preset
 };
 const ARENA = { cx: CFG.arenaW / 2 * XS, cz: CFG.arenaH / 2 * XS, hw: CFG.arenaW / 2 * XS, hd: CFG.arenaH / 2 * XS };
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+function staticMatrices(geo, mat, list) {   // list of [Matrix4, colour]: for props whose parts lean together about a shared foot
+  const mesh = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length));
+  list.forEach(([m, c], i) => { mesh.setMatrixAt(i, m); mesh.setColorAt(i, colorOf(c)); });
+  mesh.count = list.length;
+  VIEW.scene.add(mesh);
+  return mesh;
+}
+// A headstone in the churchyard, facing the town (+z). One of four shapes by a hash of where it stands — round-topped,
+// gabled, a stone cross on a stepped base, or a tablet under a coping stone — on a plinth, in one of five weathered
+// stones, with a darker panel where the inscription is and a raised turf plot in front. Three in ten lean with age,
+// the stone pivoting on its plinth. Kept under the 0.9 m the simulation stops rounds at (COVER_TOP.grave).
+const TOMB_STONE = ['#bdb9af', '#aaa598', '#a0a4a6', '#8f8d86', '#c7c2b6'];
+function tombstone(x, z, T) {
+  const h1 = hash2(x, z), h2 = hash2(z, x), h3 = hash2(x * 1.7 + 3, z * 0.6 - 1);
+  const col = TOMB_STONE[Math.floor(h1 * TOMB_STONE.length) % TOMB_STONE.length], dark = '#6e6b64', turf = '#4c5a34';
+  const yaw = (h3 - 0.5) * 0.1, lean = h2 < 0.3 ? (h2 - 0.15) * 0.55 : 0;
+  const M = (px, py, pz, rx, ry, rz) => new THREE.Matrix4().compose(new THREE.Vector3(px, py, pz), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz, 'YXZ')), new THREE.Vector3(1, 1, 1));
+  const ground = M(x, 0, z, 0, yaw, 0);
+  const put = (list, parent, px, py, pz, sx, sy, sz, c) => list.push([new THREE.Matrix4().multiplyMatrices(parent, new THREE.Matrix4().compose(new THREE.Vector3(px, py, pz), new THREE.Quaternion(), new THREE.Vector3(sx, sy, sz))), c]);
+  put(T.box, ground, 0, 0.03, 0.9, 0.64, 0.06, 1.3, turf);             // the plot
+  put(T.box, ground, 0, 0.06, 0, 0.84, 0.12, 0.4, dark);               // the plinth
+  const shape = Math.floor(h3 * 4) % 4;
+  const foot = new THREE.Matrix4().multiplyMatrices(ground, M(0, 0.12, 0, lean, 0, 0));   // the stone, pivoting on the plinth's top
+  const panel = (y, w, h) => put(T.box, foot, 0, y, 0.071, w, h, 0.012, dark);
+  if (shape === 0) {        // round-topped
+    put(T.box, foot, 0, 0.25, 0, 0.6, 0.5, 0.13, col);
+    put(T.dome, foot, 0, 0.5, 0, 0.6, 0.3 / 0.5, 0.13, col);
+    panel(0.3, 0.36, 0.24);
+  } else if (shape === 1) { // gabled
+    put(T.box, foot, 0, 0.27, 0, 0.58, 0.54, 0.13, col);
+    put(T.gable, foot, 0, 0.54, 0, 0.66, 0.24, 0.15, col);
+    panel(0.3, 0.34, 0.26);
+  } else if (shape === 2) { // a stone cross on a stepped base
+    put(T.box, foot, 0, 0.05, 0, 0.44, 0.1, 0.3, col);
+    put(T.box, foot, 0, 0.44, 0, 0.12, 0.68, 0.12, col);
+    put(T.box, foot, 0, 0.58, 0, 0.44, 0.11, 0.12, col);
+  } else {                  // a tablet under a coping stone
+    put(T.box, foot, 0, 0.31, 0, 0.7, 0.62, 0.15, col);
+    put(T.box, foot, 0, 0.65, 0, 0.78, 0.06, 0.2, col);
+    panel(0.36, 0.44, 0.28);
+  }
+}
 function staticInstances(geo, mat, list) {   // list of [x, y, z, sx, sy, sz, yaw, colour]
   const mesh = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length));
   list.forEach((p, i) => {
@@ -7164,7 +7194,7 @@ function buildEnvironment() {
   const jersey = new THREE.BoxGeometry(1, 1, 1);   // concrete barrier: the top pinched in across its width
   { const p = jersey.attributes.position; for (let i = 0; i < p.count; i++) if (p.getY(i) > 0) p.setX(i, p.getX(i) * 0.38); jersey.computeVertexNormals(); }
   const trunks = [], boughs = [], bushes = [], rocks = [[], [], []], bastion = [], poles = [], hulls = [], tents = [];
-  const stones = [], balconies = [], spires = [], placed = [], detail = [], sleepers = [], tanks = [], graves = [], hedges = [], mounds = [];
+  const stones = [], balconies = [], spires = [], placed = [], detail = [], sleepers = [], tanks = [], hedges = [], mounds = [], tombs = { box: [], dome: [], gable: [] };
   const W = geoArrays(), RF = geoArrays(), ST = geoArrays(), MT = geoArrays(), CN = geoArrays();
   const stoneWallMat = new THREE.MeshLambertMaterial({ map: E.stone, vertexColors: true });
   const metalMat = new THREE.MeshLambertMaterial({ map: E.metalWall, vertexColors: true, side: THREE.DoubleSide });
@@ -7300,10 +7330,8 @@ function buildEnvironment() {
     else if (kind === 'tent') tents.push([fx, 0, fz, 1.2, 2.2, 5.5, yaw, '#b8ae8a']);
     else if (kind === 'mound') mounds.push([fx, 0.25, fz, 2.7, 1.45, 2.7, hash2(fx, fz) * TAU, '#e0d4b8']);
     else if (kind === 'hedge') hedges.push([fx, 0.65, fz, hw * 2, 1.3, hd * 2, 0, '#ffffff']);
-    else if (kind === 'grave') {
-      graves.push([fx, 0.45, fz, 0.8, 0.9, 0.22, 0, '#ffffff']);
-      if (hash2(fz, fx) < 0.5) { box(fx, 1.08, fz, 0.1, 0.5, 0.08, '#8a8a84'); box(fx, 1.18, fz, 0.36, 0.08, 0.08, '#8a8a84'); }
-    } else if (kind === 'statue') {   // the war memorial: a soldier on a plinth, rifle raised
+    else if (kind === 'grave') tombstone(fx, fz, tombs);
+    else if (kind === 'statue') {   // the war memorial: a soldier on a plinth, rifle raised
       box(fx, 0.12, fz, 2.1, 0.24, 2.1, '#b8b2a4'); box(fx, 0.72, fz, 1.6, 1.0, 1.6, '#c8c2b4');
       box(fx, 1.67, fz, 0.34, 0.9, 0.22, '#6a5a3a'); box(fx, 2.42, fz, 0.46, 0.62, 0.28, '#6a5a3a'); box(fx, 2.88, fz, 0.24, 0.26, 0.24, '#6a5a3a');
       box(fx + 0.3, 2.78, fz, 0.12, 0.7, 0.12, '#6a5a3a'); box(fx + 0.42, 3.15, fz, 0.08, 0.95, 0.08, '#5a4a2e');
@@ -7371,7 +7399,10 @@ function buildEnvironment() {
   staticInstances(rockGeometry(31), rockMat, mounds);
   staticInstances(new THREE.BoxGeometry(1, 1, 1), hescoMat, bastion);
   staticInstances(new THREE.BoxGeometry(1, 1, 1), stoneMat, stones);
-  staticInstances(new THREE.BoxGeometry(1, 1, 1), stoneMat, graves);
+  const tombMat = new THREE.MeshLambertMaterial();   // smooth dressed stone: the town's brick texture is what made the old ones read as blocks
+  staticMatrices(new THREE.BoxGeometry(1, 1, 1), tombMat, tombs.box);
+  staticMatrices(new THREE.CylinderGeometry(0.5, 0.5, 1, 12, 1, false, Math.PI / 2, Math.PI).rotateX(Math.PI / 2), tombMat, tombs.dome);   // a half drum, round side up, axis through the stone
+  staticMatrices(new THREE.ExtrudeGeometry(new THREE.Shape([new THREE.Vector2(-0.5, 0), new THREE.Vector2(0.5, 0), new THREE.Vector2(0, 1)]), { depth: 1, bevelEnabled: false }).translate(0, 0, -0.5), tombMat, tombs.gable);
   staticInstances(toCell(new THREE.BoxGeometry(1, 1, 1), () => CELLS.leaf), lit, hedges);
   staticInstances(K.wood, lit, balconies);
   staticInstances(K.wood, lit, sleepers);

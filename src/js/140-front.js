@@ -26,7 +26,7 @@ function enterBattle(tid) {
   state.eFragAt = -99; state.noEnemyFrags = false; state.sniperDownAt = null;
   state.flyby = null; state.crossTarget = null;
   rollSky(tid);
-  enemies = []; bullets = []; markers = []; floaters = []; bodies = []; particles = []; pickups = [];
+  enemies = []; bullets = []; floaters = []; bodies = []; particles = []; pickups = [];
   genTerrain();
   setupObjectives(objectiveSites(tid)); state.squadObj = null;
   state.callout = null; VOICE.barkT = -99; VOICE.callCd = 0; VOICE.barks.length = 0;

@@ -14,7 +14,7 @@ const state = {   // per-battle / session
   tod: 1, weather: 'clear',
 };
 let screen = 'map'; // map | team | battle
-let soldiers = [], enemies = [], bullets = [], particles = [], floaters = [], markers = [], bodies = [];
+let soldiers = [], enemies = [], bullets = [], particles = [], floaters = [], bodies = [];
 let mines = [], shells = [], fires = [], craters = [], splats = [], obstacles = [], corpses = [], pickups = [], grenades = [];
 const CORPSE_CAP = 120; // enemy corpses beyond this fade oldest-first; squad corpses never removed
 const AI_SLOTS = [0, -140, 140, 280];   // where each of the four starts inside the FOB, just south of its gate

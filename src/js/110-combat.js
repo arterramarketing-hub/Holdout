@@ -318,7 +318,6 @@ function damageSoldier(s, dmg, quiet) {
 function killSoldier(s) {
   s.alive = false; s.hp = 0;
   state.frontDeaths++;
-  markers.push({ x: s.x, y: s.y });
   const hd = s.lastHit, front = hd ? Math.cos(s.aim) * hd.x + Math.sin(s.aim) * hd.y < 0 : Math.random() < 0.6;
   const ga = s.aim + rand(0.5, 1.4) * (Math.random() < 0.5 ? 1 : -1);
   bodies.push({ x: s.x, y: s.y, color: s.color, t: CFG.fallDur, face: Math.cos(s.aim) >= 0 ? 1 : -1, horse: s.horse,

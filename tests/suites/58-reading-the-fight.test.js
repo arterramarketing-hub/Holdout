@@ -177,3 +177,36 @@ suite('blood', t => {
     assert.ok(splats.length > 0 && particles.some(p => p.kind === 'mist'), 'and it still bled');
   });
 });
+
+suite('the cemetery and the fallen', t => {
+  t.test('nothing is planted where a soldier falls', () => {
+    newCampaign(); seed(3);
+    const h = battle({ clear: true, invuln: false });
+    assert.eq(typeof markers, 'undefined', 'no battlefield crosses kept');
+    h.hp = 0.1; damageSoldier(h, 5);
+    assert.ok(!h.alive, 'down');
+    frames(2);   // and the view draws the fall without one
+  });
+  t.test('every grave is a headstone: four shapes, dressed stone, under the height rounds are stopped at', () => {
+    const graves = TOWN.fixed.filter(f => f[0] === 'grave');
+    assert.eq(graves.length, 20, 'the churchyard\'s twenty');
+    const Y = { box: [-0.5, 0.5], dome: [0, 0.5], gable: [0, 1] }, shapes = new Set();   // each unit shape's height range
+    let leaning = 0;
+    for (const [, gx, gz] of graves) {
+      const T = { box: [], dome: [], gable: [] };
+      tombstone(gx, gz, T);
+      shapes.add([T.box.length, T.dome.length, T.gable.length].join(','));
+      let highest = 0;
+      for (const k of Object.keys(T)) for (const [m] of T[k]) for (const cx of [-0.5, 0.5]) for (const cz of [-0.5, 0.5]) for (const cy of Y[k])
+        highest = Math.max(highest, new THREE.Vector3(cx, cy, cz).applyMatrix4(m).y);
+      assert.ok(highest <= 0.97, `the stone at ${gx}, ${gz} stands ${highest.toFixed(2)} m, over the 0.9 m rounds stop at`);
+      assert.ok(highest >= 0.7, `and it is a headstone, not a kerb (${highest.toFixed(2)} m)`);
+      const stone = T.box[2][0], up = new THREE.Vector3(0, 1, 0).transformDirection(stone);
+      if (up.y < 0.9995) leaning++;
+    }
+    assert.ok(shapes.size >= 3, 'at least three of the four shapes in the rows: ' + [...shapes].join(' | '));
+    assert.range(leaning, 1, 12, 'a few lean with age');
+    const tombMesh = VIEW.scene.children.find(c => c.isInstancedMesh && c.geometry.type === 'ExtrudeGeometry');
+    assert.ok(tombMesh && !tombMesh.material.map, 'dressed stone, not the town\'s brick texture');
+  });
+});
