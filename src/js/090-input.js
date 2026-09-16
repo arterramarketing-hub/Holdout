@@ -96,7 +96,7 @@ function addLook(dx, dy, scale) {
   aim.pitch = clamp(aim.pitch - dy * k * 0.8, -0.7, 0.7);
   aim.lookDx = aim.lookDx * 0.6 + dx * k * 0.4;
 }
-function crosshairTarget(s, cone) {   // the enemy nearest the middle of the screen — for aim assist and the crosshair
+function crosshairTarget(s, cone) {   // the enemy nearest the middle of the screen, within 950 px — for aim assist (the crosshair itself uses crosshairEnemy: the real line, at any range)
   const fx = Math.sin(aim.yaw), fy = -Math.cos(aim.yaw);
   let best = null, bs = cone;
   for (const e of enemies) {

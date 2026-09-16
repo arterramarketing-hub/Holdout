@@ -104,7 +104,7 @@ function updateSoldiers(dt) {
     s.tgtT = (s.tgtT || 0) - dt;
     if (s.tgtT <= 0 || (s.tgt && (s.tgt.hp <= 0 || !enemies.includes(s.tgt)))) {
       s.tgtT = 0.2;
-      s.tgt = isCtl ? crosshairTarget(s, 0.2) : nearestVisibleEnemy(s.x, s.y, wrange);
+      s.tgt = isCtl ? crosshairEnemy(s) : nearestVisibleEnemy(s.x, s.y, wrange);
     }
     if (s.reloadT > 0) { s.reloadT -= dt; if (s.reloadT <= 0) finishReload(s); }
     const t = s.tgt;

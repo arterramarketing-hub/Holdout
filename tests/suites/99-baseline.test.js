@@ -1,9 +1,13 @@
 // Numbers later phases are held to (written to tests/baseline.json by `python3 tools/test.py --baseline`).
+// Only dpm.open is asserted against anywhere (32-enemy-fire, to within 15%), and it has held since v6. The cover
+// rows in the recorded file are older than 3D enemy fire — rounds come over sandbags now, so a soldier standing
+// behind them takes about as much as one in the open (21 against 25), not the quarter the file still remembers.
 suite('baseline', t => {
   function standoff(coverKind, seedN) {   // you stand still on Main Street; three riflemen 7.5 m north shoot at you for a minute
     newCampaign(); seed(seedN);
     const h = battle({ clear: true, invuln: false });
     benchSquad();
+    state.noEnemyFrags = true;   // rounds alone, like the check in 32-enemy-fire: a thrown frag is not a measure of cover
     h.x = 48 * PX; h.y = 40 * PX; clearArea(h.x, h.y - 150, 520);
     if (coverKind === 'car') addCover('car', 48, 38.9, 1);   // broadside, its back 0.2 m in front of you
     if (coverKind === 'sandbags') addCover('sandbags', 48, 39.4);

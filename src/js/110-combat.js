@@ -33,6 +33,10 @@ function headShot(e, b) {   // did this round's line pass through the centre col
 // ---------- your rounds go where the crosshair is: a 3D line through the town ----------
 // Sim px everywhere (40 px = 1 m), z up. Buildings and cover have tops; enemies are upright cylinders.
 const PX = 40;
+// How far a round flies. Your own go the length of the town: you can see and aim clear across it, and a round that
+// quietly expires in mid-air reads exactly like the gun not registering. Everyone else shoots inside their weapon's
+// `range`, so their rounds keep the shorter `reach` — which is also where the damage drop-off above bottoms out.
+const AIM_REACH = 4800;   // px: the arena's diagonal, 96 m x 72 m
 const COVER_TOP = { crates: 1.42, sandbags: 0.72, barrel: 1.0, propane: 0.9, car: 1.6, van: 1.9, wreck: 1.2, vanwreck: 1.5, stall: 0.95,
   wall: 1.1, barrier: 0.9, fountain: 0.68, fence: 1.0, dumpster: 1.32, woodpile: 0.9, planter: 0.72,
   platform: 0.9, pillar: 6.6, hesco: 1.6, tree: 7, statue: 2.6, tent: 2.2, truck: 3.0, bus: 3.0, mound: 1.3, grave: 0.9, hedge: 1.3,
@@ -81,7 +85,7 @@ function los3(ax, ay, az, bx, by, bz, skip) {   // a clear straight line in 3D b
   }
   return true;
 }
-const SHOT = { ox: 0, oy: 0, oz: 0, dx: 0, dy: 0, dz: 0 }, AIMP = { x: 0, y: 0, z: 0 };
+const SHOT = { ox: 0, oy: 0, oz: 0, dx: 0, dy: 0, dz: 0 }, AIMP = { x: 0, y: 0, z: 0, e: null };
 function crosshairRay(s) {   // where your crosshair's ray starts and which way it points
   if (fpvActive() || !VIEW.ready || !VIEW.camera) {   // first person: from the eyes, along the view
     const L = Math.hypot(1, aim.pitch);
@@ -106,9 +110,17 @@ function crosshairPoint(R, maxT, out) {   // the first thing along the ray: an e
     t = Math.min(t, ob.shape === 'c' ? rayCylT(ox, oy, oz, dx, dy, dz, ob.x, ob.y, ob.r, top)
       : rayBoxT(ox, oy, oz, dx, dy, dz, ob.x - ob.hw, ob.x + ob.hw, ob.y - ob.hd, ob.y + ob.hd, top));
   }
-  for (const e of enemies) { const ez = e.z || 0; t = Math.min(t, rayCylT(ox, oy, oz, dx, dy, dz, e.x, e.y, e.r, ez + bodyTop(e), ez)); }
+  out.e = null;
+  for (const e of enemies) {
+    const ez = e.z || 0, et = rayCylT(ox, oy, oz, dx, dy, dz, e.x, e.y, e.r, ez + bodyTop(e), ez);
+    if (et < t) { t = et; out.e = e; }   // the nearest enemy on the line, ahead of any wall: what the crosshair is on
+  }
   out.x = ox + dx * t; out.y = oy + dy * t; out.z = oz + dz * t;
   return t;
+}
+function crosshairEnemy(s) {   // the enemy your crosshair is actually on, at any range — the line itself, not a cone around it
+  crosshairPoint(crosshairRay(s), AIM_REACH, AIMP);
+  return AIMP.e && !AIMP.e.down ? AIMP.e : null;
 }
 function headHit(e, b) {   // a round that strikes the top of the body, near its middle
   if (b.z - (e.z || 0) < bodyTop(e) * 0.8) return false;
@@ -146,14 +158,6 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   const dx = target ? target.x - s.x : 0, dy = target ? target.y - s.y : 0;
   const jit = fromPlayer ? 0 : rand(-1, 1) * (w.spread + 0.03), a = (angle != null ? angle : Math.atan2(dy, dx)) + jit;   // your own spread is the 3D cone below
   s.aim = a; s.recoil = 0.09;
-  if (fromPlayer) {   // the weapon climbs: your next round goes where the recoil left the muzzle
-    const rk = RECOIL_KICK[key] || 0.2, steady = aim.ads ? 0.6 : 1;
-    const kx = rand(-1, 1) * rk * 0.022 * steady;
-    aim.pitch = clamp(aim.pitch + rk * 0.055 * steady, -0.7, 0.7);
-    aim.yaw = angWrap(aim.yaw + kx);
-    aim.settle = (aim.settle || 0) + rk * 0.055 * steady;    // the whole climb comes back down
-    aim.settleY = (aim.settleY || 0) + kx;                   // and the sideways walk comes back too between bursts
-  }
   if (!s.pistol) s.mag--;
   s.shotN = (s.shotN || 0) + 1;
   if (fromPlayer) { state.shots++; MUS.heat = performance.now(); }
@@ -165,7 +169,7 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   }
   if (fromPlayer) {   // your round flies in 3D to whatever is under the crosshair, spread around that line
     const R = crosshairRay(s);
-    crosshairPoint(R, (w.reach || w.range) + 400, AIMP);
+    crosshairPoint(R, AIM_REACH, AIMP);
     if (fpvActive()) { bx = R.ox + R.dx * 18; by = R.oy + R.dy * 18; bz = R.oz + R.dz * 18; }   // from just ahead of the eyes; the tracer is drawn from the barrel you see
     else bz = 1.35 * PX;
     let ex = AIMP.x - bx, ey = AIMP.y - by, ez = AIMP.z - bz;
@@ -178,8 +182,16 @@ function fire(s, target, fromPlayer, angle) {   // angle set = fired where the p
   bullets.push({ x: bx, y: by, z: bz, vz: uz * w.speed, ballistic,
     vx: ux * w.speed, vy: uy * w.speed,
     tracer: !quiet && (key === 'rocket' || key === 'sniper' || s.shotN % 3 === 0),   // every third round is loaded as a tracer; the .50 and the rocket always burn
-    life: (w.reach || w.range) / w.speed, age: 0, fromPlayer, wkey: key, slot: s.slot,
+    life: (fromPlayer && !w.aoe ? AIM_REACH : (w.reach || w.range)) / w.speed, age: 0, fromPlayer, wkey: key, slot: s.slot,   // a warhead flies its own burn and goes off; a bullet flies until it hits something
     dmg: s.pistol ? SIDEARM.dmg : squadDmg(s.weapon), hits: 0, maxHits: w.pierce || 1, aoe: w.aoe || 0, skip: coverNear(s, 34) });
+  if (fromPlayer) {   // the weapon climbs AFTER this round has left: the one you fired went where the crosshair was, the next goes higher
+    const rk = RECOIL_KICK[key] || 0.2, steady = aim.ads ? 0.6 : 1;
+    const kx = rand(-1, 1) * rk * 0.022 * steady;
+    aim.pitch = clamp(aim.pitch + rk * 0.055 * steady, -0.7, 0.7);
+    aim.yaw = angWrap(aim.yaw + kx);
+    aim.settle = (aim.settle || 0) + rk * 0.055 * steady;    // the whole climb comes back down
+    aim.settleY = (aim.settleY || 0) + kx;                   // and the sideways walk comes back too between bursts
+  }
   const mx = s.x + Math.cos(a) * mz, my = s.y + Math.sin(a) * mz;   // the flash and the brass are drawn by the view, at the gun it draws
   particles.push({ x: mx, y: my, z: 16, vx: Math.cos(a) * 20 + rand(-8, 8), vy: Math.sin(a) * 20 + rand(-8, 8),
     vz: rand(14, 32), life: rand(0.3, 0.55), max: 0.55, col: '#8a8a80', r: rand(1.5, 2.8) });   // muzzle smoke

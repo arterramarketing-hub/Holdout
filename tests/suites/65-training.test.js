@@ -87,6 +87,33 @@ suite('firing range', t => {
     assert.ok(!document.body.classList.contains('training'));
     assert.eq(meta.terr[1].progress, 0, 'nothing saved to a sector');
   });
+  t.test('the two far targets fold to the UMP45 you start with, from the marker', () => {
+    newCampaign(); seed(3); hideModal();
+    meta.loadout = 'smg'; applyOpts();               // the gun a new player is holding, and the shortest reach in the game
+    enterTraining();
+    const h = soldiers[0];
+    assert.eq(h.weapon, 'smg', 'the UMP45');
+    state.training.step = TRAIN_STEPS.findIndex(x => x.id === 'ads');
+    trainingStepBegin();
+    h.x = RANGE.move[0] * PX; h.y = RANGE.move[1] * PX;   // standing on the marker the course walked you to
+    assert.eq(enemies.length, 2, 'the two far targets');
+    const out = [];
+    for (const e of enemies.slice()) {
+      const d = Math.hypot(e.x - h.x, e.y - h.y) / PX;
+      out.push(+d.toFixed(1));
+      assert.ok(d > WEAPONS.smg.reach / PX, `the target stands ${d.toFixed(1)} m out, inside the old ${WEAPONS.smg.reach / PX} m reach — this no longer tests anything`);
+      for (let k = 0; k < 20 && !e.down; k++) {
+        aim.ads = true; aimAt(h, e.x, e.y, 0.95 * PX);
+        h.fireCd = 0; h.mag = 32; aim.fire = true; tick(1 / 60); aim.fire = false;
+        ticks(30);
+      }
+      aim.fire = false; aim.ads = false;
+      assert.ok(e.down, `the target ${d.toFixed(1)} m out never took a round`);
+    }
+    assert.ok(state.training.adsDowns >= 2, 'the step counts them and moves on');
+    exitTraining();
+    return { metres: out };
+  }, { timeout: 120000 });
   t.test('keyboard and mouse: the whole course, then Deploy', () => {
     newCampaign(); seed(3); hideModal();
     enterTraining();

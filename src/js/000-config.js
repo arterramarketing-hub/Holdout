@@ -30,14 +30,14 @@ const CFG = {
 const TAU = Math.PI * 2;
 
 const WEAPONS = {
-  // `range` is how far the AI will engage from; `reach` is how far the round actually flies. They are
-  // separate because you can see clear across an 80 m town in first person, and a round that quietly
-  // expires at 10 m reads as the gun simply not registering.
+  // `range` is how far the AI will engage from; `reach` is how far the rounds it fires travel, and where the damage
+  // drop-off bottoms out. Your own rounds are not held to it: they fly the length of the town (AIM_REACH), because you
+  // can see and aim clear across it, and a round that quietly expires reads as the gun simply not registering.
   smg:    { name:'UMP45',        cd:0.09, dmg:0.85, range:300, reach:900,  spread:0.09,  speed:4200, len:13, mag:32,  ext:48,  reload:1.7, spare:5 },
   ar:     { name:'M4A1',         cd:0.16, dmg:1.05, range:430, reach:1500, spread:0.04,  speed:5100, len:19, mag:30,  ext:45,  reload:2.1, spare:5 },
   lmg:    { name:'M249 SAW',     cd:0.11, dmg:1, range:400, reach:1400, spread:0.07,  speed:4800, len:23, mag:100, ext:200, reload:4.2, spare:2, moveMul:0.85 },
   sniper: { name:'INTERVENTION', cd:1.05, dmg:4, range:720, reach:2600, spread:0.005, speed:8400, len:29, mag:5,   ext:8,   reload:2.9, spare:6, pierce:2 },
-  rocket: { name:'ROCKET',   cd:1.50, dmg:3, range:520, reach:1000, spread:0.02,  speed:900,  len:21, mag:1,   reload:2.6, spare:6, aoe:70 },
+  rocket: { name:'ROCKET',   cd:1.50, dmg:3, range:520, reach:2400, spread:0.02,  speed:900,  len:21, mag:1,   reload:2.6, spare:6, aoe:70 },   // a warhead burns its motor out and detonates: 60 m, even in your hands
   // taken off the dead (see ENEMY GUNS): never in BATTLE PREP
   ak:     { name:'AK-47',        cd:0.10, dmg:1.1, range:420, reach:1400, spread:0.05,  speed:4700, len:19, mag:30,  reload:2.3, spare:2, pickup:true },
   pkm:    { name:'PKM',          cd:0.092, dmg:1.1, range:400, reach:1400, spread:0.085, speed:4700, len:24, mag:100, reload:5.2, spare:1, moveMul:0.82, pickup:true },
