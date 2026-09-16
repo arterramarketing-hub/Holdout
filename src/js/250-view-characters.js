@@ -268,6 +268,8 @@ function buildFxBatches() {
     shadow: new Batch(plane, decalMat(T.blob), 256, 2),
     stain: new Batch(plane, decalMat(T.glow, { opacity: 0.7 }), 400, 1),
     crater: new Batch(plane, decalMat(T.crater), 96, 1),
+    splat: new Batch(plane, decalMat(T.splat), SPLAT_CAP, 1),
+    mist: new Batch(new THREE.IcosahedronGeometry(0.5, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.5, depthWrite: false }), 48, 5),   // blood mist: ordinary blending, dark on a bright day
     ring: new Batch(plane, decalMat(T.ring, { opacity: 0.75 }), 48, 3),
     fireGlow: new Batch(plane, decalMat(T.glow, add), 64, 3),
     tracer: new Batch(box, new THREE.MeshBasicMaterial(), 400),
@@ -286,8 +288,9 @@ function buildFxBatches() {
     flag: new Batch(box, new THREE.MeshLambertMaterial(), 40),
   };
 }
-const FX_FRAME = ['shadow', 'crater', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass', 'objRing', 'flag'];
+const FX_FRAME = ['shadow', 'crater', 'splat', 'mist', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass', 'objRing', 'flag'];
 let TRACER_COLS = null;   // tracer palette, built once the engine is up
+let BLOOD_COL = null;
 const hash2 = (x, y) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };
 function muzzleWorld(s, out) {   // where the drawn weapon's barrel actually ends, this frame
   if (fpvActive() && s.slot === state.controlled && FPV.muz) { out.copy(FPV.muz); return true; }
@@ -349,7 +352,11 @@ function drawFx() {
   for (let pi = Math.max(0, particles.length - Q.particles); pi < particles.length; pi++) {   // the newest, up to the preset's cap
     const p = particles[pi], fr = clamp(p.life / p.max, 0, 1);
     TMP.v.set(p.x * XS, Math.max(0.02, p.z * ZS), p.y * XS);
-    if (p.r >= 20) {
+    if (p.kind === 'mist') {   // a puff that opens out and is gone
+      const sz = p.r * XS * 2 * (0.55 + 0.9 * (1 - fr));
+      TMP.m.compose(TMP.v, TMP.q, TMP.s.set(sz, sz * 0.85, sz));
+      F.mist.push(TMP.m, colorOf(p.col));
+    } else if (p.r >= 20) {
       const sz = p.r * XS * 2 * (1.25 - 0.55 * fr);
       TMP.m.compose(TMP.v, TMP.q, TMP.s.set(sz, sz * 0.7, sz));
       F.flash.push(TMP.m, colorOf(p.col));
@@ -360,6 +367,7 @@ function drawFx() {
     }
   }
   for (const c of craters) decal(F.crater, c.x * XS, c.y * XS, c.r * XS * 2.2, hash2(c.x, c.y) * TAU, WHITE, 0.022);
+  for (const sp of splats) decal(F.splat, sp.x * XS, sp.y * XS, sp.s * (0.35 + 0.65 * Math.min(1, sp.t * 4)), sp.rot, BLOOD_COL || (BLOOD_COL = colorOf('#8c1a12')), 0.024);
   for (const sh of shells) drawIncoming(sh, now);
   TMP.q.identity();
   for (const f of fires) {

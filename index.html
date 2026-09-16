@@ -1390,7 +1390,7 @@ const state = {   // per-battle / session
 };
 let screen = 'map'; // map | team | battle
 let soldiers = [], enemies = [], bullets = [], particles = [], floaters = [], markers = [], bodies = [];
-let mines = [], shells = [], fires = [], craters = [], obstacles = [], corpses = [], pickups = [], grenades = [];
+let mines = [], shells = [], fires = [], craters = [], splats = [], obstacles = [], corpses = [], pickups = [], grenades = [];
 const CORPSE_CAP = 120; // enemy corpses beyond this fade oldest-first; squad corpses never removed
 const AI_SLOTS = [0, -140, 140, 280];   // where each of the four starts inside the FOB, just south of its gate
 
@@ -1414,7 +1414,7 @@ function buildSoldier(i) {
   };
 }
 function genTerrain() {   // the same town every front; its movable cover is rolled fresh each battle
-  obstacles = []; craters = []; mines = []; fires = []; shells = []; corpses = []; rubble = []; grenades = []; weaponDrops = [];
+  obstacles = []; craters = []; splats = []; mines = []; fires = []; shells = []; corpses = []; rubble = []; grenades = []; weaponDrops = [];
   const k = PX, W = TOWN.w * k, H = TOWN.h * k, T = 24;
   buildings = TOWN.buildings.map(([x0, y0, x1, y1, h, style]) =>
     ({ shape: 'r', x: (x0 + x1) / 2 * k, y: (y0 + y1) / 2 * k, hw: (x1 - x0) / 2 * k, hd: (y1 - y0) / 2 * k, top: h * k, style, building: true, claims: 0 }));
@@ -3074,6 +3074,28 @@ function headHit(e, b) {   // a round that strikes the top of the body, near its
   const bl = Math.hypot(b.vx, b.vy) || 1;
   return Math.abs((e.x - b.x) * (b.vy / bl) - (e.y - b.y) * (b.vx / bl)) <= (HEAD_W[e.type] || 4) * 2.4;
 }
+// ---------- blood ----------
+// A hit throws a short mist where the round struck — at the height it struck, a headshot higher and wider — droplets
+// flung along its path that fall and bounce, and a splat on the ground up to a metre behind (not on a roof). Splats spread
+// over a quarter second and stay, the oldest going once there are SPLAT_CAP. All of it rolls its own dice (fxRand), never
+// the simulation's: a look must not be able to change who wins a fight.
+const SPLAT_CAP = 64;
+let fxSeed = 0x2545f491;
+const fxRand = (a, b) => a + ((fxSeed = (fxSeed * 1664525 + 1013904223) >>> 0) / 4294967296) * (b - a);
+function bleed(e, dmg, head, dir) {
+  const ez = e.z || 0, dx = dir ? dir.x : 0, dy = dir ? dir.y : 0;
+  const hz = dir && dir.z != null ? dir.z : ez + bodyTop(e) * (head ? 0.9 : 0.62);   // px: where on the body it went in
+  const pz = hz / (PX * ZS), big = Math.min(1.6, 0.75 + dmg * 0.22) * (head ? 1.3 : 1);
+  particles.push({ kind: 'mist', x: e.x + dx * 5, y: e.y + dy * 5, z: pz, vx: dx * 40, vy: dy * 40, vz: 6, life: 0.26, max: 0.26, col: '#a3261a', r: 7 * big });
+  for (let i = 0, n = head ? 10 : 7; i < n; i++)
+    particles.push({ x: e.x + dx * 4, y: e.y + dy * 4, z: pz, vx: dx * fxRand(70, 210) + fxRand(-50, 50), vy: dy * fxRand(70, 210) + fxRand(-50, 50),
+      vz: fxRand(10, 95), life: fxRand(0.4, 0.7), max: 0.7, col: fxRand(0, 1) < 0.5 ? '#6a120e' : '#9a1e16', r: fxRand(1.8, 3.2) * (head ? 1.15 : 1) });
+  if (!ez) {
+    const back = fxRand(0.3, 1.05) * PX;
+    splats.push({ x: e.x + dx * back + fxRand(-6, 6), y: e.y + dy * back + fxRand(-6, 6), s: fxRand(0.8, 1.15) * big, rot: dir ? Math.atan2(-dy, dx) + fxRand(-0.35, 0.35) : fxRand(0, TAU), t: 0 });   // metres across; turned so its spray points the way the round went
+    if (splats.length > SPLAT_CAP) splats.shift();
+  }
+}
 const FEED = [], DMGDIR = [];   // kill feed rows and the arcs that show where fire came from
 let gestured = false;   // vibrate() is refused (and logs an error) until the page itself has been touched
 addEventListener('pointerdown', () => { gestured = true; }, true);
@@ -3209,11 +3231,7 @@ function hurtEnemy(idx, dmg, credit, dir) {
     particles.push({ x: e.x, y: e.y, z: 16, vx: rand(-50, 50), vy: rand(-50, 50), vz: rand(40, 90), life: 0.15, max: 0.15, col: '#fff4c0', r: 1.4 });
   }
   e.hp -= dmg; e.flash = 0.1; e.lastHit = dir;
-  for (let i = 0; i < (credit.head ? 5 : 3); i++)                 // blood spurt, biased along the hit direction
-    particles.push({ x: e.x, y: e.y, z: credit.head ? 22 : 12,
-      vx: (dir ? dir.x * rand(30, 130) : 0) + rand(-45, 45), vy: (dir ? dir.y * rand(30, 130) : 0) + rand(-45, 45),
-      vz: rand(20, 85), life: rand(0.25, 0.4), max: 0.4,
-      col: Math.random() < 0.5 ? '#7a1f16' : '#a03028', r: rand(1, 2.2) });
+  if (!e.target && (dir || dmg >= 0.5)) bleed(e, dmg, !!credit.head, dir);   // a round, a blast or a frag bleeds; a fire's steady burn does not (and range plates ring instead)
   if (credit.player) {
     if (HITFX.hit <= 0) { beep(credit.head ? 3500 : 2600, credit.head ? 0.045 : 0.03, 'square', credit.head ? 0.042 : 0.03); buzz(credit.head ? 16 : 8); }
     HITFX.hit = 0.14;
@@ -4652,7 +4670,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
           const cdmg = (b.ballistic || !inCover(e) ? b.dmg : b.dmg * 0.65) * (head ? CFG.headshotMul : 1)   // your rounds meet cover as geometry, not a discount
             * falloffMul(b.wkey, b.age * Math.hypot(b.vx, b.vy, b.vz || 0));   // how far this round had flown by the time it arrived
           particles.push({ x: e.x, y: e.y, z: head ? 22 : 14, vx: rand(-40, 40), vy: rand(-40, 40), vz: rand(30, 90), life: 0.08, max: 0.08, col: '#fff0b0', r: 1.4 });
-          const died = hurtEnemy(j, cdmg, { player: b.fromPlayer, wkey: b.wkey, slot: b.slot, head }, { x: b.vx / bl, y: b.vy / bl });
+          const died = hurtEnemy(j, cdmg, { player: b.fromPlayer, wkey: b.wkey, slot: b.slot, head }, { x: b.vx / bl, y: b.vy / bl, z: b.ballistic ? b.z : null });
           b.hits++;
           (b.hitList || (b.hitList = [])).push(e);
           if (died) j--;
@@ -4670,6 +4688,7 @@ function impact(b, col, wall) {   // a round striking a wall or cover: rockets d
   if (Math.random() < (wall ? 0.12 : 0.22)) sfxRicochet(b.x, b.y);
 }
 function updateFx(dt) {
+  for (const sp of splats) if (sp.t < 1) sp.t += dt;   // a splat spreads as it lands
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.vz -= 340 * dt;
@@ -5052,6 +5071,14 @@ function buildTextures() {
       const gr = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
       gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(255,255,255,0.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
       g.fillStyle = gr; g.fillRect(0, 0, s, s);
+    }), false),
+    splat: finishTex(paintCanvas(96, (g, s) => {   // blood on the ground: an uneven wet centre, lobes, and a spray of drops thrown one way
+      let seed = 71;
+      const r = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+      const blot = (x, y, rad, a) => { const gr = g.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(0.86, `rgba(255,255,255,${a})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, rad, 0, TAU); g.fill(); };
+      blot(s * 0.46, s * 0.5, s * 0.25, 1);   // wet edges, not a soft glow: blood on stone has a line where it stops
+      for (let i = 0; i < 9; i++) { const a = r() * TAU, d = s * (0.1 + r() * 0.16); blot(s * 0.46 + Math.cos(a) * d, s / 2 + Math.sin(a) * d, s * (0.08 + r() * 0.1), 1); }
+      for (let i = 0; i < 18; i++) { const a = -0.8 + r() * 1.6, d = s * (0.3 + r() * 0.17); blot(s * 0.46 + Math.cos(a) * d, s / 2 + Math.sin(a) * d, s * (0.014 + r() * 0.032), 0.95); }
     }), false),
     ring: finishTex(paintCanvas(64, (g, s) => {
       g.strokeStyle = '#ffffff'; g.lineWidth = 5;
@@ -6465,6 +6492,8 @@ function buildFxBatches() {
     shadow: new Batch(plane, decalMat(T.blob), 256, 2),
     stain: new Batch(plane, decalMat(T.glow, { opacity: 0.7 }), 400, 1),
     crater: new Batch(plane, decalMat(T.crater), 96, 1),
+    splat: new Batch(plane, decalMat(T.splat), SPLAT_CAP, 1),
+    mist: new Batch(new THREE.IcosahedronGeometry(0.5, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.5, depthWrite: false }), 48, 5),   // blood mist: ordinary blending, dark on a bright day
     ring: new Batch(plane, decalMat(T.ring, { opacity: 0.75 }), 48, 3),
     fireGlow: new Batch(plane, decalMat(T.glow, add), 64, 3),
     tracer: new Batch(box, new THREE.MeshBasicMaterial(), 400),
@@ -6483,8 +6512,9 @@ function buildFxBatches() {
     flag: new Batch(box, new THREE.MeshLambertMaterial(), 40),
   };
 }
-const FX_FRAME = ['shadow', 'crater', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass', 'objRing', 'flag'];
+const FX_FRAME = ['shadow', 'crater', 'splat', 'mist', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass', 'objRing', 'flag'];
 let TRACER_COLS = null;   // tracer palette, built once the engine is up
+let BLOOD_COL = null;
 const hash2 = (x, y) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };
 function muzzleWorld(s, out) {   // where the drawn weapon's barrel actually ends, this frame
   if (fpvActive() && s.slot === state.controlled && FPV.muz) { out.copy(FPV.muz); return true; }
@@ -6546,7 +6576,11 @@ function drawFx() {
   for (let pi = Math.max(0, particles.length - Q.particles); pi < particles.length; pi++) {   // the newest, up to the preset's cap
     const p = particles[pi], fr = clamp(p.life / p.max, 0, 1);
     TMP.v.set(p.x * XS, Math.max(0.02, p.z * ZS), p.y * XS);
-    if (p.r >= 20) {
+    if (p.kind === 'mist') {   // a puff that opens out and is gone
+      const sz = p.r * XS * 2 * (0.55 + 0.9 * (1 - fr));
+      TMP.m.compose(TMP.v, TMP.q, TMP.s.set(sz, sz * 0.85, sz));
+      F.mist.push(TMP.m, colorOf(p.col));
+    } else if (p.r >= 20) {
       const sz = p.r * XS * 2 * (1.25 - 0.55 * fr);
       TMP.m.compose(TMP.v, TMP.q, TMP.s.set(sz, sz * 0.7, sz));
       F.flash.push(TMP.m, colorOf(p.col));
@@ -6557,6 +6591,7 @@ function drawFx() {
     }
   }
   for (const c of craters) decal(F.crater, c.x * XS, c.y * XS, c.r * XS * 2.2, hash2(c.x, c.y) * TAU, WHITE, 0.022);
+  for (const sp of splats) decal(F.splat, sp.x * XS, sp.y * XS, sp.s * (0.35 + 0.65 * Math.min(1, sp.t * 4)), sp.rot, BLOOD_COL || (BLOOD_COL = colorOf('#8c1a12')), 0.024);
   for (const sh of shells) drawIncoming(sh, now);
   TMP.q.identity();
   for (const f of fires) {

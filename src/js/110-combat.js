@@ -127,6 +127,28 @@ function headHit(e, b) {   // a round that strikes the top of the body, near its
   const bl = Math.hypot(b.vx, b.vy) || 1;
   return Math.abs((e.x - b.x) * (b.vy / bl) - (e.y - b.y) * (b.vx / bl)) <= (HEAD_W[e.type] || 4) * 2.4;
 }
+// ---------- blood ----------
+// A hit throws a short mist where the round struck — at the height it struck, a headshot higher and wider — droplets
+// flung along its path that fall and bounce, and a splat on the ground up to a metre behind (not on a roof). Splats spread
+// over a quarter second and stay, the oldest going once there are SPLAT_CAP. All of it rolls its own dice (fxRand), never
+// the simulation's: a look must not be able to change who wins a fight.
+const SPLAT_CAP = 64;
+let fxSeed = 0x2545f491;
+const fxRand = (a, b) => a + ((fxSeed = (fxSeed * 1664525 + 1013904223) >>> 0) / 4294967296) * (b - a);
+function bleed(e, dmg, head, dir) {
+  const ez = e.z || 0, dx = dir ? dir.x : 0, dy = dir ? dir.y : 0;
+  const hz = dir && dir.z != null ? dir.z : ez + bodyTop(e) * (head ? 0.9 : 0.62);   // px: where on the body it went in
+  const pz = hz / (PX * ZS), big = Math.min(1.6, 0.75 + dmg * 0.22) * (head ? 1.3 : 1);
+  particles.push({ kind: 'mist', x: e.x + dx * 5, y: e.y + dy * 5, z: pz, vx: dx * 40, vy: dy * 40, vz: 6, life: 0.26, max: 0.26, col: '#a3261a', r: 7 * big });
+  for (let i = 0, n = head ? 10 : 7; i < n; i++)
+    particles.push({ x: e.x + dx * 4, y: e.y + dy * 4, z: pz, vx: dx * fxRand(70, 210) + fxRand(-50, 50), vy: dy * fxRand(70, 210) + fxRand(-50, 50),
+      vz: fxRand(10, 95), life: fxRand(0.4, 0.7), max: 0.7, col: fxRand(0, 1) < 0.5 ? '#6a120e' : '#9a1e16', r: fxRand(1.8, 3.2) * (head ? 1.15 : 1) });
+  if (!ez) {
+    const back = fxRand(0.3, 1.05) * PX;
+    splats.push({ x: e.x + dx * back + fxRand(-6, 6), y: e.y + dy * back + fxRand(-6, 6), s: fxRand(0.8, 1.15) * big, rot: dir ? Math.atan2(-dy, dx) + fxRand(-0.35, 0.35) : fxRand(0, TAU), t: 0 });   // metres across; turned so its spray points the way the round went
+    if (splats.length > SPLAT_CAP) splats.shift();
+  }
+}
 const FEED = [], DMGDIR = [];   // kill feed rows and the arcs that show where fire came from
 let gestured = false;   // vibrate() is refused (and logs an error) until the page itself has been touched
 addEventListener('pointerdown', () => { gestured = true; }, true);
@@ -262,11 +284,7 @@ function hurtEnemy(idx, dmg, credit, dir) {
     particles.push({ x: e.x, y: e.y, z: 16, vx: rand(-50, 50), vy: rand(-50, 50), vz: rand(40, 90), life: 0.15, max: 0.15, col: '#fff4c0', r: 1.4 });
   }
   e.hp -= dmg; e.flash = 0.1; e.lastHit = dir;
-  for (let i = 0; i < (credit.head ? 5 : 3); i++)                 // blood spurt, biased along the hit direction
-    particles.push({ x: e.x, y: e.y, z: credit.head ? 22 : 12,
-      vx: (dir ? dir.x * rand(30, 130) : 0) + rand(-45, 45), vy: (dir ? dir.y * rand(30, 130) : 0) + rand(-45, 45),
-      vz: rand(20, 85), life: rand(0.25, 0.4), max: 0.4,
-      col: Math.random() < 0.5 ? '#7a1f16' : '#a03028', r: rand(1, 2.2) });
+  if (!e.target && (dir || dmg >= 0.5)) bleed(e, dmg, !!credit.head, dir);   // a round, a blast or a frag bleeds; a fire's steady burn does not (and range plates ring instead)
   if (credit.player) {
     if (HITFX.hit <= 0) { beep(credit.head ? 3500 : 2600, credit.head ? 0.045 : 0.03, 'square', credit.head ? 0.042 : 0.03); buzz(credit.head ? 16 : 8); }
     HITFX.hit = 0.14;

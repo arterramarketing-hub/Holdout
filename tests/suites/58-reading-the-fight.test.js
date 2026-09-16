@@ -129,3 +129,51 @@ suite('killstreaks', t => {
     assert.ok(h.alive && h.hp === h.maxHp, 'you, 36 m back, untouched');
   });
 });
+
+suite('blood', t => {
+  const range8 = () => {
+    newCampaign(); seed(21);
+    const h = battle({ weapon: 'ar', clear: true });
+    benchSquad(); setupObjectives([]);
+    h.x = 48 * PX; h.y = 48 * PX; clearArea(h.x, h.y - 200, 500);
+    const e = G.spawn('grunt', h.x, h.y - 8 * PX); e.sp = 0; e.ranged = 0; e.dmg = 0; e.hp = e.maxHp = 1e6;
+    splats.length = 0; particles.length = 0;
+    return { h, e };
+  };
+  t.test('a hit throws a mist where the round went in, droplets along its path, and a splat on the ground behind', () => {
+    const { h, e } = range8();
+    const tz = bodyTop(e) * 0.62;
+    aimAt(h, e.x, e.y, tz); aim.ads = true;
+    h.fireCd = 0; aim.fire = true; tick(1 / 60); aim.fire = false;
+    let seenZ = null;
+    for (let k = 0; k < 30 && !particles.some(p => p.kind === 'mist'); k++) { const b = bullets.find(q => q.fromPlayer); if (b) seenZ = b.z; tick(1 / 60); }
+    aim.ads = false;
+    const mist = particles.find(p => p.kind === 'mist');
+    assert.ok(mist, 'a mist');
+    assert.near(mist.z * ZS, tz / PX, 0.25, 'at the height the round struck (m)');
+    assert.ok(particles.filter(p => !p.kind && /^#[69]/.test(p.col)).length >= 6, 'droplets');
+    assert.eq(splats.length, 1, 'one splat');
+    const sp = splats[0];
+    assert.ok(sp.y < e.y && e.y - sp.y < 1.3 * PX, 'on the ground behind him, along the shot: ' + ((e.y - sp.y) / PX).toFixed(2) + ' m');
+  });
+  t.test('a fire does not bleed its victims every frame, and the ground keeps at most 64 splats', () => {
+    const { e } = range8();
+    fires.push({ x: e.x, y: e.y, r: 30, t: 3 });
+    ticks(120);
+    assert.eq(splats.length, 0, 'burning leaves no splats');
+    assert.ok(particles.filter(p => p.kind === 'mist').length === 0, 'and no mist');
+    fires.length = 0;
+    for (let i = 0; i < 90; i++) hurtEnemy(enemies.indexOf(e), 1, { player: true, wkey: 'ar' }, { x: 0, y: -1 });
+    assert.eq(splats.length, SPLAT_CAP, 'capped');
+  });
+  t.test('blood rolls its own dice: bleeding draws nothing from the fight\'s', () => {
+    const { e } = range8();
+    let draws = 0;
+    const fightDice = Math.random;
+    Math.random = () => { draws++; return fightDice(); };
+    try { for (let i = 0; i < 25; i++) bleed(e, 1.05, i % 3 === 0, i % 2 ? { x: 0, y: -1, z: 50 } : null); }
+    finally { Math.random = fightDice; }
+    assert.eq(draws, 0, 'draws from the simulation\'s random numbers');
+    assert.ok(splats.length > 0 && particles.some(p => p.kind === 'mist'), 'and it still bled');
+  });
+});

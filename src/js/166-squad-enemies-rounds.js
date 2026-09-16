@@ -409,7 +409,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
           const cdmg = (b.ballistic || !inCover(e) ? b.dmg : b.dmg * 0.65) * (head ? CFG.headshotMul : 1)   // your rounds meet cover as geometry, not a discount
             * falloffMul(b.wkey, b.age * Math.hypot(b.vx, b.vy, b.vz || 0));   // how far this round had flown by the time it arrived
           particles.push({ x: e.x, y: e.y, z: head ? 22 : 14, vx: rand(-40, 40), vy: rand(-40, 40), vz: rand(30, 90), life: 0.08, max: 0.08, col: '#fff0b0', r: 1.4 });
-          const died = hurtEnemy(j, cdmg, { player: b.fromPlayer, wkey: b.wkey, slot: b.slot, head }, { x: b.vx / bl, y: b.vy / bl });
+          const died = hurtEnemy(j, cdmg, { player: b.fromPlayer, wkey: b.wkey, slot: b.slot, head }, { x: b.vx / bl, y: b.vy / bl, z: b.ballistic ? b.z : null });
           b.hits++;
           (b.hitList || (b.hitList = [])).push(e);
           if (died) j--;
@@ -427,6 +427,7 @@ function impact(b, col, wall) {   // a round striking a wall or cover: rockets d
   if (Math.random() < (wall ? 0.12 : 0.22)) sfxRicochet(b.x, b.y);
 }
 function updateFx(dt) {
+  for (const sp of splats) if (sp.t < 1) sp.t += dt;   // a splat spreads as it lands
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.vz -= 340 * dt;

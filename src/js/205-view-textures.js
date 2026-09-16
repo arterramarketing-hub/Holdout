@@ -201,6 +201,14 @@ function buildTextures() {
       gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(255,255,255,0.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
       g.fillStyle = gr; g.fillRect(0, 0, s, s);
     }), false),
+    splat: finishTex(paintCanvas(96, (g, s) => {   // blood on the ground: an uneven wet centre, lobes, and a spray of drops thrown one way
+      let seed = 71;
+      const r = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+      const blot = (x, y, rad, a) => { const gr = g.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(0.86, `rgba(255,255,255,${a})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, rad, 0, TAU); g.fill(); };
+      blot(s * 0.46, s * 0.5, s * 0.25, 1);   // wet edges, not a soft glow: blood on stone has a line where it stops
+      for (let i = 0; i < 9; i++) { const a = r() * TAU, d = s * (0.1 + r() * 0.16); blot(s * 0.46 + Math.cos(a) * d, s / 2 + Math.sin(a) * d, s * (0.08 + r() * 0.1), 1); }
+      for (let i = 0; i < 18; i++) { const a = -0.8 + r() * 1.6, d = s * (0.3 + r() * 0.17); blot(s * 0.46 + Math.cos(a) * d, s / 2 + Math.sin(a) * d, s * (0.014 + r() * 0.032), 0.95); }
+    }), false),
     ring: finishTex(paintCanvas(64, (g, s) => {
       g.strokeStyle = '#ffffff'; g.lineWidth = 5;
       g.beginPath(); g.arc(s / 2, s / 2, s / 2 - 5, 0, TAU); g.stroke();
