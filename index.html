@@ -3226,12 +3226,13 @@ function hurtEnemy(idx, dmg, credit, dir) {
   const e = enemies[idx];
   if (e.hp <= 0) return false;                                    // already dead this frame
   if (e.target) { targetHit(e, credit); return false; }           // a range target folds; it never dies
-  if (e.type === 'brute' && dir && e.aim != null && Math.cos(e.aim) * dir.x + Math.sin(e.aim) * dir.y < -0.35) {   // riot shield soaks frontal fire
+  const shielded = e.type === 'brute' && dir && e.aim != null && Math.cos(e.aim) * dir.x + Math.sin(e.aim) * dir.y < -0.35;
+  if (shielded) {   // riot shield soaks frontal fire
     dmg *= 0.3;
     particles.push({ x: e.x, y: e.y, z: 16, vx: rand(-50, 50), vy: rand(-50, 50), vz: rand(40, 90), life: 0.15, max: 0.15, col: '#fff4c0', r: 1.4 });
   }
   e.hp -= dmg; e.flash = 0.1; e.lastHit = dir;
-  if (!e.target && (dir || dmg >= 0.5)) bleed(e, dmg, !!credit.head, dir);   // a round, a blast or a frag bleeds; a fire's steady burn does not (and range plates ring instead)
+  if (!e.target && !shielded && (dir || dmg >= 0.5)) bleed(e, dmg, !!credit.head, dir);   // a round, a blast or a frag bleeds; a fire's steady burn does not, a round into a riot shield sparks, and range plates ring
   if (credit.player) {
     if (HITFX.hit <= 0) { beep(credit.head ? 3500 : 2600, credit.head ? 0.045 : 0.03, 'square', credit.head ? 0.042 : 0.03); buzz(credit.head ? 16 : 8); }
     HITFX.hit = 0.14;
@@ -7843,6 +7844,11 @@ function toScreen(x, y, z) {   // sim coords → CSS pixels; false when behind t
   return true;
 }
 const hideEl = d => { if (d.style.display !== 'none') d.style.display = 'none'; };
+function outsideGlass(x, y) {   // behind a magnified optic, a tag for something outside the round window would float on the blackout
+  const so = OV.sight;
+  if (!so || so.style.display !== 'block' || so.className === 'dot') return false;
+  return Math.hypot(x - innerWidth / 2, y - innerHeight / 2) > parseFloat(so.style.getPropertyValue('--r'));
+}
 function updateOverlays(dt) {
   for (let i = 0; i < OV.floaters.length; i++) {
     const d = OV.floaters[i], f = floaters[i];
@@ -7901,7 +7907,7 @@ function updateOverlays(dt) {
       const tag = tags[i], s = soldiers.find(u => u.slot === i);
       if (!tag) continue;
       if (!s || !s.alive || s.slot === state.controlled || state.mode !== 'play' || !me
-        || !toScreen(s.x, s.y, (soldierTop(s) / PX + 0.3) / ZS) || SCR.x < -30 || SCR.x > innerWidth + 30 || SCR.y < top || SCR.y > innerHeight + 30) { hideEl(tag); continue; }
+        || !toScreen(s.x, s.y, (soldierTop(s) / PX + 0.3) / ZS) || SCR.x < -30 || SCR.x > innerWidth + 30 || SCR.y < top || SCR.y > innerHeight + 30 || outsideGlass(SCR.x, SCR.y)) { hideEl(tag); continue; }
       if (tag.style.display !== 'flex') tag.style.display = 'flex';
       const m = meta.squad[i], name = m ? (m.wren ? 'Cpl ' : '') + m.name : '';
       if (tag.dataset.n !== name) { tag.dataset.n = name; tag.firstChild.textContent = name; }
@@ -7914,7 +7920,7 @@ function updateOverlays(dt) {
     const objs = signs ? RANGE.signs.map((p, i) => ({ x: p[0] * PX, y: p[1] * PX, letter: String(i + 1), owner: T.seen[i] ? 'p' : null })) : (state.objs || []);
     for (let i = 0; i < 3; i++) {
       const tag = (OV.otag || (OV.otag = []))[i] || (OV.otag[i] = document.getElementById('otag' + i)), o = objs[i];
-      if (o && state.mode !== 'failed' && toScreen(o.x, o.y, (signs ? 2.7 : 4.3) / ZS) && SCR.x > -20 && SCR.x < innerWidth + 20 && SCR.y > (innerHeight < 520 ? 70 : 96) && SCR.y < innerHeight + 20) {   // never over the ticket bar and the objective chips
+      if (o && state.mode !== 'failed' && toScreen(o.x, o.y, (signs ? 2.7 : 4.3) / ZS) && SCR.x > -20 && SCR.x < innerWidth + 20 && SCR.y > (innerHeight < 520 ? 70 : 96) && SCR.y < innerHeight + 20 && !outsideGlass(SCR.x, SCR.y)) {   // never over the ticket bar and the objective chips, nor on a scope's blackout
         if (tag.style.display !== 'grid') tag.style.display = 'grid';
         if (tag.textContent !== o.letter) tag.textContent = o.letter;
         tag.style.transform = `translate3d(${SCR.x.toFixed(1)}px,${SCR.y.toFixed(1)}px,0)`;

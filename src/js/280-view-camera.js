@@ -151,6 +151,11 @@ function toScreen(x, y, z) {   // sim coords → CSS pixels; false when behind t
   return true;
 }
 const hideEl = d => { if (d.style.display !== 'none') d.style.display = 'none'; };
+function outsideGlass(x, y) {   // behind a magnified optic, a tag for something outside the round window would float on the blackout
+  const so = OV.sight;
+  if (!so || so.style.display !== 'block' || so.className === 'dot') return false;
+  return Math.hypot(x - innerWidth / 2, y - innerHeight / 2) > parseFloat(so.style.getPropertyValue('--r'));
+}
 function updateOverlays(dt) {
   for (let i = 0; i < OV.floaters.length; i++) {
     const d = OV.floaters[i], f = floaters[i];
@@ -209,7 +214,7 @@ function updateOverlays(dt) {
       const tag = tags[i], s = soldiers.find(u => u.slot === i);
       if (!tag) continue;
       if (!s || !s.alive || s.slot === state.controlled || state.mode !== 'play' || !me
-        || !toScreen(s.x, s.y, (soldierTop(s) / PX + 0.3) / ZS) || SCR.x < -30 || SCR.x > innerWidth + 30 || SCR.y < top || SCR.y > innerHeight + 30) { hideEl(tag); continue; }
+        || !toScreen(s.x, s.y, (soldierTop(s) / PX + 0.3) / ZS) || SCR.x < -30 || SCR.x > innerWidth + 30 || SCR.y < top || SCR.y > innerHeight + 30 || outsideGlass(SCR.x, SCR.y)) { hideEl(tag); continue; }
       if (tag.style.display !== 'flex') tag.style.display = 'flex';
       const m = meta.squad[i], name = m ? (m.wren ? 'Cpl ' : '') + m.name : '';
       if (tag.dataset.n !== name) { tag.dataset.n = name; tag.firstChild.textContent = name; }
@@ -222,7 +227,7 @@ function updateOverlays(dt) {
     const objs = signs ? RANGE.signs.map((p, i) => ({ x: p[0] * PX, y: p[1] * PX, letter: String(i + 1), owner: T.seen[i] ? 'p' : null })) : (state.objs || []);
     for (let i = 0; i < 3; i++) {
       const tag = (OV.otag || (OV.otag = []))[i] || (OV.otag[i] = document.getElementById('otag' + i)), o = objs[i];
-      if (o && state.mode !== 'failed' && toScreen(o.x, o.y, (signs ? 2.7 : 4.3) / ZS) && SCR.x > -20 && SCR.x < innerWidth + 20 && SCR.y > (innerHeight < 520 ? 70 : 96) && SCR.y < innerHeight + 20) {   // never over the ticket bar and the objective chips
+      if (o && state.mode !== 'failed' && toScreen(o.x, o.y, (signs ? 2.7 : 4.3) / ZS) && SCR.x > -20 && SCR.x < innerWidth + 20 && SCR.y > (innerHeight < 520 ? 70 : 96) && SCR.y < innerHeight + 20 && !outsideGlass(SCR.x, SCR.y)) {   // never over the ticket bar and the objective chips, nor on a scope's blackout
         if (tag.style.display !== 'grid') tag.style.display = 'grid';
         if (tag.textContent !== o.letter) tag.textContent = o.letter;
         tag.style.transform = `translate3d(${SCR.x.toFixed(1)}px,${SCR.y.toFixed(1)}px,0)`;

@@ -279,12 +279,13 @@ function hurtEnemy(idx, dmg, credit, dir) {
   const e = enemies[idx];
   if (e.hp <= 0) return false;                                    // already dead this frame
   if (e.target) { targetHit(e, credit); return false; }           // a range target folds; it never dies
-  if (e.type === 'brute' && dir && e.aim != null && Math.cos(e.aim) * dir.x + Math.sin(e.aim) * dir.y < -0.35) {   // riot shield soaks frontal fire
+  const shielded = e.type === 'brute' && dir && e.aim != null && Math.cos(e.aim) * dir.x + Math.sin(e.aim) * dir.y < -0.35;
+  if (shielded) {   // riot shield soaks frontal fire
     dmg *= 0.3;
     particles.push({ x: e.x, y: e.y, z: 16, vx: rand(-50, 50), vy: rand(-50, 50), vz: rand(40, 90), life: 0.15, max: 0.15, col: '#fff4c0', r: 1.4 });
   }
   e.hp -= dmg; e.flash = 0.1; e.lastHit = dir;
-  if (!e.target && (dir || dmg >= 0.5)) bleed(e, dmg, !!credit.head, dir);   // a round, a blast or a frag bleeds; a fire's steady burn does not (and range plates ring instead)
+  if (!e.target && !shielded && (dir || dmg >= 0.5)) bleed(e, dmg, !!credit.head, dir);   // a round, a blast or a frag bleeds; a fire's steady burn does not, a round into a riot shield sparks, and range plates ring
   if (credit.player) {
     if (HITFX.hit <= 0) { beep(credit.head ? 3500 : 2600, credit.head ? 0.045 : 0.03, 'square', credit.head ? 0.042 : 0.03); buzz(credit.head ? 16 : 8); }
     HITFX.hit = 0.14;

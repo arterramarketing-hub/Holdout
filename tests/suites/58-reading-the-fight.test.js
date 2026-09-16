@@ -30,6 +30,13 @@ suite('friend or foe', t => {
     assert.ok($('mate' + mates[2].slot).classList.contains('far'), 'past 35 m: the triangle alone');
     aim.yaw = Math.PI; cam.yaw = Math.PI; frames(2);
     assert.ok(mates.every(m => $('mate' + m.slot).style.display === 'none'), 'nothing for teammates behind you');
+    aim.yaw = 0; cam.yaw = 0; mates[1].alive = true; mates[1].x = h.x + 8 * PX; mates[1].y = h.y - 10 * PX;   // well off to the right
+    frames(2);
+    assert.eq($('mate' + mates[1].slot).style.display, 'flex', 'seen from the hip');
+    h.weapon = 'sniper'; h.sight = 'scope'; aim.ads = true; frames(2, 0.5);
+    assert.eq($('sight').style.display, 'block', 'behind the 6x scope');
+    assert.eq($('mate' + mates[1].slot).style.display, 'none', 'no name floating on the blackout outside the glass');
+    aim.ads = false;
   });
   t.test('the enemy is dark with a red armband; your squad is light', () => {
     const us = soldierPalette(1, slotColor(1), slotDark(1)), them = enemyPalette(ETYPES.grunt.col);
@@ -155,6 +162,16 @@ suite('blood', t => {
     assert.eq(splats.length, 1, 'one splat');
     const sp = splats[0];
     assert.ok(sp.y < e.y && e.y - sp.y < 1.3 * PX, 'on the ground behind him, along the shot: ' + ((e.y - sp.y) / PX).toFixed(2) + ' m');
+  });
+  t.test('a round into a breacher\'s riot shield sparks and does not bleed; one in his back does', () => {
+    const { e } = range8();
+    const brute = G.spawn('brute', e.x + 3 * PX, e.y); brute.sp = 0; brute.hp = brute.maxHp = 1e6; brute.aim = Math.PI / 2;   // facing south, toward you
+    particles.length = 0; splats.length = 0;
+    hurtEnemy(enemies.indexOf(brute), 1, { player: true, wkey: 'ar' }, { x: 0, y: -1 });   // a round travelling north: into his face and shield
+    assert.eq(splats.length, 0, 'no splat off the shield');
+    assert.ok(!particles.some(p => p.kind === 'mist'), 'no mist');
+    hurtEnemy(enemies.indexOf(brute), 1, { player: true, wkey: 'ar' }, { x: 0, y: 1 });    // travelling south: into his back
+    assert.eq(splats.length, 1, 'a hit from behind bleeds');
   });
   t.test('a fire does not bleed its victims every frame, and the ground keeps at most 64 splats', () => {
     const { e } = range8();
