@@ -336,7 +336,7 @@ function explode(x, y, r, eDmg, sDmg, credit, z = 0) {   // z: how high the blas
   for (const ob of obstacles.slice()) {   // blasts chew through cover
     if (!ob.hp) continue;
     const d = coverPoint(ob, x, y, CP).d;
-    if (d < r) damageCover(ob, 30 * (1 - Math.max(0, d) / r) + 10);
+    if (d < r) damageCover(ob, 30 * (1 - Math.max(0, d) / r) + 10, credit);   // a barrel your blast sets off is yours too
   }
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 500 * 500) cam.shake = Math.max(cam.shake, 7);
   for (let j = enemies.length - 1; j >= 0; j--) {

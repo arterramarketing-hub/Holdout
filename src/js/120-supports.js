@@ -60,6 +60,17 @@ function updateFires(dt) {
     if (f.t <= 0) fires.splice(i, 1);
   }
 }
+const MINE_HIT = { r: 13, top: 0.25 * PX };   // px: the plate (0.34 m across) with a little grace, and how low a round must be to strike it
+function shootMine(b) {   // one of your rounds on a mine sets it off where it lies, and what it kills is yours — so is what it does to you
+  for (let i = 0; i < mines.length; i++) {
+    const m = mines[i];
+    if (dist2(b.x, b.y, m.x, m.y) > MINE_HIT.r * MINE_HIT.r) continue;
+    mines.splice(i, 1);
+    explode(m.x, m.y, CFG.mineR, CFG.mineDmg, CFG.mineDmg, { player: true, wkey: null, slot: b.slot });
+    return true;
+  }
+  return false;
+}
 function updateMines() {
   for (let i = mines.length - 1; i >= 0; i--) {
     const m = mines[i];

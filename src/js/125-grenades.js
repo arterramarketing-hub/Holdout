@@ -13,7 +13,7 @@
 const FRAG_G = 9.8 * PX;   // gravity, px/s²
 function throwGrenade(s) {
   if (!s || !s.alive || screen !== 'battle' || state.mode !== 'play' || s.slot !== state.controlled) return false;
-  if ((s.frags || 0) <= 0 || s.throwT > 0 || s.swapT > 0) return false;
+  if ((s.frags || 0) <= 0 || s.throwT > 0 || s.swapT > 0 || bossCine()) return false;   // not while the camera is away on the Warlord
   s.frags--; s.throwT = 0.7; s.sprinting = false; s.sprintOutT = CFG.sprintOut;
   let ox = s.x, oy = s.y, oz = 1.5 * PX, yaw = aim.yaw, el = Math.atan(aim.pitch);
   if (fpvActive() || !VIEW.ready || !VIEW.camera) { const R = crosshairRay(s); ox = R.ox + R.dx * 20; oy = R.oy + R.dy * 20; oz = R.oz - 0.12 * PX; }
@@ -118,7 +118,7 @@ function fragBlast(g) {
   for (const ob of obstacles.slice()) {
     if (!ob.hp) continue;
     const d = coverPoint(ob, x, y, CP).d;
-    if (d < R) damageCover(ob, 26 * (1 - Math.max(0, d) / R) + 6);
+    if (d < R) damageCover(ob, 26 * (1 - Math.max(0, d) / R) + 6, g.hostile ? null : { player: true, wkey: 'frag', slot: g.owner });
   }
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 700 * 700) cam.shake = Math.max(cam.shake, 8);
   const reach = (tx, ty, tr) => { const d = Math.max(0, Math.hypot(tx - x, ty - y) - tr * 0.5); return d < R && losClear(x, y, tx, ty) ? 1 - d / R : 0; };

@@ -695,10 +695,17 @@
   #sight.acog #sg-ret::after { transform:rotate(42deg); }
   #sight.acog #sg-mask::after { content:''; position:absolute; left:var(--cx); top:var(--cy); width:calc(var(--r) * 2); height:calc(var(--r) * 2);
     margin:calc(-1 * var(--r)) 0 0 calc(-1 * var(--r)); border-radius:50%; box-shadow:inset 0 0 22px 6px rgba(0,0,0,.55); }
-  #sight.scope #sg-ret { width:calc(var(--r) * 2); height:2px; margin:-1px 0 0 calc(-1 * var(--r)); background:#0a0a0a; }
-  #sight.scope #sg-ret::before { content:''; position:absolute; left:50%; top:calc(-1 * var(--r)); width:2px; height:calc(var(--r) * 2); margin-left:-1px; background:#0a0a0a; }
-  #sight.scope #sg-ret::after { content:''; position:absolute; left:50%; top:50%; width:5px; height:5px; margin:-2.5px 0 0 -2.5px; border-radius:50%;
-    border:1.5px solid #0a0a0a; }
+  /* the 6x scope: a duplex — heavy posts that lead the eye in, a fine cross where it counts, nothing drawn at the centre itself.
+     One square the size of the glass, laid from the exact centre, so every line is measured from the same point. */
+  #sight *, #sight *::before, #sight *::after { box-sizing:border-box; }   /* pseudo-elements do not inherit the page's border-box: a bordered one grows and slides off its centre */
+  #sight.scope #sg-ret { left:calc(var(--cx) - var(--r)); top:calc(var(--cy) - var(--r)); width:calc(var(--r) * 2); height:calc(var(--r) * 2);
+    background:linear-gradient(#0a0a0a, #0a0a0a) 0 calc(var(--r) - 1px) / 100% 2px no-repeat,
+               linear-gradient(#0a0a0a, #0a0a0a) calc(var(--r) - 1px) 0 / 2px 100% no-repeat; }
+  #sight.scope #sg-ret::before, #sight.scope #sg-ret::after { content:''; position:absolute; }
+  #sight.scope #sg-ret::before { left:0; right:0; top:calc(var(--r) - 3px); height:6px;
+    background:linear-gradient(90deg, #0a0a0a 0 29%, transparent 29% 71%, #0a0a0a 71%); }
+  #sight.scope #sg-ret::after { top:0; bottom:0; left:calc(var(--r) - 3px); width:6px;
+    background:linear-gradient(180deg, #0a0a0a 0 29%, transparent 29% 71%, #0a0a0a 71%); }
   #sight.scope #sg-mask::after { content:''; position:absolute; left:var(--cx); top:var(--cy); width:calc(var(--r) * 2); height:calc(var(--r) * 2);
     margin:calc(-1 * var(--r)) 0 0 calc(-1 * var(--r)); border-radius:50%; box-shadow:inset 0 0 40px 14px rgba(0,0,0,.7); }
   #reticle.hot { color:#ff3b30; }   /* an enemy is lined up under it */
@@ -722,6 +729,8 @@
   #cine-top, #cine-bot { position:fixed; left:0; right:0; height:11vh; background:#000; z-index:9; pointer-events:none; transition:transform .25s ease; }
   #cine-top { top:0; transform:translateY(-100%); } #cine-bot { bottom:0; transform:translateY(100%); }
   body.cine #cine-top, body.cine #cine-bot { transform:none; }
+  /* the Warlord's hero shot is a cutscene: nothing of yours on it but the letterbox and its title card */
+  body.boss-cine #bhud, body.boss-cine #reticle, body.boss-cine #sight, body.boss-cine #threats, body.boss-cine #joy, body.boss-cine #floaters { visibility:hidden !important; }
   #floaters, #threats { position:fixed; inset:0; z-index:8; pointer-events:none; overflow:hidden; }
   .floater { position:absolute; left:0; top:0; display:none; white-space:nowrap; will-change:transform;
     font:800 13px var(--mono); letter-spacing:.06em; color:var(--accent); text-shadow:0 1px 3px rgba(0,0,0,.95); }
@@ -1509,7 +1518,7 @@ const COVER_KINDS = {   // half-size px, visual height m, hp, chance to stop a r
   mound:    { shape: 'c', r: 50, hgt: 1.3, hp: 0, block: 1, mat: 'dirt' },
   grave:    { shape: 'r', hw: 16, hd: 8, hgt: 0.9, hp: 0, block: 0.95, mat: 'stone' },
   hedge:    { shape: 'r', hw: 80, hd: 16, hgt: 1.3, hp: 0, block: 0.35, mat: 'leaf' },
-  pump:     { shape: 'r', hw: 16, hd: 24, hgt: 1.7, hp: 24, block: 0.85, mat: 'metal', boom: 80 },
+  pump:     { shape: 'r', hw: 16, hd: 24, hgt: 1.7, hp: 6, block: 0.85, mat: 'metal', boom: 80 },   // a fuel pump goes up like a barrel: six M4 rounds, two from the Intervention
   tanker:   { shape: 'r', hw: 46, hd: 150, hgt: 3.0, hp: 150, block: 1, mat: 'metal', boom: 180, wreck: 'tankwreck' },
   tankwreck:{ shape: 'r', hw: 46, hd: 150, hgt: 2.2, hp: 0, block: 0.9, mat: 'metal' },
   logs:     { shape: 'r', hw: 70, hd: 32, hgt: 1.2, hp: 90, block: 0.95, mat: 'wood' },
@@ -1695,14 +1704,14 @@ function followPath(u, spd, dt) {   // true once the last waypoint is reached
 }
 
 // ---------- cover lifecycle ----------
-function damageCover(ob, dmg) {
+function damageCover(ob, dmg, credit) {   // credit: whoever's round or blast this was, so an explosion they set off is theirs
   if (!ob.hp || ob.hp <= 0) return;
   const was = ob.hp / ob.maxHp;
   ob.hp -= dmg;
-  if (ob.hp <= 0) destroyCover(ob);
+  if (ob.hp <= 0) destroyCover(ob, credit);
   else if (was > 0.5 && ob.hp / ob.maxHp <= 0.5) propsDirty = true;   // shows its damaged state
 }
-function destroyCover(ob) {
+function destroyCover(ob, credit) {
   const i = obstacles.indexOf(ob);
   if (i < 0) return;
   obstacles.splice(i, 1);
@@ -1718,7 +1727,7 @@ function destroyCover(ob) {
   navPatch(ob); propsDirty = true;
   for (const u of soldiers) if (u.coverRef === ob) { u.coverRef = null; u.tacT = 0; }
   for (const u of enemies) if (u.coverRef === ob) { u.coverRef = null; u.tacT = 0; }
-  if (K.boom) explode(ob.x, ob.y, K.boom, 3, 2, { player: false, wkey: null });
+  if (K.boom) explode(ob.x, ob.y, K.boom, 3, 2, credit && credit.player ? { player: true, wkey: null, slot: credit.slot } : { player: false, wkey: null });
   else sfxBreak(ob.x, ob.y, K.mat);
 }
 function tallyClaims() {   // each side counts only its own people on a piece of cover — they use opposite faces
@@ -3292,7 +3301,7 @@ function explode(x, y, r, eDmg, sDmg, credit, z = 0) {   // z: how high the blas
   for (const ob of obstacles.slice()) {   // blasts chew through cover
     if (!ob.hp) continue;
     const d = coverPoint(ob, x, y, CP).d;
-    if (d < r) damageCover(ob, 30 * (1 - Math.max(0, d) / r) + 10);
+    if (d < r) damageCover(ob, 30 * (1 - Math.max(0, d) / r) + 10, credit);   // a barrel your blast sets off is yours too
   }
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 500 * 500) cam.shake = Math.max(cam.shake, 7);
   for (let j = enemies.length - 1; j >= 0; j--) {
@@ -3457,6 +3466,17 @@ function updateFires(dt) {
     if (f.t <= 0) fires.splice(i, 1);
   }
 }
+const MINE_HIT = { r: 13, top: 0.25 * PX };   // px: the plate (0.34 m across) with a little grace, and how low a round must be to strike it
+function shootMine(b) {   // one of your rounds on a mine sets it off where it lies, and what it kills is yours — so is what it does to you
+  for (let i = 0; i < mines.length; i++) {
+    const m = mines[i];
+    if (dist2(b.x, b.y, m.x, m.y) > MINE_HIT.r * MINE_HIT.r) continue;
+    mines.splice(i, 1);
+    explode(m.x, m.y, CFG.mineR, CFG.mineDmg, CFG.mineDmg, { player: true, wkey: null, slot: b.slot });
+    return true;
+  }
+  return false;
+}
 function updateMines() {
   for (let i = mines.length - 1; i >= 0; i--) {
     const m = mines[i];
@@ -3481,7 +3501,7 @@ function updateMines() {
 const FRAG_G = 9.8 * PX;   // gravity, px/s²
 function throwGrenade(s) {
   if (!s || !s.alive || screen !== 'battle' || state.mode !== 'play' || s.slot !== state.controlled) return false;
-  if ((s.frags || 0) <= 0 || s.throwT > 0 || s.swapT > 0) return false;
+  if ((s.frags || 0) <= 0 || s.throwT > 0 || s.swapT > 0 || bossCine()) return false;   // not while the camera is away on the Warlord
   s.frags--; s.throwT = 0.7; s.sprinting = false; s.sprintOutT = CFG.sprintOut;
   let ox = s.x, oy = s.y, oz = 1.5 * PX, yaw = aim.yaw, el = Math.atan(aim.pitch);
   if (fpvActive() || !VIEW.ready || !VIEW.camera) { const R = crosshairRay(s); ox = R.ox + R.dx * 20; oy = R.oy + R.dy * 20; oz = R.oz - 0.12 * PX; }
@@ -3586,7 +3606,7 @@ function fragBlast(g) {
   for (const ob of obstacles.slice()) {
     if (!ob.hp) continue;
     const d = coverPoint(ob, x, y, CP).d;
-    if (d < R) damageCover(ob, 26 * (1 - Math.max(0, d) / R) + 6);
+    if (d < R) damageCover(ob, 26 * (1 - Math.max(0, d) / R) + 6, g.hostile ? null : { player: true, wkey: 'frag', slot: g.owner });
   }
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 700 * 700) cam.shake = Math.max(cam.shake, 8);
   const reach = (tx, ty, tr) => { const d = Math.max(0, Math.hypot(tx - x, ty - y) - tr * 0.5); return d < R && losClear(x, y, tx, ty) ? 1 - d / R : 0; };
@@ -4353,7 +4373,7 @@ function updateSoldiers(dt) {
       aimAssist(s, dt);
       s.aim = aim.yaw - Math.PI / 2;
       s.quietT = aim.fire ? 0 : (s.quietT || 0) + dt;
-      if (aim.fire && s.fireCd <= 0 && s.reloadT <= 0 && !s.sprinting && s.sprintOutT <= 0 && s.throwT <= 0.35 && !(s.swapT > 0)) {
+      if (aim.fire && s.fireCd <= 0 && s.reloadT <= 0 && !s.sprinting && s.sprintOutT <= 0 && s.throwT <= 0.35 && !(s.swapT > 0) && !bossCine()) {
         if (s.pistol || s.mag > 0) {
           s.fireCd = s.pistol ? SIDEARM.cd : w.cd;
           fire(s, null, true, s.aim);
@@ -4603,6 +4623,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
       b.x += b.vx * sdt; b.y += b.vy * sdt; b.life -= sdt; b.age = (b.age || 0) + sdt;
       if (b.ballistic) {
         b.z += b.vz * sdt;
+        if (b.fromPlayer && b.z < MINE_HIT.top && mines.length && shootMine(b)) { dead = true; break; }   // down at a mine: it goes off
         if (b.z <= 0) { b.z = 0; impact(b, '#8a7a5a', false); dead = true; break; }   // into the ground where you aimed low
       }
       if (b.life <= 0) {
@@ -4616,7 +4637,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
         if (b.ballistic && COVER_KINDS[ob.kind].block >= 0.5) { if (b.z >= coverTop(ob)) continue; }   // a real line: over the top of it, or into it
         else if (!b.aoe && Math.random() > ob.block) { b.over = ob; continue; }   // this one flies over the top
         impact(b, MAT_COL[COVER_KINDS[ob.kind].mat] || '#999999', false);
-        if (!b.aoe) damageCover(ob, b.dmg);
+        if (!b.aoe) damageCover(ob, b.dmg, b.fromPlayer ? { player: true, wkey: null, slot: b.slot } : null);
         dead = true; break;
       }
       if (dead) break;
@@ -6180,7 +6201,9 @@ function drawViewmodel(s, wdt, set) {
     TMP.m.multiplyMatrices(cam3.matrixWorld, TMP.m2);
     FPV.muz = FPV.muz || TMP.v.clone();
     FPV.muz.setFromMatrixPosition(TMP.m);
-    if (FPV.flashT > 0) {   // down the sights the bloom sits in the middle of the picture: keep it from washing the sight out
+    const scoped = glass && A > 0.85;   // behind a magnified optic the barrel is not in the picture: a glow or a tracer rising from it floats in the glass, off the crosshair
+    if (scoped) FPV.muz.copy(cam3.position).addScaledVector(cam3.getWorldDirection(TMP.v2), 0.9);   // so the round leaves from the middle of the glass
+    if (FPV.flashT > 0 && !scoped) {   // down the sights the bloom sits in the middle of the picture: keep it from washing the sight out
       const k = FPV.flashT / VM_FLASH, a = 1 - 0.55 * A, big = FLASH_SIZE[key] || 1;
       bloomAt(FPV.muz, 0.3 * FPV.flashSc * big * a, BLOOM.wide, 0.5 * k * a, FPV.flashRot);
       bloomAt(FPV.muz, 0.11 * FPV.flashSc * big, BLOOM.core, 0.9 * k * a, FPV.flashRot + 0.8);
@@ -7623,6 +7646,9 @@ const CAM3 = {
   port: { dist: 5.6, height: 2.6, side: 0, fov: 72, ahead: 5, lookH: 1.1 },
 };
 const camView = { eye: null, look: null, oEye: null, oLook: null, cEye: null, cLook: null, have: false, orbit: 0, orbitBase: 0, bossSeen: null, bossT: 0, dieFrom: null, dieLook: null };
+// The Warlord's hero shot is a cutscene: while it plays the camera is not your eyes, so nothing of yours is drawn over it —
+// no gun, no crosshair or scope, no HUD — the sights do not zoom it, and your trigger waits (you cannot see what it would hit).
+const bossCine = () => camView.bossT > 0;
 function chasePose(sx, sy, yaw, pr, eye, look, dist = pr.dist) {
   const X = sx * XS, Z = sy * XS, fx = Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = Math.sin(yaw);
   eye.set(X - fx * dist + rx * pr.side, pr.height + (dist - pr.dist) * 0.3, Z - fz * dist + rz * pr.side);
@@ -7657,7 +7683,10 @@ function updateCamera3(dt) {
     }
   }
   const boss = state.bossRef;
-  if (boss && boss !== C.bossSeen && state.mode === 'play') { C.bossSeen = boss; C.bossT = CFG.bossIntro; showTitleCard(boss); }   // waits out a death camera
+  if (boss && boss !== C.bossSeen && state.mode === 'play') {   // waits out a death camera
+    C.bossSeen = boss; C.bossT = CFG.bossIntro; showTitleCard(boss);
+    aim.fire = false; aim.take = false;   // a thumb resting on a button that is about to vanish must not come back firing
+  }
   const ctl = soldiers[state.controlled];
   if (state.mode === 'dying' && ctl) {   // watch them go down: ease around and low over the body
     if (C.bossT > 0) { C.bossT = 0; hideTitleCard(); }
@@ -7717,11 +7746,12 @@ function updateCamera3(dt) {
   if (cam.shake > 0) cam3.position.add(TMP.v.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).multiplyScalar(cam.shake * 0.012));
   cam3.lookAt(C.look);
   if (cam.shake > 0) cam3.rotateZ(rand(-1, 1) * cam.shake * 0.0025);
-  const base = (fpvActive() ? 68 : pr.fov) + (meta.opts.fovAdd || 0) + 8 * FPV.sprintK;
+  const base = (fpvActive() && !bossCine() ? 68 : pr.fov) + (meta.opts.fovAdd || 0) + 8 * FPV.sprintK;
   const adsFov = 2 * Math.atan(Math.tan(base * Math.PI / 360) / heroZoom()) * 180 / Math.PI;   // a 4x shows a quarter of the view
-  const fov = lerp(base, adsFov, FPV.adsK) * (1 - cam.punch * 1.5) * (state.mode === 'dying' ? 0.88 : 1);
+  const fov = lerp(base, adsFov, bossCine() ? 0 : FPV.adsK) * (1 - cam.punch * 1.5) * (state.mode === 'dying' ? 0.88 : 1);
   if (Math.abs(cam3.fov - fov) > 0.01) { cam3.fov = fov; cam3.updateProjectionMatrix(); }
   document.body.classList.toggle('cine', state.mode === 'dying' || state.mode === 'spectate' || C.bossT > 0);
+  document.body.classList.toggle('boss-cine', C.bossT > 0);
   document.body.classList.toggle('dying', state.mode === 'dying');
 }
 
@@ -7730,7 +7760,7 @@ function updateSightOverlay() {   // what you see through an optic once you are 
   const so = OV.sight || (OV.sight = $('sight'));
   if (!so) return;
   const hero = soldiers[state.controlled], sg = heroSight();
-  const on = fpvActive() && hero && hero.alive && !hero.pistol && sg.over && FPV.adsK > 0.7 && state.mode === 'play';
+  const on = fpvActive() && !bossCine() && hero && hero.alive && !hero.pistol && sg.over && FPV.adsK > 0.7 && state.mode === 'play';
   if (!on) { if (so.style.display !== 'none') so.style.display = 'none'; return; }
   const ads = adsInfo(hero.weapon, hero);
   let r = innerHeight * 0.46;
@@ -7741,8 +7771,8 @@ function updateSightOverlay() {   // what you see through an optic once you are 
   so.style.display = 'block';
   so.style.opacity = smooth(0.7, sg.over === 'dot' ? 0.97 : 0.85, FPV.adsK).toFixed(2);   // a scope's blackout is solid by the time the tube would show
   if (so.className !== sg.over) so.className = sg.over;
-  so.style.setProperty('--cx', (innerWidth / 2).toFixed(0) + 'px');
-  so.style.setProperty('--cy', (innerHeight / 2).toFixed(0) + 'px');
+  so.style.setProperty('--cx', (innerWidth / 2).toFixed(1) + 'px');    // the exact middle, where the view's own axis is: rounding an odd size puts the cross half a pixel off it
+  so.style.setProperty('--cy', (innerHeight / 2).toFixed(1) + 'px');
   so.style.setProperty('--r', r.toFixed(0) + 'px');
 }
 const OV = { floaters: [], threats: [], fpsOn: false, fpsT: 0, frames: 0, reticle: null, rtOn: false, rtX: 0, rtY: 0, gap: 0, dmg: [], mapT: 0, hurt: 0 };
@@ -7784,7 +7814,7 @@ function updateOverlays(dt) {
   const aimAt = hero && hero.alive && state.mode === 'play' ? state.crossTarget : null;
   if (rt) {
     let shown = false;
-    if (hero && hero.alive && state.mode === 'play') {   // you aim it: the crosshair sits in the middle
+    if (hero && hero.alive && state.mode === 'play' && !bossCine()) {   // you aim it: the crosshair sits in the middle
       const cx = innerWidth / 2, cy = innerHeight * (fpvActive() ? 0.5 : 0.46);
       OV.rtX = cx; OV.rtY = cy;
       rt.style.display = 'block';
@@ -8003,7 +8033,7 @@ function renderView(dt) {
   const D = VIEW.dyn, F = VIEW.fx;
   batchesDo(D, b => b.begin());
   for (const k of FX_FRAME) F[k].begin();
-  const fpv = fpvActive();
+  const fpv = fpvActive() && !bossCine();   // on the hero shot the camera is not your eyes: your body is drawn, your gun is not
   for (const s of soldiers) if (s.alive && !(fpv && s.slot === state.controlled)) drawSoldier(s, wdt, D);
   if (fpv) drawViewmodel(soldiers[state.controlled], wdt, D);
   for (const e of enemies) drawEnemy(e, wdt, D);

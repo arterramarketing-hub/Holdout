@@ -93,7 +93,7 @@ const COVER_KINDS = {   // half-size px, visual height m, hp, chance to stop a r
   mound:    { shape: 'c', r: 50, hgt: 1.3, hp: 0, block: 1, mat: 'dirt' },
   grave:    { shape: 'r', hw: 16, hd: 8, hgt: 0.9, hp: 0, block: 0.95, mat: 'stone' },
   hedge:    { shape: 'r', hw: 80, hd: 16, hgt: 1.3, hp: 0, block: 0.35, mat: 'leaf' },
-  pump:     { shape: 'r', hw: 16, hd: 24, hgt: 1.7, hp: 24, block: 0.85, mat: 'metal', boom: 80 },
+  pump:     { shape: 'r', hw: 16, hd: 24, hgt: 1.7, hp: 6, block: 0.85, mat: 'metal', boom: 80 },   // a fuel pump goes up like a barrel: six M4 rounds, two from the Intervention
   tanker:   { shape: 'r', hw: 46, hd: 150, hgt: 3.0, hp: 150, block: 1, mat: 'metal', boom: 180, wreck: 'tankwreck' },
   tankwreck:{ shape: 'r', hw: 46, hd: 150, hgt: 2.2, hp: 0, block: 0.9, mat: 'metal' },
   logs:     { shape: 'r', hw: 70, hd: 32, hgt: 1.2, hp: 90, block: 0.95, mat: 'wood' },
@@ -279,14 +279,14 @@ function followPath(u, spd, dt) {   // true once the last waypoint is reached
 }
 
 // ---------- cover lifecycle ----------
-function damageCover(ob, dmg) {
+function damageCover(ob, dmg, credit) {   // credit: whoever's round or blast this was, so an explosion they set off is theirs
   if (!ob.hp || ob.hp <= 0) return;
   const was = ob.hp / ob.maxHp;
   ob.hp -= dmg;
-  if (ob.hp <= 0) destroyCover(ob);
+  if (ob.hp <= 0) destroyCover(ob, credit);
   else if (was > 0.5 && ob.hp / ob.maxHp <= 0.5) propsDirty = true;   // shows its damaged state
 }
-function destroyCover(ob) {
+function destroyCover(ob, credit) {
   const i = obstacles.indexOf(ob);
   if (i < 0) return;
   obstacles.splice(i, 1);
@@ -302,7 +302,7 @@ function destroyCover(ob) {
   navPatch(ob); propsDirty = true;
   for (const u of soldiers) if (u.coverRef === ob) { u.coverRef = null; u.tacT = 0; }
   for (const u of enemies) if (u.coverRef === ob) { u.coverRef = null; u.tacT = 0; }
-  if (K.boom) explode(ob.x, ob.y, K.boom, 3, 2, { player: false, wkey: null });
+  if (K.boom) explode(ob.x, ob.y, K.boom, 3, 2, credit && credit.player ? { player: true, wkey: null, slot: credit.slot } : { player: false, wkey: null });
   else sfxBreak(ob.x, ob.y, K.mat);
 }
 function tallyClaims() {   // each side counts only its own people on a piece of cover — they use opposite faces

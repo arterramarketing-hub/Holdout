@@ -137,4 +137,40 @@ suite('ballistics', t => {
     aim.yaw = 0; aim.pitch = 0.02; aim.ads = true;
     assert.range(flight(h), 55, 65, 'metres before the warhead went off');
   });
+  // ---------- things in the town that go off when you shoot them ----------
+  const shootAt = (h, x, y, z) => {   // one aimed round down the sights, flown until it lands
+    aim.ads = true; aimAt(h, x, y, z);
+    h.fireCd = 0; h.mag = 9999; aim.fire = true; tick(1 / 60); aim.fire = false;
+    for (let k = 0; k < 120 && bullets.some(b => b.fromPlayer); k++) tick(1 / 60);
+    aim.ads = false;
+  };
+  t.test('a round on a mine sets it off, and what it kills is yours', () => {
+    const { h, e } = lane('ar', 12);
+    e.hp = e.maxHp = 1.5;
+    mines = [{ x: e.x + 40, y: e.y + 30, blink: 0 }, { x: h.x - 3 * PX, y: h.y - 9 * PX, blink: 0 }];   // 50 px from him: inside the blast, outside the 38 px he would step on it from
+    const [near, other] = mines, kills = state.kills, down = state.enemyDown;
+    shootAt(h, other.x + 1.2 * PX, other.y, 0);   // a metre off the other one: the ground, not the mine
+    assert.ok(mines.includes(other), 'a round a metre wide of a mine leaves it be');
+    assert.ok(mines.includes(near) && enemies.includes(e), 'still armed, and he never stepped on it');
+    shootAt(h, near.x, near.y, 0);
+    assert.ok(!mines.includes(near), 'the mine you hit went off');
+    assert.ok(!enemies.includes(e), 'the rifleman beside it went down');
+    assert.eq(state.kills, kills + 1, 'the kill is yours');
+    assert.eq(state.enemyDown, down + 1, 'and it counts');
+  });
+  t.test('a fuel pump goes up after six rifle rounds, takes its neighbour with it, and the kills are yours', () => {
+    const { h, e } = lane('ar', 8);
+    enemies.length = 0;
+    const pump = addCover('pump', 48, 62), twin = addCover('pump', 48, 59.6);   // a pair on one island, 2.4 m apart like the gas station's
+    const e2 = G.spawn('grunt', 49.3 * PX, 60.8 * PX); e2.sp = 0; e2.ranged = 0; e2.dmg = 0;
+    const kills = state.kills;
+    let rounds = 0;
+    while (obstacles.includes(pump) && rounds < 12) { shootAt(h, pump.x, pump.y + pump.hd, 0.85 * PX); rounds++; }
+    assert.ok(!obstacles.includes(pump), 'the pump blew');
+    assert.range(rounds, 5, 6, 'rounds it took');
+    assert.ok(!obstacles.includes(twin), 'and set off the one beside it');
+    assert.ok(!enemies.includes(e2), 'the rifleman between them went down');
+    assert.eq(state.kills, kills + 1, 'credited to you');
+    return { rounds };
+  });
 });

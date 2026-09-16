@@ -339,7 +339,9 @@ function drawViewmodel(s, wdt, set) {
     TMP.m.multiplyMatrices(cam3.matrixWorld, TMP.m2);
     FPV.muz = FPV.muz || TMP.v.clone();
     FPV.muz.setFromMatrixPosition(TMP.m);
-    if (FPV.flashT > 0) {   // down the sights the bloom sits in the middle of the picture: keep it from washing the sight out
+    const scoped = glass && A > 0.85;   // behind a magnified optic the barrel is not in the picture: a glow or a tracer rising from it floats in the glass, off the crosshair
+    if (scoped) FPV.muz.copy(cam3.position).addScaledVector(cam3.getWorldDirection(TMP.v2), 0.9);   // so the round leaves from the middle of the glass
+    if (FPV.flashT > 0 && !scoped) {   // down the sights the bloom sits in the middle of the picture: keep it from washing the sight out
       const k = FPV.flashT / VM_FLASH, a = 1 - 0.55 * A, big = FLASH_SIZE[key] || 1;
       bloomAt(FPV.muz, 0.3 * FPV.flashSc * big * a, BLOOM.wide, 0.5 * k * a, FPV.flashRot);
       bloomAt(FPV.muz, 0.11 * FPV.flashSc * big, BLOOM.core, 0.9 * k * a, FPV.flashRot + 0.8);

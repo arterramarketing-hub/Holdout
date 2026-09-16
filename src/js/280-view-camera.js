@@ -4,6 +4,9 @@ const CAM3 = {
   port: { dist: 5.6, height: 2.6, side: 0, fov: 72, ahead: 5, lookH: 1.1 },
 };
 const camView = { eye: null, look: null, oEye: null, oLook: null, cEye: null, cLook: null, have: false, orbit: 0, orbitBase: 0, bossSeen: null, bossT: 0, dieFrom: null, dieLook: null };
+// The Warlord's hero shot is a cutscene: while it plays the camera is not your eyes, so nothing of yours is drawn over it —
+// no gun, no crosshair or scope, no HUD — the sights do not zoom it, and your trigger waits (you cannot see what it would hit).
+const bossCine = () => camView.bossT > 0;
 function chasePose(sx, sy, yaw, pr, eye, look, dist = pr.dist) {
   const X = sx * XS, Z = sy * XS, fx = Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = Math.sin(yaw);
   eye.set(X - fx * dist + rx * pr.side, pr.height + (dist - pr.dist) * 0.3, Z - fz * dist + rz * pr.side);
@@ -38,7 +41,10 @@ function updateCamera3(dt) {
     }
   }
   const boss = state.bossRef;
-  if (boss && boss !== C.bossSeen && state.mode === 'play') { C.bossSeen = boss; C.bossT = CFG.bossIntro; showTitleCard(boss); }   // waits out a death camera
+  if (boss && boss !== C.bossSeen && state.mode === 'play') {   // waits out a death camera
+    C.bossSeen = boss; C.bossT = CFG.bossIntro; showTitleCard(boss);
+    aim.fire = false; aim.take = false;   // a thumb resting on a button that is about to vanish must not come back firing
+  }
   const ctl = soldiers[state.controlled];
   if (state.mode === 'dying' && ctl) {   // watch them go down: ease around and low over the body
     if (C.bossT > 0) { C.bossT = 0; hideTitleCard(); }
@@ -98,11 +104,12 @@ function updateCamera3(dt) {
   if (cam.shake > 0) cam3.position.add(TMP.v.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).multiplyScalar(cam.shake * 0.012));
   cam3.lookAt(C.look);
   if (cam.shake > 0) cam3.rotateZ(rand(-1, 1) * cam.shake * 0.0025);
-  const base = (fpvActive() ? 68 : pr.fov) + (meta.opts.fovAdd || 0) + 8 * FPV.sprintK;
+  const base = (fpvActive() && !bossCine() ? 68 : pr.fov) + (meta.opts.fovAdd || 0) + 8 * FPV.sprintK;
   const adsFov = 2 * Math.atan(Math.tan(base * Math.PI / 360) / heroZoom()) * 180 / Math.PI;   // a 4x shows a quarter of the view
-  const fov = lerp(base, adsFov, FPV.adsK) * (1 - cam.punch * 1.5) * (state.mode === 'dying' ? 0.88 : 1);
+  const fov = lerp(base, adsFov, bossCine() ? 0 : FPV.adsK) * (1 - cam.punch * 1.5) * (state.mode === 'dying' ? 0.88 : 1);
   if (Math.abs(cam3.fov - fov) > 0.01) { cam3.fov = fov; cam3.updateProjectionMatrix(); }
   document.body.classList.toggle('cine', state.mode === 'dying' || state.mode === 'spectate' || C.bossT > 0);
+  document.body.classList.toggle('boss-cine', C.bossT > 0);
   document.body.classList.toggle('dying', state.mode === 'dying');
 }
 
@@ -111,7 +118,7 @@ function updateSightOverlay() {   // what you see through an optic once you are 
   const so = OV.sight || (OV.sight = $('sight'));
   if (!so) return;
   const hero = soldiers[state.controlled], sg = heroSight();
-  const on = fpvActive() && hero && hero.alive && !hero.pistol && sg.over && FPV.adsK > 0.7 && state.mode === 'play';
+  const on = fpvActive() && !bossCine() && hero && hero.alive && !hero.pistol && sg.over && FPV.adsK > 0.7 && state.mode === 'play';
   if (!on) { if (so.style.display !== 'none') so.style.display = 'none'; return; }
   const ads = adsInfo(hero.weapon, hero);
   let r = innerHeight * 0.46;
@@ -122,8 +129,8 @@ function updateSightOverlay() {   // what you see through an optic once you are 
   so.style.display = 'block';
   so.style.opacity = smooth(0.7, sg.over === 'dot' ? 0.97 : 0.85, FPV.adsK).toFixed(2);   // a scope's blackout is solid by the time the tube would show
   if (so.className !== sg.over) so.className = sg.over;
-  so.style.setProperty('--cx', (innerWidth / 2).toFixed(0) + 'px');
-  so.style.setProperty('--cy', (innerHeight / 2).toFixed(0) + 'px');
+  so.style.setProperty('--cx', (innerWidth / 2).toFixed(1) + 'px');    // the exact middle, where the view's own axis is: rounding an odd size puts the cross half a pixel off it
+  so.style.setProperty('--cy', (innerHeight / 2).toFixed(1) + 'px');
   so.style.setProperty('--r', r.toFixed(0) + 'px');
 }
 const OV = { floaters: [], threats: [], fpsOn: false, fpsT: 0, frames: 0, reticle: null, rtOn: false, rtX: 0, rtY: 0, gap: 0, dmg: [], mapT: 0, hurt: 0 };
@@ -165,7 +172,7 @@ function updateOverlays(dt) {
   const aimAt = hero && hero.alive && state.mode === 'play' ? state.crossTarget : null;
   if (rt) {
     let shown = false;
-    if (hero && hero.alive && state.mode === 'play') {   // you aim it: the crosshair sits in the middle
+    if (hero && hero.alive && state.mode === 'play' && !bossCine()) {   // you aim it: the crosshair sits in the middle
       const cx = innerWidth / 2, cy = innerHeight * (fpvActive() ? 0.5 : 0.46);
       OV.rtX = cx; OV.rtY = cy;
       rt.style.display = 'block';
@@ -384,7 +391,7 @@ function renderView(dt) {
   const D = VIEW.dyn, F = VIEW.fx;
   batchesDo(D, b => b.begin());
   for (const k of FX_FRAME) F[k].begin();
-  const fpv = fpvActive();
+  const fpv = fpvActive() && !bossCine();   // on the hero shot the camera is not your eyes: your body is drawn, your gun is not
   for (const s of soldiers) if (s.alive && !(fpv && s.slot === state.controlled)) drawSoldier(s, wdt, D);
   if (fpv) drawViewmodel(soldiers[state.controlled], wdt, D);
   for (const e of enemies) drawEnemy(e, wdt, D);

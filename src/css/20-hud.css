@@ -167,10 +167,17 @@
   #sight.acog #sg-ret::after { transform:rotate(42deg); }
   #sight.acog #sg-mask::after { content:''; position:absolute; left:var(--cx); top:var(--cy); width:calc(var(--r) * 2); height:calc(var(--r) * 2);
     margin:calc(-1 * var(--r)) 0 0 calc(-1 * var(--r)); border-radius:50%; box-shadow:inset 0 0 22px 6px rgba(0,0,0,.55); }
-  #sight.scope #sg-ret { width:calc(var(--r) * 2); height:2px; margin:-1px 0 0 calc(-1 * var(--r)); background:#0a0a0a; }
-  #sight.scope #sg-ret::before { content:''; position:absolute; left:50%; top:calc(-1 * var(--r)); width:2px; height:calc(var(--r) * 2); margin-left:-1px; background:#0a0a0a; }
-  #sight.scope #sg-ret::after { content:''; position:absolute; left:50%; top:50%; width:5px; height:5px; margin:-2.5px 0 0 -2.5px; border-radius:50%;
-    border:1.5px solid #0a0a0a; }
+  /* the 6x scope: a duplex — heavy posts that lead the eye in, a fine cross where it counts, nothing drawn at the centre itself.
+     One square the size of the glass, laid from the exact centre, so every line is measured from the same point. */
+  #sight *, #sight *::before, #sight *::after { box-sizing:border-box; }   /* pseudo-elements do not inherit the page's border-box: a bordered one grows and slides off its centre */
+  #sight.scope #sg-ret { left:calc(var(--cx) - var(--r)); top:calc(var(--cy) - var(--r)); width:calc(var(--r) * 2); height:calc(var(--r) * 2);
+    background:linear-gradient(#0a0a0a, #0a0a0a) 0 calc(var(--r) - 1px) / 100% 2px no-repeat,
+               linear-gradient(#0a0a0a, #0a0a0a) calc(var(--r) - 1px) 0 / 2px 100% no-repeat; }
+  #sight.scope #sg-ret::before, #sight.scope #sg-ret::after { content:''; position:absolute; }
+  #sight.scope #sg-ret::before { left:0; right:0; top:calc(var(--r) - 3px); height:6px;
+    background:linear-gradient(90deg, #0a0a0a 0 29%, transparent 29% 71%, #0a0a0a 71%); }
+  #sight.scope #sg-ret::after { top:0; bottom:0; left:calc(var(--r) - 3px); width:6px;
+    background:linear-gradient(180deg, #0a0a0a 0 29%, transparent 29% 71%, #0a0a0a 71%); }
   #sight.scope #sg-mask::after { content:''; position:absolute; left:var(--cx); top:var(--cy); width:calc(var(--r) * 2); height:calc(var(--r) * 2);
     margin:calc(-1 * var(--r)) 0 0 calc(-1 * var(--r)); border-radius:50%; box-shadow:inset 0 0 40px 14px rgba(0,0,0,.7); }
   #reticle.hot { color:#ff3b30; }   /* an enemy is lined up under it */
@@ -194,6 +201,8 @@
   #cine-top, #cine-bot { position:fixed; left:0; right:0; height:11vh; background:#000; z-index:9; pointer-events:none; transition:transform .25s ease; }
   #cine-top { top:0; transform:translateY(-100%); } #cine-bot { bottom:0; transform:translateY(100%); }
   body.cine #cine-top, body.cine #cine-bot { transform:none; }
+  /* the Warlord's hero shot is a cutscene: nothing of yours on it but the letterbox and its title card */
+  body.boss-cine #bhud, body.boss-cine #reticle, body.boss-cine #sight, body.boss-cine #threats, body.boss-cine #joy, body.boss-cine #floaters { visibility:hidden !important; }
   #floaters, #threats { position:fixed; inset:0; z-index:8; pointer-events:none; overflow:hidden; }
   .floater { position:absolute; left:0; top:0; display:none; white-space:nowrap; will-change:transform;
     font:800 13px var(--mono); letter-spacing:.06em; color:var(--accent); text-shadow:0 1px 3px rgba(0,0,0,.95); }

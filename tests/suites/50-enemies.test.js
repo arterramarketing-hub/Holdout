@@ -18,6 +18,37 @@ suite('enemies', t => {
     assert.ok(enemies.includes(boss), 'the Warlord still stands');
     assert.eq(max, CFG.enemyCap, 'most on the field besides the Warlord');
   });
+  t.test('the Warlord\'s hero shot is a cutscene: no gun, crosshair, scope or HUD on it, and your trigger waits', () => {
+    newCampaign(); seed(6);
+    const h = battle({ weapon: 'sniper', clear: true });
+    benchSquad(); setupObjectives([]);
+    aim.ads = true; frames(2, 0.5);   // settled behind the 6x scope, as you would be
+    assert.ok($('sight').style.display === 'block', 'behind the scope before it starts');
+    let vm = 0;
+    const realVm = drawViewmodel;
+    drawViewmodel = (...a) => { vm++; return realVm(...a); };
+    try {
+      spawnBoss();
+      frames(1, 1 / 60);   // the camera picks the Warlord up on its next frame
+      assert.ok(bossCine(), 'the hero shot is playing');
+      vm = 0; frames(2, 1 / 60);
+      assert.eq(vm, 0, 'no gun drawn over it');
+      assert.ok(document.body.classList.contains('boss-cine'));
+      for (const id of ['bhud', 'reticle', 'sight']) assert.eq(getComputedStyle($(id)).visibility, 'hidden', id + ' is hidden');
+      assert.ok(VIEW.camera.fov > 40, `the scope does not zoom a cutscene (fov ${VIEW.camera.fov.toFixed(1)})`);
+      const shots = state.shots;
+      h.fireCd = 0; aim.fire = true; tick(1 / 60); aim.fire = false;
+      assert.eq(state.shots, shots, 'no round while the camera is away');
+      assert.ok(!throwGrenade(h), 'and no frag');
+      frames(3, 1);   // it plays out
+      assert.ok(!bossCine(), 'over');
+      assert.eq(getComputedStyle($('bhud')).visibility, 'visible', 'the HUD is back');
+      vm = 0; frames(1, 1 / 60);
+      assert.eq(vm, 1, 'and so is your gun');
+      h.fireCd = 0; aim.fire = true; tick(1 / 60); aim.fire = false;
+      assert.eq(state.shots, shots + 1, 'and your trigger');
+    } finally { drawViewmodel = realVm; aim.ads = false; }
+  });
   t.test('killing the Warlord secures the front', () => {
     newCampaign(); seed(9);
     battle({ weapon: 'sniper' });

@@ -113,7 +113,7 @@ function updateSoldiers(dt) {
       aimAssist(s, dt);
       s.aim = aim.yaw - Math.PI / 2;
       s.quietT = aim.fire ? 0 : (s.quietT || 0) + dt;
-      if (aim.fire && s.fireCd <= 0 && s.reloadT <= 0 && !s.sprinting && s.sprintOutT <= 0 && s.throwT <= 0.35 && !(s.swapT > 0)) {
+      if (aim.fire && s.fireCd <= 0 && s.reloadT <= 0 && !s.sprinting && s.sprintOutT <= 0 && s.throwT <= 0.35 && !(s.swapT > 0) && !bossCine()) {
         if (s.pistol || s.mag > 0) {
           s.fireCd = s.pistol ? SIDEARM.cd : w.cd;
           fire(s, null, true, s.aim);
@@ -363,6 +363,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
       b.x += b.vx * sdt; b.y += b.vy * sdt; b.life -= sdt; b.age = (b.age || 0) + sdt;
       if (b.ballistic) {
         b.z += b.vz * sdt;
+        if (b.fromPlayer && b.z < MINE_HIT.top && mines.length && shootMine(b)) { dead = true; break; }   // down at a mine: it goes off
         if (b.z <= 0) { b.z = 0; impact(b, '#8a7a5a', false); dead = true; break; }   // into the ground where you aimed low
       }
       if (b.life <= 0) {
@@ -376,7 +377,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
         if (b.ballistic && COVER_KINDS[ob.kind].block >= 0.5) { if (b.z >= coverTop(ob)) continue; }   // a real line: over the top of it, or into it
         else if (!b.aoe && Math.random() > ob.block) { b.over = ob; continue; }   // this one flies over the top
         impact(b, MAT_COL[COVER_KINDS[ob.kind].mat] || '#999999', false);
-        if (!b.aoe) damageCover(ob, b.dmg);
+        if (!b.aoe) damageCover(ob, b.dmg, b.fromPlayer ? { player: true, wkey: null, slot: b.slot } : null);
         dead = true; break;
       }
       if (dead) break;
