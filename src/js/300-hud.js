@@ -4,16 +4,14 @@ const $ = id => document.getElementById(id);
 const el = {
   hurt: $('hurt'), banner: $('banner'),
   modal: $('modal'), modalbox: $('modalbox'), hint: $('hint'),
-  bhud: $('bhud'), mapscr: $('mapscr'), teamscr: $('teamscr'),
+  bhud: $('bhud'), mapscr: $('mapscr'),
   supports: $('supports'), mapsvg: $('mapsvg'),
 };
 function showScreen(s) {
   screen = s;
   el.mapscr.classList.toggle('on', s === 'map');
-  el.teamscr.classList.toggle('on', s === 'team');
   el.bhud.style.display = s === 'battle' ? 'block' : 'none';
   if (s === 'map') { renderMap(); playMapEntrance(); }
-  if (s === 'team') renderTeam();
 }
 let hpRefs = [];
 function rebuildSupports() {

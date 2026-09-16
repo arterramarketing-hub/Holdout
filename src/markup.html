@@ -60,10 +60,9 @@
         <div class="br-tools"><button class="br-cog" id="torange" aria-label="Firing range" title="Firing range"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 1.8v4M12 18.2v4M1.8 12h4M18.2 12h4"/></svg></button>
         <button class="br-cog" id="toinstall" hidden aria-label="Install Holdout" title="Install Holdout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M4.5 15.5v5h15v-5"/></svg></button>
         <button class="br-cog" id="tosettings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 2.8v3.1M12 18.1v3.1M2.8 12h3.1M18.1 12h3.1M5.5 5.5l2.2 2.2M16.3 16.3l2.2 2.2M5.5 18.5l2.2-2.2M16.3 7.7l2.2-2.2"/></svg></button></div>
-        <div class="br-segs" id="brSegs" aria-hidden="true"></div>
       </header>
       <section class="br-sector" aria-live="polite">
-        <div class="br-status"><span class="chip" id="brChip">Attackable</span><span class="br-code" id="brCode">Sector 01</span></div>
+        <div class="br-status"><span class="chip" id="brChip">Attackable</span><span class="br-code" id="brCode">Grid C4</span></div>
         <h2 class="br-name" id="brName">Miller Fields</h2>
         <div class="br-stats">
           <div class="bs"><span class="k">Threat</span><span class="v" id="brTier">Tier 1</span><span class="pips" id="brPips"></span></div>
@@ -72,25 +71,17 @@
         </div>
         <div class="br-prog" id="brProg" hidden><i id="brProgFill"></i></div>
         <p class="br-line" id="brLine"></p>
+        <p class="br-rule" id="brRule"></p>
+      </section>
+      <section class="br-kit" aria-label="Kit">
+        <div class="kit-head"><span class="kit-k">Kit</span><span class="kit-cls" id="kitcls">Assault rifle</span></div>
+        <div class="wpick" id="wpick" role="radiogroup" aria-label="Weapon"></div>
+        <div class="kit-now"><span class="kit-v" id="kitname">M4A1</span><span class="kit-s" id="kitsub">Iron sights · 30 rds</span></div>
+        <div class="kit-att" id="kitatt"></div>
+        <p class="kit-note" id="kitnote"></p>
       </section>
       <button class="cta deploy" id="deploybtn"><span id="dbMain">Deploy</span><span class="db-sub" id="dbSub">Miller Fields</span></button>
-      <div class="br-foot">
-        <button class="kit" id="toteam"><span class="kit-k">Kit</span><span class="kit-go">Change ›</span><span class="kit-v" id="kitname">M4A1</span><span class="kit-s" id="kitsub">Iron sights · 30 rds</span></button>
-        <ol class="squad" id="brSquad" aria-label="Your squad"></ol>
-      </div>
     </aside>
-  </div>
-</div>
-
-<!-- ============ LOADOUT ============ -->
-<div id="teamscr" class="scr">
-  <div class="menu lo">
-    <aside class="lo-rail">
-      <div class="ttl"><div class="eyebrow">Battle prep</div><h1 class="xl">Loadout</h1></div>
-      <div class="wlist" id="wlist"></div>
-      <button class="btn" id="backmap">◂ Map</button>
-    </aside>
-    <section class="lo-detail" id="loadout"></section>
   </div>
 </div>
 

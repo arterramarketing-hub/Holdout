@@ -46,11 +46,11 @@ const WKEYS = Object.keys(WEAPONS).filter(k => !WEAPONS[k].pickup);   // what BA
 // ---------- attachments: what you look through, and how many rounds you carry in the gun ----------
 // zoom is tan-based (a 4x shows a quarter of the view); rate = how fast the sights come up; spread = ADS spread multiplier;
 // over = the DOM overlay drawn once you are settled behind the optic (null = the real iron sights, nothing drawn)
-const SIGHTS = {
-  iron:  { name:'IRON SIGHTS',  zoom:1.45, rate:12,  spread:0.5,  over:null,    note:'Iron sights: quick to the shoulder, a touch of zoom, nothing between you and the street.' },
-  rds:   { name:'RED DOT 1.2x', zoom:1.2,  rate:14,  spread:0.5,  over:'dot',   note:'Red dot: the fastest to the eye, 1.2x, a clean window with one dot in it.' },
-  acog:  { name:'ACOG 4x',      zoom:4,    rate:8.5, spread:0.4,  over:'acog',  note:'ACOG: 4x for the long streets, a red chevron, slower to shoulder and heavy on the look speed.' },
-  scope: { name:'SCOPE 6x',     zoom:6,    rate:7.5, spread:0.35, over:'scope', note:'6x scope: the far end of the street, fully blacked out around the glass; slow to shoulder.' },
+const SIGHTS = {   // `short` is the label on the kit's chips, where the briefing column is only ~290 px wide
+  iron:  { name:'IRON SIGHTS',  short:'IRON',    zoom:1.45, rate:12,  spread:0.5,  over:null,    note:'Iron sights: quick to the shoulder, a touch of zoom, nothing between you and the street.' },
+  rds:   { name:'RED DOT 1.2x', short:'RED DOT', zoom:1.2,  rate:14,  spread:0.5,  over:'dot',   note:'Red dot: the fastest to the eye, 1.2x, a clean window with one dot in it.' },
+  acog:  { name:'ACOG 4x',      short:'ACOG 4X', zoom:4,    rate:8.5, spread:0.4,  over:'acog',  note:'ACOG: 4x for the long streets, a red chevron, slower to shoulder and heavy on the look speed.' },
+  scope: { name:'SCOPE 6x',     short:'6X',      zoom:6,    rate:7.5, spread:0.35, over:'scope', note:'6x scope: the far end of the street, fully blacked out around the glass; slow to shoulder.' },
 };
 const SIGHT_OPTS = { smg: ['iron', 'rds', 'acog'], ar: ['iron', 'rds', 'acog'], lmg: ['iron', 'rds', 'acog'], sniper: ['scope', 'acog'] };
 const NO_ATT = { sight: 'iron', ext: false, suppressor: false };

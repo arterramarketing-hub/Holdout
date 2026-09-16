@@ -28,38 +28,31 @@
     body.touch #feed { top:88px; bottom:auto; left:calc(6px + var(--sl)); }
     #hint { bottom:70px; font-size:10px; }
     #dmgdir i { width:210px; height:180px; margin:-180px 0 0 -105px; }
-    .menu { grid-template-columns:minmax(0, 1fr) clamp(220px, 34vw, 300px); }
     .ops { grid-template-columns:minmax(0, 1fr) clamp(262px, 38vw, 330px); }
-    .menu.lo { grid-template-columns:clamp(190px, 30vw, 260px) minmax(0, 1fr); }
+    .attrow > span { display:none; }                                    /* the chips say IRON, EXT 45, SUPPRESSOR themselves */
+    .attrow > span + .att + .att + span + .att { margin-left:10px; }    /* so the two groups still read as two */
   }
   /* phones in landscape: every pixel is the fight */
   @media (max-height:520px) {
     #banner, #hint, #floaters, #feed { display:none !important; }   /* no text toasts on a phone */
-    .menu .eyebrow { margin-bottom:5px; font-size:9.5px; letter-spacing:.26em; } .menu .ttl .xl { font-size:28px; }
-    .lo-rail { gap:8px; padding:10px 12px; }
-    .brief { gap:7px; padding:9px 12px 10px; }
+    .brief { gap:6px; padding:8px 12px 9px; }
     .br-head { gap:6px 10px; } .br-tag, .br-held { font-size:9.5px; } .br-cog { width:28px; height:28px; } .br-cog svg { width:15px; height:15px; }
-    .br-segs i { height:4px; }
-    .br-sector { gap:5px; padding-top:7px; }
+    .br-sector { gap:4px; padding-top:6px; }
     .chip { padding:3px 7px 3px 6px; font-size:8.5px; } .br-code { font-size:8.5px; }
     .br-name { font-size:20px; }
     .bs { gap:2px; padding:5px 7px 6px; } .bs .k { font-size:7.5px; letter-spacing:.16em; } .bs .v { font-size:12.5px; } .bs .s { font-size:8px; }
-    .br-line { font-size:9.5px; line-height:1.4; }
+    .br-line { font-size:9.5px; line-height:1.4; } .br-line b { width:12px; height:12px; font-size:8px; vertical-align:-1px; }
+    .br-rule { display:none; }   /* the rule of the game never changes; a phone spends its pixels on this sector */
     .deploy { min-height:44px; align-items:center; } .deploy .db-sub { font-size:8.5px; }
-    .br-foot { grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr); gap:6px; }
-    .kit { gap:1px 6px; padding:6px 8px; } .kit-k, .kit-go { font-size:8px; } .kit-v { font-size:13px; } .kit-s { font-size:8px; }
-    .squad li { column-gap:6px; padding:3px 6px 4px 0; } .squad b { font-size:7px; } .squad span { gap:4px; font-size:9.5px; } .squad em { display:none; }
+    .br-kit { gap:4px; padding-top:6px; }
+    .wp { gap:0; padding:3px 2px 4px; } .wp b { font-size:8.5px; letter-spacing:.06em; } .wp span { font-size:7px; }
+    .kit-v { font-size:13px; } .kit-s { font-size:8px; }
+    .kit-att { gap:3px; }
+    .kit-note { display:none; }   /* no room on a phone: the chips and the line above say what it is */
     .om-co { font-size:8px; letter-spacing:.28em; } .om-title { margin-top:2px; font-size:24px; }
     .ops-key { gap:4px 10px; font-size:8px; } .ops-scale { gap:6px; font-size:8px; } .ops-scale b { width:13px; height:13px; font-size:7.5px; }
-    .menu .btn { padding:8px 12px; font-size:10.5px; }
     .cta { padding:12px 18px; font-size:13px; }
-    .wrow { padding:5px 10px; } .wr-n { font-size:12px; } .wr-d { font-size:10px; } .wr-c { font-size:8px; letter-spacing:.16em; }
-    .lo-detail { gap:8px; padding:10px 14px; }
-    .lo-head { padding-bottom:6px; } .lo-cls { font-size:9px; } .lo-name { margin-top:2px; font-size:26px; } .lo-tag { padding:3px 7px; font-size:8.5px; }
-    .lo-stats { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px 16px; }
-    .lstat { gap:3px 8px; } .lstat .k { font-size:8.5px; letter-spacing:.14em; } .lstat .v { font-size:11px; }
-    .att { padding:4px 7px; font-size:9px; } .attrow > span { min-width:40px; font-size:8.5px; }
-    .lo-note { font-size:9.5px; line-height:1.45; }
+    .att { padding:2px 5px; font-size:8.5px; } .attrow { gap:3px; }
     #modal { padding:14px calc(26px + var(--sr)) 14px calc(26px + var(--sl)); }
     #modalbox .eyebrow { margin-bottom:8px; font-size:10px; }
     #modalbox h2 { margin-bottom:10px; font-size:40px; }
@@ -76,11 +69,12 @@
     #bootbox h1 { font-size:64px; } #bootbox .boot-press { margin:12px 0 14px; } #bootlines { min-height:0; font-size:10px; }
     body.touch #supports { gap:3px; } body.touch .supbtn { gap:2px; padding:4px 8px 5px; }   /* clear of the ADS button below */
   }
+  /* the shortest phones: the KIT label goes, the picker and the gun name below it say the same thing */
+  @media (max-height:410px) {
+    .kit-head { display:none; }
+  }
   /* a desktop window taller than it is wide stacks the menu columns (a phone is held sideways, so it never lands here) */
   @media (max-aspect-ratio: 1/1) {
-    .menu, .menu.lo { grid-template-columns:minmax(0, 1fr); }
     .ops { grid-template-columns:minmax(0, 1fr); grid-template-rows:minmax(40vh, 1fr) auto; }
     .brief { border-left:0; border-top:1px solid var(--line); }
-    .br-sector { margin-top:0; }
-    .lo-rail { border-right:0; border-bottom:1px solid var(--line); }
   }

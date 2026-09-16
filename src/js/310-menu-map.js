@@ -1,12 +1,15 @@
 // ---------- START MENU: the theater map beside the briefing ----------
 // A field operations table. The thirteen sectors are regions split by distance with hand-wandered borders; contour
 // lines climb to the northern ranges, a river runs past Velen Crossing into Dunmoor Marsh, and wherever your ground
-// meets theirs an orange front line burns. The briefing column says what the selected sector is, what holds it, what
-// the sky will be when you get there, and deploys. Map units are TERRITORIES' own (x 0..100, y 0..60; 1 unit = 2.5 km).
+// meets theirs an orange front line burns. Map units are TERRITORIES' own (x 0..100, y 0..60; 1 unit = 2.5 km).
+// The briefing column beside it carries everything you decide before a fight: what the sector is, what holds it, what
+// the sky will be, the objectives you will be fighting over, the gun and attachments you carry, and DEPLOY. There is
+// no separate armory screen — the kit is here, two taps from the fight. The column is only ~290 px wide on a phone in
+// landscape and must never scroll, so every block earns its height: what a section costs is what it is worth.
 let selectedTid = -1;
 const MAPV = { built: false, owned: null, cells: null, regions: [], nodes: [], layers: {}, enterT: 0 };
 const SVGNS = 'http://www.w3.org/2000/svg';
-const SQUAD_ROLE_NAMES = ['Lead', 'Point', 'Flank', 'Overwatch'];
+const WSHORT = { smg: 'SMG', ar: 'AR', lmg: 'LMG', sniper: 'SNIPER', rocket: 'ROCKET' };   // the picker's chips: one gun per class, so the class is the name
 function svgEl(tag, attrs, parent) {
   const n = document.createElementNS(SVGNS, tag);
   if (attrs) for (const k in attrs) n.setAttribute(k, attrs[k]);
@@ -342,15 +345,11 @@ function renderBrief() {
   const heldN = TERRITORIES.filter(terrOwned).length;
   $('brTheater').textContent = `Theater ${ROMAN[meta.theater] || meta.theater + 1}`;
   $('brHeld').textContent = `${heldN} / ${TERRITORIES.length} held`;
-  const segs = $('brSegs');
-  if (segs.children.length !== TERRITORIES.length) segs.innerHTML = TERRITORIES.map(() => '<i></i>').join('');
-  TERRITORIES.forEach((tt, i) => { segs.children[i].className = (terrOwned(tt) ? 'held' : terrAttackable(tt) ? 'atk' : '') + (i === t.id ? ' sel' : ''); });
-
   const own = terrOwned(t), atk = terrAttackable(t), prog = meta.terr[t.id].progress, tier = effTier(t);
   const chip = $('brChip');
   chip.className = 'chip ' + (own ? 'held' : atk ? 'atk' : 'foe');
   chip.textContent = own ? 'Held' : atk ? (prog > 0 ? `${Math.floor(prog)}% taken` : 'Attackable') : 'Enemy held';
-  $('brCode').textContent = `Sector ${String(t.id).padStart(2, '0')} · Grid ${gridRef(t)}`;
+  $('brCode').textContent = `Grid ${gridRef(t)}`;
   $('brName').textContent = t.name;
   $('brTier').textContent = `Tier ${tier}`;
   $('brPips').innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < Math.min(tier, 6) ? 'on' : ''}"></i>`).join('');
@@ -366,10 +365,11 @@ function renderBrief() {
   const bar = $('brProg');
   bar.hidden = own || !(prog > 0);
   $('brProgFill').style.width = prog + '%';
-  const line = $('brLine');
+  const line = $('brLine'), rule = $('brRule');
+  // what is true of THIS sector is always shown; the rule of the game, which never changes, only where there is room
+  rule.textContent = atk ? `Hold more objectives than they do to bleed their ${left} reserves. The Warlord comes at 90%.` : '';
   if (own) line.textContent = t.tier === 0 ? 'Headquarters. Every push starts here.' : 'Held by the Ninth Company.';
-  else if (atk) line.innerHTML = 'Objectives ' + objectiveSites(t.id).map((o, i) => `<b>${'ABC'[i]}</b> ${o.name}`).join(' · ')
-    + `. Hold more of them than they do to bleed their <b>${left}</b> reserves; the Warlord comes at 90%.`;
+  else if (atk) line.innerHTML = objectiveSites(t.id).map((o, i) => `<b>${'ABC'[i]}</b> ${o.name}`).join(' · ');
   else {
     const via = t.adj.map(i => TERRITORIES[i]).filter(terrAttackable).map(x => x.name);
     line.textContent = via.length ? `Out of reach. Take ${via.join(' or ')} first.` : 'Out of reach. Push the front closer.';
@@ -379,13 +379,52 @@ function renderBrief() {
   $('dbMain').textContent = atk ? (prog > 0 ? 'Resume' : 'Deploy') : own ? 'Held' : 'Out of reach';
   $('dbSub').textContent = atk ? t.name : 'Pick an orange sector';
 
-  const lk = WEAPONS[meta.loadout] ? meta.loadout : 'ar', lw = WEAPONS[lk], la = attFor(lk);
-  $('kitname').textContent = lw.name;
-  $('kitsub').textContent = (SIGHT_OPTS[lk] ? SIGHTS[la.sight].name + ' · ' : '') + `${la.ext && lw.ext ? lw.ext : lw.mag} rds` + (la.suppressor ? ' · suppressed' : '');
-  $('brSquad').innerHTML = meta.squad.slice(0, CFG.rosterSize).map((m, i) => {
-    const gun = WEAPONS[i === 0 ? lk : m.weapon] || WEAPONS.ar;
-    return `<li style="--c:${m.wren ? '#d9dbe4' : slotColor(i)}"><b>${SQUAD_ROLE_NAMES[i]}</b><span>${m.wren ? 'CPL ' : ''}${m.name}<em>${gun.name}</em></span></li>`;
+  renderKit();
+}
+// ---- the kit: the gun you carry and what is bolted to it, decided here rather than on a screen of its own ----
+const WCLASS = { smg: 'Submachine gun', ar: 'Assault rifle', lmg: 'Light machine gun', sniper: 'Sniper rifle', rocket: 'Launcher' };
+const attChip = (label, on, data) => `<button class="att${on ? ' on' : ''}" ${data}>${label}</button>`;
+const attRow = (label, chips) => `<div class="attrow"><span>${label}</span>${chips.join('')}</div>`;
+function cycleWeapon(dir) {   // Y on a controller: the next gun in the picker
+  const i = WKEYS.indexOf(WEAPONS[meta.loadout] ? meta.loadout : 'ar');
+  meta.loadout = WKEYS[(i + dir + WKEYS.length) % WKEYS.length];
+  saveMeta(); renderKit();
+  beep(1250, 0.03, 'square', 0.012, -300);
+}
+function renderKit() {
+  if (!meta.attach) meta.attach = freshAttach();
+  const k = WEAPONS[meta.loadout] ? meta.loadout : 'ar', w = WEAPONS[k], att = attFor(k), opts = SIGHT_OPTS[k] || [];
+  const mag = att.ext && w.ext ? w.ext : w.mag, fall = FALLOFF[k], reach = Math.round((w.reach || w.range) / PX);
+  $('kitcls').textContent = WCLASS[k] || '';
+  $('wpick').innerHTML = WKEYS.map(q => {
+    const n = hitsToDrop(q);
+    return `<button class="wp${q === k ? ' on' : ''}" data-w="${q}" role="radio" aria-checked="${q === k}" aria-label="${WEAPONS[q].name}">`
+      + `<b>${WSHORT[q] || WEAPONS[q].name}</b><span>${n} hit${n === 1 ? '' : 's'}</span></button>`;
   }).join('');
+  $('kitname').textContent = w.name;
+  $('kitsub').textContent = [opts.length ? SIGHTS[att.sight].short : null, `${mag} rds`, `${(1 / w.cd).toFixed(1)}/s`,
+    att.suppressor ? 'suppressed' : null].filter(Boolean).join(' · ');
+  const mags = w.ext ? [attChip(`Std ${w.mag}`, !att.ext, 'data-ext="0"'), attChip(`Ext ${w.ext}`, att.ext, 'data-ext="1"')] : [];
+  const muzz = SUPPRESSOR_OK[k] ? [attChip('None', !att.suppressor, 'data-supp="0"'), attChip('Suppressor', att.suppressor, 'data-supp="1"')] : [];
+  $('kitatt').innerHTML = (opts.length ? attRow('Sight', opts.map(sk => attChip(SIGHTS[sk].short, att.sight === sk, `data-sight="${sk}"`))) : '')
+    + (mags.length || muzz.length   // one row for both: on a phone the column has no height to spare, and they wrap if it ever runs out of width
+      ? `<div class="attrow">${mags.length ? '<span>Mag</span>' + mags.join('') : ''}${muzz.length ? '<span>Muzzle</span>' + muzz.join('') : ''}</div>` : '');
+  $('kitnote').textContent = (opts.length ? SIGHTS[att.sight].note + ' ' : '')
+    + (fall ? `Full damage to ${Math.round(fall.near / PX)} m, ${Math.round(fall.min * 100)}% by ${reach} m.` : 'No damage drop-off.')
+    + ` ${(w.reload * (att.ext ? EXT_RELOAD : 1)).toFixed(1)} s reload, ${Math.round((w.moveMul || 1) * 100)}% move speed.`
+    + (w.pierce ? ` Pierces ${w.pierce} targets.` : '') + (w.aoe ? ` ${(w.aoe / PX).toFixed(1)} m blast.` : '')
+    + (att.suppressor ? ` Suppressed: a dull shot with no flash and no tracers, heard only within ${CFG.hearQuiet / PX} m (${CFG.hearLoud / PX} m without); the sights come up ${Math.round((1 - CFG.suppressorAds) * 100)}% slower.` : '');
+  $('wpick').querySelectorAll('.wp').forEach(b => b.onclick = () => {
+    if (meta.loadout === b.dataset.w) return;
+    meta.loadout = b.dataset.w; saveMeta(); renderKit();
+    beep(1250, 0.03, 'square', 0.012, -300);
+  });
+  $('kitatt').querySelectorAll('.att').forEach(b => b.onclick = () => {
+    const a = meta.attach[k] || (meta.attach[k] = { sight: opts[0], ext: false });
+    if (b.dataset.sight) a.sight = b.dataset.sight; else if (b.dataset.supp) a.suppressor = b.dataset.supp === '1'; else a.ext = b.dataset.ext === '1';
+    saveMeta(); renderKit();
+    beep(1250, 0.03, 'square', 0.012, -300);
+  });
 }
 function playMapEntrance() {   // the map lays itself out: land, sectors, the front line, markers, then the briefing
   const scr = el.mapscr;

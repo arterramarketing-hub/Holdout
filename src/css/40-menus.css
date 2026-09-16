@@ -4,9 +4,6 @@
     background-size:56px 56px; }
   .scr.on { display:flex; }
   /* Laid out for a landscape screen: a big picture on one side, a command column on the other, nothing to scroll. */
-  .menu { flex:1 0 auto; display:grid; grid-template-columns:minmax(0, 1fr) clamp(260px, 30vw, 400px); min-height:100%; }
-  .menu .eyebrow { margin-bottom:10px; }
-  .menu .ttl .xl { font-size:clamp(30px, 3.4vw, 50px); }   /* sized to the command column, not the window */
   /* ---------- start menu: the theater map beside the briefing ----------
      A field operations table. The map is drawn in theater units (x 0..100, y 0..60) and fills its pane; the
      terrain runs past the edges so a letterbox is still land. Held ground is blue and hatched, theirs a red wash,
@@ -85,7 +82,7 @@
     font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--label); pointer-events:none; }
   .ops-scale b { display:grid; place-items:center; width:16px; height:16px; font-size:9px; color:var(--ink); border:1px solid var(--line-hi); }
   .sc-bar { display:block; width:40px; height:5px; border:1px solid var(--label); border-top:0; }
-  .brief { position:relative; display:flex; flex-direction:column; gap:clamp(10px, 2vh, 16px); min-width:0; min-height:0; overflow:hidden auto;
+  .brief { position:relative; display:flex; flex-direction:column; justify-content:space-between; gap:clamp(10px, 2vh, 16px); min-width:0; min-height:0; overflow:hidden auto;
     padding:clamp(12px, 3vh, 28px) clamp(14px, 2vw, 28px); border-left:1px solid var(--line);
     background:linear-gradient(180deg, rgba(9,13,22,.98), rgba(5,8,15,.99)); }
   .br-head { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:center; gap:10px 12px; }
@@ -98,12 +95,7 @@
   .br-cog.nudge { position:relative; color:var(--accent); border-color:var(--accent); }
   .br-cog.nudge::after { content:''; position:absolute; top:-4px; right:-4px; width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent); }
   .br-cog svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:square; }
-  .br-segs { grid-column:1 / -1; display:grid; grid-template-columns:repeat(13, minmax(0, 1fr)); gap:3px; }
-  .br-segs i { height:5px; background:#1a2231; }
-  .br-segs i.held { background:var(--friend); }
-  .br-segs i.atk { background:transparent; box-shadow:inset 0 0 0 1px var(--accent); }
-  .br-segs i.sel { box-shadow:0 0 0 1px #05080f, 0 0 0 2px #fff; }
-  .br-sector { display:flex; flex-direction:column; gap:clamp(7px, 1.4vh, 12px); min-width:0; margin-top:auto; padding-top:clamp(10px, 2vh, 18px); border-top:1px solid var(--line-hi); }
+  .br-sector { display:flex; flex-direction:column; gap:clamp(7px, 1.4vh, 12px); min-width:0; padding-top:clamp(10px, 2vh, 18px); border-top:1px solid var(--line-hi); }
   .br-status { display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:0; }
   .chip { display:inline-flex; align-items:center; gap:7px; padding:4px 9px 4px 8px; font-family:var(--mono); font-weight:800; font-size:10px; letter-spacing:.18em;
     text-transform:uppercase; white-space:nowrap; }
@@ -126,25 +118,41 @@
   .br-prog { position:relative; height:4px; background:rgba(255,255,255,.07); }
   .br-prog i { position:absolute; left:0; top:0; bottom:0; background:var(--accent); }
   .br-line { margin:0; font-family:var(--mono); font-size:11px; line-height:1.55; color:var(--text); text-wrap:pretty; }
-  .br-line b { color:var(--ink); }
+  .br-line b { display:inline-grid; place-items:center; width:14px; height:14px; margin-right:3px; font-size:9px; color:var(--accent-ink);
+    background:var(--accent); vertical-align:-2px; }
+  .br-rule { margin:0; font-family:var(--mono); font-size:10px; line-height:1.5; color:var(--muted); text-wrap:pretty; }
+  .br-rule:empty { display:none; }
   .deploy { display:flex; align-items:baseline; justify-content:space-between; gap:14px; text-align:left; }
   .deploy .db-sub { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.14em; opacity:.72; }
-  .br-foot { display:grid; gap:8px; min-width:0; }
-  .kit { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:baseline; gap:2px 10px; width:100%; padding:10px 12px; text-align:left;
-    color:var(--ink); background:var(--panel); border:1px solid var(--line-hi); border-radius:0; }
-  .kit:hover { border-color:var(--accent); }
+  /* the kit: pick the gun, bolt things to it, read what that costs — all in the column, no screen of its own */
+  .br-kit { display:flex; flex-direction:column; gap:clamp(5px, 1vh, 9px); min-width:0; padding-top:clamp(8px, 1.6vh, 14px); border-top:1px solid var(--line-hi); }
+  .kit-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; min-width:0; }
   .kit-k { font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.24em; text-transform:uppercase; color:var(--label); }
-  .kit-go { font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); }
-  .kit-v { grid-column:1 / -1; font-family:var(--display); font-stretch:125%; font-weight:800; font-size:clamp(15px, 1.5vw, 19px); text-transform:uppercase;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .kit-s { grid-column:1 / -1; font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--label); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .squad { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1px; background:var(--line); border:1px solid var(--line); }
-  .squad li { display:grid; grid-template-columns:3px minmax(0, 1fr); column-gap:9px; min-width:0; padding:6px 8px 7px 0; background:var(--panel-solid); }
-  .squad li::before { content:''; grid-row:1 / 3; background:var(--c); }
-  .squad b { font-family:var(--mono); font-weight:700; font-size:8.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--label); }
-  .squad span { display:flex; align-items:baseline; gap:6px; min-width:0; font-family:var(--display); font-stretch:112%; font-weight:800; font-size:12px;
-    text-transform:uppercase; color:var(--ink); white-space:nowrap; overflow:hidden; }
-  .squad em { min-width:0; overflow:hidden; text-overflow:ellipsis; font-style:normal; font-family:var(--mono); font-weight:500; font-size:9px; letter-spacing:.04em; color:var(--muted); }
+  .kit-cls { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--mono); font-weight:700; font-size:9.5px;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--muted); }
+  .wpick { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:1px; background:var(--line); border:1px solid var(--line); }
+  .wp { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:0; padding:6px 2px 7px; text-align:center;
+    color:var(--label); background:var(--panel-solid); border:0; border-top:2px solid transparent; border-radius:0; }
+  .wp b { display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; font-family:var(--mono); font-weight:800; font-size:9.5px; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink); }
+  .wp span { font-family:var(--mono); font-weight:500; font-size:8px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
+  .wp:hover { background:rgba(255,255,255,.035); }
+  .wp.on { background:rgba(255,107,44,.11); border-top-color:var(--accent); }
+  .wp.on b { color:var(--accent); } .wp.on span { color:var(--label); }
+  .kit-now { display:flex; align-items:baseline; justify-content:space-between; gap:10px; min-width:0; }
+  .kit-v { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--display); font-stretch:125%; font-weight:800;
+    font-size:clamp(15px, 1.5vw, 19px); text-transform:uppercase; color:var(--ink); }
+  .kit-s { flex:none; font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--label); white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis; }
+  .kit-att { display:flex; flex-direction:column; gap:4px; }
+  .kit-note { margin:0; font-family:var(--mono); font-size:10px; line-height:1.5; color:var(--muted); text-wrap:pretty; }
+  .attrow { display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+  .attrow > span + .att + .att + span { margin-left:6px; }   /* the second label in a shared row needs air before it */
+  .attrow > span { min-width:46px; font-family:var(--mono); font-weight:700; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); }
+  .att { padding:5px 8px; font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--label);
+    background:transparent; border:1px solid var(--line-hi); border-radius:0; }
+  .att:hover { color:var(--ink); border-color:var(--label); }
+  .att.on { border-color:var(--accent); color:var(--accent); background:rgba(255,107,44,.08); }
   @keyframes ops-march { to { stroke-dashoffset:-1.9; } }
   @keyframes ops-pulse { 0% { opacity:.7; transform:scale(1); } 100% { opacity:0; transform:scale(1.75); } }
   @keyframes ops-lock { from { opacity:0; transform:scale(1.8); } }
@@ -164,41 +172,3 @@
   #mapscr.enter .brief > * { animation:ops-rise .5s cubic-bezier(.2, .8, .3, 1) both; }
   #mapscr.enter .brief > :nth-child(2) { animation-delay:.08s; } #mapscr.enter .brief > :nth-child(3) { animation-delay:.16s; } #mapscr.enter .brief > :nth-child(4) { animation-delay:.24s; }
   #mapscr .rg.fresh { animation:ops-taken 1.8s .9s ease-out both; }
-  /* loadout: the guns in a rail on the left, the one you carry laid out on the right */
-  .menu.lo { grid-template-columns:clamp(220px, 27vw, 340px) minmax(0, 1fr); }
-  .lo-rail { display:flex; flex-direction:column; gap:12px; min-width:0; min-height:0; overflow:auto; padding:clamp(12px, 3.2vh, 30px) clamp(12px, 2vw, 26px);
-    border-right:1px solid var(--line); background:linear-gradient(180deg, rgba(8,12,21,.94), rgba(5,8,15,.97)); }
-  .wlist { display:flex; flex-direction:column; gap:3px; }
-  .wrow { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:baseline; gap:2px 10px; width:100%; padding:9px 12px; text-align:left;
-    color:var(--ink); background:transparent; border:0; border-left:2px solid var(--line-hi); border-radius:0; }
-  .wrow:hover { background:rgba(255,255,255,.035); }
-  .wrow.on { border-left-color:var(--accent); background:rgba(255,107,44,.09); }
-  .wr-n { font-family:var(--display); font-stretch:125%; font-weight:800; font-size:14px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .wrow.on .wr-n { color:var(--accent); }
-  .wr-d { font-family:var(--mono); font-weight:800; font-size:11px; color:var(--label); font-variant-numeric:tabular-nums; }
-  .wr-c { grid-column:1 / -1; font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); }
-  .lo-rail .btn { margin-top:auto; width:100%; }
-  .lo-detail { display:flex; flex-direction:column; gap:clamp(10px, 2.4vh, 22px); min-width:0; min-height:0; overflow:auto;
-    padding:clamp(12px, 3.2vh, 30px) clamp(14px, 2.8vw, 38px); }
-  .lo-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; padding-bottom:12px; border-bottom:1px solid var(--line-hi); }
-  .lo-head > div { min-width:0; }
-  .lo-cls { font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--accent); }
-  .lo-name { margin-top:6px; font-size:clamp(30px, 5.2vw, 68px); color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .lo-tag { flex:none; padding:5px 9px; font-family:var(--mono); font-weight:800; font-size:10px; letter-spacing:.2em; text-transform:uppercase;
-    color:var(--accent-ink); background:var(--accent); }
-  .lo-stats { display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:12px 26px; }
-  .lstat { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:baseline; gap:6px 10px; }
-  .lstat .k { font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--label); }
-  .lstat .v { font-family:var(--mono); font-weight:800; font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums; white-space:nowrap; }
-  .lstat .v small { font-size:10px; color:var(--label); }
-  .lstat .bar { grid-column:1 / -1; position:relative; height:4px; background:rgba(255,255,255,.07); }
-  .lstat .bar i { position:absolute; left:0; top:0; bottom:0; background:var(--accent); }
-  .attrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
-  .attrow > span { min-width:52px; font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); }
-  .lo-note { margin:0; max-width:74ch; font-family:var(--mono); font-size:11px; line-height:1.6; color:var(--muted); }
-  .lo-actions { margin-top:auto; display:flex; gap:10px; }
-  .att { padding:6px 9px; font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.08em; color:var(--label);
-    background:transparent; border:1px solid var(--line-hi); border-radius:0; }
-  .att:hover { color:var(--ink); }
-  .att.on { border-color:var(--accent); color:var(--accent); background:rgba(255,107,44,.08); }
-

@@ -45,9 +45,6 @@ suite('audit regressions', t => {
     document.activeElement && document.activeElement.blur && document.activeElement.blur();
     pad.buttons[GPB.A] = { pressed: true, value: 1 }; tick(1 / 60); pad.buttons[GPB.A] = { pressed: false, value: 0 }; tick(1 / 60);
     assert.eq(screen, 'map', 'A took the card\'s main action');
-    showScreen('team'); document.activeElement && document.activeElement.blur && document.activeElement.blur();
-    pad.buttons[GPB.A] = { pressed: true, value: 1 }; tick(1 / 60); pad.buttons[GPB.A] = { pressed: false, value: 0 }; tick(1 / 60);
-    assert.ok($('teamscr').contains(document.activeElement), 'on the loadout, A wakes the focus ring instead of leaving');
     Object.defineProperty(navigator, 'getGamepads', { value: () => [], configurable: true });
   });
   t.test('the range button before the 3D engine is ready opens the range once it is, not a real front', async () => {

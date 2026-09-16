@@ -786,9 +786,6 @@
     background-size:56px 56px; }
   .scr.on { display:flex; }
   /* Laid out for a landscape screen: a big picture on one side, a command column on the other, nothing to scroll. */
-  .menu { flex:1 0 auto; display:grid; grid-template-columns:minmax(0, 1fr) clamp(260px, 30vw, 400px); min-height:100%; }
-  .menu .eyebrow { margin-bottom:10px; }
-  .menu .ttl .xl { font-size:clamp(30px, 3.4vw, 50px); }   /* sized to the command column, not the window */
   /* ---------- start menu: the theater map beside the briefing ----------
      A field operations table. The map is drawn in theater units (x 0..100, y 0..60) and fills its pane; the
      terrain runs past the edges so a letterbox is still land. Held ground is blue and hatched, theirs a red wash,
@@ -867,7 +864,7 @@
     font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--label); pointer-events:none; }
   .ops-scale b { display:grid; place-items:center; width:16px; height:16px; font-size:9px; color:var(--ink); border:1px solid var(--line-hi); }
   .sc-bar { display:block; width:40px; height:5px; border:1px solid var(--label); border-top:0; }
-  .brief { position:relative; display:flex; flex-direction:column; gap:clamp(10px, 2vh, 16px); min-width:0; min-height:0; overflow:hidden auto;
+  .brief { position:relative; display:flex; flex-direction:column; justify-content:space-between; gap:clamp(10px, 2vh, 16px); min-width:0; min-height:0; overflow:hidden auto;
     padding:clamp(12px, 3vh, 28px) clamp(14px, 2vw, 28px); border-left:1px solid var(--line);
     background:linear-gradient(180deg, rgba(9,13,22,.98), rgba(5,8,15,.99)); }
   .br-head { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:center; gap:10px 12px; }
@@ -880,12 +877,7 @@
   .br-cog.nudge { position:relative; color:var(--accent); border-color:var(--accent); }
   .br-cog.nudge::after { content:''; position:absolute; top:-4px; right:-4px; width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent); }
   .br-cog svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:square; }
-  .br-segs { grid-column:1 / -1; display:grid; grid-template-columns:repeat(13, minmax(0, 1fr)); gap:3px; }
-  .br-segs i { height:5px; background:#1a2231; }
-  .br-segs i.held { background:var(--friend); }
-  .br-segs i.atk { background:transparent; box-shadow:inset 0 0 0 1px var(--accent); }
-  .br-segs i.sel { box-shadow:0 0 0 1px #05080f, 0 0 0 2px #fff; }
-  .br-sector { display:flex; flex-direction:column; gap:clamp(7px, 1.4vh, 12px); min-width:0; margin-top:auto; padding-top:clamp(10px, 2vh, 18px); border-top:1px solid var(--line-hi); }
+  .br-sector { display:flex; flex-direction:column; gap:clamp(7px, 1.4vh, 12px); min-width:0; padding-top:clamp(10px, 2vh, 18px); border-top:1px solid var(--line-hi); }
   .br-status { display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:0; }
   .chip { display:inline-flex; align-items:center; gap:7px; padding:4px 9px 4px 8px; font-family:var(--mono); font-weight:800; font-size:10px; letter-spacing:.18em;
     text-transform:uppercase; white-space:nowrap; }
@@ -908,25 +900,41 @@
   .br-prog { position:relative; height:4px; background:rgba(255,255,255,.07); }
   .br-prog i { position:absolute; left:0; top:0; bottom:0; background:var(--accent); }
   .br-line { margin:0; font-family:var(--mono); font-size:11px; line-height:1.55; color:var(--text); text-wrap:pretty; }
-  .br-line b { color:var(--ink); }
+  .br-line b { display:inline-grid; place-items:center; width:14px; height:14px; margin-right:3px; font-size:9px; color:var(--accent-ink);
+    background:var(--accent); vertical-align:-2px; }
+  .br-rule { margin:0; font-family:var(--mono); font-size:10px; line-height:1.5; color:var(--muted); text-wrap:pretty; }
+  .br-rule:empty { display:none; }
   .deploy { display:flex; align-items:baseline; justify-content:space-between; gap:14px; text-align:left; }
   .deploy .db-sub { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.14em; opacity:.72; }
-  .br-foot { display:grid; gap:8px; min-width:0; }
-  .kit { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:baseline; gap:2px 10px; width:100%; padding:10px 12px; text-align:left;
-    color:var(--ink); background:var(--panel); border:1px solid var(--line-hi); border-radius:0; }
-  .kit:hover { border-color:var(--accent); }
+  /* the kit: pick the gun, bolt things to it, read what that costs — all in the column, no screen of its own */
+  .br-kit { display:flex; flex-direction:column; gap:clamp(5px, 1vh, 9px); min-width:0; padding-top:clamp(8px, 1.6vh, 14px); border-top:1px solid var(--line-hi); }
+  .kit-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; min-width:0; }
   .kit-k { font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.24em; text-transform:uppercase; color:var(--label); }
-  .kit-go { font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); }
-  .kit-v { grid-column:1 / -1; font-family:var(--display); font-stretch:125%; font-weight:800; font-size:clamp(15px, 1.5vw, 19px); text-transform:uppercase;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .kit-s { grid-column:1 / -1; font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--label); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .squad { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1px; background:var(--line); border:1px solid var(--line); }
-  .squad li { display:grid; grid-template-columns:3px minmax(0, 1fr); column-gap:9px; min-width:0; padding:6px 8px 7px 0; background:var(--panel-solid); }
-  .squad li::before { content:''; grid-row:1 / 3; background:var(--c); }
-  .squad b { font-family:var(--mono); font-weight:700; font-size:8.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--label); }
-  .squad span { display:flex; align-items:baseline; gap:6px; min-width:0; font-family:var(--display); font-stretch:112%; font-weight:800; font-size:12px;
-    text-transform:uppercase; color:var(--ink); white-space:nowrap; overflow:hidden; }
-  .squad em { min-width:0; overflow:hidden; text-overflow:ellipsis; font-style:normal; font-family:var(--mono); font-weight:500; font-size:9px; letter-spacing:.04em; color:var(--muted); }
+  .kit-cls { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--mono); font-weight:700; font-size:9.5px;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--muted); }
+  .wpick { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:1px; background:var(--line); border:1px solid var(--line); }
+  .wp { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:0; padding:6px 2px 7px; text-align:center;
+    color:var(--label); background:var(--panel-solid); border:0; border-top:2px solid transparent; border-radius:0; }
+  .wp b { display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; font-family:var(--mono); font-weight:800; font-size:9.5px; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink); }
+  .wp span { font-family:var(--mono); font-weight:500; font-size:8px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
+  .wp:hover { background:rgba(255,255,255,.035); }
+  .wp.on { background:rgba(255,107,44,.11); border-top-color:var(--accent); }
+  .wp.on b { color:var(--accent); } .wp.on span { color:var(--label); }
+  .kit-now { display:flex; align-items:baseline; justify-content:space-between; gap:10px; min-width:0; }
+  .kit-v { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--display); font-stretch:125%; font-weight:800;
+    font-size:clamp(15px, 1.5vw, 19px); text-transform:uppercase; color:var(--ink); }
+  .kit-s { flex:none; font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--label); white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis; }
+  .kit-att { display:flex; flex-direction:column; gap:4px; }
+  .kit-note { margin:0; font-family:var(--mono); font-size:10px; line-height:1.5; color:var(--muted); text-wrap:pretty; }
+  .attrow { display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+  .attrow > span + .att + .att + span { margin-left:6px; }   /* the second label in a shared row needs air before it */
+  .attrow > span { min-width:46px; font-family:var(--mono); font-weight:700; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); }
+  .att { padding:5px 8px; font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--label);
+    background:transparent; border:1px solid var(--line-hi); border-radius:0; }
+  .att:hover { color:var(--ink); border-color:var(--label); }
+  .att.on { border-color:var(--accent); color:var(--accent); background:rgba(255,107,44,.08); }
   @keyframes ops-march { to { stroke-dashoffset:-1.9; } }
   @keyframes ops-pulse { 0% { opacity:.7; transform:scale(1); } 100% { opacity:0; transform:scale(1.75); } }
   @keyframes ops-lock { from { opacity:0; transform:scale(1.8); } }
@@ -946,44 +954,6 @@
   #mapscr.enter .brief > * { animation:ops-rise .5s cubic-bezier(.2, .8, .3, 1) both; }
   #mapscr.enter .brief > :nth-child(2) { animation-delay:.08s; } #mapscr.enter .brief > :nth-child(3) { animation-delay:.16s; } #mapscr.enter .brief > :nth-child(4) { animation-delay:.24s; }
   #mapscr .rg.fresh { animation:ops-taken 1.8s .9s ease-out both; }
-  /* loadout: the guns in a rail on the left, the one you carry laid out on the right */
-  .menu.lo { grid-template-columns:clamp(220px, 27vw, 340px) minmax(0, 1fr); }
-  .lo-rail { display:flex; flex-direction:column; gap:12px; min-width:0; min-height:0; overflow:auto; padding:clamp(12px, 3.2vh, 30px) clamp(12px, 2vw, 26px);
-    border-right:1px solid var(--line); background:linear-gradient(180deg, rgba(8,12,21,.94), rgba(5,8,15,.97)); }
-  .wlist { display:flex; flex-direction:column; gap:3px; }
-  .wrow { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:baseline; gap:2px 10px; width:100%; padding:9px 12px; text-align:left;
-    color:var(--ink); background:transparent; border:0; border-left:2px solid var(--line-hi); border-radius:0; }
-  .wrow:hover { background:rgba(255,255,255,.035); }
-  .wrow.on { border-left-color:var(--accent); background:rgba(255,107,44,.09); }
-  .wr-n { font-family:var(--display); font-stretch:125%; font-weight:800; font-size:14px; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .wrow.on .wr-n { color:var(--accent); }
-  .wr-d { font-family:var(--mono); font-weight:800; font-size:11px; color:var(--label); font-variant-numeric:tabular-nums; }
-  .wr-c { grid-column:1 / -1; font-family:var(--mono); font-weight:700; font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); }
-  .lo-rail .btn { margin-top:auto; width:100%; }
-  .lo-detail { display:flex; flex-direction:column; gap:clamp(10px, 2.4vh, 22px); min-width:0; min-height:0; overflow:auto;
-    padding:clamp(12px, 3.2vh, 30px) clamp(14px, 2.8vw, 38px); }
-  .lo-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; padding-bottom:12px; border-bottom:1px solid var(--line-hi); }
-  .lo-head > div { min-width:0; }
-  .lo-cls { font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--accent); }
-  .lo-name { margin-top:6px; font-size:clamp(30px, 5.2vw, 68px); color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .lo-tag { flex:none; padding:5px 9px; font-family:var(--mono); font-weight:800; font-size:10px; letter-spacing:.2em; text-transform:uppercase;
-    color:var(--accent-ink); background:var(--accent); }
-  .lo-stats { display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:12px 26px; }
-  .lstat { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:baseline; gap:6px 10px; }
-  .lstat .k { font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--label); }
-  .lstat .v { font-family:var(--mono); font-weight:800; font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums; white-space:nowrap; }
-  .lstat .v small { font-size:10px; color:var(--label); }
-  .lstat .bar { grid-column:1 / -1; position:relative; height:4px; background:rgba(255,255,255,.07); }
-  .lstat .bar i { position:absolute; left:0; top:0; bottom:0; background:var(--accent); }
-  .attrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
-  .attrow > span { min-width:52px; font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); }
-  .lo-note { margin:0; max-width:74ch; font-family:var(--mono); font-size:11px; line-height:1.6; color:var(--muted); }
-  .lo-actions { margin-top:auto; display:flex; gap:10px; }
-  .att { padding:6px 9px; font-family:var(--mono); font-weight:700; font-size:10px; letter-spacing:.08em; color:var(--label);
-    background:transparent; border:1px solid var(--line-hi); border-radius:0; }
-  .att:hover { color:var(--ink); }
-  .att.on { border-color:var(--accent); color:var(--accent); background:rgba(255,107,44,.08); }
-
   /* ---------- modal: the after-action layout from the brand sheet, over the blurred fight ---------- */
   #modal { position:fixed; inset:0; z-index:30; display:none; align-items:center; justify-content:center; overflow:auto; padding:32px calc(32px + var(--sr)) 32px calc(32px + var(--sl));
     background:rgba(3,5,10,.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
@@ -1054,38 +1024,31 @@
     body.touch #feed { top:88px; bottom:auto; left:calc(6px + var(--sl)); }
     #hint { bottom:70px; font-size:10px; }
     #dmgdir i { width:210px; height:180px; margin:-180px 0 0 -105px; }
-    .menu { grid-template-columns:minmax(0, 1fr) clamp(220px, 34vw, 300px); }
     .ops { grid-template-columns:minmax(0, 1fr) clamp(262px, 38vw, 330px); }
-    .menu.lo { grid-template-columns:clamp(190px, 30vw, 260px) minmax(0, 1fr); }
+    .attrow > span { display:none; }                                    /* the chips say IRON, EXT 45, SUPPRESSOR themselves */
+    .attrow > span + .att + .att + span + .att { margin-left:10px; }    /* so the two groups still read as two */
   }
   /* phones in landscape: every pixel is the fight */
   @media (max-height:520px) {
     #banner, #hint, #floaters, #feed { display:none !important; }   /* no text toasts on a phone */
-    .menu .eyebrow { margin-bottom:5px; font-size:9.5px; letter-spacing:.26em; } .menu .ttl .xl { font-size:28px; }
-    .lo-rail { gap:8px; padding:10px 12px; }
-    .brief { gap:7px; padding:9px 12px 10px; }
+    .brief { gap:6px; padding:8px 12px 9px; }
     .br-head { gap:6px 10px; } .br-tag, .br-held { font-size:9.5px; } .br-cog { width:28px; height:28px; } .br-cog svg { width:15px; height:15px; }
-    .br-segs i { height:4px; }
-    .br-sector { gap:5px; padding-top:7px; }
+    .br-sector { gap:4px; padding-top:6px; }
     .chip { padding:3px 7px 3px 6px; font-size:8.5px; } .br-code { font-size:8.5px; }
     .br-name { font-size:20px; }
     .bs { gap:2px; padding:5px 7px 6px; } .bs .k { font-size:7.5px; letter-spacing:.16em; } .bs .v { font-size:12.5px; } .bs .s { font-size:8px; }
-    .br-line { font-size:9.5px; line-height:1.4; }
+    .br-line { font-size:9.5px; line-height:1.4; } .br-line b { width:12px; height:12px; font-size:8px; vertical-align:-1px; }
+    .br-rule { display:none; }   /* the rule of the game never changes; a phone spends its pixels on this sector */
     .deploy { min-height:44px; align-items:center; } .deploy .db-sub { font-size:8.5px; }
-    .br-foot { grid-template-columns:minmax(0, 1fr) minmax(0, 1.3fr); gap:6px; }
-    .kit { gap:1px 6px; padding:6px 8px; } .kit-k, .kit-go { font-size:8px; } .kit-v { font-size:13px; } .kit-s { font-size:8px; }
-    .squad li { column-gap:6px; padding:3px 6px 4px 0; } .squad b { font-size:7px; } .squad span { gap:4px; font-size:9.5px; } .squad em { display:none; }
+    .br-kit { gap:4px; padding-top:6px; }
+    .wp { gap:0; padding:3px 2px 4px; } .wp b { font-size:8.5px; letter-spacing:.06em; } .wp span { font-size:7px; }
+    .kit-v { font-size:13px; } .kit-s { font-size:8px; }
+    .kit-att { gap:3px; }
+    .kit-note { display:none; }   /* no room on a phone: the chips and the line above say what it is */
     .om-co { font-size:8px; letter-spacing:.28em; } .om-title { margin-top:2px; font-size:24px; }
     .ops-key { gap:4px 10px; font-size:8px; } .ops-scale { gap:6px; font-size:8px; } .ops-scale b { width:13px; height:13px; font-size:7.5px; }
-    .menu .btn { padding:8px 12px; font-size:10.5px; }
     .cta { padding:12px 18px; font-size:13px; }
-    .wrow { padding:5px 10px; } .wr-n { font-size:12px; } .wr-d { font-size:10px; } .wr-c { font-size:8px; letter-spacing:.16em; }
-    .lo-detail { gap:8px; padding:10px 14px; }
-    .lo-head { padding-bottom:6px; } .lo-cls { font-size:9px; } .lo-name { margin-top:2px; font-size:26px; } .lo-tag { padding:3px 7px; font-size:8.5px; }
-    .lo-stats { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px 16px; }
-    .lstat { gap:3px 8px; } .lstat .k { font-size:8.5px; letter-spacing:.14em; } .lstat .v { font-size:11px; }
-    .att { padding:4px 7px; font-size:9px; } .attrow > span { min-width:40px; font-size:8.5px; }
-    .lo-note { font-size:9.5px; line-height:1.45; }
+    .att { padding:2px 5px; font-size:8.5px; } .attrow { gap:3px; }
     #modal { padding:14px calc(26px + var(--sr)) 14px calc(26px + var(--sl)); }
     #modalbox .eyebrow { margin-bottom:8px; font-size:10px; }
     #modalbox h2 { margin-bottom:10px; font-size:40px; }
@@ -1102,13 +1065,14 @@
     #bootbox h1 { font-size:64px; } #bootbox .boot-press { margin:12px 0 14px; } #bootlines { min-height:0; font-size:10px; }
     body.touch #supports { gap:3px; } body.touch .supbtn { gap:2px; padding:4px 8px 5px; }   /* clear of the ADS button below */
   }
+  /* the shortest phones: the KIT label goes, the picker and the gun name below it say the same thing */
+  @media (max-height:410px) {
+    .kit-head { display:none; }
+  }
   /* a desktop window taller than it is wide stacks the menu columns (a phone is held sideways, so it never lands here) */
   @media (max-aspect-ratio: 1/1) {
-    .menu, .menu.lo { grid-template-columns:minmax(0, 1fr); }
     .ops { grid-template-columns:minmax(0, 1fr); grid-template-rows:minmax(40vh, 1fr) auto; }
     .brief { border-left:0; border-top:1px solid var(--line); }
-    .br-sector { margin-top:0; }
-    .lo-rail { border-right:0; border-bottom:1px solid var(--line); }
   }
 </style>
 </head>
@@ -1175,10 +1139,9 @@
         <div class="br-tools"><button class="br-cog" id="torange" aria-label="Firing range" title="Firing range"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 1.8v4M12 18.2v4M1.8 12h4M18.2 12h4"/></svg></button>
         <button class="br-cog" id="toinstall" hidden aria-label="Install Holdout" title="Install Holdout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M4.5 15.5v5h15v-5"/></svg></button>
         <button class="br-cog" id="tosettings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 2.8v3.1M12 18.1v3.1M2.8 12h3.1M18.1 12h3.1M5.5 5.5l2.2 2.2M16.3 16.3l2.2 2.2M5.5 18.5l2.2-2.2M16.3 7.7l2.2-2.2"/></svg></button></div>
-        <div class="br-segs" id="brSegs" aria-hidden="true"></div>
       </header>
       <section class="br-sector" aria-live="polite">
-        <div class="br-status"><span class="chip" id="brChip">Attackable</span><span class="br-code" id="brCode">Sector 01</span></div>
+        <div class="br-status"><span class="chip" id="brChip">Attackable</span><span class="br-code" id="brCode">Grid C4</span></div>
         <h2 class="br-name" id="brName">Miller Fields</h2>
         <div class="br-stats">
           <div class="bs"><span class="k">Threat</span><span class="v" id="brTier">Tier 1</span><span class="pips" id="brPips"></span></div>
@@ -1187,25 +1150,17 @@
         </div>
         <div class="br-prog" id="brProg" hidden><i id="brProgFill"></i></div>
         <p class="br-line" id="brLine"></p>
+        <p class="br-rule" id="brRule"></p>
+      </section>
+      <section class="br-kit" aria-label="Kit">
+        <div class="kit-head"><span class="kit-k">Kit</span><span class="kit-cls" id="kitcls">Assault rifle</span></div>
+        <div class="wpick" id="wpick" role="radiogroup" aria-label="Weapon"></div>
+        <div class="kit-now"><span class="kit-v" id="kitname">M4A1</span><span class="kit-s" id="kitsub">Iron sights · 30 rds</span></div>
+        <div class="kit-att" id="kitatt"></div>
+        <p class="kit-note" id="kitnote"></p>
       </section>
       <button class="cta deploy" id="deploybtn"><span id="dbMain">Deploy</span><span class="db-sub" id="dbSub">Miller Fields</span></button>
-      <div class="br-foot">
-        <button class="kit" id="toteam"><span class="kit-k">Kit</span><span class="kit-go">Change ›</span><span class="kit-v" id="kitname">M4A1</span><span class="kit-s" id="kitsub">Iron sights · 30 rds</span></button>
-        <ol class="squad" id="brSquad" aria-label="Your squad"></ol>
-      </div>
     </aside>
-  </div>
-</div>
-
-<!-- ============ LOADOUT ============ -->
-<div id="teamscr" class="scr">
-  <div class="menu lo">
-    <aside class="lo-rail">
-      <div class="ttl"><div class="eyebrow">Battle prep</div><h1 class="xl">Loadout</h1></div>
-      <div class="wlist" id="wlist"></div>
-      <button class="btn" id="backmap">◂ Map</button>
-    </aside>
-    <section class="lo-detail" id="loadout"></section>
   </div>
 </div>
 
@@ -1262,11 +1217,11 @@ const WKEYS = Object.keys(WEAPONS).filter(k => !WEAPONS[k].pickup);   // what BA
 // ---------- attachments: what you look through, and how many rounds you carry in the gun ----------
 // zoom is tan-based (a 4x shows a quarter of the view); rate = how fast the sights come up; spread = ADS spread multiplier;
 // over = the DOM overlay drawn once you are settled behind the optic (null = the real iron sights, nothing drawn)
-const SIGHTS = {
-  iron:  { name:'IRON SIGHTS',  zoom:1.45, rate:12,  spread:0.5,  over:null,    note:'Iron sights: quick to the shoulder, a touch of zoom, nothing between you and the street.' },
-  rds:   { name:'RED DOT 1.2x', zoom:1.2,  rate:14,  spread:0.5,  over:'dot',   note:'Red dot: the fastest to the eye, 1.2x, a clean window with one dot in it.' },
-  acog:  { name:'ACOG 4x',      zoom:4,    rate:8.5, spread:0.4,  over:'acog',  note:'ACOG: 4x for the long streets, a red chevron, slower to shoulder and heavy on the look speed.' },
-  scope: { name:'SCOPE 6x',     zoom:6,    rate:7.5, spread:0.35, over:'scope', note:'6x scope: the far end of the street, fully blacked out around the glass; slow to shoulder.' },
+const SIGHTS = {   // `short` is the label on the kit's chips, where the briefing column is only ~290 px wide
+  iron:  { name:'IRON SIGHTS',  short:'IRON',    zoom:1.45, rate:12,  spread:0.5,  over:null,    note:'Iron sights: quick to the shoulder, a touch of zoom, nothing between you and the street.' },
+  rds:   { name:'RED DOT 1.2x', short:'RED DOT', zoom:1.2,  rate:14,  spread:0.5,  over:'dot',   note:'Red dot: the fastest to the eye, 1.2x, a clean window with one dot in it.' },
+  acog:  { name:'ACOG 4x',      short:'ACOG 4X', zoom:4,    rate:8.5, spread:0.4,  over:'acog',  note:'ACOG: 4x for the long streets, a red chevron, slower to shoulder and heavy on the look speed.' },
+  scope: { name:'SCOPE 6x',     short:'6X',      zoom:6,    rate:7.5, spread:0.35, over:'scope', note:'6x scope: the far end of the street, fully blacked out around the glass; slow to shoulder.' },
 };
 const SIGHT_OPTS = { smg: ['iron', 'rds', 'acog'], ar: ['iron', 'rds', 'acog'], lmg: ['iron', 'rds', 'acog'], sniper: ['scope', 'acog'] };
 const NO_ATT = { sight: 'iron', ext: false, suppressor: false };
@@ -2836,18 +2791,15 @@ function pollPad(dt) {
   } else if (screen === 'map') {
     GPAD.lx = GPAD.ly = 0;
     if (!document.getElementById('boot')) {
-      if (hit(GPB.LB) || hit(GPB.LEFT)) cycleSector(-1);
-      if (hit(GPB.RB) || hit(GPB.RIGHT)) cycleSector(1);
-      if (hit(GPB.Y)) showScreen('team');
-      if (hit(GPB.START)) showSettings();
       const focus = document.activeElement;
+      const inKit = !!(focus && focus.closest && focus.closest('.br-kit'));   // down in the kit the D-pad walks the chips; the shoulders still change sector
+      if (hit(GPB.LB) || (!inKit && hit(GPB.LEFT))) cycleSector(-1);
+      if (hit(GPB.RB) || (!inKit && hit(GPB.RIGHT))) cycleSector(1);
+      if (hit(GPB.Y)) cycleWeapon(1);   // the kit is in this column now: Y walks the guns
+      if (hit(GPB.START)) showSettings();
       if (hit(GPB.A)) { if (focus && focus !== document.body && focus.closest('.brief')) focus.click(); else deploySelected(); }
-      padMenu(p, hit, 0, ly, dt, document.querySelector('.brief'), true);
+      padMenu(p, hit, inKit ? lx : 0, ly, dt, document.querySelector('.brief'), !inKit);
     }
-  } else if (screen === 'team') {
-    GPAD.lx = GPAD.ly = 0;
-    padMenu(p, hit, lx, ly, dt, $('teamscr'));
-    if (hit(GPB.B)) showScreen('map');
   }
   GPAD.prev = p.buttons.map((b, i) => held(i));
 }
@@ -2878,7 +2830,7 @@ function padMenu(p, hit, lx, ly, dt, root, verticalOnly) {   // spatial focus: t
   if (hit(GPB.A) && !focus && root !== document.querySelector('.brief')) {   // nothing focused yet: A takes a card's main action, and wakes the focus ring elsewhere
     const main = root.id === 'modalbox' ? root.querySelector('.cta:not([disabled])') : null;
     if (main) main.click();
-    else { const first = root.querySelector('.wrow.on, button, input, select, [tabindex]'); if (first) first.focus(); }
+    else { const first = root.querySelector('.wp.on, button, input, select, [tabindex]'); if (first) first.focus(); }
     return;
   }
   if (hit(GPB.A) && focus && root !== document.querySelector('.brief')) {
@@ -8170,16 +8122,14 @@ const $ = id => document.getElementById(id);
 const el = {
   hurt: $('hurt'), banner: $('banner'),
   modal: $('modal'), modalbox: $('modalbox'), hint: $('hint'),
-  bhud: $('bhud'), mapscr: $('mapscr'), teamscr: $('teamscr'),
+  bhud: $('bhud'), mapscr: $('mapscr'),
   supports: $('supports'), mapsvg: $('mapsvg'),
 };
 function showScreen(s) {
   screen = s;
   el.mapscr.classList.toggle('on', s === 'map');
-  el.teamscr.classList.toggle('on', s === 'team');
   el.bhud.style.display = s === 'battle' ? 'block' : 'none';
   if (s === 'map') { renderMap(); playMapEntrance(); }
-  if (s === 'team') renderTeam();
 }
 let hpRefs = [];
 function rebuildSupports() {
@@ -8411,12 +8361,15 @@ function hideModal() { el.modal.style.display = 'none'; }
 // ---------- START MENU: the theater map beside the briefing ----------
 // A field operations table. The thirteen sectors are regions split by distance with hand-wandered borders; contour
 // lines climb to the northern ranges, a river runs past Velen Crossing into Dunmoor Marsh, and wherever your ground
-// meets theirs an orange front line burns. The briefing column says what the selected sector is, what holds it, what
-// the sky will be when you get there, and deploys. Map units are TERRITORIES' own (x 0..100, y 0..60; 1 unit = 2.5 km).
+// meets theirs an orange front line burns. Map units are TERRITORIES' own (x 0..100, y 0..60; 1 unit = 2.5 km).
+// The briefing column beside it carries everything you decide before a fight: what the sector is, what holds it, what
+// the sky will be, the objectives you will be fighting over, the gun and attachments you carry, and DEPLOY. There is
+// no separate armory screen — the kit is here, two taps from the fight. The column is only ~290 px wide on a phone in
+// landscape and must never scroll, so every block earns its height: what a section costs is what it is worth.
 let selectedTid = -1;
 const MAPV = { built: false, owned: null, cells: null, regions: [], nodes: [], layers: {}, enterT: 0 };
 const SVGNS = 'http://www.w3.org/2000/svg';
-const SQUAD_ROLE_NAMES = ['Lead', 'Point', 'Flank', 'Overwatch'];
+const WSHORT = { smg: 'SMG', ar: 'AR', lmg: 'LMG', sniper: 'SNIPER', rocket: 'ROCKET' };   // the picker's chips: one gun per class, so the class is the name
 function svgEl(tag, attrs, parent) {
   const n = document.createElementNS(SVGNS, tag);
   if (attrs) for (const k in attrs) n.setAttribute(k, attrs[k]);
@@ -8752,15 +8705,11 @@ function renderBrief() {
   const heldN = TERRITORIES.filter(terrOwned).length;
   $('brTheater').textContent = `Theater ${ROMAN[meta.theater] || meta.theater + 1}`;
   $('brHeld').textContent = `${heldN} / ${TERRITORIES.length} held`;
-  const segs = $('brSegs');
-  if (segs.children.length !== TERRITORIES.length) segs.innerHTML = TERRITORIES.map(() => '<i></i>').join('');
-  TERRITORIES.forEach((tt, i) => { segs.children[i].className = (terrOwned(tt) ? 'held' : terrAttackable(tt) ? 'atk' : '') + (i === t.id ? ' sel' : ''); });
-
   const own = terrOwned(t), atk = terrAttackable(t), prog = meta.terr[t.id].progress, tier = effTier(t);
   const chip = $('brChip');
   chip.className = 'chip ' + (own ? 'held' : atk ? 'atk' : 'foe');
   chip.textContent = own ? 'Held' : atk ? (prog > 0 ? `${Math.floor(prog)}% taken` : 'Attackable') : 'Enemy held';
-  $('brCode').textContent = `Sector ${String(t.id).padStart(2, '0')} · Grid ${gridRef(t)}`;
+  $('brCode').textContent = `Grid ${gridRef(t)}`;
   $('brName').textContent = t.name;
   $('brTier').textContent = `Tier ${tier}`;
   $('brPips').innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < Math.min(tier, 6) ? 'on' : ''}"></i>`).join('');
@@ -8776,10 +8725,11 @@ function renderBrief() {
   const bar = $('brProg');
   bar.hidden = own || !(prog > 0);
   $('brProgFill').style.width = prog + '%';
-  const line = $('brLine');
+  const line = $('brLine'), rule = $('brRule');
+  // what is true of THIS sector is always shown; the rule of the game, which never changes, only where there is room
+  rule.textContent = atk ? `Hold more objectives than they do to bleed their ${left} reserves. The Warlord comes at 90%.` : '';
   if (own) line.textContent = t.tier === 0 ? 'Headquarters. Every push starts here.' : 'Held by the Ninth Company.';
-  else if (atk) line.innerHTML = 'Objectives ' + objectiveSites(t.id).map((o, i) => `<b>${'ABC'[i]}</b> ${o.name}`).join(' · ')
-    + `. Hold more of them than they do to bleed their <b>${left}</b> reserves; the Warlord comes at 90%.`;
+  else if (atk) line.innerHTML = objectiveSites(t.id).map((o, i) => `<b>${'ABC'[i]}</b> ${o.name}`).join(' · ');
   else {
     const via = t.adj.map(i => TERRITORIES[i]).filter(terrAttackable).map(x => x.name);
     line.textContent = via.length ? `Out of reach. Take ${via.join(' or ')} first.` : 'Out of reach. Push the front closer.';
@@ -8789,13 +8739,52 @@ function renderBrief() {
   $('dbMain').textContent = atk ? (prog > 0 ? 'Resume' : 'Deploy') : own ? 'Held' : 'Out of reach';
   $('dbSub').textContent = atk ? t.name : 'Pick an orange sector';
 
-  const lk = WEAPONS[meta.loadout] ? meta.loadout : 'ar', lw = WEAPONS[lk], la = attFor(lk);
-  $('kitname').textContent = lw.name;
-  $('kitsub').textContent = (SIGHT_OPTS[lk] ? SIGHTS[la.sight].name + ' · ' : '') + `${la.ext && lw.ext ? lw.ext : lw.mag} rds` + (la.suppressor ? ' · suppressed' : '');
-  $('brSquad').innerHTML = meta.squad.slice(0, CFG.rosterSize).map((m, i) => {
-    const gun = WEAPONS[i === 0 ? lk : m.weapon] || WEAPONS.ar;
-    return `<li style="--c:${m.wren ? '#d9dbe4' : slotColor(i)}"><b>${SQUAD_ROLE_NAMES[i]}</b><span>${m.wren ? 'CPL ' : ''}${m.name}<em>${gun.name}</em></span></li>`;
+  renderKit();
+}
+// ---- the kit: the gun you carry and what is bolted to it, decided here rather than on a screen of its own ----
+const WCLASS = { smg: 'Submachine gun', ar: 'Assault rifle', lmg: 'Light machine gun', sniper: 'Sniper rifle', rocket: 'Launcher' };
+const attChip = (label, on, data) => `<button class="att${on ? ' on' : ''}" ${data}>${label}</button>`;
+const attRow = (label, chips) => `<div class="attrow"><span>${label}</span>${chips.join('')}</div>`;
+function cycleWeapon(dir) {   // Y on a controller: the next gun in the picker
+  const i = WKEYS.indexOf(WEAPONS[meta.loadout] ? meta.loadout : 'ar');
+  meta.loadout = WKEYS[(i + dir + WKEYS.length) % WKEYS.length];
+  saveMeta(); renderKit();
+  beep(1250, 0.03, 'square', 0.012, -300);
+}
+function renderKit() {
+  if (!meta.attach) meta.attach = freshAttach();
+  const k = WEAPONS[meta.loadout] ? meta.loadout : 'ar', w = WEAPONS[k], att = attFor(k), opts = SIGHT_OPTS[k] || [];
+  const mag = att.ext && w.ext ? w.ext : w.mag, fall = FALLOFF[k], reach = Math.round((w.reach || w.range) / PX);
+  $('kitcls').textContent = WCLASS[k] || '';
+  $('wpick').innerHTML = WKEYS.map(q => {
+    const n = hitsToDrop(q);
+    return `<button class="wp${q === k ? ' on' : ''}" data-w="${q}" role="radio" aria-checked="${q === k}" aria-label="${WEAPONS[q].name}">`
+      + `<b>${WSHORT[q] || WEAPONS[q].name}</b><span>${n} hit${n === 1 ? '' : 's'}</span></button>`;
   }).join('');
+  $('kitname').textContent = w.name;
+  $('kitsub').textContent = [opts.length ? SIGHTS[att.sight].short : null, `${mag} rds`, `${(1 / w.cd).toFixed(1)}/s`,
+    att.suppressor ? 'suppressed' : null].filter(Boolean).join(' · ');
+  const mags = w.ext ? [attChip(`Std ${w.mag}`, !att.ext, 'data-ext="0"'), attChip(`Ext ${w.ext}`, att.ext, 'data-ext="1"')] : [];
+  const muzz = SUPPRESSOR_OK[k] ? [attChip('None', !att.suppressor, 'data-supp="0"'), attChip('Suppressor', att.suppressor, 'data-supp="1"')] : [];
+  $('kitatt').innerHTML = (opts.length ? attRow('Sight', opts.map(sk => attChip(SIGHTS[sk].short, att.sight === sk, `data-sight="${sk}"`))) : '')
+    + (mags.length || muzz.length   // one row for both: on a phone the column has no height to spare, and they wrap if it ever runs out of width
+      ? `<div class="attrow">${mags.length ? '<span>Mag</span>' + mags.join('') : ''}${muzz.length ? '<span>Muzzle</span>' + muzz.join('') : ''}</div>` : '');
+  $('kitnote').textContent = (opts.length ? SIGHTS[att.sight].note + ' ' : '')
+    + (fall ? `Full damage to ${Math.round(fall.near / PX)} m, ${Math.round(fall.min * 100)}% by ${reach} m.` : 'No damage drop-off.')
+    + ` ${(w.reload * (att.ext ? EXT_RELOAD : 1)).toFixed(1)} s reload, ${Math.round((w.moveMul || 1) * 100)}% move speed.`
+    + (w.pierce ? ` Pierces ${w.pierce} targets.` : '') + (w.aoe ? ` ${(w.aoe / PX).toFixed(1)} m blast.` : '')
+    + (att.suppressor ? ` Suppressed: a dull shot with no flash and no tracers, heard only within ${CFG.hearQuiet / PX} m (${CFG.hearLoud / PX} m without); the sights come up ${Math.round((1 - CFG.suppressorAds) * 100)}% slower.` : '');
+  $('wpick').querySelectorAll('.wp').forEach(b => b.onclick = () => {
+    if (meta.loadout === b.dataset.w) return;
+    meta.loadout = b.dataset.w; saveMeta(); renderKit();
+    beep(1250, 0.03, 'square', 0.012, -300);
+  });
+  $('kitatt').querySelectorAll('.att').forEach(b => b.onclick = () => {
+    const a = meta.attach[k] || (meta.attach[k] = { sight: opts[0], ext: false });
+    if (b.dataset.sight) a.sight = b.dataset.sight; else if (b.dataset.supp) a.suppressor = b.dataset.supp === '1'; else a.ext = b.dataset.ext === '1';
+    saveMeta(); renderKit();
+    beep(1250, 0.03, 'square', 0.012, -300);
+  });
 }
 function playMapEntrance() {   // the map lays itself out: land, sectors, the front line, markers, then the briefing
   const scr = el.mapscr;
@@ -8806,60 +8795,10 @@ function playMapEntrance() {   // the map lays itself out: land, sectors, the fr
   clearTimeout(MAPV.enterT);
   MAPV.enterT = setTimeout(() => scr.classList.remove('enter'), 2200);
 }
-// ---------- TEAM / ARMORY SCREEN ----------
-const WCLASS = { smg: 'Submachine gun', ar: 'Assault rifle', lmg: 'Light machine gun', sniper: 'Sniper rifle', rocket: 'Launcher' };
-function renderTeam() {   // the rail picks the gun; the panel lays out the one you carry
-  if (!meta.attach) meta.attach = freshAttach();
-  const cur = WEAPONS[meta.loadout] ? meta.loadout : 'ar';
-  const list = $('wlist');
-  list.innerHTML = '';
-  for (const k of WKEYS) {
-    const b = document.createElement('button');
-    b.className = 'wrow' + (k === cur ? ' on' : '');
-    b.innerHTML = `<span class="wr-n">${WEAPONS[k].name}</span><span class="wr-d">${hitsToDrop(k)} ${hitsToDrop(k) === 1 ? 'HIT' : 'HITS'}</span><span class="wr-c">${WCLASS[k] || ''}</span>`;
-    b.onclick = () => { meta.loadout = k; saveMeta(); renderTeam(); };
-    list.appendChild(b);
-  }
-  const k = cur, w = WEAPONS[k], att = attFor(k), opts = SIGHT_OPTS[k] || [];
-  const mag = att.ext && w.ext ? w.ext : w.mag, reach = (w.reach || w.range) / 40;
-  const top = f => Math.max(...WKEYS.map(f));
-  const stat = (label, val, frac) =>
-    `<div class="lstat"><span class="k">${label}</span><span class="v">${val}</span><span class="bar"><i style="width:${Math.round(clamp(frac, 0.04, 1) * 100)}%"></i></span></div>`;
-  const f = FALLOFF[k];
-  const note = (opts.length ? SIGHTS[att.sight].note + ' ' : '')
-    + (f ? `Full damage to ${Math.round(f.near / 40)} m, ${Math.round(f.min * 100)}% by ${Math.round(reach)} m.` : 'No damage drop-off.')
-    + (w.pierce ? ` Pierces ${w.pierce} targets.` : '') + (w.aoe ? ` ${(w.aoe / 40).toFixed(1)} m blast.` : '')
-    + (att.ext ? ` The extended magazine reloads ${Math.round((EXT_RELOAD - 1) * 100)}% slower.` : '')
-    + (att.suppressor ? ` Suppressed: a dull shot with no flash and no tracers, heard only within ${CFG.hearQuiet / 40} m (${CFG.hearLoud / 40} m without); the sights come up ${Math.round((1 - CFG.suppressorAds) * 100)}% slower.` : '');
-  const box = $('loadout');
-  box.innerHTML = `
-    <div class="lo-head"><div><div class="lo-cls">${WCLASS[k] || ''}</div><h2 class="xl lo-name">${w.name}</h2></div><span class="lo-tag">Equipped</span></div>
-    <div class="lo-stats">
-      ${stat('Damage', squadDmg(k).toFixed(2), squadDmg(k) / top(squadDmg))}
-      ${stat('To drop', `${hitsToDrop(k)} <small>${hitsToDrop(k) === 1 ? 'hit' : 'hits'}</small>`, 1 / hitsToDrop(k))}
-      ${stat('Fire rate', (1 / w.cd).toFixed(1) + '/s', (1 / w.cd) / top(q => 1 / WEAPONS[q].cd))}
-      ${stat('Range', Math.round(reach) + ' m', (w.reach || w.range) / top(q => WEAPONS[q].reach || WEAPONS[q].range))}
-      ${stat('Magazine', `${mag} <small>×${w.spare}</small>`, Math.sqrt(mag / top(q => WEAPONS[q].ext || WEAPONS[q].mag)))}
-      ${stat('Mobility', Math.round((w.moveMul || 1) * 100) + '%', ((w.moveMul || 1) - 0.6) / 0.4)}
-      ${stat('Reload', (w.reload * (att.ext ? EXT_RELOAD : 1)).toFixed(1) + ' s', 1 - (w.reload - 1.2) / 3.4)}
-    </div>
-    ${opts.length ? `<div class="attrow"><span>Sight</span>${opts.map(sk => `<button class="att${att.sight === sk ? ' on' : ''}" data-sight="${sk}">${SIGHTS[sk].name}</button>`).join('')}</div>` : ''}
-    ${SUPPRESSOR_OK[k] ? `<div class="attrow"><span>Muzzle</span><button class="att${att.suppressor ? '' : ' on'}" data-supp="0">NONE</button><button class="att${att.suppressor ? ' on' : ''}" data-supp="1">SUPPRESSOR</button></div>` : ''}
-    ${w.ext ? `<div class="attrow"><span>Mag</span><button class="att${att.ext ? '' : ' on'}" data-ext="0">STANDARD ${w.mag}</button><button class="att${att.ext ? ' on' : ''}" data-ext="1">EXTENDED ${w.ext}</button></div>` : ''}
-    <p class="lo-note">${note}</p>
-    <div class="lo-actions"><button class="cta" id="lodone">Done</button></div>`;
-  box.querySelectorAll('.att').forEach(b => b.onclick = () => {
-    const a = meta.attach[k] || (meta.attach[k] = { sight: opts[0], ext: false });
-    if (b.dataset.sight) a.sight = b.dataset.sight; else if (b.dataset.supp) a.suppressor = b.dataset.supp === '1'; else a.ext = b.dataset.ext === '1';
-    saveMeta(); renderTeam();
-  });
-  $('lodone').onclick = () => showScreen('map');
-}
-
+// ---------- SCREEN NAV AND THE TOUCH BUTTONS ----------
+// The kit used to live on a screen of its own (BATTLE PREP). It is in the briefing column now: renderKit, in 310.
 // nav buttons
-$('toteam').onclick = () => showScreen('team');
 $('deploybtn').onclick = deploySelected;
-$('backmap').onclick = () => showScreen('map');
 $('ammo').addEventListener('pointerdown', e => { e.preventDefault(); heroReload(); });
 $('nadebtn').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); throwGrenade(soldiers[state.controlled]); });
 bindHoldButton('firebtn', () => { aim.fire = true; }, () => { aim.fire = false; });
@@ -8958,7 +8897,7 @@ window.G = { state, meta, cam, CFG, WEAPONS, TERRITORIES,
   get soldiers() { return soldiers; }, get enemies() { return enemies; },
   get mines() { return mines; }, get fires() { return fires; }, get shells() { return shells; },
   get bullets() { return bullets; }, get corpses() { return corpses; }, get obstacles() { return obstacles; },
-  keys, joy, enterBattle, exitBattle, useSupport, damageSoldier, saveMeta, showScreen, renderTeam, renderMap,
+  keys, joy, enterBattle, exitBattle, useSupport, damageSoldier, saveMeta, showScreen, renderKit, renderMap,
   VIEW, stats: viewStats, frame(dt = 1 / 60) { renderView(dt); updateBattleHud(); },
   spawn(type, x, y) { spawnEnemy(type); const e = enemies[enemies.length - 1]; if (x != null) { e.x = x; e.y = y; } return e; },
   spawnMany(type, n) { for (let i = 0; i < n; i++) spawnEnemy(type); },

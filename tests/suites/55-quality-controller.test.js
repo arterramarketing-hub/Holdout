@@ -155,15 +155,17 @@ suite('controller', t => {
     assert.eq(state.tid, pick);
     unplug();
   });
-  t.test('loadout: the D-pad walks the guns and A picks one', () => {
-    newCampaign(); hideModal(); showScreen('team');
+  t.test('the kit takes a controller: A picks the focused gun, Y cycles them', () => {
+    newCampaign(); hideModal(); showScreen('map');
     plug();
-    const rows = [...document.querySelectorAll('.wrow')];
-    rows[0].focus();
-    tap(GPB.DOWN); tap(GPB.A);
-    assert.eq(meta.loadout, WKEYS[1], 'picked the second gun');
-    tap(GPB.B);
-    assert.eq(screen, 'map', 'B goes back to the map');
+    document.querySelector(`.wp[data-w="${WKEYS[1]}"]`).focus();
+    tap(GPB.A);
+    assert.eq(meta.loadout, WKEYS[1], 'A picked the focused gun');
+    assert.eq(screen, 'map', 'and stayed on the start menu');
+    document.activeElement && document.activeElement.blur && document.activeElement.blur();
+    tap(GPB.Y);
+    assert.eq(meta.loadout, WKEYS[2], 'Y walks on to the next');
+    assert.eq($('kitname').textContent, WEAPONS[WKEYS[2]].name, 'and the column follows');
     unplug();
   });
 });

@@ -55,6 +55,27 @@ suite('start menu', t => {
     assert.eq(document.querySelectorAll('#mapsvg .front').length, expected, 'front segments');
     assert.eq(document.querySelectorAll('#mapsvg .route.adv').length, TERRITORIES.filter(tt => owned[tt.id]).reduce((n, tt) => n + tt.adj.filter(a => !owned[a]).length, 0), 'axes of advance');
   });
+  t.test('the briefing carries the kit: the picker changes the gun, and each gun keeps its own attachments', () => {
+    newCampaign(); open();
+    assert.eq(document.getElementById('teamscr'), null, 'no separate loadout screen to walk to');
+    assert.eq(document.querySelector('.squad'), null, 'no roster of teammate names');
+    assert.eq(document.getElementById('brSegs'), null, 'no strip of 13 segments: the map says that');
+    const chips = [...document.querySelectorAll('.wp')];
+    assert.eq(chips.length, WKEYS.length, 'one chip per gun you can carry');
+    assert.eq(chips.filter(c => c.classList.contains('on')).length, 1, 'the one you carry is marked');
+    document.querySelector('.wp[data-w="sniper"]').click();
+    assert.eq(meta.loadout, 'sniper', 'picked from the column');
+    assert.eq($('kitname').textContent, WEAPONS.sniper.name);
+    [...document.querySelectorAll('#kitatt .att')].find(b => b.dataset.sight === 'acog').click();
+    assert.eq(meta.attach.sniper.sight, 'acog', 'the sight sticks');
+    assert.ok(/ACOG/i.test($('kitsub').textContent), 'and the line under the name says so: ' + $('kitsub').textContent);
+    document.querySelector('.wp[data-w="ar"]').click();
+    assert.eq($('kitname').textContent, WEAPONS.ar.name, 'back to the rifle');
+    assert.eq(attFor('sniper').sight, 'acog', 'the sniper kept its ACOG');
+    saveMeta(); loadMeta();
+    assert.eq(meta.attach.sniper.sight, 'acog', 'and the save carries it');
+    assert.eq(meta.loadout, 'ar');
+  });
   t.test('a partly taken sector shows how much is left', () => {
     newCampaign(); meta.terr[2].progress = 50; open();
     selectSector(2);

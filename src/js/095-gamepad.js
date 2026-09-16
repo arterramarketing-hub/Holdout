@@ -71,18 +71,15 @@ function pollPad(dt) {
   } else if (screen === 'map') {
     GPAD.lx = GPAD.ly = 0;
     if (!document.getElementById('boot')) {
-      if (hit(GPB.LB) || hit(GPB.LEFT)) cycleSector(-1);
-      if (hit(GPB.RB) || hit(GPB.RIGHT)) cycleSector(1);
-      if (hit(GPB.Y)) showScreen('team');
-      if (hit(GPB.START)) showSettings();
       const focus = document.activeElement;
+      const inKit = !!(focus && focus.closest && focus.closest('.br-kit'));   // down in the kit the D-pad walks the chips; the shoulders still change sector
+      if (hit(GPB.LB) || (!inKit && hit(GPB.LEFT))) cycleSector(-1);
+      if (hit(GPB.RB) || (!inKit && hit(GPB.RIGHT))) cycleSector(1);
+      if (hit(GPB.Y)) cycleWeapon(1);   // the kit is in this column now: Y walks the guns
+      if (hit(GPB.START)) showSettings();
       if (hit(GPB.A)) { if (focus && focus !== document.body && focus.closest('.brief')) focus.click(); else deploySelected(); }
-      padMenu(p, hit, 0, ly, dt, document.querySelector('.brief'), true);
+      padMenu(p, hit, inKit ? lx : 0, ly, dt, document.querySelector('.brief'), !inKit);
     }
-  } else if (screen === 'team') {
-    GPAD.lx = GPAD.ly = 0;
-    padMenu(p, hit, lx, ly, dt, $('teamscr'));
-    if (hit(GPB.B)) showScreen('map');
   }
   GPAD.prev = p.buttons.map((b, i) => held(i));
 }
@@ -113,7 +110,7 @@ function padMenu(p, hit, lx, ly, dt, root, verticalOnly) {   // spatial focus: t
   if (hit(GPB.A) && !focus && root !== document.querySelector('.brief')) {   // nothing focused yet: A takes a card's main action, and wakes the focus ring elsewhere
     const main = root.id === 'modalbox' ? root.querySelector('.cta:not([disabled])') : null;
     if (main) main.click();
-    else { const first = root.querySelector('.wrow.on, button, input, select, [tabindex]'); if (first) first.focus(); }
+    else { const first = root.querySelector('.wp.on, button, input, select, [tabindex]'); if (first) first.focus(); }
     return;
   }
   if (hit(GPB.A) && focus && root !== document.querySelector('.brief')) {

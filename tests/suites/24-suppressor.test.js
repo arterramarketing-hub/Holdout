@@ -21,17 +21,16 @@ suite('suppressor', t => {
     h.alive = false; respawnSoldier(h);
     assert.ok(h.suppressor, 'and comes back with it');
   });
-  t.test('BATTLE PREP has a Muzzle row on the guns that take one, and the start menu says so', () => {
-    newCampaign(); meta.loadout = 'ar'; showScreen('team');
-    const btn = [...document.querySelectorAll('#loadout .att')].find(b => b.dataset.supp === '1');
+  t.test('the kit offers a muzzle on the guns that take one, and says what it costs', () => {
+    newCampaign(); meta.loadout = 'ar'; hideModal(); showScreen('map');
+    const btn = [...document.querySelectorAll('#kitatt .att')].find(b => b.dataset.supp === '1');
     assert.ok(btn, 'a SUPPRESSOR choice');
     btn.click();
     assert.ok(meta.attach.ar.suppressor, 'chosen');
-    assert.ok(/heard only within 10 m/.test($('loadout').textContent), 'the note explains it');
-    meta.loadout = 'rocket'; renderTeam();
-    assert.ok(![...document.querySelectorAll('#loadout .att')].some(b => b.dataset.supp), 'no Muzzle row on the rocket');
-    meta.loadout = 'ar'; showScreen('map');
-    assert.ok(/suppressed/.test($('kitsub').textContent), 'kit line: ' + $('kitsub').textContent);
+    assert.ok(/heard only within 10 m/.test($('kitnote').textContent), 'the note explains it');
+    assert.ok(/suppressed/i.test($('kitsub').textContent), 'the kit line says so: ' + $('kitsub').textContent);
+    meta.loadout = 'rocket'; renderKit();
+    assert.ok(![...document.querySelectorAll('#kitatt .att')].some(b => b.dataset.supp), 'no muzzle on the rocket');
   });
   t.test('a suppressed round: no tracer, no flash, the suppressed sound, and full damage', () => {
     const h = withSuppressor(true);

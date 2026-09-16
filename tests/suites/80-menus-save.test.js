@@ -1,10 +1,12 @@
 suite('menus and save', t => {
   t.test('loadout: every gun and attachment can be picked', () => {
-    newCampaign(); showScreen('team');
-    for (const b of [...document.querySelectorAll('.wrow')]) { b.click(); for (const a of [...document.querySelectorAll('.att')]) a.click(); }
-    assert.eq(meta.loadout, 'rocket', 'last gun in the rail');
-    $('lodone').click();
-    assert.eq(screen, 'map');
+    newCampaign(); hideModal(); showScreen('map');
+    for (const k of WKEYS) {
+      document.querySelector(`.wp[data-w="${k}"]`).click();
+      assert.eq(meta.loadout, k, 'picked ' + k);
+      for (const a of [...document.querySelectorAll('#kitatt .att')]) a.click();
+    }
+    assert.eq(screen, 'map', 'the kit never leaves the start menu');
   });
   t.test('settings: music level and view apply', () => {
     newCampaign(); showSettings();
