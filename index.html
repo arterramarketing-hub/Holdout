@@ -1200,9 +1200,10 @@ const CFG = {
   saveKey: 'holdout.v2', saveEvery: 5,
   aiCdMul: 2.6,
   mineCount: 8, mineDmg: 2, mineR: 55,
+  uavTime: 30,            // seconds a UAV keeps every enemy on your minimap
   headshotMul: 2,         // damage multiplier for a round that goes through the head column
   headshotChance: 0.35,   // ...and happened to be at head height (the sim has no elevation, so it is rolled)
-  frags: 2,               // grenades each life; a care package tops them up
+  frags: 2,               // grenades each life
   fragSpeed: 600, fragLoft: 0.21, fragFuse: 2.2,   // thrown at 15 m/s, 12° above the crosshair, bursting 2.2 s after it leaves the hand
   fragR: 200, fragDmg: 6, fragSelf: 0.5,           // 5 m blast, 6 at the centre falling to nothing at the edge; half of that to you, never to your squad
   sprintMul: 1.45, sprintOut: 0.18,                // sprint speed, and the moment it takes to get the gun up after one
@@ -1258,9 +1259,9 @@ const adsSens = () => clamp(0.8 / heroZoom(), 0.13, 0.66);   // look speed comes
 const SIDEARM = { name:'PISTOL', cd:0.3, dmg:0.7, range:280, reach:800, spread:0.05, speed:3900, len:8 };   // bottomless, for when the rifle runs dry
 
 const SUPPORTS = {
-  napalm:    { name:'INCENDIARY', cost:120, desc:'Strike jet lays white phosphorus across the enemy push. Burns both sides.', key:'1' },
-  artillery: { name:'ARTILLERY', cost:90,  desc:'6-shell barrage on the thickest cluster. Danger close.', key:'2' },
-  supply:    { name:'SUPPLY DROP', cost:60, desc:'Care package of trauma kits — squad heals to full.', key:'3' },
+  uav:       { name:'UAV', desc:'A drone overhead: every enemy on your minimap for 30 s.' },
+  napalm:    { name:'NAPALM', desc:'Strike jet lays a line of napalm across the enemy push. Burns both sides.' },
+  airstrike: { name:'AIRSTRIKE', desc:'A jet lays a stick of bombs along the enemy push. Danger close.' },
 };
 const INVESTMENTS = {
   armor:    { name:'BODY ARMOR', max:3, cost: l => 150 * Math.pow(2, l), desc:'+1 HP for every soldier, per level.' },
@@ -1346,10 +1347,10 @@ function makeWren(s) {
   meta.story.wren = 'joined'; meta.story.wrenPending = false;
 }
 
-const KILLSTREAKS = [   // supports are earned on the field now, not bought
-  { at: 4,  key: 'napalm' },
-  { at: 7,  key: 'artillery' },
-  { at: 10, key: 'supply' },
+const KILLSTREAKS = [   // earned on the field, once each per life, at these kills in a row; keys 1 2 3, D-pad left up right
+  { at: 2, key: 'uav' },
+  { at: 4, key: 'napalm' },
+  { at: 6, key: 'airstrike' },
 ];
 function awardStreak() {
   state.ks++;
@@ -2219,14 +2220,10 @@ function sfxExplosion(x, y, big) {
   if (!ok && !playBuf('blast:0', { gain: 0.7 * m, x, y, force: true })) noise({ freq: 700, type: 'lowpass', dur: 0.9, gain: 0.5 * m, drive: true, slide: -560 });
 }
 function sfxJet() { if (!playBuf('jet', { gain: 0.75, force: true })) noise({ freq: 600, type: 'lowpass', dur: 2, gain: 0.2, attack: 0.6 }); }
-function sfxOutgoing() {   // the battery firing from miles back
-  for (let k = 0; k < 3; k++) playBuf('blastf', { gain: 0.3, lp: 650, rate: aRand(0.78, 0.92), delay: k * 0.45 + aRand(0, 0.15), force: true });
-}
 const sfxKill  = (x, y) => { playBuf('fall:' + aRandi(0, 1), { gain: 0.32 * distMul(x, y), rate: aRand(0.9, 1.1), delay: 0.1, x, y }); };
 const sfxHurt  = () => { playBuf('fall:0', { gain: 0.55, rate: 1.5, force: true }); noise({ freq: 300, type: 'lowpass', dur: 0.12, gain: 0.22 }); beep(3900, 0.8, 'sine', 0.01); };
 const sfxKia   = () => { playBuf('fall:1', { gain: 0.6, force: true }); beep(62, 0.9, 'sine', 0.16, -30, 0, 0.4); };
 const sfxClear = () => { beep(440, 0.15, 'square', 0.05); beep(660, 0.25, 'square', 0.05, 0, 0.14); };
-const sfxBuy   = () => beep(660, 0.08, 'square', 0.04, 200);
 function startAmbience() {
   const ac = audio(); if (!ac || amb.started) return;
   amb.started = true;
@@ -2562,9 +2559,8 @@ window.addEventListener('keydown', e => {
     if (e.code === 'KeyF') aim.take = true;
     if (e.code === 'KeyO') showSettings();
     if (e.code === 'KeyV') { meta.opts.fpv = !meta.opts.fpv; applyOpts(); saveMeta(); }
-    if (e.code === 'Digit1') useSupport('napalm');
-    if (e.code === 'Digit2') useSupport('artillery');
-    if (e.code === 'Digit3') useSupport('supply');
+    const ksKey = { Digit1: 0, Digit2: 1, Digit3: 2 }[e.code];
+    if (ksKey != null) useSupport(KILLSTREAKS[ksKey].key);
   }
   audio(); startAmbience();
 });
@@ -2777,9 +2773,7 @@ function pollPad(dt) {
     if (hit(GPB.DOWN)) { meta.opts.fpv = !meta.opts.fpv; applyOpts(); saveMeta(); }
     if (hit(GPB.L3)) aim.sprintPad = !aim.sprintPad;
     if (aim.sprintPad && ly > -0.3) aim.sprintPad = false;   // the sprint ends when the stick comes back
-    if (hit(GPB.LEFT)) useSupport('napalm');
-    if (hit(GPB.UP)) useSupport('artillery');
-    if (hit(GPB.RIGHT)) useSupport('supply');
+    [GPB.LEFT, GPB.UP, GPB.RIGHT].forEach((b, i) => { if (hit(b)) useSupport(KILLSTREAKS[i].key); });   // the killstreaks, in order
     if (hit(GPB.START)) showSettings();
     if (hit(GPB.VIEW)) $('tomap').click();
   } else if (screen === 'battle') {
@@ -3407,34 +3401,35 @@ function useSupport(k) {
   if (screen !== 'battle' || state.mode !== 'play' || !state.earned[k]) return;
   state.earned[k]--;
   const c = enemyCluster();
-  if (k === 'napalm') {
-    showBanner('INCENDIARY STRIKE INBOUND'); sfxJet();
+  if (k === 'uav') {   // a drone overhead: every enemy on your minimap until it leaves
+    showBanner('UAV ONLINE');
+    state.uavT = CFG.uavTime;
+    playBuf('radio', { gain: 0.32, force: true });
+  } else if (k === 'napalm') {
+    showBanner('NAPALM STRIKE INBOUND'); sfxJet();
     state.flyby = { x: c.x, y: c.y, t0: state.frontTime };
     for (let i = 0; i < 12; i++)
       shells.push({ kind: 'fire', x: c.x - 330 + i * 60, y: c.y + rand(-35, 35), t: 0.5 + i * 0.07 });
-  } else if (k === 'artillery') {
-    showBanner('ARTILLERY — DANGER CLOSE'); sfxOutgoing();
-    for (let i = 0; i < 6; i++)
-      shells.push({ kind: 'he', x: c.x + rand(-130, 130), y: c.y + rand(-90, 90), t: 0.7 + i * 0.4 });
-  } else if (k === 'supply') {
-    showBanner('CARE PACKAGE INBOUND');
-    const p = camTarget();
-    shells.push({ kind: 'crate', x: p ? p.x : CFG.arenaW / 2, y: p ? p.y : CFG.lineY, t: 1.0 });
+  } else if (k === 'airstrike') {   // the jet crosses the enemy's thickest ground west to east and lays a stick of bombs along its path
+    showBanner('AIRSTRIKE INBOUND'); sfxJet();
+    state.flyby = { x: c.x, y: c.y, t0: state.frontTime };
+    const speed = 100 * PX / 1.8;   // the jet covers 100 m in 1.8 s (drawPlane) and is over the middle at 0.9 s
+    for (let i = 0; i < AIRSTRIKE.bombs; i++) {
+      const off = (i - (AIRSTRIKE.bombs - 1) / 2) * AIRSTRIKE.spacing;
+      shells.push({ kind: 'bomb', x: clamp(c.x + off, 40, CFG.arenaW - 40), y: clamp(c.y + rand(-25, 25), 40, CFG.arenaH - 40), t: 0.9 + off / speed + AIRSTRIKE.fall });
+    }
   }
   supportsDirty = true;
 }
+const AIRSTRIKE = { bombs: 7, spacing: 85, fall: 0.45, r: 95, eDmg: 4, sDmg: 2 };   // px apart along the path; a bomb's blast is bigger than a shell's
 function updateShells(dt) {
+  if (state.uavT > 0 && (state.uavT -= dt) <= 0) { state.uavT = 0; supportsDirty = true; showBanner('UAV OFFLINE'); }
   for (let i = shells.length - 1; i >= 0; i--) {
     const sh = shells[i];
     sh.t -= dt;
     if (sh.t > 0) continue;
-    if (sh.kind === 'he') explode(sh.x, sh.y, 60, 3, 1.5, { player: true, wkey: null });
+    if (sh.kind === 'bomb') explode(sh.x, sh.y, AIRSTRIKE.r, AIRSTRIKE.eDmg, AIRSTRIKE.sDmg, { player: true, wkey: null, slot: state.controlled });
     else if (sh.kind === 'fire') { fires.push({ x: sh.x, y: sh.y, r: 30, t: 8 }); burst(sh.x, sh.y, '#e8843a', 8, 6); }
-    else if (sh.kind === 'crate') {
-      burst(sh.x, sh.y, '#b7d34a', 14, 10); sfxBuy();
-      for (const s of soldiers) if (s.alive) { const w = WEAPONS[s.weapon]; s.hp = s.maxHp; s.mag = magCap(s); s.reserve = magCap(s) * w.spare; s.pistol = false; s.reloadT = 0; s.frags = Math.max(s.frags || 0, CFG.frags); }
-      floaters.push({ x: sh.x, y: sh.y, z: 34, txt: 'HEALED & RESUPPLIED', life: 1.4 });
-    }
     shells.splice(i, 1);
   }
 }
@@ -3859,7 +3854,7 @@ function enterBattle(tid) {
   supportsDirty = true;
   state.streakN = 0; state.streakT = 0;
   state.kills = 0; state.ks = 0; state.tickets = CFG.tickets;
-  state.earned = { napalm: 0, artillery: 0, supply: 0 };
+  state.earned = { uav: 0, napalm: 0, airstrike: 0 }; state.uavT = 0;
   showScreen('battle');
   if (first < 0) showFailModal();
 }
@@ -7908,9 +7903,8 @@ function updateOverlays(dt) {
 // ---------- incoming rounds, airdrops, air strikes ----------
 function drawIncoming(sh, now) {   // warning ring, then the round itself falling for its last 0.35 s
   const F = VIEW.fx, D = VIEW.dyn, X = sh.x * XS, Z = sh.y * XS;
-  if (sh.kind === 'crate') { drawCrateDrop(sh, now); return; }
   const pulse = 0.85 + Math.sin(now / 90) * 0.15;
-  decal(F.ring, X, Z, (sh.kind === 'fire' ? 1.3 : 2.3) * pulse, 0, colorOf('#ffb040'), 0.04);
+  decal(F.ring, X, Z, (sh.kind === 'fire' ? 1.3 : sh.kind === 'bomb' ? 3.2 : 2.3) * pulse, 0, colorOf('#ffb040'), 0.04);
   if (sh.t >= 0.35) return;
   const h = sh.t / 0.35 * 22 + 0.2;
   TMP.q.identity();
@@ -7922,23 +7916,6 @@ function drawIncoming(sh, now) {   // warning ring, then the round itself fallin
   TMP.q.identity();
   TMP.m.compose(TMP.v.set(X, h + 1.1, Z), TMP.q, TMP.s.set(0.12, 0.12, 0.12));
   F.spark.push(TMP.m, colorOf('#d8d4c8'));
-}
-function drawCrateDrop(sh, now) {   // supply crate under a parachute, drifting onto the squad
-  const D = VIEW.dyn, X = sh.x * XS, Z = sh.y * XS, h = Math.max(0, sh.t) * 14;
-  const sway = Math.sin(now / 320) * 0.3 * (h / 14);
-  decal(VIEW.fx.ring, X, Z, 2.0, now / 500, colorOf('#9fe070'), 0.04);
-  TMP.q.setFromAxisAngle(TMP.up, now / 900);
-  TMP.m.compose(TMP.v.set(X + sway, h + 0.35, Z), TMP.q, TMP.s.set(0.7, 0.7, 0.7));
-  D.wood.push(TMP.m, colorOf('#5e6444'));
-  TMP.m.compose(TMP.v.set(X + sway, h + 0.36, Z), TMP.q, TMP.s.set(0.72, 0.12, 0.72));
-  D.cloth.push(TMP.m, colorOf('#d23a2a'));
-  TMP.q.identity();
-  TMP.m.compose(TMP.v.set(X + sway * 1.6, h + 3.1, Z), TMP.q, TMP.s.set(3.0, 0.9, 3.0));
-  D.cone.push(TMP.m, colorOf('#a09a78'));
-  for (const [ox, oz] of [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]]) {
-    TMP.m.compose(TMP.v.set(X + sway * 1.3 + ox * 0.6, h + 1.7, Z + oz * 0.6), TMP.q, TMP.s.set(0.02, 2.2, 0.02));
-    D.white.push(TMP.m, colorOf('#e8e2d0'));
-  }
 }
 function drawPlane(x, y, z) {   // strike jet, nose toward +X
   const D = VIEW.dyn, grey = colorOf('#7a8088'), dark = colorOf('#4a4e54');
@@ -8172,6 +8149,7 @@ function rebuildSupports() {
   KILLSTREAKS.forEach((ks, i) => {
     const s = SUPPORTS[ks.key], have = state.earned[ks.key] || 0, need = Math.max(0, ks.at - state.ks);
     const status = have ? `<span class="cnt">READY${have > 1 ? ' ×' + have : ''}</span>`
+      : ks.key === 'uav' && state.uavT > 0 ? '<span class="cnt">ONLINE</span>'   // the drone is still up
       : `<span class="need">${need > 0 ? need + (need === 1 ? ' KILL' : ' KILLS') : 'USED'}</span>`;   // used: earned once already this life
     const b = document.createElement('button');
     b.className = 'supbtn' + (have ? '' : ' locked');

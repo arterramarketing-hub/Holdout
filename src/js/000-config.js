@@ -14,9 +14,10 @@ const CFG = {
   saveKey: 'holdout.v2', saveEvery: 5,
   aiCdMul: 2.6,
   mineCount: 8, mineDmg: 2, mineR: 55,
+  uavTime: 30,            // seconds a UAV keeps every enemy on your minimap
   headshotMul: 2,         // damage multiplier for a round that goes through the head column
   headshotChance: 0.35,   // ...and happened to be at head height (the sim has no elevation, so it is rolled)
-  frags: 2,               // grenades each life; a care package tops them up
+  frags: 2,               // grenades each life
   fragSpeed: 600, fragLoft: 0.21, fragFuse: 2.2,   // thrown at 15 m/s, 12° above the crosshair, bursting 2.2 s after it leaves the hand
   fragR: 200, fragDmg: 6, fragSelf: 0.5,           // 5 m blast, 6 at the centre falling to nothing at the edge; half of that to you, never to your squad
   sprintMul: 1.45, sprintOut: 0.18,                // sprint speed, and the moment it takes to get the gun up after one
@@ -72,9 +73,9 @@ const adsSens = () => clamp(0.8 / heroZoom(), 0.13, 0.66);   // look speed comes
 const SIDEARM = { name:'PISTOL', cd:0.3, dmg:0.7, range:280, reach:800, spread:0.05, speed:3900, len:8 };   // bottomless, for when the rifle runs dry
 
 const SUPPORTS = {
-  napalm:    { name:'INCENDIARY', cost:120, desc:'Strike jet lays white phosphorus across the enemy push. Burns both sides.', key:'1' },
-  artillery: { name:'ARTILLERY', cost:90,  desc:'6-shell barrage on the thickest cluster. Danger close.', key:'2' },
-  supply:    { name:'SUPPLY DROP', cost:60, desc:'Care package of trauma kits — squad heals to full.', key:'3' },
+  uav:       { name:'UAV', desc:'A drone overhead: every enemy on your minimap for 30 s.' },
+  napalm:    { name:'NAPALM', desc:'Strike jet lays a line of napalm across the enemy push. Burns both sides.' },
+  airstrike: { name:'AIRSTRIKE', desc:'A jet lays a stick of bombs along the enemy push. Danger close.' },
 };
 const INVESTMENTS = {
   armor:    { name:'BODY ARMOR', max:3, cost: l => 150 * Math.pow(2, l), desc:'+1 HP for every soldier, per level.' },

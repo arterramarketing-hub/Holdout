@@ -76,3 +76,56 @@ suite('information you earn', t => {
     state.uavT = 0;
   });
 });
+
+suite('killstreaks', t => {
+  const streakScene = () => {
+    newCampaign(); seed(14);
+    const h = battle({ clear: true });
+    benchSquad(); setupObjectives([]);
+    return h;
+  };
+  const kill = () => { const e = G.spawn('grunt', 20 * PX, 20 * PX); hurtEnemy(enemies.indexOf(e), 99, { player: true, wkey: 'ar', slot: state.controlled }, null); };
+  t.test('UAV at two kills, napalm at four, airstrike at six, each in the HUD by name', () => {
+    streakScene();
+    assert.eq(KILLSTREAKS.map(k => k.at + ' ' + k.key).join(', '), '2 uav, 4 napalm, 6 airstrike');
+    const earned = () => ['uav', 'napalm', 'airstrike'].map(k => state.earned[k]).join('');
+    kill(); assert.eq(earned(), '000', 'one kill: nothing yet');
+    kill(); assert.eq(earned(), '100', 'two: the UAV');
+    kill(); kill(); assert.eq(earned(), '110', 'four: napalm');
+    kill(); kill(); assert.eq(earned(), '111', 'six: the airstrike');
+    rebuildSupports();
+    assert.eq([...el.supports.querySelectorAll('.ks-name')].map(n => n.textContent).join(' / '), 'UAV / NAPALM / AIRSTRIKE');
+    assert.eq(typeof SUPPORTS.artillery, 'undefined', 'no artillery');
+    assert.eq(typeof SUPPORTS.supply, 'undefined', 'no supply drop');
+  });
+  t.test('the UAV puts every enemy on your minimap for 30 s, and says so', () => {
+    const h = streakScene();
+    state.earned.uav = 1;
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Digit1' }));
+    assert.eq(state.earned.uav, 0, '1 calls it');
+    assert.near(state.uavT, CFG.uavTime, 0.01, 'up for 30 s');
+    rebuildSupports();
+    assert.ok(/ONLINE/.test(el.supports.children[0].textContent), 'the chip says ONLINE');
+    ticks(60 * 31);
+    assert.eq(state.uavT, 0, 'and it leaves');
+  });
+  t.test('the airstrike lays a line of bombs across the enemy push, and the kills are yours', () => {
+    const h = streakScene();
+    h.x = 48 * PX; h.y = 66 * PX;
+    const line = [-3, -1.5, 0, 1.5, 3].map(dx => { const e = G.spawn('grunt', (48 + dx) * PX, 30 * PX); e.sp = 0; e.ranged = 0; e.dmg = 0; return e; });
+    const kills = state.kills;
+    h.invuln = 0;   // so the last check means something
+    state.earned.airstrike = 1; useSupport('airstrike');
+    assert.ok(state.flyby, 'the jet comes over');
+    const bombs = shells.filter(sh => sh.kind === 'bomb');
+    assert.eq(bombs.length, AIRSTRIKE.bombs, 'a stick of bombs');
+    const xs = bombs.map(b => b.x), ts = bombs.map(b => b.t);
+    assert.ok(Math.max(...xs) - Math.min(...xs) > 400, 'spread along the jet\'s path');
+    assert.ok(ts.every((t, i) => i === 0 || t >= ts[i - 1]), 'falling in order along it');
+    ticks(120);
+    assert.eq(shells.length, 0, 'all down');
+    assert.ok(line.every(e => !enemies.includes(e)), 'the line of riflemen under it is gone: ' + line.filter(e => enemies.includes(e)).length + ' left');
+    assert.eq(state.kills - kills, line.length, 'every kill yours');
+    assert.ok(h.alive && h.hp === h.maxHp, 'you, 36 m back, untouched');
+  });
+});

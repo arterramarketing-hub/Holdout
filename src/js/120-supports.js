@@ -13,34 +13,35 @@ function useSupport(k) {
   if (screen !== 'battle' || state.mode !== 'play' || !state.earned[k]) return;
   state.earned[k]--;
   const c = enemyCluster();
-  if (k === 'napalm') {
-    showBanner('INCENDIARY STRIKE INBOUND'); sfxJet();
+  if (k === 'uav') {   // a drone overhead: every enemy on your minimap until it leaves
+    showBanner('UAV ONLINE');
+    state.uavT = CFG.uavTime;
+    playBuf('radio', { gain: 0.32, force: true });
+  } else if (k === 'napalm') {
+    showBanner('NAPALM STRIKE INBOUND'); sfxJet();
     state.flyby = { x: c.x, y: c.y, t0: state.frontTime };
     for (let i = 0; i < 12; i++)
       shells.push({ kind: 'fire', x: c.x - 330 + i * 60, y: c.y + rand(-35, 35), t: 0.5 + i * 0.07 });
-  } else if (k === 'artillery') {
-    showBanner('ARTILLERY — DANGER CLOSE'); sfxOutgoing();
-    for (let i = 0; i < 6; i++)
-      shells.push({ kind: 'he', x: c.x + rand(-130, 130), y: c.y + rand(-90, 90), t: 0.7 + i * 0.4 });
-  } else if (k === 'supply') {
-    showBanner('CARE PACKAGE INBOUND');
-    const p = camTarget();
-    shells.push({ kind: 'crate', x: p ? p.x : CFG.arenaW / 2, y: p ? p.y : CFG.lineY, t: 1.0 });
+  } else if (k === 'airstrike') {   // the jet crosses the enemy's thickest ground west to east and lays a stick of bombs along its path
+    showBanner('AIRSTRIKE INBOUND'); sfxJet();
+    state.flyby = { x: c.x, y: c.y, t0: state.frontTime };
+    const speed = 100 * PX / 1.8;   // the jet covers 100 m in 1.8 s (drawPlane) and is over the middle at 0.9 s
+    for (let i = 0; i < AIRSTRIKE.bombs; i++) {
+      const off = (i - (AIRSTRIKE.bombs - 1) / 2) * AIRSTRIKE.spacing;
+      shells.push({ kind: 'bomb', x: clamp(c.x + off, 40, CFG.arenaW - 40), y: clamp(c.y + rand(-25, 25), 40, CFG.arenaH - 40), t: 0.9 + off / speed + AIRSTRIKE.fall });
+    }
   }
   supportsDirty = true;
 }
+const AIRSTRIKE = { bombs: 7, spacing: 85, fall: 0.45, r: 95, eDmg: 4, sDmg: 2 };   // px apart along the path; a bomb's blast is bigger than a shell's
 function updateShells(dt) {
+  if (state.uavT > 0 && (state.uavT -= dt) <= 0) { state.uavT = 0; supportsDirty = true; showBanner('UAV OFFLINE'); }
   for (let i = shells.length - 1; i >= 0; i--) {
     const sh = shells[i];
     sh.t -= dt;
     if (sh.t > 0) continue;
-    if (sh.kind === 'he') explode(sh.x, sh.y, 60, 3, 1.5, { player: true, wkey: null });
+    if (sh.kind === 'bomb') explode(sh.x, sh.y, AIRSTRIKE.r, AIRSTRIKE.eDmg, AIRSTRIKE.sDmg, { player: true, wkey: null, slot: state.controlled });
     else if (sh.kind === 'fire') { fires.push({ x: sh.x, y: sh.y, r: 30, t: 8 }); burst(sh.x, sh.y, '#e8843a', 8, 6); }
-    else if (sh.kind === 'crate') {
-      burst(sh.x, sh.y, '#b7d34a', 14, 10); sfxBuy();
-      for (const s of soldiers) if (s.alive) { const w = WEAPONS[s.weapon]; s.hp = s.maxHp; s.mag = magCap(s); s.reserve = magCap(s) * w.spare; s.pistol = false; s.reloadT = 0; s.frags = Math.max(s.frags || 0, CFG.frags); }
-      floaters.push({ x: sh.x, y: sh.y, z: 34, txt: 'HEALED & RESUPPLIED', life: 1.4 });
-    }
     shells.splice(i, 1);
   }
 }

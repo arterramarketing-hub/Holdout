@@ -60,9 +60,7 @@ function pollPad(dt) {
     if (hit(GPB.DOWN)) { meta.opts.fpv = !meta.opts.fpv; applyOpts(); saveMeta(); }
     if (hit(GPB.L3)) aim.sprintPad = !aim.sprintPad;
     if (aim.sprintPad && ly > -0.3) aim.sprintPad = false;   // the sprint ends when the stick comes back
-    if (hit(GPB.LEFT)) useSupport('napalm');
-    if (hit(GPB.UP)) useSupport('artillery');
-    if (hit(GPB.RIGHT)) useSupport('supply');
+    [GPB.LEFT, GPB.UP, GPB.RIGHT].forEach((b, i) => { if (hit(b)) useSupport(KILLSTREAKS[i].key); });   // the killstreaks, in order
     if (hit(GPB.START)) showSettings();
     if (hit(GPB.VIEW)) $('tomap').click();
   } else if (screen === 'battle') {

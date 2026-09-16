@@ -277,9 +277,8 @@ function updateOverlays(dt) {
 // ---------- incoming rounds, airdrops, air strikes ----------
 function drawIncoming(sh, now) {   // warning ring, then the round itself falling for its last 0.35 s
   const F = VIEW.fx, D = VIEW.dyn, X = sh.x * XS, Z = sh.y * XS;
-  if (sh.kind === 'crate') { drawCrateDrop(sh, now); return; }
   const pulse = 0.85 + Math.sin(now / 90) * 0.15;
-  decal(F.ring, X, Z, (sh.kind === 'fire' ? 1.3 : 2.3) * pulse, 0, colorOf('#ffb040'), 0.04);
+  decal(F.ring, X, Z, (sh.kind === 'fire' ? 1.3 : sh.kind === 'bomb' ? 3.2 : 2.3) * pulse, 0, colorOf('#ffb040'), 0.04);
   if (sh.t >= 0.35) return;
   const h = sh.t / 0.35 * 22 + 0.2;
   TMP.q.identity();
@@ -291,23 +290,6 @@ function drawIncoming(sh, now) {   // warning ring, then the round itself fallin
   TMP.q.identity();
   TMP.m.compose(TMP.v.set(X, h + 1.1, Z), TMP.q, TMP.s.set(0.12, 0.12, 0.12));
   F.spark.push(TMP.m, colorOf('#d8d4c8'));
-}
-function drawCrateDrop(sh, now) {   // supply crate under a parachute, drifting onto the squad
-  const D = VIEW.dyn, X = sh.x * XS, Z = sh.y * XS, h = Math.max(0, sh.t) * 14;
-  const sway = Math.sin(now / 320) * 0.3 * (h / 14);
-  decal(VIEW.fx.ring, X, Z, 2.0, now / 500, colorOf('#9fe070'), 0.04);
-  TMP.q.setFromAxisAngle(TMP.up, now / 900);
-  TMP.m.compose(TMP.v.set(X + sway, h + 0.35, Z), TMP.q, TMP.s.set(0.7, 0.7, 0.7));
-  D.wood.push(TMP.m, colorOf('#5e6444'));
-  TMP.m.compose(TMP.v.set(X + sway, h + 0.36, Z), TMP.q, TMP.s.set(0.72, 0.12, 0.72));
-  D.cloth.push(TMP.m, colorOf('#d23a2a'));
-  TMP.q.identity();
-  TMP.m.compose(TMP.v.set(X + sway * 1.6, h + 3.1, Z), TMP.q, TMP.s.set(3.0, 0.9, 3.0));
-  D.cone.push(TMP.m, colorOf('#a09a78'));
-  for (const [ox, oz] of [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]]) {
-    TMP.m.compose(TMP.v.set(X + sway * 1.3 + ox * 0.6, h + 1.7, Z + oz * 0.6), TMP.q, TMP.s.set(0.02, 2.2, 0.02));
-    D.white.push(TMP.m, colorOf('#e8e2d0'));
-  }
 }
 function drawPlane(x, y, z) {   // strike jet, nose toward +X
   const D = VIEW.dyn, grey = colorOf('#7a8088'), dark = colorOf('#4a4e54');

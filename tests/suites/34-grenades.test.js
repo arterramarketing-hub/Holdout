@@ -71,16 +71,14 @@ suite('grenades', t => {
     tick(1 / 60);
     assert.ok(!h.alive, 'already hurt, it can finish you');
   });
-  t.test('two frags a life; a care package tops them up', () => {
+  t.test('two frags a life, and a fresh life carries two', () => {
     const h = yard();
     assert.eq(h.frags, 2);
     assert.ok(throwGrenade(h)); ticks(50);
     assert.ok(throwGrenade(h)); ticks(50);
     assert.ok(!throwGrenade(h), 'out of frags');
     assert.eq(h.frags, 0);
-    state.earned.supply = 1; useSupport('supply'); ticks(90);
-    assert.eq(h.frags, 2, 'resupplied');
-    h.frags = 0; respawnSoldier(h);
+    respawnSoldier(h);
     assert.eq(h.frags, 2, 'a fresh life carries two');
   });
   t.test('G throws', () => {

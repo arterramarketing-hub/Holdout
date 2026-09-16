@@ -110,8 +110,8 @@ suite('controller', t => {
     assert.ok(h.sprinting, 'sprinting');
     pad.axes[1] = 0; ticks(5);
     assert.ok(!h.sprinting && !aim.sprintPad, 'the sprint ends when the stick comes back');
-    state.earned.supply = 1; tap(GPB.RIGHT);
-    assert.eq(state.earned.supply, 0, 'care package called');
+    state.earned.airstrike = 1; tap(GPB.RIGHT);
+    assert.eq(state.earned.airstrike, 0, 'D-pad right calls the airstrike');
     unplug();
   });
   t.test('rumble follows the Vibration setting', () => {

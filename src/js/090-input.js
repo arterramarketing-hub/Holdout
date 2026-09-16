@@ -17,9 +17,8 @@ window.addEventListener('keydown', e => {
     if (e.code === 'KeyF') aim.take = true;
     if (e.code === 'KeyO') showSettings();
     if (e.code === 'KeyV') { meta.opts.fpv = !meta.opts.fpv; applyOpts(); saveMeta(); }
-    if (e.code === 'Digit1') useSupport('napalm');
-    if (e.code === 'Digit2') useSupport('artillery');
-    if (e.code === 'Digit3') useSupport('supply');
+    const ksKey = { Digit1: 0, Digit2: 1, Digit3: 2 }[e.code];
+    if (ksKey != null) useSupport(KILLSTREAKS[ksKey].key);
   }
   audio(); startAmbience();
 });

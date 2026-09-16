@@ -35,10 +35,10 @@ function makeWren(s) {
   meta.story.wren = 'joined'; meta.story.wrenPending = false;
 }
 
-const KILLSTREAKS = [   // supports are earned on the field now, not bought
-  { at: 4,  key: 'napalm' },
-  { at: 7,  key: 'artillery' },
-  { at: 10, key: 'supply' },
+const KILLSTREAKS = [   // earned on the field, once each per life, at these kills in a row; keys 1 2 3, D-pad left up right
+  { at: 2, key: 'uav' },
+  { at: 4, key: 'napalm' },
+  { at: 6, key: 'airstrike' },
 ];
 function awardStreak() {
   state.ks++;

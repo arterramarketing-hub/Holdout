@@ -42,7 +42,7 @@ function enterBattle(tid) {
   supportsDirty = true;
   state.streakN = 0; state.streakT = 0;
   state.kills = 0; state.ks = 0; state.tickets = CFG.tickets;
-  state.earned = { napalm: 0, artillery: 0, supply: 0 };
+  state.earned = { uav: 0, napalm: 0, airstrike: 0 }; state.uavT = 0;
   showScreen('battle');
   if (first < 0) showFailModal();
 }

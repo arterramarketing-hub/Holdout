@@ -20,6 +20,7 @@ function rebuildSupports() {
   KILLSTREAKS.forEach((ks, i) => {
     const s = SUPPORTS[ks.key], have = state.earned[ks.key] || 0, need = Math.max(0, ks.at - state.ks);
     const status = have ? `<span class="cnt">READY${have > 1 ? ' ×' + have : ''}</span>`
+      : ks.key === 'uav' && state.uavT > 0 ? '<span class="cnt">ONLINE</span>'   // the drone is still up
       : `<span class="need">${need > 0 ? need + (need === 1 ? ' KILL' : ' KILLS') : 'USED'}</span>`;   // used: earned once already this life
     const b = document.createElement('button');
     b.className = 'supbtn' + (have ? '' : ' locked');

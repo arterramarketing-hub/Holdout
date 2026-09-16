@@ -375,14 +375,10 @@ function sfxExplosion(x, y, big) {
   if (!ok && !playBuf('blast:0', { gain: 0.7 * m, x, y, force: true })) noise({ freq: 700, type: 'lowpass', dur: 0.9, gain: 0.5 * m, drive: true, slide: -560 });
 }
 function sfxJet() { if (!playBuf('jet', { gain: 0.75, force: true })) noise({ freq: 600, type: 'lowpass', dur: 2, gain: 0.2, attack: 0.6 }); }
-function sfxOutgoing() {   // the battery firing from miles back
-  for (let k = 0; k < 3; k++) playBuf('blastf', { gain: 0.3, lp: 650, rate: aRand(0.78, 0.92), delay: k * 0.45 + aRand(0, 0.15), force: true });
-}
 const sfxKill  = (x, y) => { playBuf('fall:' + aRandi(0, 1), { gain: 0.32 * distMul(x, y), rate: aRand(0.9, 1.1), delay: 0.1, x, y }); };
 const sfxHurt  = () => { playBuf('fall:0', { gain: 0.55, rate: 1.5, force: true }); noise({ freq: 300, type: 'lowpass', dur: 0.12, gain: 0.22 }); beep(3900, 0.8, 'sine', 0.01); };
 const sfxKia   = () => { playBuf('fall:1', { gain: 0.6, force: true }); beep(62, 0.9, 'sine', 0.16, -30, 0, 0.4); };
 const sfxClear = () => { beep(440, 0.15, 'square', 0.05); beep(660, 0.25, 'square', 0.05, 0, 0.14); };
-const sfxBuy   = () => beep(660, 0.08, 'square', 0.04, 200);
 function startAmbience() {
   const ac = audio(); if (!ac || amb.started) return;
   amb.started = true;
