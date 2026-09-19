@@ -49,7 +49,8 @@ function updateCamera3(dt) {
   if (state.mode === 'dying' && ctl) {   // watch them go down: ease around and low over the body
     if (C.bossT > 0) { C.bossT = 0; hideTitleCard(); }
     if (!C.dieFrom) { C.dieFrom = C.eye.clone(); C.dieLook = C.look.clone(); }
-    const t = clamp(state.dyingT / CFG.deathCam, 0, 1), bx = ctl.x * XS, bz = ctl.y * XS, oa = C.orbitBase + 0.35;
+    const body = bodies.find(b => b.slot === state.controlled), rag = body && views.get(body) && views.get(body).rag;   // a blast can throw you metres: watch the body, not the spot
+    const t = clamp(state.dyingT / CFG.deathCam, 0, 1), bx = rag ? rag.p[0] : ctl.x * XS, bz = rag ? rag.p[2] : ctl.y * XS, oa = C.orbitBase + 0.35;
     C.oEye.set(bx - Math.sin(oa) * 3.2, 0.95, bz + Math.cos(oa) * 3.2);
     C.oLook.set(bx, 0.45, bz);
     C.eye.lerpVectors(C.dieFrom, C.oEye, smooth(0, 1, t));

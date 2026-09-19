@@ -161,9 +161,16 @@ function drawEnemy(e, wdt, set) {
   if (!e.boss && e.maxHp >= 3 && e.hp < e.maxHp)
     hpBar(X, Z, 2.1 * look[1] + (e.horse ? 0.45 : 0) + lift, e.hp / e.maxHp, '#e0583c');
 }
-function drawBody(b, wdt, set) {   // a soldier's fall, continuing from the exact pose they died in
+function drawBody(b, wdt, set) {   // a soldier's fall: the canned fall from the exact pose they died in, then the ragdoll
   const r = recFor(b), slot = b.slot || 0, J = r.J;
   if (!r.pal) r.pal = soldierPalette(slot, b.color, helmFor(slot, b.color));
+  const parts = soldierParts(b.weapon || 'ar', true, isWrenCol(b.color), b);
+  if (r.rag) {
+    ragStep(r.rag, wdt);
+    emitParts(r.rag.J, noGun(parts), r.pal, set);
+    emitGround(gunOnly(parts), r.pal, b.gunX, b.gunY, b.gunYaw, 1, set);
+    return;
+  }
   if (!r.init) {
     const src = views.get(soldiers[slot]);
     if (src && src.init) { r.pose.set(src.pose); r.yaw = src.yaw; r.init = true; }
@@ -174,9 +181,20 @@ function drawBody(b, wdt, set) {   // a soldier's fall, continuing from the exac
   const pitch = poseDeath(J, t, b.style);
   smoothPose(r, J, wdt, 20);
   placeRoot(J, b.x * XS, b.y * XS, r.yaw, pitch, 1, 1, 1);
-  const parts = soldierParts(b.weapon || 'ar', true, isWrenCol(b.color), b), dropped = t > 0.42;
+  if (ragHandoff(r, J, t, b, RAG_ONE, wdt)) { emitParts(r.rag.J, noGun(parts), r.pal, set); emitGround(gunOnly(parts), r.pal, b.gunX, b.gunY, b.gunYaw, 1, set); return; }
+  const dropped = t > 0.42;
   emitParts(J, dropped ? noGun(parts) : parts, r.pal, set);
   if (dropped) emitGround(gunOnly(parts), r.pal, b.gunX, b.gunY, b.gunYaw, 1, set);
+}
+const RAG_ONE = [1, 1, 1];
+function ragHandoff(r, J, t, d, sc, wdt) {   // at its moment in the canned fall, hand the body to a ragdoll; until then remember this frame's points for the motion
+  if (!r.ragTried && t >= (d.blast ? RAG.handoffBlast : RAG.handoff)) {
+    r.ragTried = true;   // one chance: with every slot busy, this death stays canned to the end
+    r.rag = ragStart(J, r.ragPrev && r.ragPrevDt > 0 ? r.ragPrev : null, r.ragPrevDt, { hit: d.hit, kick: d.kick || 1.8, blast: !!d.blast, sc });
+    if (r.rag) return true;
+  }
+  if (!r.ragTried) { ragSample(J, r.ragPrev || (r.ragPrev = new Float32Array(RAG_N * 3))); r.ragPrevDt = wdt; }
+  return false;
 }
 
 // ---------- corpses: settled bodies are baked once into the static batch layer ----------
@@ -197,13 +215,21 @@ function poseCorpse(J, c, t) {
   placeRoot(J, c.x * XS, c.y * XS, corpseYaw(c), pitch, lk.sc[0], lk.sc[1], lk.sc[2], (c.z || 0) * XS);
   return lk;
 }
-function bakeCorpse(c) {
-  const J = takeSkeleton('humanoid');
-  const lk = poseCorpse(J, c, 1);
+function bakeCorpse(c, rag) {   // into the static layer: the pose the ragdoll came to rest in, or the canned fall's last
   const cache = [];
-  emitParts(J, noGun(lk.parts), lk.pal, null, false, cache);
+  let lk;
+  if (rag) {
+    lk = corpseLook(c);
+    emitParts(rag.J, noGun(lk.parts), lk.pal, null, false, cache);
+    c._restX = rag.p[0] / XS; c._restY = rag.p[2] / XS; c._restZ = rag.floor / XS;   // the blood pool goes where it lies
+    ragRelease(rag);
+  } else {
+    const J = takeSkeleton('humanoid');
+    lk = poseCorpse(J, c, 1);
+    emitParts(J, noGun(lk.parts), lk.pal, null, false, cache);
+    rigPool.humanoid.push(J);
+  }
   if (!c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], null, cache, (c.z || 0) * XS);
-  rigPool.humanoid.push(J);
   return cache;
 }
 function syncCorpses(wdt, set) {
@@ -214,23 +240,37 @@ function syncCorpses(wdt, set) {
   if (sig !== corpseSig) { corpseSig = sig; staticDirty = true; }
   for (const c of corpses) {
     if (c._cache) continue;
-    const src = c.src && views.get(c.src);   // the living view this corpse continues from
+    const src = c.src && views.get(c.src);   // the living view (or the falling body) this corpse continues from
     c.src = null;
     if (c.kind === 'soldier') {
       if (src && src.yaw != null) c.yawBake = src.yaw;
-      c._cache = bakeCorpse(c); staticDirty = true; continue;
+      if (src && src.rag) { recFor(c).rag = src.rag; src.rag = null; }   // still coming to rest: the ragdoll goes on as the corpse
+      if (!views.get(c) || !views.get(c).rag) { c._cache = bakeCorpse(c); staticDirty = true; continue; }
     }
-    const r = recFor(c);
+    const r = recFor(c), lk = corpseLook(c), lift = (c.z || 0) * XS;
+    if (r.rag) {   // a ragdoll: until it lies still, then its pose is the corpse
+      ragStep(r.rag, wdt);
+      if (r.rag.done) { c._cache = bakeCorpse(c, r.rag); r.rag = null; staticDirty = true; continue; }
+      emitParts(r.rag.J, noGun(lk.parts), lk.pal, set);
+      if (!c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], set, null, lift);
+      continue;
+    }
     if (!r.init && src && src.init) { r.pose.set(src.pose); r.init = true; c.yawBake = src.yaw; }
     c._fall = (c._fall || 0) + wdt;
     if (c._fall >= CFG.enemyFallDur) { c._cache = bakeCorpse(c); staticDirty = true; continue; }
-    const lk = corpseLook(c), t = c._fall / CFG.enemyFallDur, dropped = t > 0.42;
+    const t = c._fall / CFG.enemyFallDur;
     resetPose(r.J);
     const pitch = poseDeath(r.J, t, c.style);
     smoothPose(r, r.J, wdt, 20);
-    placeRoot(r.J, c.x * XS, c.y * XS, corpseYaw(c), pitch, lk.sc[0], lk.sc[1], lk.sc[2], (c.z || 0) * XS);
+    placeRoot(r.J, c.x * XS, c.y * XS, corpseYaw(c), pitch, lk.sc[0], lk.sc[1], lk.sc[2], lift);
+    if (ragHandoff(r, r.J, t, c, lk.sc, wdt)) {
+      emitParts(r.rag.J, noGun(lk.parts), lk.pal, set);
+      if (!c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], set, null, lift);
+      continue;
+    }
+    const dropped = t > 0.42;
     emitParts(r.J, dropped ? noGun(lk.parts) : lk.parts, lk.pal, set);
-    if (dropped && !c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], set, null, (c.z || 0) * XS);   // a gun that can be taken is drawn as a drop instead
+    if (dropped && !c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], set, null, lift);   // a gun that can be taken is drawn as a drop instead
   }
   if (staticDirty) rebuildStatic();
 }
@@ -245,7 +285,7 @@ function rebuildStatic() {
     if (!c._cache) continue;
     const k = c._cache;
     for (let i = 0; i < k.length; i += 3) S[k[i]].push(k[i + 1], k[i + 2]);
-    decal(stain, c.x * XS, c.y * XS, 1.5 * (c.sc || 1), c.rot || 0, colorOf('#5c1810'), 0.025 + (c.z || 0) * XS);
+    decal(stain, (c._restX != null ? c._restX : c.x) * XS, (c._restY != null ? c._restY : c.y) * XS, 1.5 * (c.sc || 1), c.rot || 0, colorOf('#5c1810'), 0.025 + (c._restX != null ? c._restZ : c.z || 0) * XS);
   }
   batchesDo(S, b => b.end());
   stain.end();

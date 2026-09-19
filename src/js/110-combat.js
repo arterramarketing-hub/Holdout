@@ -229,7 +229,14 @@ function burst(x, y, col, n, z = 10) {
   }
 }
 // credit: {player:bool, wkey:string|null}
-function killEnemy(idx, credit) {
+// ---------- how a death hands over to the ragdoll (RAGDOLLS, in the view) ----------
+// The simulation only records which way the killing hit travelled (a unit vector) and how hard it shoves the body
+// (m/s); a blast (a rocket, a frag, a barrel, a bomb) also marks the death so the ragdoll throws rather than pushes.
+const RAG_KICK = { pistol: 1.4, smg: 1.6, ar: 2.0, ak: 2.1, lmg: 2.2, pkm: 2.3, sniper: 3.4,   // your guns, by what they fire
+  grunt: 1.8, gunner: 2.0, rider: 2.4, runner: 1.6, brute: 2.8, boss: 2.6 };                     // theirs, by who fired or struck
+const RAG_BLAST = 4.6;
+const unitHit = h => { const d = h ? Math.hypot(h.x, h.y) : 0; return d > 1e-6 ? { x: h.x / d, y: h.y / d } : null; };
+function killEnemy(idx, credit, hitDir) {
   const e = enemies[idx];
   enemies[idx] = enemies[enemies.length - 1]; enemies.pop();      // remove FIRST — death effects must not re-hit e
   burst(e.x, e.y, e.col, e.type === 'brute' || e.boss ? 18 : 10);
@@ -239,8 +246,10 @@ function killEnemy(idx, credit) {
     const w = WEAPONS[drops];
     dropGun(drops, gunX, gunY, drops === 'pkm' ? randi(40, 100) : randi(10, 30), w.mag, { yaw: gunYaw });
   }
+  const blast = !credit.wkey ? !!hitDir : credit.wkey === 'rocket' || credit.wkey === 'frag';   // no gun and no direction is a fire's burn
   addCorpse({ kind: 'enemy', x: e.x + (e.perch ? 0 : rand(-4, 4)), y: e.y + (e.perch ? 0 : rand(-3, 3)), z: e.z || 0, col: e.col, noGun: !!drops,
     face: e.face, sc: e.r / 14, horse: e.horse, type: e.type, aim: e.aim, src: e,
+    hit: unitHit(hitDir || hd), blast, kick: blast ? RAG_BLAST : (RAG_KICK[credit.wkey] || 1.8),
     style: !credit.wkey || credit.wkey === 'rocket' || credit.wkey === 'frag' ? 2 : hd && e.aim != null && Math.cos(e.aim) * hd.x + Math.sin(e.aim) * hd.y > 0 ? 1 : 0,
     gunX, gunY, gunYaw });
   sfxKill(e.x, e.y);
@@ -284,6 +293,7 @@ function hurtEnemy(idx, dmg, credit, dir) {
     dmg *= 0.3;
     particles.push({ x: e.x, y: e.y, z: 16, vx: rand(-50, 50), vy: rand(-50, 50), vz: rand(40, 90), life: 0.15, max: 0.15, col: '#fff4c0', r: 1.4 });
   }
+  const hitDir = dir || (credit.wkey === 'frag' ? e.lastHit : null);   // a frag marks which way it threw them before it calls
   e.hp -= dmg; e.flash = 0.1; e.lastHit = dir;
   if (!e.target && !shielded && (dir || dmg >= 0.5)) bleed(e, dmg, !!credit.head, dir);   // a round, a blast or a frag bleeds; a fire's steady burn does not, a round into a riot shield sparks, and range plates ring
   if (credit.player) {
@@ -291,7 +301,7 @@ function hurtEnemy(idx, dmg, credit, dir) {
     HITFX.hit = 0.14;
     if (credit.head) HITFX.head = 0.2;
   }
-  if (e.hp <= 0) { if (credit.player) HITFX.kill = 0.32; killEnemy(idx, credit); return true; }
+  if (e.hp <= 0) { if (credit.player) HITFX.kill = 0.32; killEnemy(idx, credit, hitDir); return true; }
   return false;
 }
 function addCorpse(c) {
@@ -321,8 +331,10 @@ function killSoldier(s) {
   state.frontDeaths++;
   const hd = s.lastHit, front = hd ? Math.cos(s.aim) * hd.x + Math.sin(s.aim) * hd.y < 0 : Math.random() < 0.6;
   const ga = s.aim + rand(0.5, 1.4) * (Math.random() < 0.5 ? 1 : -1);
+  const blast = s.lastSrc === 'blast' || s.lastSrc === 'frag';
   bodies.push({ x: s.x, y: s.y, color: s.color, t: CFG.fallDur, face: Math.cos(s.aim) >= 0 ? 1 : -1, horse: s.horse,
     aim: s.aim, slot: s.slot, weapon: s.pistol ? 'pistol' : s.weapon, sight: s.sight, ext: s.ext, style: front ? 0 : 1,
+    hit: unitHit(hd), blast, kick: blast ? RAG_BLAST : (RAG_KICK[s.lastSrc] || 1.8),
     gunX: s.x + Math.cos(ga) * rand(16, 30), gunY: s.y + Math.sin(ga) * rand(16, 30), gunYaw: rand(0, TAU) });
   burst(s.x, s.y, s.color, 16, 12);
   feedPush(labelOf(s.lastSrc), s.name.toUpperCase(), true);

@@ -8,10 +8,10 @@
 // thresholds stretch to the cap's own frame (a 30 cap is slow past 45 ms, smooth under 35), so a cap never reads as a
 // slow device. The battery saver (see POWER) holds the Saver preset and pauses Auto.
 const QUALITY = {
-  low:    { lines: 270, dpr: 1,   particles: 220, brass: 40,  corpses: 50,  rain: 0.35, glow: false },
-  medium: { lines: 360, dpr: 1.5, particles: 500, brass: 100, corpses: 90,  rain: 0.7,  glow: true },
-  high:   { lines: 480, dpr: 2,   particles: 900, brass: 160, corpses: 120, rain: 1,    glow: true },   // the N64 hi-res mode: the game's own look
-  saver:  { lines: 240, dpr: 1,   particles: 160, brass: 24,  corpses: 40,  rain: 0.25, glow: false },  // the battery saver's: never chosen by Auto
+  low:    { lines: 270, dpr: 1,   particles: 220, brass: 40,  corpses: 50,  rain: 0.35, glow: false, ragdolls: 3 },
+  medium: { lines: 360, dpr: 1.5, particles: 500, brass: 100, corpses: 90,  rain: 0.7,  glow: true,  ragdolls: 5 },
+  high:   { lines: 480, dpr: 2,   particles: 900, brass: 160, corpses: 120, rain: 1,    glow: true,  ragdolls: 8 },   // the N64 hi-res mode: the game's own look
+  saver:  { lines: 240, dpr: 1,   particles: 160, brass: 24,  corpses: 40,  rain: 0.25, glow: false, ragdolls: 2 },  // the battery saver's: never chosen by Auto
 };
 const QLEVELS = ['low', 'medium', 'high'];
 const Q = Object.assign({ level: 'high', auto: true, start: 'high', emaMs: 16.7, slowT: 0, fastT: 0, holdT: 0, changes: 0, fails: {} }, QUALITY.high);

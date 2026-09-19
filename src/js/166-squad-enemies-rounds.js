@@ -444,7 +444,7 @@ function updateFx(dt) {
     if (bodies[i].t <= 0) { // fall animation over -> permanent corpse on the field
       const b = bodies[i];
       addCorpse({ kind: 'soldier', x: b.x, y: b.y, col: b.color, face: b.face, sc: 1, horse: b.horse,
-        aim: b.aim, slot: b.slot, weapon: b.weapon, sight: b.sight, ext: b.ext, src: b,
+        aim: b.aim, slot: b.slot, weapon: b.weapon, sight: b.sight, ext: b.ext, src: b, hit: b.hit, blast: b.blast, kick: b.kick,
         style: b.style, gunX: b.gunX, gunY: b.gunY, gunYaw: b.gunYaw });
       bodies.splice(i, 1);
     }

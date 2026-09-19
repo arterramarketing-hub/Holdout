@@ -253,6 +253,7 @@ function recFor(obj) {
 function sweepViews(all) {
   for (const [obj, r] of views) {
     if (!all && r.gen === viewGen) continue;
+    if (r.rag) { ragRelease(r.rag); r.rag = null; }   // a body cleared away mid-fall
     rigPool.humanoid.push(r.J);
     if (r.H) rigPool.horse.push(r.H);
     views.delete(obj);
