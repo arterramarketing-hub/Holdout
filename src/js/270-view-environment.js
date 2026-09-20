@@ -450,8 +450,8 @@ function buildEnvironment() {
   VIEW.props = {
     bags: coverMesh(K.burlap, lit, 600), crates: coverMesh(K.crate, lit, 260),
     drums: coverMesh(toCell(new THREE.CylinderGeometry(0.5, 0.5, 1, 10), () => CELLS.metal), lit, 200),
-    cars: coverMesh(K.metal, lit, 640), wood: coverMesh(K.wood, lit, 420), cloth: coverMesh(K.white, lit, 120),
-    walls: coverMesh(new THREE.BoxGeometry(1, 1, 1), stoneMat, 220), barriers: coverMesh(jersey, concreteMat, 120),
+    cars: coverMesh(K.metal, lit, 640), wood: coverMesh(K.wood, lit, 620), cloth: coverMesh(K.white, lit, 120),
+    walls: coverMesh(new THREE.BoxGeometry(1, 1, 1), stoneMat, 420), barriers: coverMesh(jersey, concreteMat, 120),
     basin: coverMesh(new THREE.CylinderGeometry(0.5, 0.5, 1, 18), stoneMat, 8),
     rubble: coverMesh(new THREE.DodecahedronGeometry(0.5, 0), rockMat, 700),
   };
@@ -515,6 +515,47 @@ function applyEnv(dt) {
   }
   R.end();
 }
+const DEBRIS = [];   // view only: the pieces thrown off cover as it comes apart. No dice from the fight, nothing the fight reads
+const DEB = { g: 12, life: 7.5, fade: 0.9, bounce: 0.32, drag: 0.56 };
+function debrisBurst(x, y, z, col, heavy) {   // two or three pieces out of the hole, in the cover's own material
+  for (let k = 0, n = heavy ? 3 : 2; k < n; k++) {
+    const a = fxRand(0, TAU), v = fxRand(0.9, 2.9), s = fxRand(0.09, 0.19);
+    DEBRIS.push({ x, y, z, vx: Math.cos(a) * v, vy: fxRand(1.3, 3.3), vz: Math.sin(a) * v,
+      sx: s * fxRand(0.7, 1.6), sy: s * fxRand(0.5, 1.1), sz: s * fxRand(0.7, 1.4),
+      rx: fxRand(0, TAU), ry: fxRand(0, TAU), rz: fxRand(0, TAU),
+      wx: fxRand(-7, 7), wy: fxRand(-5, 5), wz: fxRand(-7, 7), col, t: 0, rest: false });
+  }
+  const cap = Q.debris || 30;
+  while (DEBRIS.length > cap) DEBRIS.shift();
+}
+function drawDebris(dt) {   // gravity, a bounce, friction, then it settles and shrinks away
+  const B = VIEW.fx.debris;
+  for (let i = DEBRIS.length - 1; i >= 0; i--) {
+    const d = DEBRIS[i];
+    d.t += dt;
+    if (d.t > DEB.life) { DEBRIS.splice(i, 1); continue; }
+    if (!d.rest && dt > 0) {
+      d.vy -= DEB.g * dt;
+      d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt;
+      d.rx += d.wx * dt; d.ry += d.wy * dt; d.rz += d.wz * dt;
+      const floor = d.sy * 0.5;
+      if (d.y <= floor) {
+        d.y = floor;
+        if (d.vy < -1.2) { d.vy = -d.vy * DEB.bounce; d.vx *= DEB.drag; d.vz *= DEB.drag; d.wx *= 0.5; d.wy *= 0.5; d.wz *= 0.5; }
+        else {
+          const k = Math.exp(-7 * dt);
+          d.vy = 0; d.vx *= k; d.vz *= k; d.wx *= k; d.wy *= k; d.wz *= k;
+          if (Math.abs(d.vx) + Math.abs(d.vz) < 0.12) { d.rest = true; d.wx = d.wy = d.wz = 0; }
+        }
+      }
+    }
+    const f = d.t > DEB.life - DEB.fade ? (DEB.life - d.t) / DEB.fade : 1;
+    TMP.e.set(d.rx, d.ry, d.rz, 'XYZ'); TMP.q.setFromEuler(TMP.e);
+    TMP.m.compose(TMP.v.set(d.x, d.y, d.z), TMP.q, TMP.s.set(d.sx * f, d.sy * f, d.sz * f));
+    B.push(TMP.m, colorOf(d.col));
+  }
+  TMP.q.identity();
+}
 function buildProps() {   // every cover piece, drawn battered below half health, plus rubble where cover was destroyed
   propsDirty = false;
   const P = VIEW.props, n = {};
@@ -540,6 +581,18 @@ function buildProps() {   // every cover piece, drawn battered below half health
     if (STATIC_COVER.has(ob.kind)) continue;   // drawn once with the town
     const K = COVER_KINDS[ob.kind], X = ob.x * XS, Z = ob.y * XS, yaw = ob.rot90 ? Math.PI / 2 : 0;
     const hurt = ob.maxHp > 0 && ob.hp / ob.maxHp <= 0.5, h = hash2(ob.x, ob.y), HW = (K.hw || 0) * XS, HD = (K.hd || 0) * XS;
+    const g = coverGrid(ob), gc = g ? g[0] : 0, gr = g ? g[1] : 0;
+    const on = (c, r) => !g || (ob.chunks & (1 << (r * gc + c))) !== 0;   // is that piece of it still standing
+    const colOf = lx => clamp(Math.floor((lx / (HW || 1) + 1) / 2 * gc), 0, gc - 1);
+    const whole = !g || ob.chunks === (1 << (gc * gr)) - 1;
+    if (g && ob._shown !== ob.chunks) {   // pieces that went since this was last drawn throw their debris
+      const gone = ob._shown == null ? 0 : ob._shown & ~ob.chunks;
+      for (let i = 0; i < gc * gr; i++) if (gone & (1 << i)) {
+        const c = i % gc, r = (i / gc) | 0, lx = -HW + (c + 0.5) * (HW * 2 / gc), hy = coverFull(ob) * XS * (r + 0.5) / gr;
+        debrisBurst(ob.rot90 ? X : X + lx, hy, ob.rot90 ? Z - lx : Z, MAT_COL[K.mat] || '#999999', K.mat === 'dirt' || K.mat === 'stone');
+      }
+      ob._shown = ob.chunks;
+    }
     const at = (k, lx, y, lz, sx, sy, sz, col, dyaw = 0) =>   // local offsets turn with the piece
       put(k, ob.rot90 ? X + lz : X + lx, y, ob.rot90 ? Z - lx : Z + lz, sx, sy, sz, yaw + dyaw, col);
     const atE = (k, lx, y, lz, sx, sy, sz, col, ex, ez) => putE(k, ob.rot90 ? X + lz : X + lx, y, ob.rot90 ? Z - lx : Z + lz, sx, sy, sz, yaw, ex, ez, col);
@@ -547,16 +600,17 @@ function buildProps() {   // every cover piece, drawn battered below half health
       case 'crates': {
         const c = Math.min(HW, HD) * 0.95, cols = ['#8a7a56', '#6e7250', '#7a6a4a'];
         [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]].forEach(([a, b], i) => {
-          if (!(hurt && i === 3)) at('crates', a * c * 1.05, c * 0.5, b * c * 1.05, c, c, c, cols[i % 3], (hash2(i, ob.x) - 0.5) * 0.3);
+          if (on(a < 0 ? 0 : 1, 0)) at('crates', a * c * 1.05, c * 0.5, b * c * 1.05, c, c, c, cols[i % 3], (hash2(i, ob.x) - 0.5) * 0.3);
         });
-        if (!hurt) at('crates', 0, c * 1.5, 0, c, c, c, '#8a7a56', h);
+        const t0 = on(0, 1), t1 = on(1, 1);
+        if (t0 || t1) at('crates', (t0 && t1 ? 0 : t0 ? -0.5 : 0.5) * c * 1.05, c * 1.5, 0, c, c, c, '#8a7a56', h);   // the top one shifts onto whatever still holds it
         break;
       }
       case 'sandbags': {
-        const layers = hurt ? 2 : 3, per = Math.max(4, Math.round(HW * 2 / 0.46));
-        for (let l = 0; l < layers; l++) for (let i = 0; i < per; i++) {
+        const per = Math.max(4, Math.round(HW * 2 / 0.46));
+        for (let l = 0; l < 3; l++) for (let i = 0; i < per; i++) {
           const lx = -HW + (i + 0.5 + (l % 2) * 0.5) * (HW * 2 / per);
-          if (lx < HW) at('bags', lx, 0.12 + l * 0.24, 0, 0.5, 0.24, HD * 2.2, hash2(i, l + ob.x) < 0.5 ? '#c8bc94' : '#b4a87e');
+          if (lx < HW && on(colOf(lx), l)) at('bags', lx, 0.12 + l * 0.24, 0, 0.5, 0.24, HD * 2.2, hash2(i, l + ob.x) < 0.5 ? '#c8bc94' : '#b4a87e');
         }
         break;
       }
@@ -588,19 +642,32 @@ function buildProps() {   // every cover piece, drawn battered below half health
         break;
       }
       case 'wall': {
-        const hgt = hurt ? 0.6 : 1.0;
-        at('walls', 0, hgt / 2, 0, HW * 2, hgt, HD * 2, '#ffffff');
-        if (!hurt) at('walls', 0, 1.05, 0, HW * 2 + 0.1, 0.12, HD * 2 + 0.12, '#d8d2c4');
+        const bw = HW * 2 / gc, bh = 1.04 / gr;
+        for (let c = 0; c < gc; c++) {
+          const cx = -HW + (c + 0.5) * bw;
+          for (let r = 0; r < gr; r++)
+            if (on(c, r)) at('walls', cx, (r + 0.5) * bh, 0, bw - 0.03, bh - 0.02, HD * 2, hash2(c, r + ob.x) < 0.4 ? '#efe9dd' : '#ffffff');
+          if (on(c, gr - 1)) at('walls', cx, 1.07, 0, bw + 0.02, 0.1, HD * 2 + 0.12, '#d8d2c4');
+        }
         break;
       }
-      case 'barrier': for (let i = -1; i <= 1; i++) { if (hurt && i === 1) continue; at('barriers', i * HW * 0.67, 0.45, 0, 0.62, 0.9, HW * 0.66, '#ffffff', Math.PI / 2 + (hurt && i === -1 ? 0.3 : 0)); } break;
+      case 'barrier':
+        for (let j = 0; j < gc; j++) {
+          if (!on(j, 0)) continue;
+          const askew = (j > 0 && !on(j - 1, 0)) || (j < gc - 1 && !on(j + 1, 0)) ? 0.22 : 0;   // shoved out of line where the next one went
+          at('barriers', (j - 1) * HW * 0.67, 0.45, 0, 0.62, 0.9, HW * 0.66, '#ffffff', Math.PI / 2 + askew);
+        }
+        break;
       case 'fence': {
         const per = Math.max(2, Math.round(HW * 2 / 0.6));
         for (let i = 0; i <= per; i++) {
-          if (hurt && i % 2) continue;
-          at('wood', -HW + i * (HW * 2 / per), 0.5, 0, 0.08, 1.0, 0.08, '#8a6a44', hurt ? (hash2(i, ob.x) - 0.5) * 0.5 : 0);
+          const lx = -HW + i * (HW * 2 / per);
+          if (on(colOf(lx), 0)) at('wood', lx, 0.5, 0, 0.08, 1.0, 0.08, '#8a6a44', whole ? 0 : (hash2(i, ob.x) - 0.5) * 0.5);
         }
-        if (!hurt) { at('wood', 0, 0.78, 0, HW * 2, 0.08, 0.05, '#9a7a50'); at('wood', 0, 0.36, 0, HW * 2, 0.08, 0.05, '#9a7a50'); }
+        for (let c = 0; c < gc; c++) if (on(c, 0)) {   // the rails run only where the palings still stand
+          const cw = HW * 2 / gc, cx = -HW + (c + 0.5) * cw;
+          at('wood', cx, 0.78, 0, cw, 0.08, 0.05, '#9a7a50'); at('wood', cx, 0.36, 0, cw, 0.08, 0.05, '#9a7a50');
+        }
         break;
       }
       case 'dumpster': {
@@ -610,9 +677,8 @@ function buildProps() {   // every cover piece, drawn battered below half health
         break;
       }
       case 'woodpile': {
-        const rows = hurt ? 2 : 3;
-        for (let l = 0; l < rows; l++) for (let i = 0; i < 3; i++)
-          at('wood', -HW + (i + 0.5) * (HW * 2 / 3), 0.16 + l * 0.3, (l % 2) * 0.06, HW * 0.6, 0.28, HD * 2, hash2(i, l + ob.y) < 0.5 ? '#9a7448' : '#7a5a38');
+        for (let l = 0; l < gr; l++) for (let i = 0; i < gc; i++)
+          if (on(i, l)) at('wood', -HW + (i + 0.5) * (HW * 2 / gc), 0.16 + l * 0.3, (l % 2) * 0.06, HW * 0.6, 0.28, HD * 2, hash2(i, l + ob.y) < 0.5 ? '#9a7448' : '#7a5a38');
         break;
       }
       case 'planter': {
@@ -685,6 +751,7 @@ function buildProps() {   // every cover piece, drawn battered below half health
   for (const k in P) {
     P[k].count = n[k];
     P[k].instanceMatrix.needsUpdate = true;
+    P[k].boundingSphere = null;   // the pieces moved: work out again what this batch covers, or the culling drops it from a whole angle
     if (P[k].instanceColor) P[k].instanceColor.needsUpdate = true;
   }
 }

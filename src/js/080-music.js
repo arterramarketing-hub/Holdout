@@ -204,6 +204,10 @@ function sfxHeartbeat() {   // the world goes muffled and you hear your own puls
     beep(52, 0.2, 'sine', 0.3, -14, k * 0.62 + 0.2);
   }
 }
+function sfxChip(x, y, mat) {   // a piece knocked off cover: a crack and a short fall of debris
+  const m = distMul(x, y);
+  playBuf('fall:' + aRandi(0, 1), { gain: 0.24 * m, rate: mat === 'wood' ? 2.2 : 1.2, x, y });
+}
 function sfxBreak(x, y, mat) {   // cover giving way: splintering wood, slumping sandbags, crumbling stone
   const m = distMul(x, y);
   playBuf('fall:' + aRandi(0, 1), { gain: 0.5 * m, rate: mat === 'wood' ? 1.7 : 0.8, x, y, force: true });

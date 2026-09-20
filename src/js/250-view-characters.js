@@ -317,6 +317,7 @@ function buildFxBatches() {
     spark: new Batch(new THREE.IcosahedronGeometry(0.5, 0), new THREE.MeshBasicMaterial(), 900),
     flash: new Batch(new THREE.IcosahedronGeometry(0.5, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending }), 220, 5),
     flame: new Batch(VIEW.kit.cone, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending }), 240, 5),
+    debris: new Batch(box, new THREE.MeshLambertMaterial(), 140),   // pieces knocked off cover, tumbling: flat lit colour, like the flags
     mine: new Batch(VIEW.kit.cyl, VIEW.mats.lit, 32),
     wood: new Batch(VIEW.kit.wood, VIEW.mats.lit, 64),
     hpBack: new Batch(plane, new THREE.MeshBasicMaterial({ fog: false, depthWrite: false }), 64, 6),
@@ -328,7 +329,7 @@ function buildFxBatches() {
     flag: new Batch(box, new THREE.MeshLambertMaterial(), 40),
   };
 }
-const FX_FRAME = ['shadow', 'crater', 'splat', 'mist', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass', 'objRing', 'flag'];
+const FX_FRAME = ['shadow', 'crater', 'splat', 'mist', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'debris', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass', 'objRing', 'flag'];
 let TRACER_COLS = null;   // tracer palette, built once the engine is up
 let BLOOD_COL = null;
 const hash2 = (x, y) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };

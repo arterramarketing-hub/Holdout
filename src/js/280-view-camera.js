@@ -374,7 +374,7 @@ function resizeView() {   // the canvas runs at native resolution; the scene ren
 function viewEnterBattle() {
   if (!VIEW.ready) return;
   sweepViews(true);
-  BRASS.length = 0; DROPS.length = 0;
+  BRASS.length = 0; DROPS.length = 0; DEBRIS.length = 0;
   corpseSig = '';
   buildProps();
   rebuildStatic();
@@ -402,6 +402,7 @@ function renderView(dt) {
   syncCorpses(wdt, D);
   drawLoose(wdt);
   drawFx();
+  drawDebris(wdt);
   const ctl = soldiers[state.controlled];
   if (ctl && ctl.alive && state.mode === 'play')
     decal(F.ring, ctl.x * XS, ctl.y * XS, ctl.horse ? 2.2 : 1.35, 0, colorOf(ctl.color), 0.035);

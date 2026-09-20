@@ -41,10 +41,23 @@ const COVER_TOP = { crates: 1.42, sandbags: 0.72, barrel: 1.0, propane: 0.9, car
   wall: 1.1, barrier: 0.9, fountain: 0.68, fence: 1.0, dumpster: 1.32, woodpile: 0.9, planter: 0.72,
   platform: 0.9, pillar: 6.6, hesco: 1.6, tree: 7, statue: 2.6, tent: 2.2, truck: 3.0, bus: 3.0, mound: 1.3, grave: 0.9, hedge: 1.3,
   pump: 1.7, tanker: 3.0, tankwreck: 2.2, logs: 1.2, mixer: 1.6, toilet: 2.3, bench: 0.5, table: 0.75 };   // metres, as the view draws them
-const COVER_HURT = { crates: 0.5, sandbags: 0.67, wall: 0.55, woodpile: 0.66 };   // what's left of them below half health
-function coverTop(ob) {   // px: how high this piece of cover stands right now
-  const h = COVER_TOP[ob.kind] != null ? COVER_TOP[ob.kind] : (COVER_KINDS[ob.kind].hgt || 1);
-  return h * PX * (ob.maxHp > 0 && ob.hp / ob.maxHp <= 0.5 ? (COVER_HURT[ob.kind] || 1) : 1);
+function coverFull(ob) {   // px: how high it stands undamaged, as the view draws it
+  const h = COVER_TOP[ob.kind];
+  return (h != null ? h : (COVER_KINDS[ob.kind].hgt || 1)) * PX;
+}
+function coverTop(ob) {   // px: the highest part of it still standing — for grenade arcs, heads behind it, bodies falling on it
+  if (ob._top != null && ob._topOf === ob.chunks) return ob._top;   // only changes when pieces come off it, and sight lines ask constantly
+  ob._topOf = ob.chunks;
+  const g = coverGrid(ob);
+  if (!g) return (ob._top = coverFull(ob));
+  let top = -1;
+  for (let c = 0; c < g[0]; c++) { const t = chunkStack(ob, g, c); if (t > top) top = t; }
+  return (ob._top = coverFull(ob) * (top + 1) / g[1]);
+}
+function coverTopAt(ob, x, y) {   // px: how high it stands at this point — nothing at all where a column has been blown out
+  const g = coverGrid(ob);
+  if (!g) return coverFull(ob);
+  return coverFull(ob) * (chunkStack(ob, g, chunkCol(ob, g, x, y)) + 1) / g[1];
 }
 function bodyTop(e) {   // px: the top of an enemy's head right now — riflemen kneel while they hold still
   if (e.target) return (e.down ? 0.1 : 1.3) * PX;   // a range target: a plate on a post, flat once it folds
@@ -75,13 +88,30 @@ function rayCylT(ox, oy, oz, dx, dy, dz, cx, cy, r, z1, z0 = 0) {   // into an u
   const z = oz + dz * t;
   return z >= z0 && z <= z1 ? t : Infinity;
 }
+function coverRayT(ob, ox, oy, oz, dx, dy, dz) {   // how far along a ray this cover stands, honouring the gaps shot in it
+  const top = coverTop(ob);
+  if (top <= 0) return Infinity;
+  if (ob.shape === 'c') return rayCylT(ox, oy, oz, dx, dy, dz, ob.x, ob.y, ob.r, top);
+  const t = rayBoxT(ox, oy, oz, dx, dy, dz, ob.x - ob.hw, ob.x + ob.hw, ob.y - ob.hd, ob.y + ob.hd, top);
+  const g = coverGrid(ob);
+  if (!g || t === Infinity) return t;   // the whole footprint first: only a ray that reaches it is worth the columns
+  let best = Infinity;
+  const full = coverFull(ob);
+  for (let c = 0; c < g[0]; c++) {
+    const r = chunkStack(ob, g, c);
+    if (r < 0) continue;   // shot away: the line goes through
+    chunkBox(ob, g, c, CHUNKB);
+    const ct = rayBoxT(ox, oy, oz, dx, dy, dz, CHUNKB.x0, CHUNKB.x1, CHUNKB.y0, CHUNKB.y1, full * (r + 1) / g[1]);
+    if (ct < best) best = ct;
+  }
+  return best;
+}
 function los3(ax, ay, az, bx, by, bz, skip) {   // a clear straight line in 3D between two points: no building, and no cover that stops rounds (skip: the shooter's own)
   const dx = bx - ax, dy = by - ay, dz = bz - az;
   for (const b of buildings) if (rayBoxT(ax, ay, az, dx, dy, dz, b.x - b.hw, b.x + b.hw, b.y - b.hd, b.y + b.hd, b.top) < 1) return false;
   for (const ob of obstacles) {
     if (ob === skip || COVER_KINDS[ob.kind].block < 0.5) continue;
-    const top = coverTop(ob);
-    if ((ob.shape === 'c' ? rayCylT(ax, ay, az, dx, dy, dz, ob.x, ob.y, ob.r, top) : rayBoxT(ax, ay, az, dx, dy, dz, ob.x - ob.hw, ob.x + ob.hw, ob.y - ob.hd, ob.y + ob.hd, top)) < 1) return false;
+    if (coverRayT(ob, ax, ay, az, dx, dy, dz) < 1) return false;
   }
   return true;
 }
@@ -106,9 +136,7 @@ function crosshairPoint(R, maxT, out) {   // the first thing along the ray: an e
   for (const b of buildings) t = Math.min(t, rayBoxT(ox, oy, oz, dx, dy, dz, b.x - b.hw, b.x + b.hw, b.y - b.hd, b.y + b.hd, b.top));
   for (const ob of obstacles) {
     if (COVER_KINDS[ob.kind].block < 0.5) continue;   // you aim through a fence, a hedge, a tent
-    const top = coverTop(ob);
-    t = Math.min(t, ob.shape === 'c' ? rayCylT(ox, oy, oz, dx, dy, dz, ob.x, ob.y, ob.r, top)
-      : rayBoxT(ox, oy, oz, dx, dy, dz, ob.x - ob.hw, ob.x + ob.hw, ob.y - ob.hd, ob.y + ob.hd, top));
+    t = Math.min(t, coverRayT(ob, ox, oy, oz, dx, dy, dz));
   }
   out.e = null;
   for (const e of enemies) {
@@ -366,7 +394,7 @@ function explode(x, y, r, eDmg, sDmg, credit, z = 0) {   // z: how high the blas
   for (const ob of obstacles.slice()) {   // blasts chew through cover
     if (!ob.hp) continue;
     const d = coverPoint(ob, x, y, CP).d;
-    if (d < r) damageCover(ob, 30 * (1 - Math.max(0, d) / r) + 10, credit);   // a barrel your blast sets off is yours too
+    if (d < r) damageCover(ob, 30 * (1 - Math.max(0, d) / r) + 10, credit, CP.px, CP.py);   // a barrel your blast sets off is yours too
   }
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 500 * 500) cam.shake = Math.max(cam.shake, 7);
   for (let j = enemies.length - 1; j >= 0; j--) {

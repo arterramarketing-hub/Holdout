@@ -374,10 +374,12 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
       if (dead) break;
       for (const ob of obstacles) {
         if (ob === b.skip || ob === b.over || !insideShape(ob, b.x, b.y)) continue;
-        if (b.ballistic && COVER_KINDS[ob.kind].block >= 0.5) { if (b.z >= coverTop(ob)) continue; }   // a real line: over the top of it, or into it
+        const ctop = coverTopAt(ob, b.x, b.y);
+        if (ctop <= 0) continue;                                                 // straight through the hole shot in it
+        if (b.ballistic && COVER_KINDS[ob.kind].block >= 0.5) { if (b.z >= ctop) continue; }   // a real line: over the top of it, or into it
         else if (!b.aoe && Math.random() > ob.block) { b.over = ob; continue; }   // this one flies over the top
         impact(b, MAT_COL[COVER_KINDS[ob.kind].mat] || '#999999', false);
-        if (!b.aoe) damageCover(ob, b.dmg, b.fromPlayer ? { player: true, wkey: null, slot: b.slot } : null);
+        if (!b.aoe) damageCover(ob, b.dmg, b.fromPlayer ? { player: true, wkey: null, slot: b.slot } : null, b.x, b.y);
         dead = true; break;
       }
       if (dead) break;

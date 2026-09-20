@@ -96,6 +96,17 @@ function ragStart(J, prev, prevDt, o) {
   for (const ob of obstacles) {
     const ex = ob.shape === 'c' ? ob.r : ob.hw, ez = ob.shape === 'c' ? ob.r : ob.hd;
     if (Math.abs(ob.x - px) > ex + R || Math.abs(ob.y - pz) > ez + R) continue;
+    const g = coverGrid(ob);
+    if (g) {   // cover that has come apart: a body falls through the gaps, and drapes over what still stands
+      const full = coverFull(ob) * XS;
+      for (let c = 0; c < g[0]; c++) {
+        const r = chunkStack(ob, g, c);
+        if (r < 0) continue;
+        chunkBox(ob, g, c, CHUNKB);
+        rag.cols.push({ cyl: false, x0: CHUNKB.x0 * XS, x1: CHUNKB.x1 * XS, z0: CHUNKB.y0 * XS, z1: CHUNKB.y1 * XS, top: full * (r + 1) / g[1] });
+      }
+      continue;
+    }
     rag.cols.push(ob.shape === 'c' ? { cyl: true, x: ob.x * XS, z: ob.y * XS, r: ob.r * XS, top: coverTop(ob) * XS }
       : { cyl: false, x0: (ob.x - ob.hw) * XS, x1: (ob.x + ob.hw) * XS, z0: (ob.y - ob.hd) * XS, z1: (ob.y + ob.hd) * XS, top: coverTop(ob) * XS });
   }

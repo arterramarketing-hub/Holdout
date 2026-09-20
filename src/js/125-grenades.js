@@ -55,7 +55,7 @@ function throwEnemyFrag(e, t) {   // a lob landing 0.5-2 m past the target (over
   for (let k = 1; k < 16; k++) {
     const tt = T * k / 16, x = e.x + dx / D * vh * tt, y = e.y + dy / D * vh * tt, z = oz + vz * tt - FRAG_G * tt * tt / 2;
     if (buildings.some(b => insideShape(b, x, y) && z < b.top)) return false;
-    if (k < 13 && obstacles.some(ob => ob !== own && COVER_KINDS[ob.kind].block >= 0.5 && insideShape(ob, x, y) && z < coverTop(ob))) return false;   // the last stretch drops over the target's own cover
+    if (k < 13 && obstacles.some(ob => ob !== own && COVER_KINDS[ob.kind].block >= 0.5 && insideShape(ob, x, y) && z < coverTopAt(ob, x, y))) return false;   // the last stretch drops over the target's own cover
   }
   grenades.push({ x: e.x, y: e.y, z: oz, vx: dx / D * vh, vy: dy / D * vh, vz, fuse: T + CFG.eFragAfter, spin: rand(0, TAU), owner: null, hostile: true, rest: false, tinkT: 0, landAt: state.frontTime + T, aimX: lx, aimY: ly });
   e.throwT = 0.5;
@@ -86,8 +86,8 @@ function updateGrenades(dt) {
         for (const b of buildings) if (insideShape(b, g.x, g.y) && g.z < b.top) { bounceOff(g, b, px, py, null, 0.45); hit = true; break; }
         if (!hit) for (const ob of obstacles) {
           if (!insideShape(ob, g.x, g.y)) continue;
-          const top = coverTop(ob);
-          if (g.z < top) { bounceOff(g, ob, px, py, top, 0.4); hit = true; break; }
+          const top = coverTopAt(ob, g.x, g.y);
+          if (top > 0 && g.z < top) { bounceOff(g, ob, px, py, top, 0.4); hit = true; break; }   // through a blown gap it keeps rolling
         }
         if (g.z <= 0) {
           g.z = 0;
@@ -118,7 +118,7 @@ function fragBlast(g) {
   for (const ob of obstacles.slice()) {
     if (!ob.hp) continue;
     const d = coverPoint(ob, x, y, CP).d;
-    if (d < R) damageCover(ob, 26 * (1 - Math.max(0, d) / R) + 6, g.hostile ? null : { player: true, wkey: 'frag', slot: g.owner });
+    if (d < R) damageCover(ob, 26 * (1 - Math.max(0, d) / R) + 6, g.hostile ? null : { player: true, wkey: 'frag', slot: g.owner }, CP.px, CP.py);
   }
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 700 * 700) cam.shake = Math.max(cam.shake, 8);
   const reach = (tx, ty, tr) => { const d = Math.max(0, Math.hypot(tx - x, ty - y) - tr * 0.5); return d < R && losClear(x, y, tx, ty) ? 1 - d / R : 0; };

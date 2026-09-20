@@ -102,6 +102,9 @@ const COVER_KINDS = {   // half-size px, visual height m, hp, chance to stop a r
   bench:    { shape: 'r', hw: 34, hd: 10, hgt: 0.5, hp: 14, block: 0.3, mat: 'wood' },
   table:    { shape: 'c', r: 16, hgt: 0.75, hp: 10, block: 0.3, mat: 'wood' },
 };
+const COVER_CHUNKS = {   // pieces along the long axis x pieces up: cover that comes apart where you hit it, matching how each one is drawn
+  crates: [2, 2], sandbags: [4, 3], wall: [4, 2], barrier: [3, 1], woodpile: [3, 3], fence: [4, 1],
+};
 const STATIC_COVER = new Set(['platform', 'pillar', 'hesco', 'tree', 'statue', 'tent', 'truck', 'bus', 'mound', 'grave', 'hedge']);   // drawn once with the town
 const MAT_COL = { wood: '#b8894e', dirt: '#b4a67a', metal: '#6a6a66', stone: '#a8a498', concrete: '#b8b6b0', leaf: '#4e6a34' };
 let buildings = [], rubble = [], propsDirty = true, coverSeq = 1;
@@ -112,7 +115,26 @@ function makeCover(kind, x, y, rot90) {
   const o = { kind, x, y, shape: K.shape, hgt: K.hgt, hp: K.hp, maxHp: K.hp, block: K.block, rot90: !!rot90, id: coverSeq++, claims: 0 };
   if (K.shape === 'c') o.r = K.r;
   else { o.hw = rot90 ? K.hd : K.hw; o.hd = rot90 ? K.hw : K.hd; }
+  const g = COVER_CHUNKS[kind];
+  if (g && K.hp > 0) o.chunks = (1 << (g[0] * g[1])) - 1;   // every piece standing
   return o;
+}
+const coverGrid = ob => (ob.chunks != null ? COVER_CHUNKS[ob.kind] : null);   // null for anything that doesn't come apart
+function chunkCol(ob, g, x, y) {   // which column a point falls in, in the same local frame the view draws in
+  const u = ob.rot90 ? (ob.y - y) / (ob.hd || 1) : (x - ob.x) / (ob.hw || 1);
+  return clamp(Math.floor((u + 1) / 2 * g[0]), 0, g[0] - 1);
+}
+function chunkStack(ob, g, c) {   // the highest row still standing in a column, -1 once it's been cleared out
+  let top = -1;
+  for (let r = 0; r < g[1]; r++) if (ob.chunks & (1 << (r * g[0] + c))) top = r;
+  return top;
+}
+const CHUNKB = { x0: 0, x1: 0, y0: 0, y1: 0 };
+function chunkBox(ob, g, c, out) {   // one standing column, as a box on the ground
+  const hl = ob.rot90 ? ob.hd : ob.hw, step = 2 * hl / g[0], lo = -hl + c * step, hi = lo + step;
+  if (ob.rot90) { out.x0 = ob.x - ob.hw; out.x1 = ob.x + ob.hw; out.y0 = ob.y - hi; out.y1 = ob.y - lo; }
+  else { out.x0 = ob.x + lo; out.x1 = ob.x + hi; out.y0 = ob.y - ob.hd; out.y1 = ob.y + ob.hd; }
+  return out;
 }
 function coverPoint(ob, x, y, out) {   // nearest point on the outline, outward normal, distance from the surface (negative inside)
   if (ob.shape === 'c') {
@@ -279,12 +301,35 @@ function followPath(u, spd, dt) {   // true once the last waypoint is reached
 }
 
 // ---------- cover lifecycle ----------
-function damageCover(ob, dmg, credit) {   // credit: whoever's round or blast this was, so an explosion they set off is theirs
+function damageCover(ob, dmg, credit, hx, hy) {   // credit: whoever's round or blast this was, so an explosion they set off is theirs. hx, hy: where it was hit
   if (!ob.hp || ob.hp <= 0) return;
   const was = ob.hp / ob.maxHp;
   ob.hp -= dmg;
   if (ob.hp <= 0) destroyCover(ob, credit);
+  else if (ob.chunks) chipCover(ob, hx, hy);
   else if (was > 0.5 && ob.hp / ob.maxHp <= 0.5) propsDirty = true;   // shows its damaged state
+}
+function chipCover(ob, hx, hy) {   // knock pieces off it: the ones nearest where it was hit, top down, so fire on one spot drills a hole through
+  const g = COVER_CHUNKS[ob.kind], total = g[0] * g[1];
+  let live = 0;
+  for (let i = 0; i < total; i++) if (ob.chunks & (1 << i)) live++;
+  const want = Math.max(1, Math.ceil(ob.hp / ob.maxHp * total));   // the last piece holds until its health runs out
+  if (live <= want) return;
+  const hc = hx == null ? (g[0] - 1) / 2 : chunkCol(ob, g, hx, hy);
+  while (live > want) {
+    let best = -1, bs = -Infinity;
+    for (let r = 0; r < g[1]; r++) for (let c = 0; c < g[0]; c++) {
+      const i = r * g[0] + c;
+      if (!(ob.chunks & (1 << i))) continue;
+      const sc = r - Math.abs(c - hc) * (g[1] + 1);   // that column first, from the top
+      if (sc > bs) { bs = sc; best = i; }
+    }
+    if (best < 0) break;
+    ob.chunks &= ~(1 << best);
+    live--;
+  }
+  propsDirty = true;
+  sfxChip(ob.x, ob.y, COVER_KINDS[ob.kind].mat);
 }
 function destroyCover(ob, credit) {
   const i = obstacles.indexOf(ob);

@@ -1534,6 +1534,9 @@ const COVER_KINDS = {   // half-size px, visual height m, hp, chance to stop a r
   bench:    { shape: 'r', hw: 34, hd: 10, hgt: 0.5, hp: 14, block: 0.3, mat: 'wood' },
   table:    { shape: 'c', r: 16, hgt: 0.75, hp: 10, block: 0.3, mat: 'wood' },
 };
+const COVER_CHUNKS = {   // pieces along the long axis x pieces up: cover that comes apart where you hit it, matching how each one is drawn
+  crates: [2, 2], sandbags: [4, 3], wall: [4, 2], barrier: [3, 1], woodpile: [3, 3], fence: [4, 1],
+};
 const STATIC_COVER = new Set(['platform', 'pillar', 'hesco', 'tree', 'statue', 'tent', 'truck', 'bus', 'mound', 'grave', 'hedge']);   // drawn once with the town
 const MAT_COL = { wood: '#b8894e', dirt: '#b4a67a', metal: '#6a6a66', stone: '#a8a498', concrete: '#b8b6b0', leaf: '#4e6a34' };
 let buildings = [], rubble = [], propsDirty = true, coverSeq = 1;
@@ -1544,7 +1547,26 @@ function makeCover(kind, x, y, rot90) {
   const o = { kind, x, y, shape: K.shape, hgt: K.hgt, hp: K.hp, maxHp: K.hp, block: K.block, rot90: !!rot90, id: coverSeq++, claims: 0 };
   if (K.shape === 'c') o.r = K.r;
   else { o.hw = rot90 ? K.hd : K.hw; o.hd = rot90 ? K.hw : K.hd; }
+  const g = COVER_CHUNKS[kind];
+  if (g && K.hp > 0) o.chunks = (1 << (g[0] * g[1])) - 1;   // every piece standing
   return o;
+}
+const coverGrid = ob => (ob.chunks != null ? COVER_CHUNKS[ob.kind] : null);   // null for anything that doesn't come apart
+function chunkCol(ob, g, x, y) {   // which column a point falls in, in the same local frame the view draws in
+  const u = ob.rot90 ? (ob.y - y) / (ob.hd || 1) : (x - ob.x) / (ob.hw || 1);
+  return clamp(Math.floor((u + 1) / 2 * g[0]), 0, g[0] - 1);
+}
+function chunkStack(ob, g, c) {   // the highest row still standing in a column, -1 once it's been cleared out
+  let top = -1;
+  for (let r = 0; r < g[1]; r++) if (ob.chunks & (1 << (r * g[0] + c))) top = r;
+  return top;
+}
+const CHUNKB = { x0: 0, x1: 0, y0: 0, y1: 0 };
+function chunkBox(ob, g, c, out) {   // one standing column, as a box on the ground
+  const hl = ob.rot90 ? ob.hd : ob.hw, step = 2 * hl / g[0], lo = -hl + c * step, hi = lo + step;
+  if (ob.rot90) { out.x0 = ob.x - ob.hw; out.x1 = ob.x + ob.hw; out.y0 = ob.y - hi; out.y1 = ob.y - lo; }
+  else { out.x0 = ob.x + lo; out.x1 = ob.x + hi; out.y0 = ob.y - ob.hd; out.y1 = ob.y + ob.hd; }
+  return out;
 }
 function coverPoint(ob, x, y, out) {   // nearest point on the outline, outward normal, distance from the surface (negative inside)
   if (ob.shape === 'c') {
@@ -1711,12 +1733,35 @@ function followPath(u, spd, dt) {   // true once the last waypoint is reached
 }
 
 // ---------- cover lifecycle ----------
-function damageCover(ob, dmg, credit) {   // credit: whoever's round or blast this was, so an explosion they set off is theirs
+function damageCover(ob, dmg, credit, hx, hy) {   // credit: whoever's round or blast this was, so an explosion they set off is theirs. hx, hy: where it was hit
   if (!ob.hp || ob.hp <= 0) return;
   const was = ob.hp / ob.maxHp;
   ob.hp -= dmg;
   if (ob.hp <= 0) destroyCover(ob, credit);
+  else if (ob.chunks) chipCover(ob, hx, hy);
   else if (was > 0.5 && ob.hp / ob.maxHp <= 0.5) propsDirty = true;   // shows its damaged state
+}
+function chipCover(ob, hx, hy) {   // knock pieces off it: the ones nearest where it was hit, top down, so fire on one spot drills a hole through
+  const g = COVER_CHUNKS[ob.kind], total = g[0] * g[1];
+  let live = 0;
+  for (let i = 0; i < total; i++) if (ob.chunks & (1 << i)) live++;
+  const want = Math.max(1, Math.ceil(ob.hp / ob.maxHp * total));   // the last piece holds until its health runs out
+  if (live <= want) return;
+  const hc = hx == null ? (g[0] - 1) / 2 : chunkCol(ob, g, hx, hy);
+  while (live > want) {
+    let best = -1, bs = -Infinity;
+    for (let r = 0; r < g[1]; r++) for (let c = 0; c < g[0]; c++) {
+      const i = r * g[0] + c;
+      if (!(ob.chunks & (1 << i))) continue;
+      const sc = r - Math.abs(c - hc) * (g[1] + 1);   // that column first, from the top
+      if (sc > bs) { bs = sc; best = i; }
+    }
+    if (best < 0) break;
+    ob.chunks &= ~(1 << best);
+    live--;
+  }
+  propsDirty = true;
+  sfxChip(ob.x, ob.y, COVER_KINDS[ob.kind].mat);
 }
 function destroyCover(ob, credit) {
   const i = obstacles.indexOf(ob);
@@ -2475,6 +2520,10 @@ function sfxHeartbeat() {   // the world goes muffled and you hear your own puls
     beep(52, 0.2, 'sine', 0.3, -14, k * 0.62 + 0.2);
   }
 }
+function sfxChip(x, y, mat) {   // a piece knocked off cover: a crack and a short fall of debris
+  const m = distMul(x, y);
+  playBuf('fall:' + aRandi(0, 1), { gain: 0.24 * m, rate: mat === 'wood' ? 2.2 : 1.2, x, y });
+}
 function sfxBreak(x, y, mat) {   // cover giving way: splintering wood, slumping sandbags, crumbling stone
   const m = distMul(x, y);
   playBuf('fall:' + aRandi(0, 1), { gain: 0.5 * m, rate: mat === 'wood' ? 1.7 : 0.8, x, y, force: true });
@@ -2988,10 +3037,23 @@ const COVER_TOP = { crates: 1.42, sandbags: 0.72, barrel: 1.0, propane: 0.9, car
   wall: 1.1, barrier: 0.9, fountain: 0.68, fence: 1.0, dumpster: 1.32, woodpile: 0.9, planter: 0.72,
   platform: 0.9, pillar: 6.6, hesco: 1.6, tree: 7, statue: 2.6, tent: 2.2, truck: 3.0, bus: 3.0, mound: 1.3, grave: 0.9, hedge: 1.3,
   pump: 1.7, tanker: 3.0, tankwreck: 2.2, logs: 1.2, mixer: 1.6, toilet: 2.3, bench: 0.5, table: 0.75 };   // metres, as the view draws them
-const COVER_HURT = { crates: 0.5, sandbags: 0.67, wall: 0.55, woodpile: 0.66 };   // what's left of them below half health
-function coverTop(ob) {   // px: how high this piece of cover stands right now
-  const h = COVER_TOP[ob.kind] != null ? COVER_TOP[ob.kind] : (COVER_KINDS[ob.kind].hgt || 1);
-  return h * PX * (ob.maxHp > 0 && ob.hp / ob.maxHp <= 0.5 ? (COVER_HURT[ob.kind] || 1) : 1);
+function coverFull(ob) {   // px: how high it stands undamaged, as the view draws it
+  const h = COVER_TOP[ob.kind];
+  return (h != null ? h : (COVER_KINDS[ob.kind].hgt || 1)) * PX;
+}
+function coverTop(ob) {   // px: the highest part of it still standing — for grenade arcs, heads behind it, bodies falling on it
+  if (ob._top != null && ob._topOf === ob.chunks) return ob._top;   // only changes when pieces come off it, and sight lines ask constantly
+  ob._topOf = ob.chunks;
+  const g = coverGrid(ob);
+  if (!g) return (ob._top = coverFull(ob));
+  let top = -1;
+  for (let c = 0; c < g[0]; c++) { const t = chunkStack(ob, g, c); if (t > top) top = t; }
+  return (ob._top = coverFull(ob) * (top + 1) / g[1]);
+}
+function coverTopAt(ob, x, y) {   // px: how high it stands at this point — nothing at all where a column has been blown out
+  const g = coverGrid(ob);
+  if (!g) return coverFull(ob);
+  return coverFull(ob) * (chunkStack(ob, g, chunkCol(ob, g, x, y)) + 1) / g[1];
 }
 function bodyTop(e) {   // px: the top of an enemy's head right now — riflemen kneel while they hold still
   if (e.target) return (e.down ? 0.1 : 1.3) * PX;   // a range target: a plate on a post, flat once it folds
@@ -3022,13 +3084,30 @@ function rayCylT(ox, oy, oz, dx, dy, dz, cx, cy, r, z1, z0 = 0) {   // into an u
   const z = oz + dz * t;
   return z >= z0 && z <= z1 ? t : Infinity;
 }
+function coverRayT(ob, ox, oy, oz, dx, dy, dz) {   // how far along a ray this cover stands, honouring the gaps shot in it
+  const top = coverTop(ob);
+  if (top <= 0) return Infinity;
+  if (ob.shape === 'c') return rayCylT(ox, oy, oz, dx, dy, dz, ob.x, ob.y, ob.r, top);
+  const t = rayBoxT(ox, oy, oz, dx, dy, dz, ob.x - ob.hw, ob.x + ob.hw, ob.y - ob.hd, ob.y + ob.hd, top);
+  const g = coverGrid(ob);
+  if (!g || t === Infinity) return t;   // the whole footprint first: only a ray that reaches it is worth the columns
+  let best = Infinity;
+  const full = coverFull(ob);
+  for (let c = 0; c < g[0]; c++) {
+    const r = chunkStack(ob, g, c);
+    if (r < 0) continue;   // shot away: the line goes through
+    chunkBox(ob, g, c, CHUNKB);
+    const ct = rayBoxT(ox, oy, oz, dx, dy, dz, CHUNKB.x0, CHUNKB.x1, CHUNKB.y0, CHUNKB.y1, full * (r + 1) / g[1]);
+    if (ct < best) best = ct;
+  }
+  return best;
+}
 function los3(ax, ay, az, bx, by, bz, skip) {   // a clear straight line in 3D between two points: no building, and no cover that stops rounds (skip: the shooter's own)
   const dx = bx - ax, dy = by - ay, dz = bz - az;
   for (const b of buildings) if (rayBoxT(ax, ay, az, dx, dy, dz, b.x - b.hw, b.x + b.hw, b.y - b.hd, b.y + b.hd, b.top) < 1) return false;
   for (const ob of obstacles) {
     if (ob === skip || COVER_KINDS[ob.kind].block < 0.5) continue;
-    const top = coverTop(ob);
-    if ((ob.shape === 'c' ? rayCylT(ax, ay, az, dx, dy, dz, ob.x, ob.y, ob.r, top) : rayBoxT(ax, ay, az, dx, dy, dz, ob.x - ob.hw, ob.x + ob.hw, ob.y - ob.hd, ob.y + ob.hd, top)) < 1) return false;
+    if (coverRayT(ob, ax, ay, az, dx, dy, dz) < 1) return false;
   }
   return true;
 }
@@ -3053,9 +3132,7 @@ function crosshairPoint(R, maxT, out) {   // the first thing along the ray: an e
   for (const b of buildings) t = Math.min(t, rayBoxT(ox, oy, oz, dx, dy, dz, b.x - b.hw, b.x + b.hw, b.y - b.hd, b.y + b.hd, b.top));
   for (const ob of obstacles) {
     if (COVER_KINDS[ob.kind].block < 0.5) continue;   // you aim through a fence, a hedge, a tent
-    const top = coverTop(ob);
-    t = Math.min(t, ob.shape === 'c' ? rayCylT(ox, oy, oz, dx, dy, dz, ob.x, ob.y, ob.r, top)
-      : rayBoxT(ox, oy, oz, dx, dy, dz, ob.x - ob.hw, ob.x + ob.hw, ob.y - ob.hd, ob.y + ob.hd, top));
+    t = Math.min(t, coverRayT(ob, ox, oy, oz, dx, dy, dz));
   }
   out.e = null;
   for (const e of enemies) {
@@ -3313,7 +3390,7 @@ function explode(x, y, r, eDmg, sDmg, credit, z = 0) {   // z: how high the blas
   for (const ob of obstacles.slice()) {   // blasts chew through cover
     if (!ob.hp) continue;
     const d = coverPoint(ob, x, y, CP).d;
-    if (d < r) damageCover(ob, 30 * (1 - Math.max(0, d) / r) + 10, credit);   // a barrel your blast sets off is yours too
+    if (d < r) damageCover(ob, 30 * (1 - Math.max(0, d) / r) + 10, credit, CP.px, CP.py);   // a barrel your blast sets off is yours too
   }
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 500 * 500) cam.shake = Math.max(cam.shake, 7);
   for (let j = enemies.length - 1; j >= 0; j--) {
@@ -3556,7 +3633,7 @@ function throwEnemyFrag(e, t) {   // a lob landing 0.5-2 m past the target (over
   for (let k = 1; k < 16; k++) {
     const tt = T * k / 16, x = e.x + dx / D * vh * tt, y = e.y + dy / D * vh * tt, z = oz + vz * tt - FRAG_G * tt * tt / 2;
     if (buildings.some(b => insideShape(b, x, y) && z < b.top)) return false;
-    if (k < 13 && obstacles.some(ob => ob !== own && COVER_KINDS[ob.kind].block >= 0.5 && insideShape(ob, x, y) && z < coverTop(ob))) return false;   // the last stretch drops over the target's own cover
+    if (k < 13 && obstacles.some(ob => ob !== own && COVER_KINDS[ob.kind].block >= 0.5 && insideShape(ob, x, y) && z < coverTopAt(ob, x, y))) return false;   // the last stretch drops over the target's own cover
   }
   grenades.push({ x: e.x, y: e.y, z: oz, vx: dx / D * vh, vy: dy / D * vh, vz, fuse: T + CFG.eFragAfter, spin: rand(0, TAU), owner: null, hostile: true, rest: false, tinkT: 0, landAt: state.frontTime + T, aimX: lx, aimY: ly });
   e.throwT = 0.5;
@@ -3587,8 +3664,8 @@ function updateGrenades(dt) {
         for (const b of buildings) if (insideShape(b, g.x, g.y) && g.z < b.top) { bounceOff(g, b, px, py, null, 0.45); hit = true; break; }
         if (!hit) for (const ob of obstacles) {
           if (!insideShape(ob, g.x, g.y)) continue;
-          const top = coverTop(ob);
-          if (g.z < top) { bounceOff(g, ob, px, py, top, 0.4); hit = true; break; }
+          const top = coverTopAt(ob, g.x, g.y);
+          if (top > 0 && g.z < top) { bounceOff(g, ob, px, py, top, 0.4); hit = true; break; }   // through a blown gap it keeps rolling
         }
         if (g.z <= 0) {
           g.z = 0;
@@ -3619,7 +3696,7 @@ function fragBlast(g) {
   for (const ob of obstacles.slice()) {
     if (!ob.hp) continue;
     const d = coverPoint(ob, x, y, CP).d;
-    if (d < R) damageCover(ob, 26 * (1 - Math.max(0, d) / R) + 6, g.hostile ? null : { player: true, wkey: 'frag', slot: g.owner });
+    if (d < R) damageCover(ob, 26 * (1 - Math.max(0, d) / R) + 6, g.hostile ? null : { player: true, wkey: 'frag', slot: g.owner }, CP.px, CP.py);
   }
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 700 * 700) cam.shake = Math.max(cam.shake, 8);
   const reach = (tx, ty, tr) => { const d = Math.max(0, Math.hypot(tx - x, ty - y) - tr * 0.5); return d < R && losClear(x, y, tx, ty) ? 1 - d / R : 0; };
@@ -4647,10 +4724,12 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
       if (dead) break;
       for (const ob of obstacles) {
         if (ob === b.skip || ob === b.over || !insideShape(ob, b.x, b.y)) continue;
-        if (b.ballistic && COVER_KINDS[ob.kind].block >= 0.5) { if (b.z >= coverTop(ob)) continue; }   // a real line: over the top of it, or into it
+        const ctop = coverTopAt(ob, b.x, b.y);
+        if (ctop <= 0) continue;                                                 // straight through the hole shot in it
+        if (b.ballistic && COVER_KINDS[ob.kind].block >= 0.5) { if (b.z >= ctop) continue; }   // a real line: over the top of it, or into it
         else if (!b.aoe && Math.random() > ob.block) { b.over = ob; continue; }   // this one flies over the top
         impact(b, MAT_COL[COVER_KINDS[ob.kind].mat] || '#999999', false);
-        if (!b.aoe) damageCover(ob, b.dmg, b.fromPlayer ? { player: true, wkey: null, slot: b.slot } : null);
+        if (!b.aoe) damageCover(ob, b.dmg, b.fromPlayer ? { player: true, wkey: null, slot: b.slot } : null, b.x, b.y);
         dead = true; break;
       }
       if (dead) break;
@@ -6333,6 +6412,17 @@ function ragStart(J, prev, prevDt, o) {
   for (const ob of obstacles) {
     const ex = ob.shape === 'c' ? ob.r : ob.hw, ez = ob.shape === 'c' ? ob.r : ob.hd;
     if (Math.abs(ob.x - px) > ex + R || Math.abs(ob.y - pz) > ez + R) continue;
+    const g = coverGrid(ob);
+    if (g) {   // cover that has come apart: a body falls through the gaps, and drapes over what still stands
+      const full = coverFull(ob) * XS;
+      for (let c = 0; c < g[0]; c++) {
+        const r = chunkStack(ob, g, c);
+        if (r < 0) continue;
+        chunkBox(ob, g, c, CHUNKB);
+        rag.cols.push({ cyl: false, x0: CHUNKB.x0 * XS, x1: CHUNKB.x1 * XS, z0: CHUNKB.y0 * XS, z1: CHUNKB.y1 * XS, top: full * (r + 1) / g[1] });
+      }
+      continue;
+    }
     rag.cols.push(ob.shape === 'c' ? { cyl: true, x: ob.x * XS, z: ob.y * XS, r: ob.r * XS, top: coverTop(ob) * XS }
       : { cyl: false, x0: (ob.x - ob.hw) * XS, x1: (ob.x + ob.hw) * XS, z0: (ob.y - ob.hd) * XS, z1: (ob.y + ob.hd) * XS, top: coverTop(ob) * XS });
   }
@@ -6784,6 +6874,7 @@ function buildFxBatches() {
     spark: new Batch(new THREE.IcosahedronGeometry(0.5, 0), new THREE.MeshBasicMaterial(), 900),
     flash: new Batch(new THREE.IcosahedronGeometry(0.5, 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending }), 220, 5),
     flame: new Batch(VIEW.kit.cone, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending }), 240, 5),
+    debris: new Batch(box, new THREE.MeshLambertMaterial(), 140),   // pieces knocked off cover, tumbling: flat lit colour, like the flags
     mine: new Batch(VIEW.kit.cyl, VIEW.mats.lit, 32),
     wood: new Batch(VIEW.kit.wood, VIEW.mats.lit, 64),
     hpBack: new Batch(plane, new THREE.MeshBasicMaterial({ fog: false, depthWrite: false }), 64, 6),
@@ -6795,7 +6886,7 @@ function buildFxBatches() {
     flag: new Batch(box, new THREE.MeshLambertMaterial(), 40),
   };
 }
-const FX_FRAME = ['shadow', 'crater', 'splat', 'mist', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass', 'objRing', 'flag'];
+const FX_FRAME = ['shadow', 'crater', 'splat', 'mist', 'ring', 'fireGlow', 'tracer', 'tracerGlow', 'spark', 'flash', 'flame', 'debris', 'mine', 'wood', 'hpBack', 'hpFill', 'arrow', 'bloom', 'brass', 'objRing', 'flag'];
 let TRACER_COLS = null;   // tracer palette, built once the engine is up
 let BLOOD_COL = null;
 const hash2 = (x, y) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };
@@ -7723,8 +7814,8 @@ function buildEnvironment() {
   VIEW.props = {
     bags: coverMesh(K.burlap, lit, 600), crates: coverMesh(K.crate, lit, 260),
     drums: coverMesh(toCell(new THREE.CylinderGeometry(0.5, 0.5, 1, 10), () => CELLS.metal), lit, 200),
-    cars: coverMesh(K.metal, lit, 640), wood: coverMesh(K.wood, lit, 420), cloth: coverMesh(K.white, lit, 120),
-    walls: coverMesh(new THREE.BoxGeometry(1, 1, 1), stoneMat, 220), barriers: coverMesh(jersey, concreteMat, 120),
+    cars: coverMesh(K.metal, lit, 640), wood: coverMesh(K.wood, lit, 620), cloth: coverMesh(K.white, lit, 120),
+    walls: coverMesh(new THREE.BoxGeometry(1, 1, 1), stoneMat, 420), barriers: coverMesh(jersey, concreteMat, 120),
     basin: coverMesh(new THREE.CylinderGeometry(0.5, 0.5, 1, 18), stoneMat, 8),
     rubble: coverMesh(new THREE.DodecahedronGeometry(0.5, 0), rockMat, 700),
   };
@@ -7788,6 +7879,47 @@ function applyEnv(dt) {
   }
   R.end();
 }
+const DEBRIS = [];   // view only: the pieces thrown off cover as it comes apart. No dice from the fight, nothing the fight reads
+const DEB = { g: 12, life: 7.5, fade: 0.9, bounce: 0.32, drag: 0.56 };
+function debrisBurst(x, y, z, col, heavy) {   // two or three pieces out of the hole, in the cover's own material
+  for (let k = 0, n = heavy ? 3 : 2; k < n; k++) {
+    const a = fxRand(0, TAU), v = fxRand(0.9, 2.9), s = fxRand(0.09, 0.19);
+    DEBRIS.push({ x, y, z, vx: Math.cos(a) * v, vy: fxRand(1.3, 3.3), vz: Math.sin(a) * v,
+      sx: s * fxRand(0.7, 1.6), sy: s * fxRand(0.5, 1.1), sz: s * fxRand(0.7, 1.4),
+      rx: fxRand(0, TAU), ry: fxRand(0, TAU), rz: fxRand(0, TAU),
+      wx: fxRand(-7, 7), wy: fxRand(-5, 5), wz: fxRand(-7, 7), col, t: 0, rest: false });
+  }
+  const cap = Q.debris || 30;
+  while (DEBRIS.length > cap) DEBRIS.shift();
+}
+function drawDebris(dt) {   // gravity, a bounce, friction, then it settles and shrinks away
+  const B = VIEW.fx.debris;
+  for (let i = DEBRIS.length - 1; i >= 0; i--) {
+    const d = DEBRIS[i];
+    d.t += dt;
+    if (d.t > DEB.life) { DEBRIS.splice(i, 1); continue; }
+    if (!d.rest && dt > 0) {
+      d.vy -= DEB.g * dt;
+      d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt;
+      d.rx += d.wx * dt; d.ry += d.wy * dt; d.rz += d.wz * dt;
+      const floor = d.sy * 0.5;
+      if (d.y <= floor) {
+        d.y = floor;
+        if (d.vy < -1.2) { d.vy = -d.vy * DEB.bounce; d.vx *= DEB.drag; d.vz *= DEB.drag; d.wx *= 0.5; d.wy *= 0.5; d.wz *= 0.5; }
+        else {
+          const k = Math.exp(-7 * dt);
+          d.vy = 0; d.vx *= k; d.vz *= k; d.wx *= k; d.wy *= k; d.wz *= k;
+          if (Math.abs(d.vx) + Math.abs(d.vz) < 0.12) { d.rest = true; d.wx = d.wy = d.wz = 0; }
+        }
+      }
+    }
+    const f = d.t > DEB.life - DEB.fade ? (DEB.life - d.t) / DEB.fade : 1;
+    TMP.e.set(d.rx, d.ry, d.rz, 'XYZ'); TMP.q.setFromEuler(TMP.e);
+    TMP.m.compose(TMP.v.set(d.x, d.y, d.z), TMP.q, TMP.s.set(d.sx * f, d.sy * f, d.sz * f));
+    B.push(TMP.m, colorOf(d.col));
+  }
+  TMP.q.identity();
+}
 function buildProps() {   // every cover piece, drawn battered below half health, plus rubble where cover was destroyed
   propsDirty = false;
   const P = VIEW.props, n = {};
@@ -7813,6 +7945,18 @@ function buildProps() {   // every cover piece, drawn battered below half health
     if (STATIC_COVER.has(ob.kind)) continue;   // drawn once with the town
     const K = COVER_KINDS[ob.kind], X = ob.x * XS, Z = ob.y * XS, yaw = ob.rot90 ? Math.PI / 2 : 0;
     const hurt = ob.maxHp > 0 && ob.hp / ob.maxHp <= 0.5, h = hash2(ob.x, ob.y), HW = (K.hw || 0) * XS, HD = (K.hd || 0) * XS;
+    const g = coverGrid(ob), gc = g ? g[0] : 0, gr = g ? g[1] : 0;
+    const on = (c, r) => !g || (ob.chunks & (1 << (r * gc + c))) !== 0;   // is that piece of it still standing
+    const colOf = lx => clamp(Math.floor((lx / (HW || 1) + 1) / 2 * gc), 0, gc - 1);
+    const whole = !g || ob.chunks === (1 << (gc * gr)) - 1;
+    if (g && ob._shown !== ob.chunks) {   // pieces that went since this was last drawn throw their debris
+      const gone = ob._shown == null ? 0 : ob._shown & ~ob.chunks;
+      for (let i = 0; i < gc * gr; i++) if (gone & (1 << i)) {
+        const c = i % gc, r = (i / gc) | 0, lx = -HW + (c + 0.5) * (HW * 2 / gc), hy = coverFull(ob) * XS * (r + 0.5) / gr;
+        debrisBurst(ob.rot90 ? X : X + lx, hy, ob.rot90 ? Z - lx : Z, MAT_COL[K.mat] || '#999999', K.mat === 'dirt' || K.mat === 'stone');
+      }
+      ob._shown = ob.chunks;
+    }
     const at = (k, lx, y, lz, sx, sy, sz, col, dyaw = 0) =>   // local offsets turn with the piece
       put(k, ob.rot90 ? X + lz : X + lx, y, ob.rot90 ? Z - lx : Z + lz, sx, sy, sz, yaw + dyaw, col);
     const atE = (k, lx, y, lz, sx, sy, sz, col, ex, ez) => putE(k, ob.rot90 ? X + lz : X + lx, y, ob.rot90 ? Z - lx : Z + lz, sx, sy, sz, yaw, ex, ez, col);
@@ -7820,16 +7964,17 @@ function buildProps() {   // every cover piece, drawn battered below half health
       case 'crates': {
         const c = Math.min(HW, HD) * 0.95, cols = ['#8a7a56', '#6e7250', '#7a6a4a'];
         [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]].forEach(([a, b], i) => {
-          if (!(hurt && i === 3)) at('crates', a * c * 1.05, c * 0.5, b * c * 1.05, c, c, c, cols[i % 3], (hash2(i, ob.x) - 0.5) * 0.3);
+          if (on(a < 0 ? 0 : 1, 0)) at('crates', a * c * 1.05, c * 0.5, b * c * 1.05, c, c, c, cols[i % 3], (hash2(i, ob.x) - 0.5) * 0.3);
         });
-        if (!hurt) at('crates', 0, c * 1.5, 0, c, c, c, '#8a7a56', h);
+        const t0 = on(0, 1), t1 = on(1, 1);
+        if (t0 || t1) at('crates', (t0 && t1 ? 0 : t0 ? -0.5 : 0.5) * c * 1.05, c * 1.5, 0, c, c, c, '#8a7a56', h);   // the top one shifts onto whatever still holds it
         break;
       }
       case 'sandbags': {
-        const layers = hurt ? 2 : 3, per = Math.max(4, Math.round(HW * 2 / 0.46));
-        for (let l = 0; l < layers; l++) for (let i = 0; i < per; i++) {
+        const per = Math.max(4, Math.round(HW * 2 / 0.46));
+        for (let l = 0; l < 3; l++) for (let i = 0; i < per; i++) {
           const lx = -HW + (i + 0.5 + (l % 2) * 0.5) * (HW * 2 / per);
-          if (lx < HW) at('bags', lx, 0.12 + l * 0.24, 0, 0.5, 0.24, HD * 2.2, hash2(i, l + ob.x) < 0.5 ? '#c8bc94' : '#b4a87e');
+          if (lx < HW && on(colOf(lx), l)) at('bags', lx, 0.12 + l * 0.24, 0, 0.5, 0.24, HD * 2.2, hash2(i, l + ob.x) < 0.5 ? '#c8bc94' : '#b4a87e');
         }
         break;
       }
@@ -7861,19 +8006,32 @@ function buildProps() {   // every cover piece, drawn battered below half health
         break;
       }
       case 'wall': {
-        const hgt = hurt ? 0.6 : 1.0;
-        at('walls', 0, hgt / 2, 0, HW * 2, hgt, HD * 2, '#ffffff');
-        if (!hurt) at('walls', 0, 1.05, 0, HW * 2 + 0.1, 0.12, HD * 2 + 0.12, '#d8d2c4');
+        const bw = HW * 2 / gc, bh = 1.04 / gr;
+        for (let c = 0; c < gc; c++) {
+          const cx = -HW + (c + 0.5) * bw;
+          for (let r = 0; r < gr; r++)
+            if (on(c, r)) at('walls', cx, (r + 0.5) * bh, 0, bw - 0.03, bh - 0.02, HD * 2, hash2(c, r + ob.x) < 0.4 ? '#efe9dd' : '#ffffff');
+          if (on(c, gr - 1)) at('walls', cx, 1.07, 0, bw + 0.02, 0.1, HD * 2 + 0.12, '#d8d2c4');
+        }
         break;
       }
-      case 'barrier': for (let i = -1; i <= 1; i++) { if (hurt && i === 1) continue; at('barriers', i * HW * 0.67, 0.45, 0, 0.62, 0.9, HW * 0.66, '#ffffff', Math.PI / 2 + (hurt && i === -1 ? 0.3 : 0)); } break;
+      case 'barrier':
+        for (let j = 0; j < gc; j++) {
+          if (!on(j, 0)) continue;
+          const askew = (j > 0 && !on(j - 1, 0)) || (j < gc - 1 && !on(j + 1, 0)) ? 0.22 : 0;   // shoved out of line where the next one went
+          at('barriers', (j - 1) * HW * 0.67, 0.45, 0, 0.62, 0.9, HW * 0.66, '#ffffff', Math.PI / 2 + askew);
+        }
+        break;
       case 'fence': {
         const per = Math.max(2, Math.round(HW * 2 / 0.6));
         for (let i = 0; i <= per; i++) {
-          if (hurt && i % 2) continue;
-          at('wood', -HW + i * (HW * 2 / per), 0.5, 0, 0.08, 1.0, 0.08, '#8a6a44', hurt ? (hash2(i, ob.x) - 0.5) * 0.5 : 0);
+          const lx = -HW + i * (HW * 2 / per);
+          if (on(colOf(lx), 0)) at('wood', lx, 0.5, 0, 0.08, 1.0, 0.08, '#8a6a44', whole ? 0 : (hash2(i, ob.x) - 0.5) * 0.5);
         }
-        if (!hurt) { at('wood', 0, 0.78, 0, HW * 2, 0.08, 0.05, '#9a7a50'); at('wood', 0, 0.36, 0, HW * 2, 0.08, 0.05, '#9a7a50'); }
+        for (let c = 0; c < gc; c++) if (on(c, 0)) {   // the rails run only where the palings still stand
+          const cw = HW * 2 / gc, cx = -HW + (c + 0.5) * cw;
+          at('wood', cx, 0.78, 0, cw, 0.08, 0.05, '#9a7a50'); at('wood', cx, 0.36, 0, cw, 0.08, 0.05, '#9a7a50');
+        }
         break;
       }
       case 'dumpster': {
@@ -7883,9 +8041,8 @@ function buildProps() {   // every cover piece, drawn battered below half health
         break;
       }
       case 'woodpile': {
-        const rows = hurt ? 2 : 3;
-        for (let l = 0; l < rows; l++) for (let i = 0; i < 3; i++)
-          at('wood', -HW + (i + 0.5) * (HW * 2 / 3), 0.16 + l * 0.3, (l % 2) * 0.06, HW * 0.6, 0.28, HD * 2, hash2(i, l + ob.y) < 0.5 ? '#9a7448' : '#7a5a38');
+        for (let l = 0; l < gr; l++) for (let i = 0; i < gc; i++)
+          if (on(i, l)) at('wood', -HW + (i + 0.5) * (HW * 2 / gc), 0.16 + l * 0.3, (l % 2) * 0.06, HW * 0.6, 0.28, HD * 2, hash2(i, l + ob.y) < 0.5 ? '#9a7448' : '#7a5a38');
         break;
       }
       case 'planter': {
@@ -7958,6 +8115,7 @@ function buildProps() {   // every cover piece, drawn battered below half health
   for (const k in P) {
     P[k].count = n[k];
     P[k].instanceMatrix.needsUpdate = true;
+    P[k].boundingSphere = null;   // the pieces moved: work out again what this batch covers, or the culling drops it from a whole angle
     if (P[k].instanceColor) P[k].instanceColor.needsUpdate = true;
   }
 }
@@ -8350,7 +8508,7 @@ function resizeView() {   // the canvas runs at native resolution; the scene ren
 function viewEnterBattle() {
   if (!VIEW.ready) return;
   sweepViews(true);
-  BRASS.length = 0; DROPS.length = 0;
+  BRASS.length = 0; DROPS.length = 0; DEBRIS.length = 0;
   corpseSig = '';
   buildProps();
   rebuildStatic();
@@ -8378,6 +8536,7 @@ function renderView(dt) {
   syncCorpses(wdt, D);
   drawLoose(wdt);
   drawFx();
+  drawDebris(wdt);
   const ctl = soldiers[state.controlled];
   if (ctl && ctl.alive && state.mode === 'play')
     decal(F.ring, ctl.x * XS, ctl.y * XS, ctl.horse ? 2.2 : 1.35, 0, colorOf(ctl.color), 0.035);
@@ -8405,10 +8564,10 @@ function viewStats() {
 // thresholds stretch to the cap's own frame (a 30 cap is slow past 45 ms, smooth under 35), so a cap never reads as a
 // slow device. The battery saver (see POWER) holds the Saver preset and pauses Auto.
 const QUALITY = {
-  low:    { lines: 270, dpr: 1,   particles: 220, brass: 40,  corpses: 50,  rain: 0.35, glow: false, ragdolls: 3 },
-  medium: { lines: 360, dpr: 1.5, particles: 500, brass: 100, corpses: 90,  rain: 0.7,  glow: true,  ragdolls: 5 },
-  high:   { lines: 480, dpr: 2,   particles: 900, brass: 160, corpses: 120, rain: 1,    glow: true,  ragdolls: 8 },   // the N64 hi-res mode: the game's own look
-  saver:  { lines: 240, dpr: 1,   particles: 160, brass: 24,  corpses: 40,  rain: 0.25, glow: false, ragdolls: 2 },  // the battery saver's: never chosen by Auto
+  low:    { lines: 270, dpr: 1,   particles: 220, brass: 40,  corpses: 50,  rain: 0.35, glow: false, ragdolls: 3, debris: 30 },
+  medium: { lines: 360, dpr: 1.5, particles: 500, brass: 100, corpses: 90,  rain: 0.7,  glow: true,  ragdolls: 5, debris: 60 },
+  high:   { lines: 480, dpr: 2,   particles: 900, brass: 160, corpses: 120, rain: 1,    glow: true,  ragdolls: 8, debris: 90 },   // the N64 hi-res mode: the game's own look
+  saver:  { lines: 240, dpr: 1,   particles: 160, brass: 24,  corpses: 40,  rain: 0.25, glow: false, ragdolls: 2, debris: 14 },  // the battery saver's: never chosen by Auto
 };
 const QLEVELS = ['low', 'medium', 'high'];
 const Q = Object.assign({ level: 'high', auto: true, start: 'high', emaMs: 16.7, slowT: 0, fastT: 0, holdT: 0, changes: 0, fails: {} }, QUALITY.high);
