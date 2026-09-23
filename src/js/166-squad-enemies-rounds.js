@@ -379,7 +379,7 @@ function updateBullets(dt) {   // sub-steps of ≤10 px; buildings stop every ro
         if (b.ballistic && COVER_KINDS[ob.kind].block >= 0.5) { if (b.z >= ctop) continue; }   // a real line: over the top of it, or into it
         else if (!b.aoe && Math.random() > ob.block) { b.over = ob; continue; }   // this one flies over the top
         impact(b, MAT_COL[COVER_KINDS[ob.kind].mat] || '#999999', false);
-        if (!b.aoe) damageCover(ob, b.dmg, b.fromPlayer ? { player: true, wkey: null, slot: b.slot } : null, b.x, b.y);
+        if (!b.aoe) { const sp = Math.hypot(b.vx, b.vy) || 1; damageCover(ob, b.dmg, b.fromPlayer ? { player: true, wkey: null, slot: b.slot } : null, b.x, b.y, b.vx / sp, b.vy / sp); }
         dead = true; break;
       }
       if (dead) break;

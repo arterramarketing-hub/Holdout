@@ -115,10 +115,11 @@ function fragBlast(g) {
   particles.push({ x, y, z: 6, vx: 0, vy: 0, vz: 0, life: 0.24, max: 0.24, col: 'rgba(255,220,140,0.9)', r: R * 0.55 });
   for (let k = 0; k < 10; k++) { const a = rand(0, TAU), v = rand(120, 260); particles.push({ x, y, z: 8, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vz: rand(60, 160), life: rand(0.4, 0.8), max: 0.8, col: '#3a3a34', r: rand(1.5, 2.6) }); }
   craters.push({ x, y, r: R * 0.22 }); if (craters.length > 44) craters.shift();
+  BLASTS.push({ x, y, r: R, z: g.z || 0 }); if (BLASTS.length > 16) BLASTS.shift();
   for (const ob of obstacles.slice()) {
     if (!ob.hp) continue;
     const d = coverPoint(ob, x, y, CP).d;
-    if (d < R) damageCover(ob, 26 * (1 - Math.max(0, d) / R) + 6, g.hostile ? null : { player: true, wkey: 'frag', slot: g.owner }, CP.px, CP.py);
+    if (d < R) damageCover(ob, 26 * (1 - Math.max(0, d) / R) + 6, g.hostile ? null : { player: true, wkey: 'frag', slot: g.owner }, CP.px, CP.py, -CP.nx, -CP.ny);
   }
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 700 * 700) cam.shake = Math.max(cam.shake, 8);
   const reach = (tx, ty, tr) => { const d = Math.max(0, Math.hypot(tx - x, ty - y) - tr * 0.5); return d < R && losClear(x, y, tx, ty) ? 1 - d / R : 0; };

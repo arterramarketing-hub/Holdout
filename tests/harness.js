@@ -33,6 +33,7 @@
     const files = new Set(H.suites.map(s => s.file));
     if (FILES && files.size !== FILES) throw new Error(`only ${files.size} of ${FILES} suite files loaded — scripts went missing`);
     await waitFor(() => typeof VIEW !== 'undefined' && (VIEW.ready || VIEW.failed), 60000, 'the 3D engine');
+    await waitFor(() => typeof PHYS === 'undefined' || PHYS.ready || PHYS.failed, 60000, 'the physics engine');   // an older build (--source) has none
     const bootEl = document.getElementById('boot');
     if (bootEl) bootEl.click();
     await wait(700);

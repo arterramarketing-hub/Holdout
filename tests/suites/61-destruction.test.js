@@ -117,35 +117,41 @@ suite('destruction: cover that comes apart', t => {
     assert.eq(coverTopAt(ob, 40 * PX, 38.8 * PX), coverFull(ob), 'the north end stands');
   });
 
-  t.test('pieces fly off where the cover lost them, land, and clear away', () => {
+  t.test('pieces fly off where the cover lost them and come to rest in the street', () => {
     const { ob } = wall();
+    state.slow = 0;
     frames(1);
-    assert.eq(DEBRIS.length, 0, 'nothing flying while it stands whole');
-    damageCover(ob, 20, null, COL[0] * PX, 30.5 * PX);   // six pieces off the west end
+    assert.eq(PIECES.length, 0, 'nothing loose while it stands whole');
+    damageCover(ob, 20, null, COL[0] * PX, 30.5 * PX, 0, -1);   // six pieces off the west end, pushed north
     frames(1);
-    const n = DEBRIS.length;
-    assert.range(n, 6, Q.debris, 'pieces in the air');
-    assert.eq(VIEW.fx.debris.n, n, 'all of them drawn');
-    const high = DEBRIS.filter(d => d.y > 0.25).length;
-    assert.ok(high > 0, 'some of them off the ground');
-    for (const d of DEBRIS) assert.range(d.x, (COL[0] - 1.2) * 1, (COL[0] + 1.2) * 1, 'thrown from the hole, not the far end');
-    frames(64, 1 / 20);   // three and a bit seconds
-    assert.eq(DEBRIS.every(d => d.rest && d.y < 0.2), true, 'settled on the ground');
-    frames(90, 1 / 20);   // past their life
-    assert.eq(DEBRIS.length, 0, 'cleared away');
-    assert.eq(VIEW.fx.debris.n, 0, 'and gone from the batch');
-    return { pieces: n, high };
+    const n = PIECES.length;
+    assert.range(n, 6, Q.debris, 'pieces thrown');
+    for (const p of PIECES) assert.range(p.body.position.x, COL[0] - 1.4, COL[0] + 1.4, 'thrown from the hole, not the far end');
+    frames(80, 1 / 20);   // four seconds
+    const rubble = PIECES.filter(p => p.batch !== 'debris');   // the bags themselves; the grit shrinks away
+    const moving = rubble.filter(p => p.body.velocity.length() > 0.15 || p.body.angularVelocity.length() > 0.5).length;
+    assert.eq(moving, 0, 'bags still visibly moving');
+    frames(60, 1 / 20);   // seven seconds
+    assert.eq(PIECES.filter(p => p.batch === 'debris').length, 0, 'the grit has gone');
+    assert.eq(PIECES.length, rubble.length, 'the bags stay as rubble');
+    assert.ok(rubble.filter(p => p.body.sleepState === 2).length >= rubble.length * 0.8, 'asleep: lying rubble costs nothing');
+    assert.eq(PIECES.every(p => p.body.position.y < 0.9), true, 'down in the street, not floating');
+    const north = PIECES.filter(p => p.body.position.z < 30.5).length;
+    assert.ok(north > n / 2, 'most of them went the way they were pushed: ' + north + ' of ' + n);
+    return { pieces: n, north };
   });
 
-  t.test('debris keeps to the quality cap and never touches the fight', () => {
+  t.test('loose pieces keep to the quality cap and never touch the fight', () => {
     wall();
-    for (let k = 0; k < 120; k++) debrisBurst(20 + k * 0.1, 0.6, 20, '#b4a67a', true);
-    assert.range(DEBRIS.length, 1, Q.debris, 'capped by the quality preset');
+    state.slow = 0;
+    for (let k = 0; k < 120; k++) debrisBurst(20 + (k % 12) * 0.5, 0.6, 20 + ((k / 12) | 0) * 0.5, '#b4a67a', 'dirt', 0, 0);
+    frames(30, 1 / 30);
+    assert.range(PIECES.length, 1, Q.debris, 'capped by the quality preset');
     seed(77);
     const a0 = Math.random();
     seed(77);
-    for (let k = 0; k < 8; k++) debrisBurst(12, 1, 12, '#b4a67a', true);
-    drawDebris(1 / 60);
+    for (let k = 0; k < 8; k++) debrisBurst(12, 1, 12, '#b4a67a', 'dirt', 1, 0);
+    physStep(0.5); drawPieces(1 / 60);
     assert.eq(Math.random(), a0, 'the fight rolled nothing for any of it');
   });
 

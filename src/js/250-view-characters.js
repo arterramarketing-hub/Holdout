@@ -221,7 +221,9 @@ function bakeCorpse(c, rag) {   // into the static layer: the pose the ragdoll c
   if (rag) {
     lk = corpseLook(c);
     emitParts(rag.J, noGun(lk.parts), lk.pal, null, false, cache);
-    c._restX = rag.p[0] / XS; c._restY = rag.p[2] / XS; c._restZ = rag.floor / XS;   // the blood pool goes where it lies
+    if (c._restX == null) { c._restX = rag.p[0] / XS; c._restY = rag.p[2] / XS; c._restZ = rag.floor / XS; }   // the blood pool goes where it first lay
+    const K = c._J || (c._J = new Float32Array(HUMANOID.length * 16));   // the pose it rests in, for a later blast to start from
+    rag.J.forEach((j, i) => K.set(j.matrixWorld.elements, i * 16));
     ragRelease(rag);
   } else {
     const J = takeSkeleton('humanoid');
@@ -231,6 +233,33 @@ function bakeCorpse(c, rag) {   // into the static layer: the pose the ragdoll c
   }
   if (!c.noGun) emitGround(gunOnly(lk.parts), lk.pal, c.gunX, c.gunY, c.gunYaw, lk.sc[0], null, cache, (c.z || 0) * XS);
   return cache;
+}
+const WAKE_J = [];   // a settled body's pose, unpacked for a blast to throw it from
+function wakeCorpses(bl) {   // a blast beside the settled dead throws them again, while there are ragdoll slots to spare
+  const R = bl.r * 0.8, cap = ragCap();
+  for (const c of corpses) {
+    if (RAG_LIVE.size >= cap) return;
+    if (!c._cache || Math.abs((c.z || 0) - (bl.z || 0)) > 2.5 * PX) continue;   // settled, and on the blast's own level
+    const cx = c._restX != null ? c._restX : c.x, cy = c._restY != null ? c._restY : c.y, dx = cx - bl.x, dy = cy - bl.y, d = Math.hypot(dx, dy);
+    if (d > R) continue;
+    let J = null, pooled = null;
+    const lk = corpseLook(c);
+    if (c._J) {   // it came to rest as a ragdoll: from exactly that pose
+      if (!WAKE_J.length) for (let i = 0; i < HUMANOID.length; i++) WAKE_J.push({ matrixWorld: new THREE.Matrix4() });
+      WAKE_J.forEach((j, i) => j.matrixWorld.fromArray(c._J, i * 16));
+      J = WAKE_J;
+    } else {       // its canned fall's last pose
+      pooled = J = takeSkeleton('humanoid');
+      poseCorpse(J, c, 1);
+    }
+    const f = 1 - d / R, rag = ragStart(J, null, 0, { hit: { x: dx / (d || 1), y: dy / (d || 1) }, kick: 2 + 5 * f, blast: true, sc: lk.sc });
+    if (pooled) rigPool.humanoid.push(pooled);
+    if (!rag) continue;
+    if (c._restX == null) { c._restX = c.x; c._restY = c.y; c._restZ = c.z || 0; }   // its blood stays where it first lay
+    c._cache = null; staticDirty = true;
+    const r = recFor(c);
+    r.rag = rag; r.ragTried = true;
+  }
 }
 function syncCorpses(wdt, set) {
   const first = corpses[0], lastC = corpses[corpses.length - 1];
@@ -282,9 +311,9 @@ function rebuildStatic() {
   batchesDo(S, b => b.begin());
   stain.begin();
   for (const c of corpses) {
-    if (!c._cache) continue;
+    if (!c._cache && c._restX == null) continue;
     const k = c._cache;
-    for (let i = 0; i < k.length; i += 3) S[k[i]].push(k[i + 1], k[i + 2]);
+    if (k) for (let i = 0; i < k.length; i += 3) S[k[i]].push(k[i + 1], k[i + 2]);   // a body a blast has picked up again is drawn live; its blood stays
     decal(stain, (c._restX != null ? c._restX : c.x) * XS, (c._restY != null ? c._restY : c.y) * XS, 1.5 * (c.sc || 1), c.rot || 0, colorOf('#5c1810'), 0.025 + (c._restX != null ? c._restZ : c.z || 0) * XS);
   }
   batchesDo(S, b => b.end());

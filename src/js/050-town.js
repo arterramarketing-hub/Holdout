@@ -108,6 +108,8 @@ const COVER_CHUNKS = {   // pieces along the long axis x pieces up: cover that c
 const STATIC_COVER = new Set(['platform', 'pillar', 'hesco', 'tree', 'statue', 'tent', 'truck', 'bus', 'mound', 'grave', 'hedge']);   // drawn once with the town
 const MAT_COL = { wood: '#b8894e', dirt: '#b4a67a', metal: '#6a6a66', stone: '#a8a498', concrete: '#b8b6b0', leaf: '#4e6a34' };
 let buildings = [], rubble = [], propsDirty = true, coverSeq = 1;
+const BROKEN = [];   // cover destroyed since the view last looked: it throws whatever was still standing on them. The fight never reads it
+const BLASTS = [];   // what went off since the view last looked, for the physics to push things about. The fight never reads it either
 const CP = { px: 0, py: 0, nx: 0, ny: 0, d: 0 };
 const SPOT = { x: 0, y: 0 };
 function makeCover(kind, x, y, rot90) {
@@ -301,15 +303,15 @@ function followPath(u, spd, dt) {   // true once the last waypoint is reached
 }
 
 // ---------- cover lifecycle ----------
-function damageCover(ob, dmg, credit, hx, hy) {   // credit: whoever's round or blast this was, so an explosion they set off is theirs. hx, hy: where it was hit
+function damageCover(ob, dmg, credit, hx, hy, dx, dy) {   // credit: whoever's round or blast this was, so an explosion they set off is theirs. hx, hy: where it was hit, dx, dy: which way the push went
   if (!ob.hp || ob.hp <= 0) return;
   const was = ob.hp / ob.maxHp;
   ob.hp -= dmg;
-  if (ob.hp <= 0) destroyCover(ob, credit);
-  else if (ob.chunks) chipCover(ob, hx, hy);
+  if (ob.hp <= 0) { ob._push = { x: dx || 0, y: dy || 0 }; destroyCover(ob, credit); }
+  else if (ob.chunks) chipCover(ob, hx, hy, dx, dy);
   else if (was > 0.5 && ob.hp / ob.maxHp <= 0.5) propsDirty = true;   // shows its damaged state
 }
-function chipCover(ob, hx, hy) {   // knock pieces off it: the ones nearest where it was hit, top down, so fire on one spot drills a hole through
+function chipCover(ob, hx, hy, dx, dy) {   // knock pieces off it: the ones nearest where it was hit, top down, so fire on one spot drills a hole through
   const g = COVER_CHUNKS[ob.kind], total = g[0] * g[1];
   let live = 0;
   for (let i = 0; i < total; i++) if (ob.chunks & (1 << i)) live++;
@@ -328,6 +330,7 @@ function chipCover(ob, hx, hy) {   // knock pieces off it: the ones nearest wher
     ob.chunks &= ~(1 << best);
     live--;
   }
+  ob._push = { x: dx || 0, y: dy || 0 };   // the view throws the pieces this way; the fight reads none of it
   propsDirty = true;
   sfxChip(ob.x, ob.y, COVER_KINDS[ob.kind].mat);
 }
@@ -335,6 +338,7 @@ function destroyCover(ob, credit) {
   const i = obstacles.indexOf(ob);
   if (i < 0) return;
   obstacles.splice(i, 1);
+  BROKEN.push(ob); if (BROKEN.length > 24) BROKEN.shift();
   const K = COVER_KINDS[ob.kind], col = MAT_COL[K.mat] || '#999999';
   rubble.push({ x: ob.x, y: ob.y, hw: ob.shape === 'c' ? ob.r : ob.hw, hd: ob.shape === 'c' ? ob.r : ob.hd, mat: K.mat, seed: ob.id });
   if (rubble.length > 60) rubble.shift();

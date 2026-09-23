@@ -94,6 +94,7 @@ suite('ragdolls', t => {
     const k = killAt(h, 0, -(8 - 0.45), Math.PI / 2, { x: 0, y: -1, z: 50 }, 'sniper');   // 45 cm off the wall, blown back into it
     const w = watch([k]);
     const P = w.log.get(k.c).last;
+    assert.ok(P, 'handed to a ragdoll');
     for (const b of buildings) for (let i = 0; i < RAG_N; i++) assert.ok(!insideBox(b, P[i * 3], P[i * 3 + 1], P[i * 3 + 2]), `point ${i} inside a building`);
     assert.ok(Array.from(P).every(Number.isFinite), 'no NaN');
   }, { timeout: 120000 });

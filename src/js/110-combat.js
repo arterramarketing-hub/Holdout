@@ -391,10 +391,11 @@ function explode(x, y, r, eDmg, sDmg, credit, z = 0) {   // z: how high the blas
   burst(x, y, '#e8a75a', 22, 8);
   particles.push({ x, y, z: 4, vx: 0, vy: 0, vz: 0, life: 0.22, max: 0.22, col: 'rgba(255,220,140,0.9)', r });
   craters.push({ x, y, r: r * 0.5 }); if (craters.length > 44) craters.shift();
+  BLASTS.push({ x, y, r, z }); if (BLASTS.length > 16) BLASTS.shift();
   for (const ob of obstacles.slice()) {   // blasts chew through cover
     if (!ob.hp) continue;
     const d = coverPoint(ob, x, y, CP).d;
-    if (d < r) damageCover(ob, 30 * (1 - Math.max(0, d) / r) + 10, credit, CP.px, CP.py);   // a barrel your blast sets off is yours too
+    if (d < r) damageCover(ob, 30 * (1 - Math.max(0, d) / r) + 10, credit, CP.px, CP.py, -CP.nx, -CP.ny);   // a barrel your blast sets off is yours too; its pieces go away from it
   }
   const p = camTarget(); if (p && dist2(x, y, p.x, p.y) < 500 * 500) cam.shake = Math.max(cam.shake, 7);
   for (let j = enemies.length - 1; j >= 0; j--) {

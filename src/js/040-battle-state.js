@@ -45,6 +45,7 @@ function genTerrain() {   // the same town every front; its movable cover is rol
     ({ shape: 'r', x: (x0 + x1) / 2 * k, y: (y0 + y1) / 2 * k, hw: (x1 - x0) / 2 * k, hd: (y1 - y0) / 2 * k, top: h * k, style, building: true, claims: 0 }));
   for (const [x, y, hw, hd] of [[-T / 2, H / 2, T / 2, H / 2 + T], [W + T / 2, H / 2, T / 2, H / 2 + T], [W / 2, -T / 2, W / 2 + T, T / 2], [W / 2, H + T / 2, W / 2 + T, T / 2]])
     buildings.push({ shape: 'r', x, y, hw, hd, top: 2.4 * k, style: 'perimeter', building: true, claims: 0 });   // standing exactly on the edge: walk up and touch it
+  BROKEN.length = 0; BLASTS.length = 0;
   for (const [kind, x, y, rot] of TOWN.fixed) obstacles.push(makeCover(kind, x * k, y * k, rot));
   for (const [x, y, kinds, rot] of TOWN.slots) {
     if (Math.random() > 0.85) continue;

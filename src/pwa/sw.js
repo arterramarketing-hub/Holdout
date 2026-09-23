@@ -5,7 +5,8 @@
 // over at once and deletes the old cache.
 const CACHE = 'holdout-@@VERSION';
 const SHELL = @@PRECACHE;
-const ENGINE = ['https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js', 'https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.core.js'];
+const ENGINE = ['https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js', 'https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.core.js',
+  'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js'];
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {

@@ -10,6 +10,7 @@ const glStatus = () => VIEW.ready ? 'Waking the 3D engine (three.js r186) . . . 
   : VIEW.failed ? 'Waking the 3D engine . . . <span class="lost">offline — check your connection</span>'
   : 'Waking the 3D engine (three.js r186) . . .';
 loadThree().then(() => { const g = document.getElementById('bootgl'); if (g) g.innerHTML = glStatus(); });
+loadPhysics();   // the fight never waits on it: without it, canned falls and cover that drops its pieces where it stood
 // title screen with loading lines (click/key to skip)
 (function bootSequence() {
   const bootEl = $('boot'), linesEl = $('bootlines');

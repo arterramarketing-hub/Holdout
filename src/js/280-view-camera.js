@@ -274,7 +274,7 @@ function updateOverlays(dt) {
     if (OV.fpsT >= 0.5) {
       const info = VIEW.renderer.info.render, box = document.getElementById('fpsbox');
       box.style.display = 'block';
-      box.textContent = `${Math.round(OV.frames / OV.fpsT)} fps · ${info.calls} calls · ${(info.triangles / 1000).toFixed(1)}k tris · ${views.size} rigs · pr ${VIEW.pr.toFixed(2)}`;
+      box.textContent = `${Math.round(OV.frames / OV.fpsT)} fps · ${info.calls} calls · ${(info.triangles / 1000).toFixed(1)}k tris · ${views.size} rigs · pr ${VIEW.pr.toFixed(2)} · phys ${physOn() ? PHYS.ms.toFixed(1) + ' ms ' + PHYS.world.bodies.length : 'off'}`;
       OV.frames = 0; OV.fpsT = 0;
     }
   }
@@ -374,7 +374,8 @@ function resizeView() {   // the canvas runs at native resolution; the scene ren
 function viewEnterBattle() {
   if (!VIEW.ready) return;
   sweepViews(true);
-  BRASS.length = 0; DROPS.length = 0; DEBRIS.length = 0;
+  BRASS.length = 0; DROPS.length = 0;
+  physBuildWorld();   // a physics world for this town
   corpseSig = '';
   buildProps();
   rebuildStatic();
@@ -388,12 +389,15 @@ function renderView(dt) {
   const live = state.mode === 'play' || state.mode === 'dying' || state.mode === 'spectate';
   const wdt = live ? dt * (state.slow > 0 ? 0.3 : 1) : 0;
   if (propsDirty) buildProps();
+  physBlasts();
+  physStep(wdt);
   viewGen++;
   updateCamera3(dt);
   VIEW.camera.updateMatrixWorld(true);
   const D = VIEW.dyn, F = VIEW.fx;
   batchesDo(D, b => b.begin());
   for (const k of FX_FRAME) F[k].begin();
+  for (const k of LOOSE_KEYS) VIEW.loose[k].begin();
   const fpv = fpvActive() && !bossCine();   // on the hero shot the camera is not your eyes: your body is drawn, your gun is not
   for (const s of soldiers) if (s.alive && !(fpv && s.slot === state.controlled)) drawSoldier(s, wdt, D);
   if (fpv) drawViewmodel(soldiers[state.controlled], wdt, D);
@@ -402,13 +406,14 @@ function renderView(dt) {
   syncCorpses(wdt, D);
   drawLoose(wdt);
   drawFx();
-  drawDebris(wdt);
+  drawPieces(wdt);
   const ctl = soldiers[state.controlled];
   if (ctl && ctl.alive && state.mode === 'play')
     decal(F.ring, ctl.x * XS, ctl.y * XS, ctl.horse ? 2.2 : 1.35, 0, colorOf(ctl.color), 0.035);
   sweepViews(false);
   batchesDo(D, b => b.end());
   for (const k of FX_FRAME) F[k].end();
+  for (const k of LOOSE_KEYS) VIEW.loose[k].end();
   applyEnv(dt);
   updateSky(dt);
   n64Render();
