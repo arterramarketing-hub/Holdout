@@ -91,7 +91,22 @@ What changed from the plan while building it, and why:
   the lifting.
 - **A zero ragdoll cap now means zero** (`ragCap`), rather than falling back to eight.
 
-Found and left alone: the view draws the fight's dice when it first draws a character (`recFor`: walk phase and idle
-variety use `Math.random`). Switching them to the view's own dice is right, but it changes how seeded fights play out
-in tests that render, and it is not part of this; it may also be what makes the first battle after a page load replay
-differently from later ones.
+Found while building it, fixed afterwards (Sep 23, 2026): the fight's dice (Math.random) were being rolled by things
+that are not the fight, so a seeded fight played out differently depending on what was drawn, what sounds had played,
+and whether it was the first battle on the page. Every one of them now rolls its own dice:
+- **three.js** gives every mesh, material and geometry a random id, and the view makes those lazily — about 580 of the
+  fight's dice in a page's first battle. All view work (`renderView`, `viewEnterBattle`, `initView`, the HUD) runs
+  inside `viewFenced`, where Math.random is the view's own `fxRand` for the duration.
+- **the view's own rolls**: a new character's walk phase and idle variety, muzzle flashes, ejected brass, dropped
+  magazines, camera shake (every frame), lightning (every frame in rain) — now `fxRand`; the brass and magazine
+  sounds — now the sound's dice (`aRnd`/`aRand`/`aRandi`).
+- **sound**: the noise and echo buffers built the first time a sound plays (~247,000 draws, once per page), the looping
+  noise start, the music (rolled on its own real-time schedule), the thinning of the squad's gunfire sounds — `aRnd`.
+- **the weather forecast**, rolled when a briefing first shows a sector and cached: the first deploy drew no dice and
+  every later one drew four. It has its own dice now (`skyRand`).
+- **not dice, but the same effect**: recoil recovery ran in the camera update, so a fight that was not drawn never
+  recovered its aim — it runs in the tick now (`settleAim`); first-person movement waited for the camera to copy your
+  aim — it reads the aim; the eye height a round leaves from read the camera's eased value — it is the constant it always
+  settled to (`EYE_Y`); and spawn zones remembered the last battle's arrivals — reset when a battle starts.
+Tests: tests/suites/63-fair-dice.test.js — the view rolls none of the fight's dice; a seeded fight plays out the same
+drawn or not; the first battle on a page plays out like the ones after it.

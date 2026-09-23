@@ -217,17 +217,17 @@ function throwBrass(gunM, kind, scale, own, vx, vz) {   // out of the port to th
   if (!port || !c) return;
   const b = looseObj(BRASS, Q.brass), down = kind === 'lmg' || kind === 'pkm';
   b.p.set(port[0], port[1], port[2]).applyMatrix4(gunM);
-  b.v.set(rand(0.75, 1), down ? rand(-0.8, -0.4) : rand(0.35, 0.75), rand(0.1, 0.45)).transformDirection(gunM)
-    .multiplyScalar(kind === 'sniper' ? rand(1.4, 2) : rand(2.2, 3.3));
+  b.v.set(fxRand(0.75, 1), down ? fxRand(-0.8, -0.4) : fxRand(0.35, 0.75), fxRand(0.1, 0.45)).transformDirection(gunM)
+    .multiplyScalar(kind === 'sniper' ? fxRand(1.4, 2) : fxRand(2.2, 3.3));
   b.v.x += vx || 0; b.v.z += vz || 0;   // it leaves at the speed you are moving, plus its own
-  b.q.setFromEuler(LT.eb.set(rand(0, TAU), rand(0, TAU), rand(0, TAU)));
-  b.w.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize().multiplyScalar(rand(16, 32));
-  b.life = rand(2.4, 3.4); b.own = own; b.d = c[0] * scale; b.l = c[1] * scale;
+  b.q.setFromEuler(LT.eb.set(fxRand(0, TAU), fxRand(0, TAU), fxRand(0, TAU)));
+  b.w.set(fxRand(-1, 1), fxRand(-1, 1), fxRand(-1, 1)).normalize().multiplyScalar(fxRand(16, 32));
+  b.life = fxRand(2.4, 3.4); b.own = own; b.d = c[0] * scale; b.l = c[1] * scale;
 }
 function dropLoose(pos, quat, sx, sy, sz, col, own, vel) {   // an empty magazine let go of
   const m = looseObj(DROPS, 12);
   m.p.copy(pos); m.q.copy(quat); m.v.copy(vel);
-  m.w.set(rand(-1, 1), rand(-0.3, 0.3), rand(-1, 1)).normalize().multiplyScalar(rand(3, 7));
+  m.w.set(fxRand(-1, 1), fxRand(-0.3, 0.3), fxRand(-1, 1)).normalize().multiplyScalar(fxRand(3, 7));
   m.life = 15; m.own = own; m.sx = sx; m.sy = sy; m.sz = sz; m.col = col;
 }
 function stepLoose(o, dt, rest, bounce) {   // gravity, spin, bounce, then settle on its side; true on the step it strikes the ground
@@ -255,8 +255,8 @@ function drawLoose(wdt) {
     const b = BRASS[i];
     b.t += wdt;
     if (b.t >= b.life) { BRASS.splice(i, 1); continue; }
-    if (stepLoose(b, wdt, b.d / 2, 0.4) && b.hits === 1 && b.own && Math.random() < 0.65)
-      playBuf('tink:' + randi(0, 2), { gain: 0.05, rate: rand(0.92, 1.15) });
+    if (stepLoose(b, wdt, b.d / 2, 0.4) && b.hits === 1 && b.own && aRnd() < 0.65)   // the sound's own dice, not the fight's
+      playBuf('tink:' + aRandi(0, 2), { gain: 0.05, rate: aRand(0.92, 1.15) });
     const px = b.p.distanceTo(cp) * pix, d = Math.max(b.d, px * 1.1);   // never thinner than a render line, or the dither eats it
     LT.mb.compose(b.p, b.q, LT.vb2.set(d, Math.max(b.l, px * 2.2), d));
     F.brass.push(LT.mb, BLOOM.brass);
@@ -265,7 +265,7 @@ function drawLoose(wdt) {
     const m = DROPS[i];
     m.t += wdt;
     if (m.t >= m.life) { DROPS.splice(i, 1); continue; }
-    if (stepLoose(m, wdt, Math.min(m.sx, m.sz) / 2, 0.22) && m.hits === 1 && m.own) playBuf('fall:0', { gain: 0.14, rate: rand(2.1, 2.5) });
+    if (stepLoose(m, wdt, Math.min(m.sx, m.sz) / 2, 0.22) && m.hits === 1 && m.own) playBuf('fall:0', { gain: 0.14, rate: aRand(2.1, 2.5) });
     LT.mb.compose(m.p, m.q, LT.vb2.set(m.sx, m.sy, m.sz));
     D.metal.push(LT.mb, m.col);
   }
@@ -274,7 +274,7 @@ function drawLoose(wdt) {
 function drawViewmodel(s, wdt, set) {
   const cam3 = VIEW.camera, key = s.pistol ? 'pistol' : s.weapon;
   if (s.recoil > FPV.lastRecoil + 0.02) {
-    FPV.kickV += 10 + RECOIL_KICK[key] * 30; FPV.flashT = !s.pistol && s.suppressor ? 0 : VM_FLASH; FPV.flashRot = rand(0, TAU); FPV.flashSc = rand(0.85, 1.15);   // a suppressor hides the flash
+    FPV.kickV += 10 + RECOIL_KICK[key] * 30; FPV.flashT = !s.pistol && s.suppressor ? 0 : VM_FLASH; FPV.flashRot = fxRand(0, TAU); FPV.flashSc = fxRand(0.85, 1.15);   // a suppressor hides the flash
     if (EJECT[key]) FPV.ejectT = key === 'sniper' ? 0.45 : 1e-4;   // the bolt gun throws its brass when the bolt is worked
   }
   FPV.lastRecoil = s.recoil;

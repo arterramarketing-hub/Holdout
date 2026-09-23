@@ -62,7 +62,7 @@ function mNoise(c, nb, t, dur, type, freq, q, gain, dest) {   // a filtered nois
   f.type = type; f.frequency.value = freq; f.Q.value = q;
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   s.connect(f); f.connect(g); g.connect(dest);
-  s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.02);
+  s.start(t, aRnd() * 1.5); s.stop(t + dur + 0.02);
 }
 function musStep(c, bus, send, nb, t, cue, step, k) {   // everything that sounds on one sixteenth note; k = how hot the fight is (0..1)
   const spb = 60 / cueBpm(cue) / 4, bar = Math.floor(step / 16), s16 = step % 16;
@@ -79,7 +79,7 @@ function musStep(c, bus, send, nb, t, cue, step, k) {   // everything that sound
       mTone(c, t, { type: 'sine', f: s16 ? 70 : 82, f2: 42, glide: 0.22, dur: 0.42, gain: s16 ? 0.07 : 0.1, perc: true, a: 0.004, dest: bus });
       mNoise(c, nb, t, 0.05, 'lowpass', 1400, 0.6, s16 ? 0.02 : 0.03, bus);
     }
-    if (phrase >= 2 && step % 2 === 0 && Math.random() < 0.85) {   // a soft plucked arpeggio over the chord
+    if (phrase >= 2 && step % 2 === 0 && aRnd() < 0.85) {   // a soft plucked arpeggio over the chord
       const pat = [0, 2, 1, 3, 2, 1, 3, 2], idx = pat[(step / 2) % 8], n = (idx < 3 ? chord[idx] : chord[0] + 12) + 12;
       mTone(c, t, { type: 'triangle', f: NOTE(n), dur: 0.75, gain: 0.03, perc: true, a: 0.004, lp: 2400, pan: (step / 2) % 2 ? 0.2 : -0.2, dest: bus, send, sendAmt: 0.45 });
     }

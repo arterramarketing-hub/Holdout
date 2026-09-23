@@ -354,7 +354,7 @@ function sfxGun(w, x, y, isCtl, quiet) {
     playBuf(pickVar(`gun:${w}:`, n), { gain: 0.6, rate, force: true });   // your brass tinks when it actually lands (drawLoose)
     return;
   }
-  if (Math.random() < 0.45) return;   // thin the squad's fire so the mix stays readable
+  if (aRnd() < 0.45) return;   // thin the squad's fire so the mix stays readable (the sound's own dice)
   const far = distMul(x, y), key = far < 0.55 && SFX.buf['gunf:' + w] ? 'gunf:' + w : pickVar(`gun:${w}:`, n);
   playBuf(key, { gain: 0.32 * far, rate, x, y, lp: 1200 + 18000 * far * far });
 }

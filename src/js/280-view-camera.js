@@ -32,14 +32,6 @@ function updateCamera3(dt) {
   FPV.sprintK = approach(FPV.sprintK || 0, hs && hs.alive && hs.sprinting && state.mode === 'play' ? 1 : 0, 6, dt);   // sprinting: the view widens, the gun drops
   steerFromCursor(dt);
   aim.lookDx *= Math.exp(-dt * 8);   // the viewmodel's sway settles back to centre once you stop turning
-  {   // recoil recovery: the muzzle drifts back to where you were pointing once you stop firing
-    const rate = dt * (aim.fire ? 0.35 : 1.8);
-    if (aim.settle > 0) { const d = Math.min(aim.settle, rate); aim.pitch -= d; aim.settle -= d; }
-    if (aim.settleY) {   // without this the horizontal kick is a one-way walk off the target
-      const sgn = Math.sign(aim.settleY), d = Math.min(Math.abs(aim.settleY), rate * 0.5);
-      aim.yaw = angWrap(aim.yaw - sgn * d); aim.settleY -= sgn * d;
-    }
-  }
   const boss = state.bossRef;
   if (boss && boss !== C.bossSeen && state.mode === 'play') {   // waits out a death camera
     C.bossSeen = boss; C.bossT = CFG.bossIntro; showTitleCard(boss);
@@ -80,7 +72,7 @@ function updateCamera3(dt) {
     C.dieFrom = null;
     const s = soldiers[state.controlled];
     cam.yaw = aim.yaw;
-    const want = 1.62;   // standing eye height
+    const want = EYE_Y;   // standing eye height
     FPV.eyeY = FPV.eyeY == null ? want : approach(FPV.eyeY, want, 12, dt);
     const ey = FPV.eyeY + Math.sin(FPV.bobP) * 0.018;
     const fx = Math.sin(aim.yaw), fz = -Math.cos(aim.yaw);
@@ -102,9 +94,9 @@ function updateCamera3(dt) {
     C.orbitBase = cam.yaw;
   }
   cam3.position.copy(C.eye);
-  if (cam.shake > 0) cam3.position.add(TMP.v.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).multiplyScalar(cam.shake * 0.012));
+  if (cam.shake > 0) cam3.position.add(TMP.v.set(fxRand(-1, 1), fxRand(-1, 1), fxRand(-1, 1)).multiplyScalar(cam.shake * 0.012));   // the view's dice: shake is every frame
   cam3.lookAt(C.look);
-  if (cam.shake > 0) cam3.rotateZ(rand(-1, 1) * cam.shake * 0.0025);
+  if (cam.shake > 0) cam3.rotateZ(fxRand(-1, 1) * cam.shake * 0.0025);
   const base = (fpvActive() && !bossCine() ? 68 : pr.fov) + (meta.opts.fovAdd || 0) + 8 * FPV.sprintK;
   const adsFov = 2 * Math.atan(Math.tan(base * Math.PI / 360) / heroZoom()) * 180 / Math.PI;   // a 4x shows a quarter of the view
   const fov = lerp(base, adsFov, bossCine() ? 0 : FPV.adsK) * (1 - cam.punch * 1.5) * (state.mode === 'dying' ? 0.88 : 1);
@@ -371,7 +363,8 @@ function resizeView() {   // the canvas runs at native resolution; the scene ren
   VIEW.camera.aspect = w / h;
   VIEW.camera.updateProjectionMatrix();
 }
-function viewEnterBattle() {
+function viewEnterBattle(...a) { return viewFenced(viewEnterBattleInner, ...a); }
+function viewEnterBattleInner() {
   if (!VIEW.ready) return;
   sweepViews(true);
   BRASS.length = 0; DROPS.length = 0;
@@ -384,7 +377,8 @@ function viewEnterBattle() {
   Object.assign(cam, { yaw: 0, shake: 0, punch: 0, snap: true });
   Object.assign(aim, { yaw: 0, pitch: 0, fire: false, ads: false, sticky: false, lookDx: 0 });
 }
-function renderView(dt) {
+function renderView(...a) { return viewFenced(renderViewInner, ...a); }
+function renderViewInner(dt) {
   if (!VIEW.ready) return;
   const live = state.mode === 'play' || state.mode === 'dying' || state.mode === 'spectate';
   const wdt = live ? dt * (state.slow > 0 ? 0.3 : 1) : 0;

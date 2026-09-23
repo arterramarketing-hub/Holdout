@@ -124,7 +124,7 @@ suite('destruction: cover that comes apart', t => {
     assert.eq(PIECES.length, 0, 'nothing loose while it stands whole');
     damageCover(ob, 20, null, COL[0] * PX, 30.5 * PX, 0, -1);   // six pieces off the west end, pushed north
     frames(1);
-    const n = PIECES.length;
+    const n = PIECES.length, z0 = new Map(PIECES.map(p => [p, p.body.position.z]));
     assert.range(n, 6, Q.debris, 'pieces thrown');
     for (const p of PIECES) assert.range(p.body.position.x, COL[0] - 1.4, COL[0] + 1.4, 'thrown from the hole, not the far end');
     frames(80, 1 / 20);   // four seconds
@@ -136,9 +136,9 @@ suite('destruction: cover that comes apart', t => {
     assert.eq(PIECES.length, rubble.length, 'the bags stay as rubble');
     assert.ok(rubble.filter(p => p.body.sleepState === 2).length >= rubble.length * 0.8, 'asleep: lying rubble costs nothing');
     assert.eq(PIECES.every(p => p.body.position.y < 0.9), true, 'down in the street, not floating');
-    const north = PIECES.filter(p => p.body.position.z < 30.5).length;
-    assert.ok(north > n / 2, 'most of them went the way they were pushed: ' + north + ' of ' + n);
-    return { pieces: n, north };
+    const north = rubble.filter(p => p.body.position.z < z0.get(p)).length;   // north of where each one started
+    assert.ok(north >= rubble.length * 0.75, 'the bags went the way they were pushed: ' + north + ' of ' + rubble.length);
+    return { pieces: n, bags: rubble.length, north };
   });
 
   t.test('loose pieces keep to the quality cap and never touch the fight', () => {

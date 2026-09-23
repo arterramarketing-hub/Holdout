@@ -27,6 +27,7 @@ function enterBattle(tid) {
   state.flyby = null; state.crossTarget = null;
   rollSky(tid);
   enemies = []; bullets = []; floaters = []; bodies = []; particles = []; pickups = [];
+  for (const z of SPAWN_ZONES) z.used = -99;   // the last battle's arrivals must not steer this one's
   genTerrain();
   setupObjectives(objectiveSites(tid)); state.squadObj = null;
   state.callout = null; VOICE.barkT = -99; VOICE.callCd = 0; VOICE.barks.length = 0;

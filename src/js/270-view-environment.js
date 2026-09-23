@@ -465,9 +465,9 @@ function applyEnv(dt) {
   const A = ENV_PRESETS[i], B = ENV_PRESETS[(i + 1) % 4], W = WEATHER_LOOK[state.weather] || WEATHER_LOOK.clear;
   const num = key => lerp(A[key], B[key], f);
   const mix = (key, out) => out.copy(colorOf(A[key])).lerp(colorOf(B[key]), f);
-  if (W.rain && screen === 'battle' && Math.random() < dt * 0.05) {   // lightning, thunder a beat later
+  if (W.rain && screen === 'battle' && fxRand(0, 1) < dt * 0.05) {   // lightning, thunder a beat later (the view's dice: this rolls every frame)
     VIEW.flashT = 0.14;
-    setTimeout(() => noise({ freq: 70, dur: 1.6, gain: 0.2, type: 'lowpass', q: 0.4, attack: 0.05 }), 400 + Math.random() * 900);
+    setTimeout(() => noise({ freq: 70, dur: 1.6, gain: 0.2, type: 'lowpass', q: 0.4, attack: 0.05 }), aRand(400, 1300));
   }
   VIEW.flashT = Math.max(0, (VIEW.flashT || 0) - dt);
   const flash = VIEW.flashT > 0;

@@ -19,11 +19,11 @@ function audio() {
       master.connect(SFX.muffle); SFX.muffle.connect(comp); comp.connect(AC.destination);
       noiseBuf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
       const d = noiseBuf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      for (let i = 0; i < d.length; i++) d[i] = aRnd() * 2 - 1;
       const ir = AC.createBuffer(2, Math.floor(AC.sampleRate * 1.8), AC.sampleRate);   // outdoor reverb impulse
       for (let ch = 0; ch < 2; ch++) {
         const c = ir.getChannelData(ch);
-        for (let i = 0; i < c.length; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / c.length, 2.8);
+        for (let i = 0; i < c.length; i++) c[i] = (aRnd() * 2 - 1) * Math.pow(1 - i / c.length, 2.8);
       }
       const conv = AC.createConvolver(), wet = AC.createGain();
       conv.buffer = ir; wet.gain.value = 0.3;
@@ -47,7 +47,7 @@ function noise(o) {   // filtered noise burst for UI and weather: {freq, dur, ga
   const ac = audio(); if (!ac || (meta && meta.muted) || !o.gain) return;
   const t = ac.currentTime + (o.delay || 0);
   const src = ac.createBufferSource(); src.buffer = noiseBuf;
-  src.loop = true; src.loopStart = Math.random() * 1.2; src.loopEnd = src.loopStart + 0.6;
+  src.loop = true; src.loopStart = aRnd() * 1.2; src.loopEnd = src.loopStart + 0.6;
   const f = ac.createBiquadFilter(); f.type = o.type || 'bandpass';
   f.frequency.setValueAtTime(o.freq, t);
   if (o.slide) f.frequency.exponentialRampToValueAtTime(Math.max(30, o.freq + o.slide), t + o.dur);

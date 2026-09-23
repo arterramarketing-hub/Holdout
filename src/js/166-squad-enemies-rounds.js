@@ -502,5 +502,6 @@ function battleUpdate(dt) {
   }
   updateVoices(dt);
   updateBanner(dt);
+  settleAim(dt);   // on real time, like the camera it used to live in: slow motion does not slow your recovery
 }
 

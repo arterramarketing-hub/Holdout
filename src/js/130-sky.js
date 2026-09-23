@@ -16,16 +16,18 @@ const skyName = tod => TOD_NAMES[Math.round(tod) % 4];
 // The sky a sector will be fought under is rolled the first time the briefing shows it, and that is the sky you get
 // when you deploy; fighting there (won, lost or left) clears it, so the next visit brings new weather.
 const FORECAST = {};
+let skySeed = 0x6c8e9cf5;   // the forecast rolls its own dice: whether a briefing has shown a sector's sky must never move the fight's
+const skyRand = () => ((skySeed = (skySeed * 1664525 + 1013904223) >>> 0) / 4294967296);
 function forecastFor(t) {
   const f = FORECAST[t.id];
   if (f && f.theater === meta.theater) return f;
   let tod, weather;
   if (t.id === 1 && meta.theater === 0 && !meta.story.seen[1]) { tod = 0.15; weather = 'clear'; }   // "the line broke at dawn"
   else {
-    const r = Math.random();
-    tod = r < 0.15 ? 0.1 + Math.random() * 0.3 : r < 0.55 ? 0.8 + Math.random() * 0.6
-      : r < 0.8 ? 1.85 + Math.random() * 0.4 : 2.85 + Math.random() * 0.4;
-    const w = Math.random(), wet = Math.min(0.2, 0.04 * effTier(t));
+    const r = skyRand();
+    tod = r < 0.15 ? 0.1 + skyRand() * 0.3 : r < 0.55 ? 0.8 + skyRand() * 0.6
+      : r < 0.8 ? 1.85 + skyRand() * 0.4 : 2.85 + skyRand() * 0.4;
+    const w = skyRand(), wet = Math.min(0.2, 0.04 * effTier(t));
     weather = w < 0.12 + wet ? 'rain' : w < 0.3 + wet ? 'fog' : w < 0.5 + wet ? 'overcast' : 'clear';
   }
   return (FORECAST[t.id] = { tod, weather, theater: meta.theater });

@@ -116,10 +116,20 @@ function los3(ax, ay, az, bx, by, bz, skip) {   // a clear straight line in 3D b
   return true;
 }
 const SHOT = { ox: 0, oy: 0, oz: 0, dx: 0, dy: 0, dz: 0 }, AIMP = { x: 0, y: 0, z: 0, e: null };
+const EYE_Y = 1.62;   // metres: the eyes your rounds leave from in first person (the camera eases to it; the round never waits for the camera)
+function settleAim(dt) {   // recoil recovery: the muzzle drifts back to where you were pointing once you stop firing. The fight's, not the view's:
+  // the next round goes where this leaves the aim, so it runs in the tick, drawn or not
+  const rate = dt * (aim.fire ? 0.35 : 1.8);
+  if (aim.settle > 0) { const d = Math.min(aim.settle, rate); aim.pitch -= d; aim.settle -= d; }
+  if (aim.settleY) {   // without this the horizontal kick is a one-way walk off the target
+    const sgn = Math.sign(aim.settleY), d = Math.min(Math.abs(aim.settleY), rate * 0.5);
+    aim.yaw = angWrap(aim.yaw - sgn * d); aim.settleY -= sgn * d;
+  }
+}
 function crosshairRay(s) {   // where your crosshair's ray starts and which way it points
   if (fpvActive() || !VIEW.ready || !VIEW.camera) {   // first person: from the eyes, along the view
     const L = Math.hypot(1, aim.pitch);
-    SHOT.ox = s.x; SHOT.oy = s.y; SHOT.oz = (FPV.eyeY == null ? 1.62 : FPV.eyeY) * PX;
+    SHOT.ox = s.x; SHOT.oy = s.y; SHOT.oz = EYE_Y * PX;
     SHOT.dx = Math.sin(aim.yaw) / L; SHOT.dy = -Math.cos(aim.yaw) / L; SHOT.dz = aim.pitch / L;
   } else {   // over the shoulder: from the camera through the crosshair, drawn 46% of the way down the screen
     const c3 = VIEW.camera, v = crosshairRay.v || (crosshairRay.v = new THREE.Vector3());

@@ -51,14 +51,14 @@ function drawSoldier(s, wdt, set) {
 }
 function gunLife(r, J, kind, rt, fired, own, wdt, quiet) {   // muzzle bloom, brass and the dropped magazine for a character's drawn gun
   const gunM = J[HJ.gun].matrixWorld;
-  if (fired) { r.flashT = quiet ? 0 : 0.07; r.flashRot = rand(0, TAU); if (EJECT[kind]) r.ejectT = kind === 'sniper' ? 0.45 : 1e-4; }
+  if (fired) { r.flashT = quiet ? 0 : 0.07; r.flashRot = fxRand(0, TAU); if (EJECT[kind]) r.ejectT = kind === 'sniper' ? 0.45 : 1e-4; }
   const muz = GUN_MUZ[kind] || ENEMY_MUZ[kind];
   if (muz && Q.glow) muzzleBloom(r, gunM, muz.y, muz.z, kind, wdt);
   if (r.ejectT > 0) { r.ejectT -= wdt; if (r.ejectT <= 0) throwBrass(gunM, kind, 1, own, 0, 0); }
   if (kind !== 'rocket' && rt >= 0.24 && r.lastRt < 0.24) {   // let go of the empty magazine on the way down to the pouch
     LT.vl.set(0, -0.36, -0.03).applyMatrix4(J[HJ.fArmL].matrixWorld);
     J[HJ.fArmL].matrixWorld.decompose(LT.vb, LT.ql, LT.vb2);
-    dropLoose(LT.vl, LT.ql, 0.045 * LT.vb2.x, 0.17 * LT.vb2.x, 0.09 * LT.vb2.x, r.pal.gunm || WHITE, own, LT.vh.set(rand(-0.4, 0.4), -0.5, rand(-0.4, 0.4)));
+    dropLoose(LT.vl, LT.ql, 0.045 * LT.vb2.x, 0.17 * LT.vb2.x, 0.09 * LT.vb2.x, r.pal.gunm || WHITE, own, LT.vh.set(fxRand(-0.4, 0.4), -0.5, fxRand(-0.4, 0.4)));
   }
   r.lastRt = rt;
 }

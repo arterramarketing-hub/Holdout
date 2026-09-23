@@ -79,7 +79,7 @@ function moveVector() {
   else if (GPAD.lx || GPAD.ly) { mx = GPAD.lx; my = GPAD.ly; }
   else if (joy.active && (joy.dx || joy.dy)) { mx = joy.dx; my = joy.dy; }
   else return { x: 0, y: 0 };
-  const c = Math.cos(cam.yaw), s = Math.sin(cam.yaw);   // camera-relative: "up" walks where the camera looks
+  const yaw = fpvActive() ? aim.yaw : cam.yaw, c = Math.cos(yaw), s = Math.sin(yaw);   // camera-relative: "up" walks where you look (in first person, your aim is the camera)
   return { x: mx * c - my * s, y: mx * s + my * c };
 }
 

@@ -30,7 +30,8 @@ function rebuildSupports() {
     box.appendChild(b);
   });
 }
-function updateBattleHud() {
+function updateBattleHud() { return viewFenced(updateBattleHudInner); }   // drawing the HUD never rolls the fight's dice
+function updateBattleHudInner() {
   const theirs = Math.max(0, state.enemyTotal - state.enemyDown);
   $('killn').textContent = state.kills;
   $('ticketn').textContent = state.tickets;

@@ -242,9 +242,9 @@ function recFor(obj) {
   let r = views.get(obj);
   if (!r) {
     r = { J: takeSkeleton('humanoid'), H: null, pal: null, yaw: null, hyaw: null, moveW: 0, moveYaw: null, dir: 1,
-      phase: Math.random() * TAU, px: obj.x, py: obj.y, pose: new Float32Array(HUMANOID.length * 3 + 1), init: false,
+      phase: fxRand(0, TAU), px: obj.x, py: obj.y, pose: new Float32Array(HUMANOID.length * 3 + 1), init: false,
       hpose: null, hinit: false, kick: 0, kickV: 0, flin: 0, flinV: 0, lastRecoil: 0, lastHp: obj.hp, lastFlash: 0, lastAtk: 0,
-      seed: Math.random() * 100 };
+      seed: fxRand(0, 100) };   // the view's own dice: drawing someone new never moves the fight's
     views.set(obj, r);
   }
   r.gen = viewGen;
