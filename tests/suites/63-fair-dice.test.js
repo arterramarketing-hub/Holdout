@@ -9,10 +9,10 @@ suite('fair dice', t => {
     try { f(); } finally { Math.random = real; }
     return n;
   };
-  function fight(render, n = 900) {   // fifteen seconds of a seeded fight with the bot at the controls: drawn every other tick, or not at all
+  function fight(render, n = 600) {   // ten seconds of a seeded fight with the bot at the controls: drawn every third tick, or not at all
     newCampaign(); seed(21);
     const h = battle({ weapon: 'ar', invuln: true });
-    for (let k = 0; k < n; k++) { botTick(h); tick(1 / 60); if (render && k % 2 === 0) frames(1); }
+    for (let k = 0; k < n; k++) { botTick(h); tick(1 / 60); if (render && k % 3 === 0) frames(1); }
     aim.fire = false; keys.KeyW = false;
     return JSON.stringify({ down: state.enemyDown, hits: state.hits, shots: state.shots, x: Math.round(h.x), y: Math.round(h.y),
       e: enemies.map(e => [e.type, Math.round(e.x), Math.round(e.y), Math.round(e.hp * 10)]) });

@@ -245,7 +245,7 @@ def main():
     print(f'{n} suite files · passes: {", ".join(passes)} · window frame +{frame[0]}×+{frame[1]} px · pixel ratio {probe.get("dpr")}')
     all_ok = True
     for p in passes:
-        data, wall = run_pass(p, chrome, frame, only, headed, timeout=1500 if p in ('baseline', 'soak') else 900)
+        data, wall = run_pass(p, chrome, frame, only, headed, timeout=1500 if p in ('baseline', 'soak', 'desktop') else 900)   # the desktop pass carries most suites: GitHub's runner takes ~2.5x as long as a Mac
         ok = report(data, wall)
         summary([(data, wall, ok)])   # written as each pass ends, so a job cancelled on its own timeout still shows what happened
         all_ok = ok and all_ok

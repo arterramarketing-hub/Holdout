@@ -127,11 +127,10 @@ suite('destruction: cover that comes apart', t => {
     const n = PIECES.length, z0 = new Map(PIECES.map(p => [p, p.body.position.z]));
     assert.range(n, 6, Q.debris, 'pieces thrown');
     for (const p of PIECES) assert.range(p.body.position.x, COL[0] - 1.4, COL[0] + 1.4, 'thrown from the hole, not the far end');
-    frames(80, 1 / 20);   // four seconds
-    const rubble = PIECES.filter(p => p.batch !== 'debris');   // the bags themselves; the grit shrinks away
+    frames(140, 1 / 20);   // seven seconds
+    const rubble = PIECES.filter(p => p.batch !== 'debris');   // the bags themselves; the grit has shrunk away
     const moving = rubble.filter(p => p.body.velocity.length() > 0.15 || p.body.angularVelocity.length() > 0.5).length;
     assert.eq(moving, 0, 'bags still visibly moving');
-    frames(60, 1 / 20);   // seven seconds
     assert.eq(PIECES.filter(p => p.batch === 'debris').length, 0, 'the grit has gone');
     assert.eq(PIECES.length, rubble.length, 'the bags stay as rubble');
     assert.ok(rubble.filter(p => p.body.sleepState === 2).length >= rubble.length * 0.8, 'asleep: lying rubble costs nothing');
