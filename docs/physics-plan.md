@@ -60,3 +60,38 @@ and a test holds that line by counting the fight's dice while the world is full 
    Verlet ragdolls already had to meet.
 4. **Polish and ship.** Measure the cost on a full street, tune iterations, sleep and the caps per quality preset,
    audit, the whole suite and the soak, docs, publish.
+
+## Status
+
+Built: `src/js/243-view-physics.js` (the world, loose pieces, blasts), `src/js/245-view-ragdoll.js` rewritten on rigid
+bodies, `coverPieces` / `throwPieces` / `burstBroken` / `throwDrum` in 270-view-environment, `wakeCorpses` in
+250-view-characters. The simulation only gained two queues it never reads back — `BROKEN` (cover destroyed) and
+`BLASTS` (what went off) — and a push direction on each hit to cover. Tests: tests/suites/62-physics.test.js (15), and
+the nine claims in 59-ragdolls hold unchanged on the new ragdolls.
+
+What changed from the plan while building it, and why:
+- **One list of pieces per kind (`coverPieces`) draws the standing cover and throws the loose pieces**, so a model
+  that stood and the body that falls can never disagree. The six chunked kinds' drawing moved into it.
+- **Stepped at 1/60 s, not 1/120.** Half the cost, and the ragdoll and destruction tests hold the same: the worst
+  street measured (eight bodies falling, ninety pieces lying about, a blast through them) went from 2.8 ms of physics
+  a frame on High to 1.4 ms on the dev Mac; Low is 0.4 ms.
+- **A body that starts partly inside cover or a wall is moved out of it whole.** Moved limb by limb, a joint was
+  stretched and the solver snapped the body back the wrong way; and low cover lifts the body onto it (up to 45 cm) —
+  that is what makes a body shot beside sandbags drape across them instead of sitting against them.
+- **Only a pelvis inside a building keeps the canned fall** (the belfry marksman). A head that the canned fall had
+  already put into a wall is cleared out of it with the rest of the body.
+- **Limbs do not collide with each other.** A canned pose was never drawn to keep them apart; the joint cones keep the
+  body from folding through itself.
+- **A joint whose canned pose starts past its range gets that much room for that body**, rather than being snapped in.
+- **Grit shrinks away after four to six seconds; the pieces themselves stay as rubble**, up to the quality cap. A
+  ten-centimetre chip wedged between two bags spun itself up forever; anything loose is also held under 18 rad/s, and
+  after three seconds a near-still piece is allowed to sleep.
+- **A jersey segment is tipped from its top**, hard enough to go over its edge (the ground takes half the spin at once).
+- **A drum that goes up is an empty shell** (so its own blast can throw it), and its own throw is small: the blast does
+  the lifting.
+- **A zero ragdoll cap now means zero** (`ragCap`), rather than falling back to eight.
+
+Found and left alone: the view draws the fight's dice when it first draws a character (`recFor`: walk phase and idle
+variety use `Math.random`). Switching them to the view's own dice is right, but it changes how seeded fights play out
+in tests that render, and it is not part of this; it may also be what makes the first battle after a page load replay
+differently from later ones.

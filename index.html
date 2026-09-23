@@ -6490,6 +6490,7 @@ function drawPieces(dt) {   // everything loose, drawn from the body it is
     if (ws > PIECE_SPIN * PIECE_SPIN) w.scale(PIECE_SPIN / Math.sqrt(ws), w);   // a chip caught between two things can spin itself up: never past this
     let k = 1;
     if (p.fade) {
+      if (b.collisionResponse) { b.collisionResponse = false; b.sleep(); }   // shrinking away where it lies: nothing rests on it any more
       p.fade -= dt;
       if (p.fade <= 0) { physDropPiece(p); continue; }
       k = p.fade / PIECE_FADE;
